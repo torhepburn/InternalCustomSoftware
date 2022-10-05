@@ -1,0 +1,78 @@
+﻿@page "/"
+
+<PageTitle>Enter Production Order Number</PageTitle>
+
+@using PPS_Labels.Data;
+@using System.Data;
+@using Microsoft.Data.SqlClient;
+
+<h1>Scan Barcode from Job Card</h1>
+
+
+
+<input class="format-control" value=""  />
+
+<button class="btn btn-primary" @onclick="GetData" >Enter Data</button>
+
+<br />
+<br />
+Label Output:
+<br/>
+<p role="status">KIT @board REV @boardRev</p>
+<p role="status">@firmware REV @firmwareRev</p>
+
+@code 
+{
+    public string board=" ";
+    public string boardRev=" ";
+    public string firmware=" ";
+    public string firmwareRev=" ";
+    SqlCommand cmd;
+    SqlConnection cnxn = new ("server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
+                           "database=ZYGO-NAV-PROD; encrypt=false;");
+
+
+    public void GetData()
+    {
+        cmd = new ("select " +
+                    "pbl.[Production BOM No_] " +
+                    ",i.[Revision Level] " +
+                    ",pbl.No_ " +
+                    ",ii.[Revision Level] " +
+                    "from [ZYGO$Prod_ Order Line] pol " +
+                    "INNER JOIN[ZYGO$Production BOM Line] pbl ON pol.[Item No_] = pbl.[Production BOM No_] " +
+                    "INNER JOIN ZYGO$Item i ON pbl.[Production BOM No_] = i.No_ " +
+                    "INNER JOIN ZYGO$Item ii ON pbl.[No_] = ii.No_ " +
+                    "WHERE pol.[Prod_ Order No_] = 'PD418820' " +
+                    "AND pbl.No_ LIKE 'SPM%'", cnxn);
+
+        try
+        {
+            DataTable table = new DataTable();
+
+            cnxn.Open();
+
+            SqlDataReader dr;
+
+            dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                board = dr.GetString(0).Trim();
+                boardRev = dr.GetString(1).Trim();
+                firmware = dr.GetString(2).Trim();
+                firmwareRev = dr.GetString(3).Trim();
+            }
+                //table.Load(dr);
+        }
+        catch (Exception ex)
+        {
+                
+        }
+        finally
+        {
+            cnxn.Close();
+               
+        }
+    }
+}

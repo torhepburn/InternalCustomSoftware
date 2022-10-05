@@ -1,0 +1,143 @@
+﻿
+@page "/getdata"
+
+<PageTitle>Shipping Label</PageTitle>
+
+@using BlazorTEST.Data
+@using System.Data
+@using Microsoft.Data.SqlClient;
+
+
+@*design how the hyperlinks look in the GetData table*@
+<style> 
+    a:link {
+      color: rgb(220, 0, 0);
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    a:visited {
+      color: rgb(220, 0, 0);
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: red;
+      background-color: transparent;
+      text-decoration: underline;
+    }
+
+    a:active {
+      color: rgb(220, 0, 0);
+      background-color: transparent;
+      text-decoration: underline;
+    }
+</style>
+
+
+<h6><b>Find Label</b></h6>
+
+<div class="border-0" >
+    <EditForm Model="searchFilter" onclick="getRecords">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <h4><i>Enter the description or item number </i></h4>
+        <InputText id="num" placeholder="Keyword" @bind-Value="searchFilter" />
+
+
+        @*<button type="button" class="btn btn-primary btn-sm" @onclick="getRecords">Filter</button>*@
+        <input type="submit" class="btn btn-primary btn-sm" @onfocus="getRecords" @onclick="getRecords" title="Filter" value="Filter"  /> @*onfocus and onclick are both used to avoid double clicking the button*@
+        @if (emptyText == true) @*Case in which nothing is searched for*@
+        {
+            <br /><br />
+            <h4><b>You must enter a keyword!</b></h4>
+        }
+        @if (dt != null && dt.Rows.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Part Number</th>
+                        <th>Description</th>
+                        <th>Revision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dt != null)
+                    {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                            <tr>
+                                <td><a href=@("labeldetails/" + items[0])> @items[0].ToString()</a></td> @*Sets a hyperlink to the next page with the PN# set as a parameter*@
+                                <td>@items[1].ToString()</td>
+                                <td>@items[2].ToString()</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }else if(dt != null && dt.Rows.Count == 0 && emptyText == false) @*Case in which the search results yielded nothing*@
+        {
+            <br /><br />
+            <h4><b>Nothing was found!</b></h4>
+        }
+    </EditForm>
+</div>
+
+
+@code {
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool isSearching = false; //This variable was for having a spinner while results are loading. Could be useful in future however loading times are quick
+    public bool emptyText = false;
+
+    //Filter the data in table
+    public void getRecords() //Gets data for table based on search 
+    {
+        if (searchFilter == "")
+        {
+            emptyText = true;
+        }
+        else
+        {
+            emptyText = false;
+        }
+        SqlCommand cmd;
+        SqlConnection cNAV = new SqlConnection("server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
+                           "database=ZYGO-NAV-PROD; encrypt=false;");
+        SqlDataReader dr;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(searchFilter))
+            {
+                isSearching = true;
+                StateHasChanged();
+                cmd = new SqlCommand("SELECT No_,Description, [Revision Level] from ZYGO$Item WHERE ( Description LIKE '%" + searchFilter.Trim() + "%' OR No_ LIKE '%" + searchFilter.Trim() + "%') ORDER BY No_", cNAV);
+
+                //unsecure way to filter
+                dt = new();
+                cNAV.Open();
+                dr = cmd.ExecuteReader();
+                dt.Load(dr);
+                isSearching = false;
+
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            isSearching = false;
+        }
+        finally
+        {
+            cNAV.Close();
+        }
+        StateHasChanged();
+    }
+
+
+
+}

@@ -1,0 +1,113 @@
+﻿@page "/calibrate"
+
+@inject NavigationManager NavManager
+
+@using System
+@using System.Collections.Generic
+@using System.ComponentModel
+@using System.Data
+@using System.Drawing
+@using System.Drawing.Imaging
+@using System.Linq
+@using System.Text
+@using System.Windows
+@using System.IO
+@using System.Runtime.InteropServices
+@using System.Threading.Tasks
+@using Microsoft.Data.SqlClient
+@using ZPLPrinter.Data
+@inject Printer printer
+@*@layout EmptyLayout*@
+
+<!-- Must add these repositories to "_Imports.razor"! -->
+
+
+<div class="border-bottom">
+    <h6><b>Calibrate your media</b></h6>
+</div>
+<br />
+
+
+<button hidden=@calibrateButtonDisabler printer.zpl class="btn btn-primary" @onclick="calibrate">Calibrate</button>
+<br />
+<br />
+<button class="btn btn-primary" @onclick="changePrinter">Change Printer</button>
+<br />
+<br />
+<h3>Current printer: @printer.myPrinter</h3>
+
+
+
+
+@code {
+    public bool calibrateButtonDisabler { get; set; }
+    protected override void OnInitialized() //Code to hide the calibrate button if the printer chosen is an EPL
+    {
+        if (printer.zpl == "True"){
+            calibrateButtonDisabler = false;
+        }
+        else
+        {
+            calibrateButtonDisabler = true;
+        }
+    }
+
+    public void changePrinter()
+    {
+    NavManager.NavigateTo("");
+    }
+
+    public void calibrate() //Run printer command to calibrate media
+    {
+    if (printer.zpl == "True")
+    {
+        StringBuilder ZplBuilder = new StringBuilder();
+
+        ZplBuilder.Append("~JC"); // Adjusts media to be lined up correctly
+
+        string ZplString = ZplBuilder.ToString();
+
+        MemoryStream lmemStream = new MemoryStream();
+
+        StreamWriter lstreamWriter = new StreamWriter(lmemStream);
+        lstreamWriter.Write(ZplString);
+        lstreamWriter.Flush();
+        lmemStream.Position = 0;
+
+        byte[] byteArray = lmemStream.ToArray();
+
+        IntPtr cpUnmanagedBytes = new IntPtr(0);
+        int cnLength = byteArray.Length;
+        cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
+        Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+
+        RawPrinterHelper.SendBytesToPrinter(printer.myPrinter, cpUnmanagedBytes, cnLength);
+        Marshal.FreeCoTaskMem(cpUnmanagedBytes);
+    }
+
+    }
+
+
+    public static class g
+    {
+    public static string user;
+    public static string item;
+    public static string editRevision;
+    public static string printer;
+    public static string db = "server = CT-MID-SQL11; password = Read+Write!; " +
+                              "user = readwrite; database = AccessFrontEnds; encrypt=false;";
+    public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
+                        "user = navdb_read; database = ZYGO-NAV-PROD; encrypt=false;";
+    public static string NAVprefix = "ZYGO$";
+    }
+
+
+
+
+
+
+
+
+
+
+}

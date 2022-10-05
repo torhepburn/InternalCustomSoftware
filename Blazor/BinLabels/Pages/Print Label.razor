@@ -1,0 +1,148 @@
+﻿
+@page "/print label"
+
+@inject NavigationManager NavManager
+
+@using System
+@using System.Collections.Generic
+@using System.ComponentModel
+@using System.Data
+@using System.Drawing
+@using System.Drawing.Imaging
+@using System.Linq
+@using System.Text
+@using System.Windows
+@using System.IO
+@using System.Runtime.InteropServices
+@using System.Threading.Tasks
+@using Microsoft.Data.SqlClient
+@using LabelSpace.Data
+@using ZPLPrinter.Data
+@*@layout EmptyLayout*@
+
+<!-- Must add these repositories to "_Imports.razor"! -->
+
+
+
+<h1>Label Printer</h1>
+<br />
+
+
+
+<button class="btn btn-primary" @onclick="calibrate">Calibrate Your Printer </button>
+<br /> <br /> <br />
+<h2>Select "Get Data" to print from existing data.</h2>
+<h2>Select "Free Text" to print a brand new label.</h2>
+<!-- Buttons, textboxes, and such -->
+@*<div class="free" id="free">
+    @if (@showFreeText == true)
+{
+    <Free_Text></Free_Text>
+}
+</div>*@
+
+
+
+
+@code {
+
+    public void calibrate()
+    {
+        System.Security.Principal.WindowsIdentity userBase;
+        userBase = System.Security.Principal.WindowsIdentity.GetCurrent();
+
+        string user = userBase.Name.ToUpper(); ;
+
+        if (userBase.Name.IndexOf("Z") == 0)
+        {
+            user = userBase.Name.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = userBase.Name.Replace("AMETEK-AD\\", "");
+        }
+
+        string computername = Environment.MachineName;
+
+        SqlConnection cnxn = new SqlConnection(g.db);
+        SqlDataAdapter da;
+        DataTable table;
+
+        try
+        {
+            da = new SqlDataAdapter(
+             " Select permission, permissionvalue from applicationsetup " +
+             " where application = 'shippinglabel' and " +
+             " pcid = '" + computername + "' and " +
+             " username = '" + user + "' order by permission desc ", cnxn);
+            table = new DataTable();
+            da.Fill(table);
+
+            if (table.Rows.Count > 0)
+            {
+                /*  putting print server into table on CT-MID-SQL11  */
+                //g.printer = "\\\\midprtsrv\\" + table.Rows[0][1].ToString().Trim();
+                g.printer = table.Rows[0][1].ToString().Trim();
+            }
+            else
+            {
+                //MessageBox.Show("Either this user " + user + " or this computer (" + computername + ") does not have permission to use this program.");
+                //this.Close();
+            }
+
+            if (table.Rows.Count == 2 && table.Rows[1][1].ToString().Trim() == "YES")
+            {
+                g.editRevision = "YES";
+            }
+
+
+        }
+        catch (SqlException ex)
+        {
+            //MessageBox.Show(ex.ToString());
+        }
+        finally
+        {
+
+        }
+
+
+        StringBuilder ZplBuilder = new StringBuilder();
+
+        ZplBuilder.Append("~JC"); // Adjusts media to be lined up correctly
+
+        string ZplString = ZplBuilder.ToString();
+
+        MemoryStream lmemStream = new MemoryStream();
+
+        StreamWriter lstreamWriter = new StreamWriter(lmemStream);
+        lstreamWriter.Write(ZplString);
+        lstreamWriter.Flush();
+        lmemStream.Position = 0;
+
+        byte[] byteArray = lmemStream.ToArray();
+
+        IntPtr cpUnmanagedBytes = new IntPtr(0);
+        int cnLength = byteArray.Length;
+        cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
+        Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+
+        RawPrinterHelper.SendBytesToPrinter("ZDesigner GK420d", cpUnmanagedBytes, cnLength);
+        Marshal.FreeCoTaskMem(cpUnmanagedBytes);
+    }
+
+
+    public static class g
+    {
+        public static string user;
+        public static string item;
+        public static string editRevision;
+        public static string printer;
+        public static string db = "server = CT-MID-SQL11; password = Read+Write!; " +
+                                  "user = readwrite; database = AccessFrontEnds;";
+        public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
+                            "user = navdb_read; database = ZYGO-NAV-PROD;";
+        public static string NAVprefix = "ZYGO$";
+    }
+
+}

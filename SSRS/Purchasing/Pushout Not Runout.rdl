@@ -1,0 +1,403 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" MustUnderstand="df">
+  <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="NAV">
+      <DataSourceReference>NAV</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>e5f1ce6b-aebd-44c5-a7fe-71a6f081ab32</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>declare @item varchar(30)
+declare @document varchar(30)
+declare @quantity int
+declare @balance int
+declare @rw int
+declare @duedate date
+declare @reportCutoffDate date
+
+SET @reportCutoffDate = '2022-12-31'
+
+--DROP Table #Temp
+
+CREATE TABLE #Temp
+(
+[Due Date] date
+,[Item No] varchar(30)
+,[Quantity] int
+,[Balance] int
+,[Document] varchar(30)
+)
+
+
+
+declare itemCursor Cursor for 
+	
+	select
+
+	No_
+	
+	from [ZYGO$Item] 
+
+	WHERE SIM IN (1,2,3) --A
+
+	AND No_ not like '%FAI%'
+
+	AND F6 != 0
+
+	AND [Replenishment System] = 0
+
+open itemCursor
+fetch next from itemCursor into @item
+while @@FETCH_STATUS = 0
+begin
+
+SET @duedate = getdate()
+
+SELECT @balance = SUM(Quantity) FROM [ZYGO$Item Ledger Entry]
+
+WHERE [Item No_] = @item
+	
+INSERT INTO #Temp
+
+SELECT
+
+@duedate
+,@item
+,0
+,@balance
+,'On Hand'
+--Print CAST(@duedate as varchar) + '    ' + @item + '    ' +'OH' + '    ' + CAST(@balance as varchar)
+
+		DECLARE orderCursor Cursor for
+
+		--	SELECT 
+
+		--	[Document No_]
+		--	,[Outstanding Quantity] [Quantity]
+		--	,[Expected Receipt Date] [Due Date]
+
+		--	FROM [ZYGO$Purchase Line]
+
+		--	WHERE No_  = @item
+
+		--	AND [Outstanding Quantity] &gt; 0
+
+		--	AND [Expected Receipt Date] &lt;= @reportCutoffDate
+
+		--	AND [Document No_] NOT LIKE 'KB%'
+
+		--UNION ALL
+
+			select 
+
+			[Prod_ Order No_] [Document No_]
+			,[Remaining Quantity]*-1 Quantity
+			,[Due Date]
+
+			from [ZYGO$Prod_ Order Component]
+
+			where
+
+			Status IN (2,3)
+
+			AND [Item No_] = @item
+
+			AND [Remaining Quantity] &gt; 0
+
+			AND [Due Date] &lt;= @reportCutoffDate
+
+		UNION ALL
+			/*	Jobs  minus  */
+
+			select
+
+			[Document No_]
+			,Quantity * (-1) Quantity
+			,[Due Date] 
+
+			FROM [ZYGO$Job Journal Line]
+
+			WHERE No_ = @item
+
+			AND [Journal Template Name] = 'INVREQ'
+
+			AND [Due Date] &lt;= @reportCutoffDate
+
+	UNION ALL
+			/*	sales minus	*/
+
+			select
+
+			[Document No_] 
+			,[Outstanding Quantity] * (-1) [Quantity]
+			,[Shipment Date] [Due Date]
+			
+			from 
+			
+			[ZYGO$Sales Line]
+
+			WHERE 1=1
+
+				AND [Outstanding Quantity] &gt; 0
+
+				AND [Shipment Date] &lt;= @reportCutoffDate
+
+				AND No_ = @item
+
+	UNION ALL
+
+		/*	planned forecast  minus	*/
+
+		SELECT
+		
+		'Planning'
+		,Quantity * (-1) Quantity
+		,[Due Date] 
+		
+		from [ZYGO$Planning Component]
+
+		WHERE [Item No_] = @item
+
+		AND [Due Date] &lt;= @reportCutoffDate
+
+
+
+		order by [Due Date]
+
+
+
+		open orderCursor
+		fetch next from orderCursor into @document, @quantity, @duedate
+		while @@FETCH_STATUS = 0
+		begin
+
+		SET @balance = @balance + @quantity
+
+		INSERT INTO #Temp 
+		
+		SELECT
+		
+		@duedate
+		,@item
+		,@quantity
+		,@balance
+		,@document
+		--Print CAST(@duedate as varchar) + '    ' + @item + '    ' + CAST(@quantity as varchar) + '    ' + CAST(@balance as varchar) + '    ' + @document
+
+		fetch next from orderCursor into @document, @quantity, @duedate
+		end
+		close orderCursor
+		deallocate orderCursor
+
+
+fetch next from itemCursor into  @item
+end
+close itemCursor
+deallocate itemCursor
+
+SELECT DISTINCT [Item No] FROM #Temp WHERE [Item No] NOT IN
+(
+select [Item No] from #Temp
+
+WHERE Balance = 0
+)
+--order by [Due Date]</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="Item_No">
+          <DataField>Item No</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="textbox1">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Pushout Not Runout</Value>
+                    <Style>
+                      <FontFamily>Segoe UI Light</FontFamily>
+                      <FontSize>24pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>textbox1</rd:DefaultName>
+            <Height>0.43in</Height>
+            <Style>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Tablix Name="table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.22in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Item No</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.21in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Item_No">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Item_No.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Item_No</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet1</DataSetName>
+            <Top>0.43in</Top>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>0.86in</Height>
+        <Style />
+      </Body>
+      <Width>5in</Width>
+      <Page>
+        <LeftMargin>1in</LeftMargin>
+        <RightMargin>1in</RightMargin>
+        <TopMargin>1in</TopMargin>
+        <BottomMargin>1in</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>4</NumberOfColumns>
+      <NumberOfRows>2</NumberOfRows>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Language>en-US</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Invalid</rd:ReportUnitType>
+  <rd:ReportID>bb17ed4d-a637-49c0-ae11-87b97c9ca685</rd:ReportID>
+</Report>

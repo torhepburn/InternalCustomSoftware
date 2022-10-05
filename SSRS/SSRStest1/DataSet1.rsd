@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SharedDataSet xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/shareddatasetdefinition">
+  <DataSet Name="DataSet1">
+    <Query>
+      <DataSourceReference>NAVProd</DataSourceReference>
+      <CommandText>with s1 as
+(
+select 
+
+[Document No_] AS [Order No_], 
+[Operation No_], 
+[Work Center No_], 
+sum(Quantity) as [Quantity]
+
+from [ZYGO$Capacity Ledger Entry]
+
+group by 
+
+[Document No_], 
+[Operation No_], 
+[Work Center No_]
+)
+
+
+select	i.[Global Dimension 2 Code] as [Business Segment Code],
+
+	case p.Status
+		when 0 then 'Simulated'
+		when 1 then 'Planned'
+		when 2 then 'Firm Planned'
+		when 3 then 'Released'
+		when 4 then 'Finished'
+		else 'UNKNOWN' 
+	end as [Status],
+	
+	p.[Prod_ Order No_], 
+	l.[Item No_], 
+	l.Description,
+	l.[Starting Date-Time], 
+	l.[Ending Date-Time],
+	
+	p.[Operation No_], 
+	p.[Work Center No_], 
+	p.Description, 
+	
+	case p.[Operation Complete] when 0 then 'Yes' else 'No' end as [Operation Complete],
+	
+	case p.[Routing Status]
+		when 0 then 'Blank'
+		when 1 then 'Planned'
+		when 2 then 'In Progress'
+		when 3 then 'Finished'
+		else 'UNKNOWN' 
+	end as [Routing Step Status],
+
+	p.[Setup Time], 
+	p.[Run Time], 
+	(p.[Setup Time] + p.[Run Time]) as [ExpectedQty] , 
+	isnull(a.Quantity,0) as [ActualQty],
+
+		case 
+			when isnull(a.Quantity,0) = 0 then 'NO ACTIVITY'
+			when isnull(a.Quantity,0) = 0.01 then 'NO ACTIVITY (DB)'
+			when isnull(a.Quantity,0) &lt;  p.[Setup Time] + p.[Run Time] then 'UNDER'
+			when isnull(a.Quantity,0) =  p.[Setup Time] + p.[Run Time] then 'EXACT'
+			when isnull(a.Quantity,0) &gt;  p.[Setup Time] + p.[Run Time] then 'OVER'
+			else 'UNKNOWN'
+		end as [StepStatus],
+		(p.[Setup Time] + p.[Run Time]) - isnull(a.Quantity,0)  as [Difference]
+
+from [ZYGO$Prod_ Order Routing Line] p
+inner join [ZYGO$Prod_ Order Line] l on p.[Prod_ Order No_] = l.[Prod_ Order No_] 
+inner join ZYGO$Item i on l.[Item No_] = i.No_
+left join s1 a on p.[Prod_ Order No_] = a.[Order No_] and p.[Operation No_] = a.[Operation No_] and p.[Work Center No_] = p.[Work Center No_]
+
+where i.[Global Dimension 2 Code]  IN ( 'CRYSTALLINE OPTICS', 'GLASS OPTICS', 'MACHINED STRUCTURES')
+
+</CommandText>
+    </Query>
+  </DataSet>
+</SharedDataSet>

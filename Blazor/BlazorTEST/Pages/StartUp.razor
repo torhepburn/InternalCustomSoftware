@@ -1,0 +1,176 @@
+﻿
+@page "/"
+@page "/{ZplParam}/{PrinterParam}"
+@layout EmptyLayout
+
+<PageTitle>Choose Your User and Machine</PageTitle>
+
+@using BlazorTEST.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject NavigationManager NavManager
+@inject Printer printer
+
+
+<style>
+    a:link {
+      color: yellow;
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    a:visited {
+      color: yellow;
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: rgb(220, 0, 0);
+      background-color: transparent;
+      text-decoration: underline;
+    }
+
+    a:active {
+      color: rgb(220, 0, 0);
+      background-color: transparent;
+      text-decoration: underline;
+    }
+</style>
+
+
+
+<div class="border-0" >
+    <EditForm Model="searchFilter" OnValidSubmit="getRecords">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <h4><i>Enter the UserName or Machine Name</i></h4>
+        <InputText id="num" placeholder="Keyword" @bind-Value="searchFilter" />
+
+
+        @*<button type="button" class="btn btn-primary btn-sm" @onclick="getRecords">Filter</button>*@
+        <input type="submit" class="btn btn-primary btn-sm" OnValidSubmit="getRecords" @onfocus="getRecords" title="Filter" value="Filter" />
+        @if (emptyText == true)
+        {
+            <br /><br />
+            <h4><b>You must enter a keyword!</b></h4>
+        }
+        @if (dt != null && dt.Rows.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>UserName</th>
+                        <th>Computer Name</th>
+                        <th>Printer</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dt != null)
+                    {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                            <tr>
+                                <td><a href=@(items[5] + "/" + items[2].ToString().Replace("\\","~").Trim())> @items[0].ToString()</a></td> @*hyperlink to print data in row*@
+                                <td>@items[1].ToString()</td>
+                                <td>@items[2].ToString()</td>
+                                <td>@items[3].ToString()</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }else if(dt != null && dt.Rows.Count == 0 && emptyText == false)
+        {
+            <br /><br />
+            <h4><b>Nothing was found!</b></h4>
+        }
+    </EditForm>
+</div>
+
+
+
+
+@code {
+    //This code is a little confusing at first. The idea is to have the hyperlinks in the table bring you to the next page while also storing the "printer name/zpl setting" to SCOPED variables
+    //Clicking the hyperlink created in the HTML code above routes you back to this page BUT with ZplParam and PrinterParam set. 
+    //If the parameters are set then the page will redirect you again immediately after setting the params to the scoped variables.
+
+
+    [Parameter]
+    public string ZplParam { get; set; }
+    [Parameter]
+    public string PrinterParam //
+    {
+        get { return _printerParam; }
+        set
+        {
+            _printerParam = value; 
+            if(_printerParam != null) //This will occur as soon as the page loads. If the user just starts up the program printerParam will be null. 
+            {
+                printer.myPrinter = PrinterParam.Replace("~","\\");
+                printer.zpl = ZplParam;
+                //These variables are now saved and accessible anywhere in the project
+                NavManager.NavigateTo("home");
+            }
+        }
+    }
+
+    private string _printerParam;
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool isSearching = false;
+    public bool emptyText = false;
+
+    //Filter the data in table
+    public void getRecords() //This function is very similar to the getRecords in GetData
+    {
+        if (searchFilter == "")
+        {
+            emptyText = true;
+        }
+        SqlCommand cmd;
+        SqlConnection cNAV = new SqlConnection(g.db);
+        SqlDataReader dr;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(searchFilter))
+            {
+                isSearching = true;
+                StateHasChanged();
+                cmd = new SqlCommand("SELECT username, pcid, permissionvalue, location, application, ZPL from applicationsetup WHERE  ( permissionvalue NOT LIKE '%YES%' ) AND ( application = 'shippinglabel' ) AND ( ( username LIKE '%" + searchFilter.Trim() + "%' ) OR ( pcid LIKE '%" + searchFilter.Trim() + "%') ) ORDER BY username", cNAV);
+
+                //unsecure way to filter
+                dt = new();
+                cNAV.Open();
+                dr = cmd.ExecuteReader();
+                dt.Load(dr);
+                isSearching = false;
+
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            isSearching = false;
+        }
+        finally
+        {
+            cNAV.Close();
+        }
+
+    }
+
+    public static class g
+    {
+        public static string db = "server = CT-MID-SQL11; password = views; " +
+                                  "user = views; database = AccessFrontEnds; encrypt = false;";
+        public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
+                            "user = navdb_read; database = ZYGO-NAV-PROD;";
+        public static string NAVprefix = "ZYGO$";
+    }
+
+}

@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2005/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <DataSources>
+    <DataSource Name="DataSource1">
+      <rd:DataSourceID>1358c134-9223-408c-8bf3-8a1e955b2cc4</rd:DataSourceID>
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString>Data Source=pa-hor-as408;Initial Catalog=ZYGO-NAV-PROD</ConnectString>
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <rd:ReportID>f00bb3ad-63d6-4f6c-ac28-92ce94eac724</rd:ReportID>
+  <Width>5in</Width>
+  <Body>
+    <Height>0.43in</Height>
+    <ColumnSpacing>0.5in</ColumnSpacing>
+    <ReportItems>
+      <Textbox Name="textbox1">
+        <Style>
+          <FontFamily>Segoe UI Light</FontFamily>
+          <FontSize>24pt</FontSize>
+          <FontWeight>Bold</FontWeight>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+        <rd:DefaultName>textbox1</rd:DefaultName>
+        <Value>Report2</Value>
+        <CanGrow>true</CanGrow>
+        <Height>0.43in</Height>
+      </Textbox>
+      <Table Name="table1">
+        <Top>0.43in</Top>
+        <Style />
+        <Header>
+          <RepeatOnNewPage>true</RepeatOnNewPage>
+          <TableRows>
+            <TableRow>
+              <TableCells />
+              <Height>0in</Height>
+            </TableRow>
+          </TableRows>
+        </Header>
+        <Details>
+          <TableRows>
+            <TableRow>
+              <TableCells />
+              <Height>0in</Height>
+            </TableRow>
+          </TableRows>
+        </Details>
+        <TableColumns />
+        <DataSetName>DataSet1</DataSetName>
+      </Table>
+    </ReportItems>
+  </Body>
+  <Language>en-US</Language>
+  <LeftMargin>1in</LeftMargin>
+  <RightMargin>1in</RightMargin>
+  <TopMargin>1in</TopMargin>
+  <BottomMargin>1in</BottomMargin>
+  <PageWidth>8.5in</PageWidth>
+  <PageHeight>11in</PageHeight>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Fields />
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandType>Text</CommandType>
+        <CommandText>/*	11-30-2021	*/
+
+DROP TABLE #ItemText
+
+CREATE TABLE #ItemText
+(
+ [ItemNo] nvarchar(20)
+,[Text] nvarchar(300)
+)
+
+
+CREATE TABLE #Temp
+(
+ [ItemNo] nvarchar(20)
+,[LineNo] int
+,[Text] nvarchar(100)
+)
+
+
+INSERT INTO #Temp
+
+( 
+  [ItemNo]
+ ,[LineNo]
+ ,[Text]
+ )
+
+SELECT
+[Code 1] as [itemNo]
+,[Line No_] as [LineNo]
+,[Text] [SalesText]
+from [ZYGO$Text Module Line]
+where [Print Mgt_ Code] = 'S-ORDERS' 
+and [Table ID] = 27
+and [Code 1] in 
+
+(Select [Item No_]
+FROM [ZYGO$Sales Price] s
+INNER JOIN ZYGO$Item i on 
+s.[Item No_] = i.[No_] 
+where 
+[Signal Code] NOT LIKE 'OBS%' and 
+[Starting Date] &gt; '02-06-1995' and 
+[Starting Date] &lt;= GETDATE() and 
+([Ending Date] &gt;=  GETDATE() OR 
+ [Ending Date] is null))
+
+
+declare @item varchar(30)
+declare @line int
+declare @text varchar(100)
+declare @salesText varchar(300)
+declare @tt varchar(4000)
+SET @salesText = ''
+
+declare itemCursor Cursor for 
+
+select distinct [itemNo] FROM #Temp
+
+order by [itemNo]
+
+open itemCursor
+
+fetch next from itemCursor into @item
+
+while @@FETCH_STATUS = 0
+begin
+
+--PRINT @item
+
+--declare textCursor Cursor for 
+
+--SELECT [Text] FROM #Temp WHERE itemNo = @item
+
+--ORDER BY [LineNo]
+
+--OPEN textCursor
+
+--fetch next from textCursor into @text
+
+--while @@FETCH_STATUS = 0
+--begin
+
+	
+--	SET @salesText = @salesText + @text
+
+	--PRINT @item + @salesText
+
+	
+--fetch next from textCursor into @text	
+--end
+
+--close textCursor
+--deallocate textCursor
+
+SET @salesText = @item + 'test' 
+SET @tt = 'Select ''' + @item + ''',''' +  @salesText + ''''
+
+print @item
+print @salesText
+print @tt
+
+Insert into #ItemText (ItemNo, [Text]) 
+EXEC(@tt)
+
+
+SET @salesText = ''
+
+	
+fetch next from itemCursor into  @item
+
+
+end
+close itemCursor
+deallocate itemCursor;
+--GO
+
+
+DROP TABLE #Temp;
+--select * from #Temp
+
+--SELECT * FROM #ItemText
+
+/*
+select 
+
+sp1.[Sales Code]
+,[Price List ID] [Folder]
+,i.No_ [Item Number]
+,i.[Price List Code]
+,[Price List Description]
+,COALESCE([Text],'') [Text]
+,FORMAT(CAST(sp2.[Unit Price] as int),'C0') [ZAF Price]
+,FORMAT(CAST(sp1.[Unit Price] as int),'C0') [Unit Price]
+
+FROM [ZYGO$Item] i
+
+INNER JOIN [ZYGO$Sales Price] sp1 on sp1.[Item No_] = i.No_
+
+INNER JOIN [ZYGO$Sales Price] sp2 on sp2.[Item No_] = i.No_
+
+INNER JOIN [ZYGO$Customer Price Group] p ON sp1.[Sales Code] = p.Code
+
+INNER JOIN [ZYGO$Price List Data] d ON i.[Price List Code] = d.[Price List Code]
+
+LEFT JOIN #ItemText t ON i.No_ = t.ItemNo COLLATE DATABASE_DEFAULT
+
+where 1=1
+
+AND LEN(i.[Price List Code]) &gt; 0
+
+--AND sp1.[Sales Code] IN ('DOM', 'EXP', 'INT')
+
+AND sp1.[Sales Code] IN ('DOM')
+
+AND (sp1.[Ending Date] &gt;= GETDATE() OR sp1.[Ending Date] IS NULL)
+
+AND sp1.[Starting Date] &lt;= GETDATE()
+
+AND sp2.[Sales Code] IN ('ZAF')
+
+AND (sp2.[Ending Date] &gt;= GETDATE() OR sp2.[Ending Date] IS NULL)
+
+AND sp2.[Starting Date] &lt;= GETDATE()
+
+AND LEFT(i.[Global Dimension 2 Code],3) = 'LAS'
+
+ORDER BY sp1.[Sales Code], i.[Price List Code], No_
+
+*/
+--DROP TABLE #ItemText</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+        <Timeout>0</Timeout>
+      </Query>
+    </DataSet>
+  </DataSets>
+</Report>

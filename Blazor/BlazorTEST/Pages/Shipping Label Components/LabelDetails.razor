@@ -1,0 +1,406 @@
+﻿@page "/labeldetails/{Value}"
+@page "/labeldetails"
+
+@using ZPLPrinter.Data
+@using System.Windows
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using System.Drawing.Printing
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthProvider
+@inject FreeData freeData
+@inject Printer printer
+
+<h1>Label Details</h1>
+@*Revision is the only data which can be changed once reaching labeldetails*@
+<div class="border-bottom px-xl-0 accordion-body lead m-5">
+    @*display details gathered from 'get data' or 'free text'*@
+    <form details="/details_page.php">
+
+        <label for="partnum">Part Number: @partNum</label><br><br />
+        <label for="description">Description: @description</label><br /><br />
+        <EditForm Model="rev" OnValidSubmit="prints">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <label>Revision:</label> 
+            <InputText @bind-Value="rev" id="name" ></InputText>
+        </EditForm>
+        <br>
+    </form>
+</div>
+<br />
+
+<EditForm Model="serial" OnValidSubmit="prints">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <label>Serial Number:  </label>
+    <InputText style="margin-left:34px" id="num" placeholder="Serial Number" @bind-Value="serial" />
+    <br /> @*https://stackoverflow.com/questions/13952686/how-to-make-html-input-tag-only-accept-numerical-values#:~:text=You%20can%20use%20the%20%3Cinput,with%20attribute%20type%3D'number'.&text=This%20input%20field%20allows%20only,be%20accepted%20by%20this%20field.*@
+    <label>Quantity:</label> @*This code prevents textboxes from having any inputs except for integers. Applied for qty, numBoxes, and numLabels*@
+    <InputText onkeypress="return (event.charCode !=8 && event.charCode ==0 || (event.charCode >= 48 && event.charCode <= 57))" style="margin-left:77px" id="name" placeholder="Quantity" @bind-Value="quantity" />
+    <br />
+    <label>Number of Boxes:</label>
+    <InputText onkeypress="return (event.charCode !=8 && event.charCode ==0 || (event.charCode >= 48 && event.charCode <= 57))" style="margin-left:12px" id="name" @bind-Value="numBoxes" />
+    <br />
+    <label>Number of Labels:</label>
+    <InputText onkeypress="return (event.charCode !=8 && event.charCode ==0 || (event.charCode >= 48 && event.charCode <= 57))" style="margin-left:10px" id="name" @bind-Value="numLabels" />
+    <br />
+    <label>Use new logo:</label>
+    <InputCheckbox @bind-Value="newLogo"></InputCheckbox>
+
+</EditForm>
+
+<br />
+
+@*print button*@
+<button class="btn btn-primary " @onclick="prints">Print Label(s)</button>
+
+@*exit to last page*@
+<button class="btn btn-primary" @onclick="exitFree">Back</button>
+
+@code {
+    [Parameter]
+    public string Value { get; set; } //Value will either equal "free" or a part number based on input from last page
+    public string serial = "";
+    public string quantity = "";
+    public string numBoxes = "1"; //Num boxes and labels must be one or higher... error trap might be necessary
+    public string numLabels = "1";
+    public DataTable dt;
+    public string partNum, description, rev;
+    public bool newLogo = false;
+
+
+
+    List<string> Items { get; set; }
+
+    protected override void OnInitialized() //PURPOSE: Set our Data Variables from previous page
+    {
+        if (Value == "free") // value will equal free if free text was used to input data
+        {
+            partNum = freeData.PartNum; //freeData is a scoped class that is passed throughout the app with our data
+            description = freeData.Description;
+            rev = freeData.Rev;
+        }
+        else
+        { //This is the case where GetData is used. We use the part number passed through the URL to find the rest of the data
+            SqlCommand cmd;
+            SqlConnection cNAV = new SqlConnection("server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
+                               "database=ZYGO-NAV-PROD; encrypt=false;");
+            SqlDataReader dr;
+
+            try
+            {
+                StateHasChanged();
+                cmd = new SqlCommand("SELECT No_,Description, [Revision Level] from ZYGO$Item WHERE ( Description LIKE '%" + Value.Trim() + "%' OR No_ LIKE '%" + Value.Trim() + "%') ORDER BY No_", cNAV);
+
+                //unsecure way to filter
+                dt = new();
+                cNAV.Open();
+                dr = cmd.ExecuteReader();
+                dt.Load(dr);
+
+            }
+            catch (SqlException ex)
+            {
+
+            }
+            finally
+            {
+                cNAV.Close();
+            }
+
+            foreach (DataRow items in dt.Rows) //sets the data
+            {
+                partNum = items[0].ToString();
+                description = items[1].ToString();
+                rev = items[2].ToString();
+            }
+        }
+
+
+    }
+
+    private void prints() //Print Label Button!
+    {
+        string line1 = "";
+        string line2 = "";
+        string line3 = "";
+        int firstLastIndex = 0;
+        int secondLastIndex = 0;
+        int descriptionLength = description.Length;
+
+        //Splitting description line to fit label (code from Tor)
+        if (descriptionLength < 15)
+        {
+            line1 = description.Trim();
+            line2 = "";
+            line3 = "";
+        }
+        else   /*   description length is greater than 14   */
+        {
+            string a = description.Substring(0, 14);
+
+            if (a.LastIndexOf(",") != -1)
+            {
+                firstLastIndex = a.LastIndexOf(",");
+                line1 = description.Substring(0, firstLastIndex + 1);
+            }
+            else if (a.LastIndexOf(" ") != -1)
+            {
+                firstLastIndex = a.LastIndexOf(" ");
+                line1 = description.Substring(0, firstLastIndex);
+            }
+            else
+            {
+                line1 = description.Substring(0, 14);
+                firstLastIndex = 13;
+            }
+
+
+            if (description.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1)).Length > 14)
+            {
+                string b = description.Substring(firstLastIndex + 1, 14);
+
+                if (b.Substring(0, 1) == " ")
+                {
+                    firstLastIndex = firstLastIndex + 1;
+                    b = description.Substring(firstLastIndex + 1, 14);
+                }
+
+                if (b.LastIndexOf(",") != -1)
+                {
+                    secondLastIndex = b.LastIndexOf(",");
+                    line2 = description.Substring(firstLastIndex + 1, secondLastIndex + 1);
+                }
+                else if (b.LastIndexOf(" ") != -1 && b.LastIndexOf(" ") != 0)
+                {
+                    secondLastIndex = b.LastIndexOf(" ");
+                    line2 = description.Substring(firstLastIndex + 1, secondLastIndex);
+                }
+                else if (b.ToUpper().LastIndexOf("X") != -1)
+                {
+                    secondLastIndex = b.ToUpper().LastIndexOf("X");
+                    line2 = description.Substring(firstLastIndex + 1, secondLastIndex);
+                }
+                else
+                {
+                    secondLastIndex = 13;
+                    line2 = b;
+                }
+
+                if (line2.Substring(0, 1) == " ")
+                {
+                    line2 = line2.Trim();
+                }
+            }
+            else
+            {
+                line2 = description.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
+                secondLastIndex = -1;
+            }
+
+            if (secondLastIndex != -1)
+            {
+                line3 = description.Substring(firstLastIndex + secondLastIndex + 2, descriptionLength -
+                        (firstLastIndex + secondLastIndex + 2));
+
+                if (line3.Substring(0, 1) == " ")
+                {
+                    line3 = line3.Trim();
+                }
+            }
+            else
+            {
+                line3 = "";
+            }
+
+
+            if (line1.Length > 14 | line2.Length > 14 | line3.Length > 14)
+            {
+                line1 = description.Substring(0, 14);
+
+                if (descriptionLength > 28)
+                {
+                    line2 = description.Substring(14, 14);
+                }
+                else  //( descriptionLength <= 28 )
+                {
+                    line2 = description.Substring(14, descriptionLength - 14);
+                }
+
+                if (descriptionLength > 28)
+                {
+                    line3 = description.Substring(28, descriptionLength - 28);
+                }
+            }
+        }
+
+        if (line1.Length > 0)
+        {
+            line1 = line1.Replace("\"", "\\\"");
+        }
+
+        if (line2.Length > 0)
+        {
+            line2 = line2.Replace("\"", "\\\"");
+        }
+
+        if (line3.Length > 0)
+        {
+            line3 = line3.Replace("\"", "\\\"");
+        }
+
+        if (printer.zpl == "True") //if statement checks if printer will use ZPL or EPL
+        { //ZPL Version
+
+            StringBuilder ZplBuilder = new StringBuilder();
+
+
+            //Printing labels now... 
+            for (int i = 1; i <= Convert.ToInt32(numBoxes); i++) //prints any number of labels
+            {
+                for (int j = 1; j <= Convert.ToInt32(numLabels); j++) //Nested for loop is for number of boxes and labels
+                {
+                    ZplBuilder.Clear();
+                    ZplBuilder.Append("^XA");
+                    //To print images with ZPL use Labelary.com
+                    if (newLogo) 
+                    {   //New Logo
+                        ZplBuilder.Append("^FO10,10^GFA,885,885,15,,:::::::::::::U03FCJ0FF,I03KFE003F8IF7F03FFC,I03KFE003F9KF0JF,I03KFE003F3KF1JF8,I03LF007MF3JFC,I03LF007MF7JFE,I03JF3F80JF8KFC3FE,L0FE3F80IFE03JF00FF,K01FE1F80IF801IFE007F8,K03FC1FC1IF800IFC003F8,K03F81FC1IFI07FFC003F8,K07F00FC1IFI07FF8001F8,K0FF00FE1IFI07FF8001F8,J01FE007E3IFI07FF8001F8,J01FC007F3F7FI07FF8001F8,J03F8007F3F7FI07FFC001F8,J07F8003F7F7FI07FFC003F8,J07FI03FFE3F800IFE003F8,J0FEI01FFE3FC01IFE007F,I01FEI01FFE1FE03JF81FF,I03JFC0FFC1LF7JFE,I03JFC0FFC0LF7JFE,I03JFC0FFC07KF3JFC,I03JFC07F803KF1JF8,I03JFC07F801KF07FFE,I03JFC07FI07FF7F01FF8,P07FJ0F07F003C,P0FFL07F,I03JF81FEL0FF,I03JF83FEK03FF,N01FFCI01IFE,N01FF8I01IFE,N01FF8I01IFC,N01FEJ01IF8,N01FCJ01FFE,N01FK01FF8,,::::::::^FS");
+                        ZplBuilder.Append("^FO445,25^GFA,357,357,17,,001,003801FF807FCJFDJFEJFDFE1FC,003801FF80FFCJFDJFEJFDFE3F8,007C01FFC0FFCJFDJFEJFDFE7F,007E01FFC1FFCJFDJFEJFDFEFE,00FE01FFE1FFCJFDJFEJFDIFE,00FF01FFE3FFCFEJ03F80FE001IFC,00FF01IF3FFCJFC03F80JFDIF8,007F81IF7FFCJFC03F80JFDIF,007F81LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIFC,001FE1JFEFCFEJ03F80FE001IFE,0FEFF1FDFFCFCFEJ03F80FE001IFE,1FCFF1FDFFCFCJF803F80JF9FEFF,1FC7F9FCFFCFCJFC03F80JFDFE7F8,3F87F9FCFF8FCJFC03F80JFDFE7FC,3F83FDFC7F8FCJFC03F80JFDFE3FC,7F03FDFC7F0FCJFC03F80JFDFE3FE,7E01IFC3F0FC7IF803F007IF8FC1FE,^FS");
+
+                        
+                        //ZplBuilder.Append("^FO0,0^GFA,1125,1125,15,,:::::::::::::U03FCJ0FF,I03KFE003F8IF7F03FFC,I03KFE003F9KF0JF,I03KFE003F3KF1JF8,I03LF007MF3JFC,I03LF007MF7JFE,I03JF3F80JF8KFC3FE,L0FE3F80IFE03JF00FF,K01FE1F80IF801IFE007F8,K03FC1FC1IF800IFC003F8,K03F81FC1IFI07FFC003F8,K07F00FC1IFI07FF8001F8,K0FF00FE1IFI07FF8001F8,J01FE007E3IFI07FF8001F8,J01FC007F3F7FI07FF8001F8,J03F8007F3F7FI07FFC001F8,J07F8003F7F7FI07FFC003F8,J07FI03FFE3F800IFE003F8,J0FEI01FFE3FC01IFE007F,I01FEI01FFE1FE03JF81FF,I03JFC0FFC1LF7JFE,I03JFC0FFC0LF7JFE,I03JFC0FFC07KF3JFC,I03JFC07F803KF1JF8,I03JFC07F801KF07FFE,I03JFC07FI07FF7F01FF8,P07FJ0F07F003C,P0FFL07F,I03JF81FEL0FF,I03JF83FEK03FF,N01FFCI01IFE,N01FF8I01IFE,N01FF8I01IFC,N01FEJ01IF8,N01FCJ01FFE,N01FK01FF8,,:::::W011CLF8,W019DFF33CF,W01DIF33FF,W03DFF8330F,W06FB7F33ED8,,:::::::::::::^FS");
+                    }
+                    else
+                    {   //Old Logo
+                        ZplBuilder.Append("^FO10, 25 ^GFA, 578, 578, 17, 3KFE01FE3F1FE03FC, 7LF01FEFFDFE1IF, 7LF03LFE3IFC, 7LF03LFEJFE, 7LF83LFEKF, 7LF87RF, 007FF7F87IFC7JF1FF8, 00FFE3FC7IF83IFE0FF8, 01FFC3FC7IF83IFC07F8, 03FF83FCJF83IFC07F8, 03FF01FEFEFF83IFC07FC, 07FE01FEFEFF83IFC07F8, 0FFC00IFEFF83IFC07F8, 1FF800IFC7F83IFC07F8, 3FFI07FFC7LFE0FF8, 7JF87FFC7MF1FF, KF87FF83PF, KF83FF81JFEJFE, KF83FF80JFE7IFC, KF81FF007F3FE3IF8, 7JF81FFJ03FE0FFE, L01FEJ03FE01F, L01FE0FF83FE, K07FFE07FC7FC, K07FFC07JFC, K07FFC07JF8, K07FF803JF8, K07FF001IFE, K07FCI07FFC,,::gSF,:^FS");
+                        ZplBuilder.Append("^FO445,25^GFA,357,357,17,,001,003801FF807FCJFDJFEJFDFE1FC,003801FF80FFCJFDJFEJFDFE3F8,007C01FFC0FFCJFDJFEJFDFE7F,007E01FFC1FFCJFDJFEJFDFEFE,00FE01FFE1FFCJFDJFEJFDIFE,00FF01FFE3FFCFEJ03F80FE001IFC,00FF01IF3FFCJFC03F80JFDIF8,007F81IF7FFCJFC03F80JFDIF,007F81LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIFC,001FE1JFEFCFEJ03F80FE001IFE,0FEFF1FDFFCFCFEJ03F80FE001IFE,1FCFF1FDFFCFCJF803F80JF9FEFF,1FC7F9FCFFCFCJFC03F80JFDFE7F8,3F87F9FCFF8FCJFC03F80JFDFE7FC,3F83FDFC7F8FCJFC03F80JFDFE3FC,7F03FDFC7F0FCJFC03F80JFDFE3FE,7E01IFC3F0FC7IF803F007IF8FC1FE,^FS");
+                    }
+                    ZplBuilder.Append("^CF,20");
+                    ZplBuilder.Append("^FO140, 25^FD21 Laurel Brook Rd^FS");
+                    ZplBuilder.Append("^FO140, 50^FDMiddlefield, CT 06455 USA^FS");
+                    ZplBuilder.Append("^FO10, 85^FDP/N:^FS");
+                    ZplBuilder.Append("^FO10, 150^FDSN:^FS");
+                    //Ensure part number bar code can fit on label
+                    if (partNum.Length > 13)
+                    {
+                        ZplBuilder.Append("^FO55, 70^BCN,35,Y,N,N^BY1^A0,30,30^FD" + partNum + "^FS");//the ^BY command sets the size of the barcode
+                    }
+                    else
+                    {
+                        ZplBuilder.Append("^FO55, 70^BCN,35,Y,N,N^BY2^A0,30,30^FD" + partNum + "^FS");
+                    }
+                    //Ensure serial code can fit on label
+                    if (serial.Length > 13)
+                    {
+                        ZplBuilder.Append("^FO55, 140^BCN,35,Y,N,N^BY1^A0,30,30^FD" + serial + "^FS");
+                    }
+                    else if (serial == "")//case in which no serial is given
+                    {
+
+                    }
+                    else
+                    {
+                        ZplBuilder.Append("^FO55, 140^BCN,35,Y,N,N^BY2^A0,30,30^FD" + serial + "^FS");
+                    }
+                    ZplBuilder.Append("^FO430, 80^FD" + line1 + "^FS");
+                    ZplBuilder.Append("^FO430, 100^FD" + line2 + "^FS");
+                    ZplBuilder.Append("^FO430, 120^FD" + line3 + "^FS");
+                    ZplBuilder.Append("^FO430, 140^FDRev: " + rev + "^FS");
+                    ZplBuilder.Append("^FO430, 165^FDQty: " + quantity + "^FS");
+                    ZplBuilder.Append("^FO430, 190^FDPart: " + i + " of " + numBoxes + "^FS");
+                    ZplBuilder.Append("^XZ");
+
+                    string ZplString = ZplBuilder.ToString();
+                    //send data to printer
+                    MemoryStream lmemStream = new MemoryStream();
+
+                    StreamWriter lstreamWriter = new StreamWriter(lmemStream);
+                    lstreamWriter.Write(ZplString);
+                    lstreamWriter.Flush();
+                    lmemStream.Position = 0;
+
+                    byte[] byteArray = lmemStream.ToArray();
+
+                    IntPtr cpUnmanagedBytes = new IntPtr(0);
+                    int cnLength = byteArray.Length;
+                    cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
+                    Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+
+                    RawPrinterHelper.SendBytesToPrinter(printer.myPrinter, cpUnmanagedBytes, cnLength);
+                    Marshal.FreeCoTaskMem(cpUnmanagedBytes);
+                }
+
+            }
+        }
+        else //EPL Version
+        {
+            Bitmap bzp = Properties.Resources.zygo_blk_noR_132;
+            Bitmap bxp = Properties.Resources.ametek_blk_noR_132;
+            Bitmap byp = Properties.Resources.NewLogo;
+            string str = ""; 
+
+            for (int i = 1; i <= Convert.ToInt32(numBoxes); i++) //prints any number of labels
+            {
+                for (int j = 1; j <= Convert.ToInt32(numLabels); j++) //Nested for loop is for number of boxes and labels
+                {
+                    str = "\nN\nq609Q203,20\n"; //str MUST be reset thus no += only =
+                    if (newLogo)
+                    {
+                        str += RawPrinterHelper.SendImageToPrinter(10, 10, byp); //New Logo
+                    }
+                    else
+                    {
+                        str += RawPrinterHelper.SendImageToPrinter(10, 10, bzp); //Old Logo
+                        str += RawPrinterHelper.SendImageToPrinter(450, 10, bxp);                        
+                    }
+                    str += "A144,10,0,2,1,1,N,\"21 Laurel Brook Road\"\n";
+                    str += "A144,35,0,2,1,1,N,\"Middlefield, CT 06455 USA\"\n";
+                    str += "A10,70,0,2,1,1,N,\"PN#\"\n";
+                    str += "B50,65,0,1,2,4,32,B,\"" + partNum + "\"\n";
+                    str += "A420,60,0,2,1,1,N,\"" + line1 + "\"\n";
+                    str += "A420,80,0,2,1,1,N,\"" + line2 + "\"\n";
+                    str += "A420,100,0,2,1,1,N,\"" + line3 + "\"\n";
+                    str += "A10,140,0,2,1,1,N,\"SN#\"\n";
+                    str += "B50,135,0,1,2,4,32,B,\"" + serial + "\"\n";
+                    str += "A420,125,0,2,1,1,N,\"REV: " + rev + "\"\n";
+                    str += "A420,150,0,2,1,1,N,\"Qty: " + quantity + "\"\n";
+                    str += "A420,175,0,2,1,1,N,\"Part: " + i + " of " + numBoxes + "\"\n";
+                    str += "P1\n";
+                    RawPrinterHelper.SendStringToPrinter(printer.myPrinter, str); // With EPL
+
+                    //NOTE: With EPL, in order to print images you MUST use SendStringToPrinter over SendBytesToPrinter
+                    //ALSO if Resources does not find the images you added to the resx file. CHECK Resources.Designer.cs
+
+                }
+            }
+
+
+        }
+
+
+    }
+
+    public void exitFree()//back button
+    {
+        NavManager.NavigateTo("home");
+    }
+
+
+    public static class g 
+    {
+        public static string user;
+        public static string item;
+        public static string editRevision;
+        public static string printer;
+        public static string db = "server = CT-MID-SQL11; password = views; " +
+                                  "user = views; database = AccessFrontEnds; encrypt = false;";
+        public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
+                            "user = navdb_read; database = ZYGO-NAV-PROD;";
+        public static string NAVprefix = "ZYGO$";
+    }
+}
+

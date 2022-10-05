@@ -1,0 +1,160 @@
+﻿@page "/"
+@page "/getdata"
+
+<PageTitle>Data in Grid</PageTitle>
+
+@using BlazorTEST.Data
+@using System.Data
+@using Microsoft.Data.SqlClient;
+@using C1.Blazor.Grid
+@using LabelSpace.Data
+@using ZPLPrinter.Data
+
+
+<h1>Data Display</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+<div class="border">
+    <EditForm Model="searchFilter" OnValidSubmit="getRecords">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <label>Enter a keyword</label>
+        <br />
+        <InputText id="num" placeholder="Keyword" @bind-Value="searchFilter" />
+        <br />
+        <br />
+        @*<button type="button" class="btn btn-primary btn-sm" @onclick="getRecords">Filter</button>*@
+        <input type="submit" class="btn btn-primary btn-sm" OnValidSubmit="getRecords" title="Filter" value="Filter" />
+        <button type="button" class="btn btn-primary" @onclick="printNow">Print</button>
+
+        @if (dt != null && dt.Rows.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item Number</th>
+                        <th>Description</th>
+                        <th>Revision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dt != null)
+                    {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                            <tr>
+                                <td><a href=@("/labeldetails/" + items[0] + ">" + items[1] + ">" + items[2])> @items[0].ToString()</a></td> @*hyperlink to print data in row*@
+                                <td>@items[1].ToString()</td>
+                                <td>@items[2].ToString()</td>
+                            </tr>
+                        }
+
+                    }
+
+                </tbody>
+            </table>
+        }
+    </EditForm>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+@code {
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool isSearching = false;
+
+    public void getRecords()
+    {
+
+        SqlCommand cmd;
+        SqlConnection cNAV = new SqlConnection("server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
+                           "database=ZYGO-NAV-PROD; encrypt=false;");
+        SqlDataReader dr;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(searchFilter))
+            {
+                isSearching = true;
+                StateHasChanged();
+                //cmd = new SqlCommand("SELECT No_,Description, [Revision Level] from ZYGO$Item WHERE (P6 > 0 OR F6 >0) AND ( Description LIKE '%" + searchFilter.Trim() + "%' OR No_ LIKE '%" + searchFilter.Trim() + "%') ORDER BY No_", cNAV);
+                cmd = new SqlCommand("select " +
+                "[Bin Code] " +
+                ",i.No_ " +
+                ",i.Description " +
+                "FROM [ZYGO$Bin Content] c INNER JOIN ZYGO$Item i ON c.[Item No_] = i.No_ where [Bin Code] like '020-Y%' Order by [Bin Code], i.No_", cNAV);
+                //unsecure way to filter
+                //unsecure way to filter
+                dt = new();
+                cNAV.Open();
+                dr = cmd.ExecuteReader();
+                dt.Load(dr);
+                isSearching = false;
+
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            isSearching = false;
+        }
+        finally
+        {
+            cNAV.Close();
+        }
+
+    }
+
+    public void printNow()
+    {
+        StringBuilder ZplBuilder = new StringBuilder();
+        foreach (DataRow items in dt.Rows)
+        {
+            ZplBuilder.Clear();
+            ZplBuilder.Append("^XA");
+            ZplBuilder.Append("^FO130, 25 ^GFA, 578, 578, 17, 3KFE01FE3F1FE03FC, 7LF01FEFFDFE1IF, 7LF03LFE3IFC, 7LF03LFEJFE, 7LF83LFEKF, 7LF87RF, 007FF7F87IFC7JF1FF8, 00FFE3FC7IF83IFE0FF8, 01FFC3FC7IF83IFC07F8, 03FF83FCJF83IFC07F8, 03FF01FEFEFF83IFC07FC, 07FE01FEFEFF83IFC07F8, 0FFC00IFEFF83IFC07F8, 1FF800IFC7F83IFC07F8, 3FFI07FFC7LFE0FF8, 7JF87FFC7MF1FF, KF87FF83PF, KF83FF81JFEJFE, KF83FF80JFE7IFC, KF81FF007F3FE3IF8, 7JF81FFJ03FE0FFE, L01FEJ03FE01F, L01FE0FF83FE, K07FFE07FC7FC, K07FFC07JFC, K07FFC07JF8, K07FF803JF8, K07FF001IFE, K07FCI07FFC,,::gSF,:^FS");
+            ZplBuilder.Append("^FO565,25^GFA,357,357,17,,001,003801FF807FCJFDJFEJFDFE1FC,003801FF80FFCJFDJFEJFDFE3F8,007C01FFC0FFCJFDJFEJFDFE7F,007E01FFC1FFCJFDJFEJFDFEFE,00FE01FFE1FFCJFDJFEJFDIFE,00FF01FFE3FFCFEJ03F80FE001IFC,00FF01IF3FFCJFC03F80JFDIF8,007F81IF7FFCJFC03F80JFDIF,007F81LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIF8,003FC1LFCJFC03F80JFDIFC,001FE1JFEFCFEJ03F80FE001IFE,0FEFF1FDFFCFCFEJ03F80FE001IFE,1FCFF1FDFFCFCJF803F80JF9FEFF,1FC7F9FCFFCFCJFC03F80JFDFE7F8,3F87F9FCFF8FCJFC03F80JFDFE7FC,3F83FDFC7F8FCJFC03F80JFDFE3FC,7F03FDFC7F0FCJFC03F80JFDFE3FE,7E01IFC3F0FC7IF803F007IF8FC1FE,^FS");
+            ZplBuilder.Append("^CF,22");
+            ZplBuilder.Append("^FO130, 67^FDPart Name: " + items[2] + "^FS");
+            ZplBuilder.Append("^CF,23");
+            ZplBuilder.Append("^FO130,120^FDP/N:^FS");
+            ZplBuilder.Append("^FO200, 98^BCN,60,Y,N,N^BY2^A0,30,30^FD" + items[1] + "^FS");
+            ZplBuilder.Append("^CF,22");
+            ZplBuilder.Append("^FO450, 170^FDBin #: " + items[0] + "^FS");
+            ZplBuilder.Append("^XZ");
+
+            string ZplString = ZplBuilder.ToString();
+
+            MemoryStream lmemStream = new MemoryStream();
+
+            StreamWriter lstreamWriter = new StreamWriter(lmemStream);
+            lstreamWriter.Write(ZplString);
+            lstreamWriter.Flush();
+            lmemStream.Position = 0;
+
+            byte[] byteArray = lmemStream.ToArray();
+
+            IntPtr cpUnmanagedBytes = new IntPtr(0);
+            int cnLength = byteArray.Length;
+            cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
+            Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+
+            RawPrinterHelper.SendBytesToPrinter("ZDesigner GK420d", cpUnmanagedBytes, cnLength);
+
+
+            Marshal.FreeCoTaskMem(cpUnmanagedBytes);
+        }
+    }
+
+
+}
