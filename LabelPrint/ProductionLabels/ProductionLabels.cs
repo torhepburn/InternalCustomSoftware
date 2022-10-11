@@ -22,29 +22,27 @@ namespace ProductionLabels
         private string quantityPerLabel;
         private int firstLastIndex;
         private int secondLastIndex;
-        private int auditCount = 1;
         private bool standard = false;
         private bool custom = false;
         private bool printCheckQty = false;
         private bool multiLevel = false;
-        private bool MLprinted = false;
         private string iDescription;
         private string dbMID = "user=readWrite; password=Read+Write!; " +
                     "server=CT-MID-SQL11; database=AccessFrontEnds;";
         public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
                             "user = navdb_read; database = ZYGO-NAV-PROD;";
         private string NAVprefix = "ZYGO$";
-        private string querySTD = string.Empty;
-        private string queryCSTM = string.Empty;
         private string query = string.Empty;
         private string parent = string.Empty;
-        private string auditFile = string.Empty;
         private string printer = string.Empty;
+        private string lineNo;
 
         SqlConnection cnxn;
         SqlConnection cnxnInsideLoop;
         SqlDataReader dr;
         SqlDataReader drMulti;
+        DataTable dtLines;
+        SqlCommand cmd;
 
         public ProductionLabels()
         {
@@ -73,7 +71,7 @@ namespace ProductionLabels
 
             try
             {
-                SqlCommand cmd = new SqlCommand(
+                cmd = new SqlCommand(
                  " Select permission, permissionvalue from applicationsetup " +
                  " where application = 'PRODUCTION LABELS' and " +
                  " pcid = '" + computername + "' " +
@@ -81,9 +79,7 @@ namespace ProductionLabels
                 DataTable table = new DataTable();
 
                 cnxn.Open();
-
-                SqlDataReader dr;
-
+                                
                 dr = cmd.ExecuteReader();
                 table.Load(dr);
 
@@ -106,7 +102,7 @@ namespace ProductionLabels
             }
             finally
             {
-
+                cnxn.Close();
             }
 
 
@@ -116,12 +112,14 @@ namespace ProductionLabels
             this.BackColor = Color.FromArgb(80, 100, 220); /*       MK      *//*
             label2.Visible = false; 
             */
-            this.BackColor = Color.FromArgb(220, 100, 80);  //NAV
+            //this.BackColor = Color.FromArgb(220, 100, 80);  //NAV
         }
 
         private void button1_Click(object sender, EventArgs e)  //Print button
         {
             tbProductionOrder.Text = tbProductionOrder.Text.ToUpper().ToString();
+
+
 
             /*  This is the selection query for the label 
              *  
@@ -136,7 +134,6 @@ namespace ProductionLabels
                     ",c.[Prod_ Order No_] " +
                     ",c.[Position] " +
                     ",c.[Bin Code] " +
-                    //",cast(c.Quantity as decimal(11,2)) " + quantity looks to be the BOM quantity - Expected the exploded quantity
                     ",cast(c.[Expected Quantity] as decimal(11,2)) " +
                     ",c.[Routing Link Code] " +
                     ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +
@@ -147,8 +144,17 @@ namespace ProductionLabels
                     "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
                     "AND [Prod_ Order No_] = '" + tbProductionOrder.Text + "' ";
 
+            prodorderChoices(); 
+
+            //tbProductionOrder.Text = string.Empty;
+            tbProductionOrder.Focus();
+            //this.Close();
+        }
+
+        private void prodorderChoices()
+        {
             cnxn = new SqlConnection(dbNAV);
-            
+
             if (tbProductionOrder.Text.Length > 8)
             {
                 /*  if the number is no good then display a message to that effect  */
@@ -163,7 +169,7 @@ namespace ProductionLabels
 
                 SqlCommand cmd = new SqlCommand("SELECT [Prod_ Order No_] FROM [ZYGO$Prod_ Order Component] " +
                         "WHERE [Prod_ Order No_] = '" + tbProductionOrder.Text + "'", cnxn);
-                    cnxn.Open();
+                cnxn.Open();
                 object o = cmd.ExecuteScalar();
                 cnxn.Close();
 
@@ -173,294 +179,392 @@ namespace ProductionLabels
                 }
                 else    //order number is valid
                 {
-                    /*
+                    /* check to see if multi-line  */
+                    
+                    cmd = new SqlCommand("SELECT " +
+                        "[Prod_ Order Line No_] [Line] " +
+                        "FROM [ZYGO$Prod_ Order Component] " +
+                        "WHERE [Prod_ Order No_] = '" + tbProductionOrder.Text + "' " +
+                        "GROUP BY [Prod_ Order Line No_] " +
+                        "ORDER BY [Prod_ Order Line No_]"
+                        , cnxn);
+
+                    try
+                    {
+                        cnxn.Open();
+                        dr = cmd.ExecuteReader();
+                        dtLines = new DataTable();
+                        dtLines.Load(dr);
+                    }
+                    catch (SqlException ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+                    finally
+                    {
+                        cnxn.Close();
+                    }
+
+                    if (dtLines.Rows.Count > 1)
+                    {
+                        multiLevel = true;
+                    }
+
+                    /*  if print all lines not checked and multi-line bom then allow choice of lines. 
+                     *  dtLines will always have at least one line
+                     */
+
+                    if (cbAll.Checked == false & multiLevel)
+                    {
+                        DGV.DataSource = dtLines;
+                        DGV.Visible = true;
+                        DGV.Focus();
+                        return;
+                    }
+                    else
+                    {
+                        commonLabelProcessing();
+                    }
+                }
+            }
+        }
+
+
+        private void DGV_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex == -1 )
+            {
+                return;
+            }
+            else
+            {
+                DataGridViewTextBoxCell cell =
+                    (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[0];
+                lineNo = cell.EditedFormattedValue.ToString().Trim();
+
+                if (cbAll.Checked)
+                {
+                    
+                }
+                else
+                {
+                    query = query + " AND [Prod_ Order Line No_] = " + lineNo + " ";
+                }
+
+                commonLabelProcessing();
+            }
+        }
+
+        private void commonLabelProcessing()
+        {
+            /*
                      *      Determine if standard and custom items are present
                      *      standard = vetted = 0
                      *      custom = vetted = 1
                      *
                      */
 
-                    try
+            try
+            {
+                SqlDataAdapter da = new SqlDataAdapter(
+                 " SELECT DISTINCT Vetted FROM " +
+                 " [ZYGO$Item] i " +
+                 "INNER JOIN [ZYGO$Prod_ Order Component] c " +
+                 "ON i.No_ = c.[Item No_] " +
+                 " WHERE [Prod_ Order No_] = '" +
+                   tbProductionOrder.Text + "' ORDER BY " +
+                 " Vetted", cnxn);
+                DataTable table = new DataTable();
+                da.Fill(table);
+
+                /*  NAV vetted and non-vetted    */
+
+                if (table.Rows.Count > 0)
+                {
+                    if (table.Rows.Count > 1)
                     {
-                        SqlDataAdapter da = new SqlDataAdapter(
-                         " SELECT DISTINCT Vetted FROM " +
-                         " [ZYGO$Item] i "+ 
-                         "INNER JOIN [ZYGO$Prod_ Order Component] c " +
-                         "ON i.No_ = c.[Item No_] " +
-                         " WHERE [Prod_ Order No_] = '" +
-                           tbProductionOrder.Text + "' ORDER BY " +
-                         " Vetted", cnxn);
-                        DataTable table = new DataTable();
-                        da.Fill(table);
-
-                        /*  NAV vetted and non-vetted    */
-                            
-                            if (table.Rows.Count > 0)
-                            {
-                                if (table.Rows.Count > 1)
-                                {
-                                    if (table.Rows[1][0].ToString().Trim() == "0")
-                                    {
-                                        standard = true;
-                                    }
-
-                                    if (table.Rows[1][0].ToString().Trim() == "1")
-                                    {
-                                        custom = true;
-                                    }
-                                }
-                                if (table.Rows[0][0].ToString().Trim() == "0")
-                                {
-                                    standard = true;
-                                }
-
-                                if (table.Rows[0][0].ToString().Trim() == "1")
-                                {
-                                    custom = true;
-                                }
-                            }
-                    }
-                    catch (SqlException ex)
-                    {
-                        MessageBox.Show(ex.ToString());
-                    }
-                    finally
-                    {
-                        cnxn.Close();
-                    }
-
-                    if (standard & custom)
-                    {
-                        DialogResult result1 = MessageBox.Show("Do you want to print the STANDARD labels ?", "",
-                            MessageBoxButtons.YesNo);
-
-                        if (result1 == DialogResult.Yes)
+                        if (table.Rows[1][0].ToString().Trim() == "0")
                         {
                             standard = true;
                         }
-                        else
-                        {
-                            standard = false;
-                        }
 
-                        DialogResult result2 = MessageBox.Show("Do you want to print the CUSTOM labels ?", "",
-                            MessageBoxButtons.YesNo);
-
-                        if (result2 == DialogResult.Yes)
+                        if (table.Rows[1][0].ToString().Trim() == "1")
                         {
                             custom = true;
                         }
-                        else
-                        {
-                            custom = false;
-                        }
+                    }
+                    if (table.Rows[0][0].ToString().Trim() == "0")
+                    {
+                        standard = true;
                     }
 
-                    /*  check to see if multilevel BOM */
-
-                    /*  need parent first from Production Order just in case    */
-
-                    cmd = new SqlCommand("SELECT [Source No_] FROM " +
-                            "[ZYGO$Production Order] where No_ = '" + tbProductionOrder.Text + "'", cnxn);
-                    try
+                    if (table.Rows[0][0].ToString().Trim() == "1")
                     {
-                        cnxn.Open();
-                        parent = (string)cmd.ExecuteScalar();
-                    }
-                    catch (SqlException ex)
-                    {
-                        MessageBox.Show(ex.ToString());
-                    }
-                    finally
-                    {
-                        cnxn.Close();
-                    }
-
-                    /*  the parent item will have components with
-                     *  a Supplied-by Line No_ of 10000 - always
-                     *  so to get it into the table we just add
-                     *  it at the end.
-                     *  
-                     *  The Litem Low-Level Code > 0 will give the
-                     *  sub-assembies
-                     *  
-                     *  */
-
-                    cmd = new SqlCommand("SELECT  " +
-                         "[Item No_]" +
-                         ",[Supplied-by Line No_] " +
-                        ",CAST([Supplied-by Line No_] as varchar(10)) " +
-                        "FROM [ZYGO$Prod_ Order Component] " +
-                        "WHERE [Prod_ Order No_] = '" +
-                          tbProductionOrder.Text + "' " +
-                        "AND [Item Low-Level Code] > 0 " +
-                        "UNION " +
-                        "SELECT " +
-                        "'" + parent + "', 10000, '' " +
-                        "ORDER BY [Supplied-by Line No_]", cnxn);
-
-                    try
-                    {
-                        DataTable test = new DataTable();
-                        cnxn.Open();
-                        drMulti = cmd.ExecuteReader();
-                        test.Load(drMulti);
-
-                        if (test.Rows.Count > 1)
-                        {
-                            multiLevel = true;
-                            //auditFile = @"C:\A\SFO " + DateTime.Now.ToString("MM-dd-yy")  + ".txt";
-
-                            drMulti = cmd.ExecuteReader();
-
-                            while (drMulti.Read())
-                            {
-                                MLprinted = false;
-
-                                string str = string.Empty;
-                                str = "\nN\nq609Q203,20\n";
-                                str += "A50,20,0,3,1,1,N,\"** SUB ASSEMBLY **\"\n";
-                                str += "A50,80,0,3,1,1,N,\"SUB:" + drMulti.GetString(0).ToString() + "\"\n";
-                                str += "A50,140,0,3,1,1,N,\"Line No:" + drMulti.GetString(2).ToString() + "\"\n";
-                                str += "P" + labelQuantity + "\n";
-                                RawPrinterHelper.SendStringToPrinter(printer, str);
-
-                                cnxnInsideLoop = new SqlConnection(dbNAV);
-
-                                /*  the inside loop gets the components of the sub-assemblies as
-                                 *  well as the top level non-sub-assembly components
-                                 */
-
-                                cmd = new SqlCommand(
-                                    "SELECT  " +
-                                     " [Item No_] " +
-                                    ",[Description] " +
-                                    ",[Prod_ Order No_] " +
-                                    ",[Position] " +
-                                    ",[Bin Code] " +
-                                    //",cast(c.Quantity as decimal(11,2)) " + quantity looks to be the BOM quantity - Expected the exploded quantity
-                                    ",cast([Expected Quantity] as decimal(11,2)) " +
-                                    ",[Routing Link Code] " +
-                                    ",CAST([Prod_ Order Line No_] as varchar(6)) " +
-                                    "FROM " +
-                                    "[ZYGO$Prod_ Order Component] " +
-                                    "WHERE (Substring([Description],1, 1) != '#' AND Substring([Description],1, 1) != '&') " +
-                                    "AND [Prod_ Order No_] = '" + tbProductionOrder.Text + "' " +
-                                    //"AND [Item No_] IN " +
-                                    //"(select No_ from [ZYGO$Production BOM Line] " +
-                                    //"WHERE [Production BOM No_] = '" +
-                                    // drMulti.GetString(0) + "'" +
-                                    //"AND [Prod_ Order Line No_] = " +
-                                    //drMulti.GetInt32(1) + ") " +
-                                    "AND [Prod_ Order Line No_] = " +
-                                    drMulti.GetInt32(1) + " " +
-
-                                    "ORDER BY [Bin Code], [Item No_]", cnxnInsideLoop);
-
-                                try
-                                {
-                                    cnxnInsideLoop.Open();
-                                    dr = cmd.ExecuteReader();
-                                    DataTable tst = new DataTable();
-                                    tst.Load(dr);
-                                    dr = cmd.ExecuteReader();
-                                    QtyGreaterThan1();
-
-                                }
-                                catch (SqlException ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                finally
-                                {
-                                    cnxnInsideLoop.Close();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (standard)
-                            {
-                                try
-                                {
-                                   cmd = new SqlCommand(query + "AND i.Vetted = 0 " +
-                                         "ORDER BY [Bin Code], [Item No_]", cnxn);
-
-                                    cmd.Connection = cnxn;
-                                    if (cnxn.State == ConnectionState.Closed)
-                                    {
-                                        cnxn.Open();
-                                    }
-
-                                    dr = cmd.ExecuteReader();
-
-                                    DataTable t = new DataTable();
-                                    t.Load(dr);
-
-                                    dr = cmd.ExecuteReader();
-
-                                    QtyGreaterThan1();
-                                }
-                                catch (SqlException ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                finally
-                                {
-                                    cnxn.Close();
-                                }
-                            }
-
-
-                            if (custom)
-                            {
-                                try
-                                {
-                                    cmd = new SqlCommand(query + "AND i.Vetted = 1 " +
-                                       "ORDER BY [Bin Code], [Item No_]", cnxn);
-
-                                    cmd.Connection = cnxn;
-
-                                    if (cnxn.State == ConnectionState.Closed)
-                                    {
-                                        cnxn.Open();
-                                    }
-
-                                    dr = cmd.ExecuteReader();
-
-                                    DataTable t = new DataTable();
-                                    t.Load(dr);
-
-                                    dr = cmd.ExecuteReader();
-
-                                    QtyGreaterThan1();
-                                }
-                                catch (SqlException ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                finally
-                                {
-                                    cnxn.Close();
-                                }
-                            }
-                        }
-                    }
-                    catch (SqlException ex)
-                    {
-                        MessageBox.Show(ex.ToString());
-                    }
-                    finally
-                    {
-                        cnxn.Close();
+                        custom = true;
                     }
                 }
             }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
 
-            tbProductionOrder.Text = string.Empty;
-            tbProductionOrder.Focus();
-            //this.Close();
+            if (standard & custom)
+            {
+                DialogResult result1 = MessageBox.Show("Do you want to print the STANDARD labels ?", "",
+                    MessageBoxButtons.YesNo);
+
+                if (result1 == DialogResult.Yes)
+                {
+                    standard = true;
+                }
+                else
+                {
+                    standard = false;
+                }
+
+                DialogResult result2 = MessageBox.Show("Do you want to print the CUSTOM labels ?", "",
+                    MessageBoxButtons.YesNo);
+
+                if (result2 == DialogResult.Yes)
+                {
+                    custom = true;
+                }
+                else
+                {
+                    custom = false;
+                }
+            }
+
+            /*  check to see if multilevel BOM */
+
+            /*  need parent first from Production Order just in case    */
+
+            cmd = new SqlCommand("SELECT [Source No_] FROM " +
+                    "[ZYGO$Production Order] where No_ = '" + tbProductionOrder.Text + "'", cnxn);
+            try
+            {
+                cnxn.Open();
+                parent = (string)cmd.ExecuteScalar();
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+
+            /*  the parent item will have components with
+             *  a Prod_ Order Line No_ of 10000 - always
+             *  so to get it into the table we just add
+             *  it at the end.
+             *  
+             *  The Item Low-Level Code > 0 will give the
+             *  sub-assembies
+             *  
+             *  Looking to get the item number and description to
+             *  print on the header labels for the work order
+             *  
+             *  */
+
+            if (cbAll.Checked)
+            {
+                cmd = new SqlCommand("SELECT  " +
+                 "[Item No_]" +
+                 ",[Supplied-by Line No_] " +
+                ",CAST([Supplied-by Line No_] as varchar(10)) " +
+                "FROM [ZYGO$Prod_ Order Component] " +
+                "WHERE [Prod_ Order No_] = '" +
+                  tbProductionOrder.Text + "' " +
+                "AND [Item Low-Level Code] > 0 " +
+                "UNION " +
+                "SELECT " +
+                "'" + parent + "', 10000, '' " +
+                "ORDER BY [Supplied-by Line No_]", cnxn);
+            }
+            else
+            {
+                if (lineNo == "10000")
+                {
+                    cmd = new SqlCommand("SELECT  " +
+                     "[Source No_]" +
+                     ",10000 " +
+                    ",'10000' " +
+                    "FROM [ZYGO$Production Order] " +
+                    "WHERE [No_] = '" +
+                      tbProductionOrder.Text + "' "
+                    , cnxn);
+                }
+                else
+                {
+                    cmd = new SqlCommand("SELECT  " +
+                     "[Item No_]" +
+                     ",[Supplied-by Line No_] " +
+                    ",CAST([Supplied-by Line No_] as varchar(10)) " +
+                    "FROM [ZYGO$Prod_ Order Component] " +
+                    "WHERE [Prod_ Order No_] = '" +
+                      tbProductionOrder.Text + "' " +
+                    "AND [Supplied-by Line No_] = " + lineNo + " " +
+                    "AND [Item Low-Level Code] > 0 " +
+                    "ORDER BY [Supplied-by Line No_]", cnxn);
+                }
+            }
+
+            
+
+            try
+            {   
+                if (multiLevel)
+                {
+                    DataTable test = new DataTable();
+                    cnxn.Open();
+                    drMulti = cmd.ExecuteReader();
+                    test.Load(drMulti);
+
+                    drMulti = cmd.ExecuteReader();
+
+                    while (drMulti.Read())
+                    {
+                        //MLprinted = false;
+
+                        string str = string.Empty;
+                        str = "\nN\nq609Q203,20\n";
+                        str += "A50,20,0,3,1,1,N,\"** SUB ASSEMBLY **\"\n";
+                        str += "A50,80,0,3,1,1,N,\"SUB:" + drMulti.GetString(0).ToString() + "\"\n";
+                        str += "A50,140,0,3,1,1,N,\"Line No:" + drMulti.GetString(2).ToString() + "\"\n";
+                        str += "P" + labelQuantity + "\n";
+                        RawPrinterHelper.SendStringToPrinter(printer, str);
+
+                        cnxnInsideLoop = new SqlConnection(dbNAV);
+
+                        /*  the inside loop gets the components of the sub-assemblies as
+                         *  well as the top level non-sub-assembly components
+                         */
+
+                        cmd = new SqlCommand(
+                            "SELECT  " +
+                             " [Item No_] " +
+                            ",[Description] " +
+                            ",[Prod_ Order No_] " +
+                            ",[Position] " +
+                            ",[Bin Code] " +
+                            ",cast([Expected Quantity] as decimal(11,2)) " +
+                            ",[Routing Link Code] " +
+                            ",CAST([Prod_ Order Line No_] as varchar(6)) " +
+                            "FROM " +
+                            "[ZYGO$Prod_ Order Component] " +
+                            "WHERE (Substring([Description],1, 1) != '#' AND Substring([Description],1, 1) != '&') " +
+                            "AND [Prod_ Order No_] = '" + tbProductionOrder.Text + "' " +
+                            "AND [Prod_ Order Line No_] = " +
+                            drMulti.GetInt32(1) + " " +
+
+                            "ORDER BY [Bin Code], [Item No_]", cnxnInsideLoop);
+
+                        try
+                        {
+                            cnxnInsideLoop.Open();
+                            dr = cmd.ExecuteReader();
+                            DataTable tst = new DataTable();
+                            tst.Load(dr);
+                            dr = cmd.ExecuteReader();
+                            QtyGreaterThan1();
+
+                        }
+                        catch (SqlException ex)
+                        {
+                            MessageBox.Show(ex.ToString());
+                        }
+                        finally
+                        {
+                            cnxnInsideLoop.Close();
+                        }
+                    }
+                }
+                else
+                {
+                    if (standard)
+                    {
+                        try
+                        {
+                            cmd = new SqlCommand(query + "AND i.Vetted = 0 " +
+                                  "ORDER BY [Bin Code], [Item No_]", cnxn);
+
+                            cmd.Connection = cnxn;
+                            if (cnxn.State == ConnectionState.Closed)
+                            {
+                                cnxn.Open();
+                            }
+
+                            dr = cmd.ExecuteReader();
+
+                            DataTable t = new DataTable();
+                            t.Load(dr);
+
+                            dr = cmd.ExecuteReader();
+
+                            QtyGreaterThan1();
+                        }
+                        catch (SqlException ex)
+                        {
+                            MessageBox.Show(ex.ToString());
+                        }
+                        finally
+                        {
+                            cnxn.Close();
+                        }
+                    }
+
+
+                    if (custom)
+                    {
+                        try
+                        {
+                            cmd = new SqlCommand(query + "AND i.Vetted = 1 " +
+                               "ORDER BY [Bin Code], [Item No_]", cnxn);
+
+                            cmd.Connection = cnxn;
+
+                            if (cnxn.State == ConnectionState.Closed)
+                            {
+                                cnxn.Open();
+                            }
+
+                            dr = cmd.ExecuteReader();
+
+                            DataTable t = new DataTable();
+                            t.Load(dr);
+
+                            dr = cmd.ExecuteReader();
+
+                            QtyGreaterThan1();
+                        }
+                        catch (SqlException ex)
+                        {
+                            MessageBox.Show(ex.ToString());
+                        }
+                        finally
+                        {
+                            cnxn.Close();
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
         }
+
 
         private void QtyGreaterThan1()
         {
@@ -493,6 +597,7 @@ namespace ProductionLabels
             }
         }
 
+        
         private void printLabels()
         {
             /*  fordebugging write the data to the hard drive   */
@@ -810,6 +915,7 @@ namespace ProductionLabels
                 return Encoding.GetEncoding(1252).GetString(ms.ToArray());
             }
         }
+
     }
 
     public class RawPrinterHelper

@@ -31,13 +31,15 @@
             this.Bprint = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.tbProductionOrder = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
+            this.DGV = new System.Windows.Forms.DataGridView();
+            this.cbAll = new System.Windows.Forms.CheckBox();
+            ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
             // Bprint
             // 
             this.Bprint.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(60)))));
-            this.Bprint.Location = new System.Drawing.Point(60, 103);
+            this.Bprint.Location = new System.Drawing.Point(60, 154);
             this.Bprint.Name = "Bprint";
             this.Bprint.Size = new System.Drawing.Size(278, 79);
             this.Bprint.TabIndex = 11;
@@ -61,23 +63,39 @@
             this.tbProductionOrder.Size = new System.Drawing.Size(100, 23);
             this.tbProductionOrder.TabIndex = 7;
             // 
-            // label2
+            // DGV
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 60F);
-            this.label2.Location = new System.Drawing.Point(95, 202);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(203, 91);
-            this.label2.TabIndex = 12;
-            this.label2.Text = "NAV";
+            this.DGV.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DGV.Location = new System.Drawing.Point(60, 253);
+            this.DGV.Name = "DGV";
+            this.DGV.RowHeadersVisible = false;
+            this.DGV.RowHeadersWidth = 5;
+            this.DGV.Size = new System.Drawing.Size(111, 150);
+            this.DGV.TabIndex = 12;
+            this.DGV.Visible = false;
+            this.DGV.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGV_CellClick);
+            // 
+            // cbAll
+            // 
+            this.cbAll.AutoSize = true;
+            this.cbAll.Checked = true;
+            this.cbAll.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
+            this.cbAll.Location = new System.Drawing.Point(60, 99);
+            this.cbAll.Name = "cbAll";
+            this.cbAll.Size = new System.Drawing.Size(292, 28);
+            this.cbAll.TabIndex = 13;
+            this.cbAll.Text = "Print All Production Order Lines";
+            this.cbAll.UseVisualStyleBackColor = true;
             // 
             // ProductionLabels
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(100)))), ((int)(((byte)(220)))));
-            this.ClientSize = new System.Drawing.Size(417, 317);
-            this.Controls.Add(this.label2);
+            this.ClientSize = new System.Drawing.Size(417, 435);
+            this.Controls.Add(this.cbAll);
+            this.Controls.Add(this.DGV);
             this.Controls.Add(this.Bprint);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tbProductionOrder);
@@ -86,6 +104,7 @@
             this.Name = "ProductionLabels";
             this.Text = "Production Labels";
             this.Load += new System.EventHandler(this.ProductionLabels_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.DGV)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -96,7 +115,8 @@
         private System.Windows.Forms.Button Bprint;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tbProductionOrder;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.DataGridView DGV;
+        private System.Windows.Forms.CheckBox cbAll;
     }
 }
 
