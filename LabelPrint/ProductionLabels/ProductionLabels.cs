@@ -108,6 +108,8 @@ namespace ProductionLabels
 
             this.Text = "Production Order Labels for " + NAVprefix + "  v" + Application.ProductVersion;
 
+            tbProductionOrder.AppendText("PD");
+
             /*
             this.BackColor = Color.FromArgb(80, 100, 220); /*       MK      *//*
             label2.Visible = false; 
@@ -119,8 +121,11 @@ namespace ProductionLabels
         {
             tbProductionOrder.Text = tbProductionOrder.Text.ToUpper().ToString();
 
-
-
+            if (cbAll.Checked == false)
+            {
+                Bprint.Visible = false;
+            }
+            
             /*  This is the selection query for the label 
              *  
              *  It is defined here but not used until the 300s 
@@ -250,8 +255,8 @@ namespace ProductionLabels
                 {
                     query = query + " AND [Prod_ Order Line No_] = " + lineNo + " ";
                 }
-
-                commonLabelProcessing();
+                
+                bPrintSelectedLine.Visible = true;
             }
         }
 
@@ -563,6 +568,13 @@ namespace ProductionLabels
             {
                 cnxn.Close();
             }
+
+            Bprint.Visible = true;
+            DGV.Visible = false;
+            bPrintSelectedLine.Visible = false;
+            cbAll.Checked = true;
+            tbProductionOrder.Text = "";
+            tbProductionOrder.AppendText("PD");
         }
 
 
@@ -916,6 +928,10 @@ namespace ProductionLabels
             }
         }
 
+        private void bPrintSelectedLine_Click(object sender, EventArgs e)
+        {
+            commonLabelProcessing();
+        }
     }
 
     public class RawPrinterHelper

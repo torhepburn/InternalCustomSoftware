@@ -33,6 +33,7 @@
             this.tbProductionOrder = new System.Windows.Forms.TextBox();
             this.DGV = new System.Windows.Forms.DataGridView();
             this.cbAll = new System.Windows.Forms.CheckBox();
+            this.bPrintSelectedLine = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
@@ -88,12 +89,25 @@
             this.cbAll.Text = "Print All Production Order Lines";
             this.cbAll.UseVisualStyleBackColor = true;
             // 
+            // bPrintSelectedLine
+            // 
+            this.bPrintSelectedLine.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(60)))));
+            this.bPrintSelectedLine.Location = new System.Drawing.Point(213, 285);
+            this.bPrintSelectedLine.Name = "bPrintSelectedLine";
+            this.bPrintSelectedLine.Size = new System.Drawing.Size(139, 79);
+            this.bPrintSelectedLine.TabIndex = 14;
+            this.bPrintSelectedLine.Text = "PRINT";
+            this.bPrintSelectedLine.UseVisualStyleBackColor = false;
+            this.bPrintSelectedLine.Visible = false;
+            this.bPrintSelectedLine.Click += new System.EventHandler(this.bPrintSelectedLine_Click);
+            // 
             // ProductionLabels
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(100)))), ((int)(((byte)(220)))));
             this.ClientSize = new System.Drawing.Size(417, 435);
+            this.Controls.Add(this.bPrintSelectedLine);
             this.Controls.Add(this.cbAll);
             this.Controls.Add(this.DGV);
             this.Controls.Add(this.Bprint);
@@ -117,6 +131,7 @@
         private System.Windows.Forms.TextBox tbProductionOrder;
         private System.Windows.Forms.DataGridView DGV;
         private System.Windows.Forms.CheckBox cbAll;
+        private System.Windows.Forms.Button bPrintSelectedLine;
     }
 }
 
