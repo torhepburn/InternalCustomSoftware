@@ -9,7 +9,6 @@ namespace aaAdjustableShortageReview
     {
         SqlConnection cnxn;
         SqlConnection NAVcnxn;
-        SqlConnection cnxnDash;
         SqlDataAdapter da;
         SqlDataReader dr;
 
@@ -115,22 +114,20 @@ namespace aaAdjustableShortageReview
              * 
              * */
 
-            cnxnDash= new SqlConnection(g.dbDash);
+            cnxn.Open();
 
-            da = new SqlDataAdapter(
+            cmd = new SqlCommand(
                  "SELECT " +
-                 "UPPER(SUBSTRING(name,(CHARINDEX(',',name))+ 2, LEN(name) -  (CHARINDEX(',',name))+ 2) + ' ' + LEFT(name,1)) " +
-                 "Name " +
-                 "from middb01.dashboard.dbo.view_employees where name != 'Bacon, Bill' and " +
-                 "(mysupervisorname like 'cardinale%' or mysupervisorname like 'ogden%' " +
-                 "or mysupervisorname like 'baez%') or name = 'Tello, Christopher' " +
-                 "order by name ", cnxnDash);
+                 "Code Name " +
+                 "from BuyerPlannerData " +
+                 "UNION ALL " +
+                 "SELECT '' " +
+                 "order by code ", cnxn);
+
+            dr = cmd.ExecuteReader();
 
             DataTable dt2 = new DataTable();
-            dt2.Rows.Add();
-            dt2.AcceptChanges();
-            da.SelectCommand.CommandTimeout = 300;
-            da.Fill(dt2);
+            dt2.Load(dr);
 
             cbddPlannerBuyer.DataSource = dt2;
             cbddPlannerBuyer.DisplayMember = "Name";
