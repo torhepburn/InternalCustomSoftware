@@ -40,7 +40,7 @@
             this.tbPDNumber.Location = new System.Drawing.Point(57, 143);
             this.tbPDNumber.Name = "tbPDNumber";
             this.tbPDNumber.Size = new System.Drawing.Size(193, 23);
-            this.tbPDNumber.TabIndex = 0;
+            this.tbPDNumber.TabIndex = 1;
             // 
             // bGetData
             // 
@@ -49,7 +49,7 @@
             this.bGetData.Location = new System.Drawing.Point(289, 124);
             this.bGetData.Name = "bGetData";
             this.bGetData.Size = new System.Drawing.Size(135, 54);
-            this.bGetData.TabIndex = 1;
+            this.bGetData.TabIndex = 2;
             this.bGetData.Text = "Get Data/PRINT";
             this.bGetData.UseVisualStyleBackColor = false;
             this.bGetData.Click += new System.EventHandler(this.bGetData_Click);
@@ -60,7 +60,7 @@
             this.tbQuantity.Location = new System.Drawing.Point(249, 49);
             this.tbQuantity.Name = "tbQuantity";
             this.tbQuantity.Size = new System.Drawing.Size(36, 29);
-            this.tbQuantity.TabIndex = 2;
+            this.tbQuantity.TabIndex = 0;
             // 
             // label1
             // 
