@@ -8,6 +8,14 @@
       <rd:SecurityType>None</rd:SecurityType>
       <rd:DataSourceID>e2b86a17-9aee-4bb3-a500-3ee58d6250b0</rd:DataSourceID>
     </DataSource>
+    <DataSource Name="DataSource1">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString>Data Source=pa-hor-as408;Initial Catalog=ZYGO-NAV-PROD</ConnectString>
+      </ConnectionProperties>
+      <rd:SecurityType>DataBase</rd:SecurityType>
+      <rd:DataSourceID>b4ea30c3-bb16-4a2d-97ac-9f7244fadaaf</rd:DataSourceID>
+    </DataSource>
   </DataSources>
   <DataSets>
     <DataSet Name="DataSet1">
@@ -31,7 +39,7 @@ where document not like 'PRIR%'
               
 AND YEAR(DueDate) = '2022'
 
-AND YEAR(rescheduleDate) = '2023'
+--AND YEAR(rescheduleDate) = '2023'
 
 AND MONTH(DueDate) &lt;&gt; MONTH(RescheduleDate)
 )
@@ -83,6 +91,29 @@ Order by item, duedate</CommandText>
         <Field Name="TwoWeekUSE">
           <DataField>TwoWeekUSE</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="PriceGroups">
+      <Query>
+        <DataSourceName>DataSource1</DataSourceName>
+        <CommandText>select 
+
+Code + '  ' + Description Display
+,Code
+
+from [ZYGO$Customer Price Group]
+
+Where Code NOT IN ('1','2')</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Display">
+          <DataField>Display</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Code">
+          <DataField>Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -975,10 +1006,30 @@ Order by item, duedate</CommandText>
       </Page>
     </ReportSection>
   </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="PriceListCode">
+      <DataType>String</DataType>
+      <Prompt>Price List Code</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>PriceGroups</DataSetName>
+          <ValueField>Code</ValueField>
+          <LabelField>Display</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+  </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
       <NumberOfColumns>4</NumberOfColumns>
       <NumberOfRows>2</NumberOfRows>
+      <CellDefinitions>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>PriceListCode</ParameterName>
+        </CellDefinition>
+      </CellDefinitions>
     </GridLayoutDefinition>
   </ReportParametersLayout>
   <Language>en-US</Language>
