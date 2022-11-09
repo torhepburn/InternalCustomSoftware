@@ -273,10 +273,11 @@ namespace R_T_V
             this.cbddStatus.FormattingEnabled = true;
             this.cbddStatus.Items.AddRange(new object[] {
             "",
-            "Completed",
-            "On Hold",
+            "In Prog - Design",
             "Design Review",
-            "In Progress"});
+            "In Prog - Fab",
+            "Completed",
+            "On Hold"});
             this.cbddStatus.Location = new System.Drawing.Point(771, 233);
             this.cbddStatus.Name = "cbddStatus";
             this.cbddStatus.Size = new System.Drawing.Size(121, 21);
