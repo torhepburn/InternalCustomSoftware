@@ -64,7 +64,7 @@
             // 
             this.dtpDateNeeded.Location = new System.Drawing.Point(121, 99);
             this.dtpDateNeeded.Name = "dtpDateNeeded";
-            this.dtpDateNeeded.Size = new System.Drawing.Size(240, 26);
+            this.dtpDateNeeded.Size = new System.Drawing.Size(240, 23);
             this.dtpDateNeeded.TabIndex = 9;
             // 
             // cbddRequestor
@@ -72,26 +72,26 @@
             this.cbddRequestor.FormattingEnabled = true;
             this.cbddRequestor.Location = new System.Drawing.Point(121, 147);
             this.cbddRequestor.Name = "cbddRequestor";
-            this.cbddRequestor.Size = new System.Drawing.Size(240, 28);
+            this.cbddRequestor.Size = new System.Drawing.Size(240, 24);
             this.cbddRequestor.TabIndex = 15;
             // 
             // tbQuantity
             // 
             this.tbQuantity.Location = new System.Drawing.Point(121, 234);
             this.tbQuantity.Name = "tbQuantity";
-            this.tbQuantity.Size = new System.Drawing.Size(100, 26);
+            this.tbQuantity.Size = new System.Drawing.Size(100, 23);
             this.tbQuantity.TabIndex = 18;
             // 
             // cbddType
             // 
             this.cbddType.FormattingEnabled = true;
             this.cbddType.Items.AddRange(new object[] {
-            "ROUTINE",
-            "URGENT",
-            "PRODUCTION DOWN"});
+            "PRODUCTION",
+            "PROTOTYPE",
+            "TOOLING"});
             this.cbddType.Location = new System.Drawing.Point(121, 190);
             this.cbddType.Name = "cbddType";
-            this.cbddType.Size = new System.Drawing.Size(240, 28);
+            this.cbddType.Size = new System.Drawing.Size(240, 24);
             this.cbddType.TabIndex = 19;
             // 
             // Lhours
@@ -100,7 +100,7 @@
             this.Lhours.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.Lhours.Location = new System.Drawing.Point(22, 59);
             this.Lhours.Name = "Lhours";
-            this.Lhours.Size = new System.Drawing.Size(67, 20);
+            this.Lhours.Size = new System.Drawing.Size(56, 17);
             this.Lhours.TabIndex = 20;
             this.Lhours.Text = "Priority:";
             // 
@@ -110,7 +110,7 @@
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label1.Location = new System.Drawing.Point(22, 104);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(112, 20);
+            this.label1.Size = new System.Drawing.Size(96, 17);
             this.label1.TabIndex = 21;
             this.label1.Text = "Date Needed:";
             // 
@@ -120,7 +120,7 @@
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label2.Location = new System.Drawing.Point(22, 150);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(91, 20);
+            this.label2.Size = new System.Drawing.Size(78, 17);
             this.label2.TabIndex = 22;
             this.label2.Text = "Requestor:";
             // 
@@ -130,7 +130,7 @@
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label3.Location = new System.Drawing.Point(22, 193);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(50, 20);
+            this.label3.Size = new System.Drawing.Size(44, 17);
             this.label3.TabIndex = 23;
             this.label3.Text = "Type:";
             // 
@@ -140,7 +140,7 @@
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label4.Location = new System.Drawing.Point(22, 237);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(76, 20);
+            this.label4.Size = new System.Drawing.Size(65, 17);
             this.label4.TabIndex = 24;
             this.label4.Text = "Quantity:";
             // 
@@ -150,7 +150,7 @@
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label5.Location = new System.Drawing.Point(22, 281);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(186, 20);
+            this.label5.Size = new System.Drawing.Size(155, 17);
             this.label5.TabIndex = 26;
             this.label5.Text = "Time Savings Estimate:";
             // 
@@ -158,7 +158,7 @@
             // 
             this.tbTimeSavingsEstimate.Location = new System.Drawing.Point(182, 278);
             this.tbTimeSavingsEstimate.Name = "tbTimeSavingsEstimate";
-            this.tbTimeSavingsEstimate.Size = new System.Drawing.Size(100, 26);
+            this.tbTimeSavingsEstimate.Size = new System.Drawing.Size(100, 23);
             this.tbTimeSavingsEstimate.TabIndex = 25;
             // 
             // label6
@@ -167,7 +167,7 @@
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label6.Location = new System.Drawing.Point(22, 322);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(184, 20);
+            this.label6.Size = new System.Drawing.Size(152, 17);
             this.label6.TabIndex = 28;
             this.label6.Text = "Cost Savings Estimate:";
             // 
@@ -175,7 +175,7 @@
             // 
             this.tbCostSavingsEstimate.Location = new System.Drawing.Point(181, 319);
             this.tbCostSavingsEstimate.Name = "tbCostSavingsEstimate";
-            this.tbCostSavingsEstimate.Size = new System.Drawing.Size(100, 26);
+            this.tbCostSavingsEstimate.Size = new System.Drawing.Size(100, 23);
             this.tbCostSavingsEstimate.TabIndex = 27;
             // 
             // label7
@@ -184,7 +184,7 @@
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label7.Location = new System.Drawing.Point(22, 391);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(113, 20);
+            this.label7.Size = new System.Drawing.Size(96, 17);
             this.label7.TabIndex = 29;
             this.label7.Text = "Request Text:";
             // 
@@ -192,12 +192,12 @@
             // 
             this.cbddPriority.FormattingEnabled = true;
             this.cbddPriority.Items.AddRange(new object[] {
-            "PRODUCTION",
-            "PROTOTYPE",
-            "TOOLING"});
+            "ROUTINE",
+            "URGENT",
+            "PRODUCTION DOWN"});
             this.cbddPriority.Location = new System.Drawing.Point(121, 56);
             this.cbddPriority.Name = "cbddPriority";
-            this.cbddPriority.Size = new System.Drawing.Size(240, 28);
+            this.cbddPriority.Size = new System.Drawing.Size(240, 24);
             this.cbddPriority.TabIndex = 30;
             // 
             // LID
@@ -206,7 +206,7 @@
             this.LID.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
             this.LID.Location = new System.Drawing.Point(30, 19);
             this.LID.Name = "LID";
-            this.LID.Size = new System.Drawing.Size(86, 31);
+            this.LID.Size = new System.Drawing.Size(70, 26);
             this.LID.TabIndex = 31;
             this.LID.Text = "label1";
             // 
@@ -240,7 +240,7 @@
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label8.Location = new System.Drawing.Point(321, 282);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(214, 20);
+            this.label8.Size = new System.Drawing.Size(181, 17);
             this.label8.TabIndex = 35;
             this.label8.Text = "Revenue Savings Estimate:";
             // 
@@ -248,12 +248,12 @@
             // 
             this.tbRevenueSavingsEstimate.Location = new System.Drawing.Point(541, 279);
             this.tbRevenueSavingsEstimate.Name = "tbRevenueSavingsEstimate";
-            this.tbRevenueSavingsEstimate.Size = new System.Drawing.Size(100, 26);
+            this.tbRevenueSavingsEstimate.Size = new System.Drawing.Size(100, 23);
             this.tbRevenueSavingsEstimate.TabIndex = 34;
             // 
             // EditRequest
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(200)))), ((int)(((byte)(190)))));
             this.ClientSize = new System.Drawing.Size(665, 583);
