@@ -2,12 +2,12 @@ namespace Tool_Room_Messenger.Data
 {
     public class Global
     {
-        public string db { get; set; } = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
-                                        "user = navdb_read; database = ZYGO-NAV-PROD;";
+        public string db { get; set; } = "server = CT-MID-SQL11; password = Read+Write!; " +
+                                        "user = readWrite; database = AccessFrontends; encrypt=false;";
 
         public DateTime Date { get; set; }
 
-        public int RequestID { get; set; }
+        public string? RequestID { get; set; }
 
         public int CommentID { get; set; }
 

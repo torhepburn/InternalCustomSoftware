@@ -1,0 +1,100 @@
+﻿@page "/getrequests"
+
+<PageTitle>View Tool Reqeusts</PageTitle>
+
+@using Tool_Room_Messenger.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>Select Tool Request</h1>
+
+@*if (dt != null)
+{
+*@@*    <p><em>Loading...</em></p>
+}
+else
+{*@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Request Number</th>
+                <th>Company</th>
+                <th>Projecct</th>
+                <th>Part</th>
+            </tr>
+        </thead>
+        <tbody>
+           @foreach (DataRow r in dt.Rows)
+            {
+                <tr @onclick="() => Select(r[0].ToString())">
+                    <td>@r[0].ToString()</td>
+                    <td>@r[1].ToString()</td>
+                    <td>@r[2].ToString()</td>
+                    <td>@r[3].ToString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+@code
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string comment = "";
+    public string emailFrom = "";
+    public string requestID = "";
+
+
+    //private WeatherForecast[]? forecasts;
+
+    protected override void OnInitialized()
+    {
+        //    //forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
+        //}
+
+        //public void DataEntry()
+        //{
+        //testInput = "TO";
+
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+        "  ID " +
+        ", COALESCE(Customer, '') Customer " +
+        ", COALESCE(Project, '') Project " +
+        ", COALESCE(Part, '') Part " + 
+        " from RIC.Tool_Requests", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string id)
+    {
+        g.RequestID = id;
+        NavMgr.NavigateTo("Comments");
+    }
+}

@@ -1,0 +1,102 @@
+﻿@page "/Comments"
+
+<PageTitle>View Tool Reqeusts</PageTitle>
+
+@using Tool_Room_Messenger.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>View Comments</h1>
+
+@*if (dt != null)
+{
+*@@*    <p><em>Loading...</em></p>
+}
+else
+{*@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Comment</th>
+                <th>Entered By</th>
+                <th>Entered On</th>
+                <th>Comment ID</th>
+            </tr>
+        </thead>
+        <tbody>
+           @foreach (DataRow r in dt.Rows)
+            {
+                <tr>
+                    <td>@r[0].ToString()</td>
+                    <td>@r[1].ToString()</td>
+                    <td>@r[2].ToString()</td>
+                    <td>@r[3].ToString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <AddComment></AddComment>
+
+@code
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string comment = "";
+    public string emailFrom = "";
+    public string requestID = "";
+
+
+    //private WeatherForecast[]? forecasts;
+
+    protected override void OnInitialized()
+    {
+        //    //forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
+        //}
+
+        //public void DataEntry()
+        //{
+        //testInput = "TO";
+
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+        "  Comment " +
+        ", COALESCE(EnteredBy, '') EnteredBy " +
+        ", COALESCE(EnteredOn, '') EnteredOn " +
+        ", COALESCE(CommentID, '') CommentID " + 
+        " from RIC.Tool_Comments " +
+        " WHERE RequestID = " + g.RequestID + " "
+        , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    //private void Select(string id)
+    //{
+    //    id = dt.Rows[0].ToString();
+    //}
+}
