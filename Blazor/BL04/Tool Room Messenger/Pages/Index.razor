@@ -7,10 +7,81 @@
 @using Microsoft.Data.SqlClient
 
 @inject Global g
+@inject NavigationManager NavMgr
 
-
-<h1>Fill in the blanks below</h1>
+<h1>Richmond Tool Requests</h1>
 
 Select the Request you need to access.
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+<table class="table">
+        <thead>
+            <tr>
+                <th>Request Number</th>
+                <th>Company</th>
+                <th>Projecct</th>
+                <th>Part</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+                    <tr @onclick="() => Select(r[0].ToString())">
+                        <td>@r[0].ToString()</td>
+                        <td>@r[1].ToString()</td>
+                        <td>@r[2].ToString()</td>
+                        <td>@r[3].ToString()</td>
+                    </tr>
+        }
+        </tbody>
+    </table>
+
+@code
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string comment = "";
+    public string emailFrom = "";
+    public string requestID = "";
+
+
+    //private WeatherForecast[]? forecasts;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+        "  ID " +
+        ", COALESCE(Customer, '') Customer " +
+        ", COALESCE(Project, '') Project " +
+        ", COALESCE(Part, '') Part " +
+        " from RIC.Tool_Requests", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string id)
+    {
+        g.RequestID = id;
+        NavMgr.NavigateTo("Comments");
+    }
+}
