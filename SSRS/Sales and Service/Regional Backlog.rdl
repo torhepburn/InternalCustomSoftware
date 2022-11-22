@@ -16,23 +16,6 @@
         <CommandText>DECLARE @region varchar(10)
 SET @region = 'CHN';
 
-WITH s1 AS
-(
-	SELECT 
-
-	[Item No_]
-	,[Unit Price]
-
-	FROM [ZYGO$Sales Price]
-
-	WHERE [Sales Code] = 'ZAF'
-
-	AND [Ending Date] &gt; GETDATE()
-)
-
-
-
-
 
 select
 
@@ -46,38 +29,25 @@ COALESCE(dreg.[Dimension Value Code],'') REGION
 ,l.[Job No_] [PROJ #]
 ,l.No_ AS [ITEM NO]
 ,l.Description [ITEM DESCRIPTION]
-,COALESCE(l.[Shortcut Dimension 2 Code],'') [BUSINESS SEGMENT]
 ,[Bin Code] WHS
 ,COALESCE(dind.[Dimension Value Code],'') LOB
 ,CASE 
-	WHEN CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(h.[Order Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(h.[Order Date], 'MM/dd/yy') as varchar(8)) 
 END [ORD DATE]
 ,CASE 
-	WHEN CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(l.[Requested Delivery Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(l.[Requested Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [REQ DATE]
 ,CASE 
-	WHEN CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(l.[Promised Delivery Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(l.[Promised Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [DEL DATE]
-,Quantity [QTY ORD]
-,[Quantity Shipped] [QTY DLV]
-,[Outstanding Quantity] [QTY TO DLV]
-,l.[Unit Price] [PRICE]
+,CAST(Quantity AS int) [QTY ORD]
+,CAST([Outstanding Quantity] AS int) [QTY TO DLV]
+,l.[Unit Price] [Line PRICE]
 ,[Line Discount _] [% DISC]
 ,[Outstanding Quantity] * l.[Unit Price] [SHIP BL]
-, CASE
-	WHEN l.[Unit Price] &gt; 0 THEN CAST(CAST(ROUND((COALESCE(p.[Unit Price]/l.[Unit Price],0)*100),0) as int) AS Varchar(2)) + ' %'
-	ELSE '0 %'
-END [Reg Mrg]
-,COALESCE(p.[Unit Price],0) [Reg Tp]
-,CASE
-	WHEN l.[Unit Price] &gt; 0 THEN CAST(CAST(ROUND((COALESCE(i.[Standard Cost]/l.[Unit Price],0)*100),0) AS int) AS varchar(2)) + ' %'
-	ELSE '0 %'
-END[Fact Mrg]
-,COALESCE(i.[Standard Cost],0) [Fact COS]
-
 
 from [ZYGO$Sales Header] h
 
@@ -85,8 +55,6 @@ INNER JOIN [ZYGO$Sales Line] l ON h.No_ = l.[Document No_] and h.[Document Type]
 
 left join	[ZYGO$Dimension Set Entry] dind on l.[Dimension Set ID] = dind.[Dimension Set ID] and dind.[Dimension Code] = 'INDUSTRY'
 left join	[ZYGO$Dimension Set Entry] dreg on l.[Dimension Set ID] = dreg.[Dimension Set ID] and dreg.[Dimension Code] = 'REGION'
-
-LEFT JOIN s1 p ON l.No_ = p.[Item No_]
 
 LEFT JOIN ZYGO$Item i ON l.No_ = i.No_
 
@@ -110,37 +78,25 @@ COALESCE(dreg.[Dimension Value Code],'') REGION
 ,l.[Job No_] [PROJ #]
 ,l.No_ AS [ITEM NO]
 ,l.Description [ITEM DESCRIPTION]
-,COALESCE(l.[Shortcut Dimension 2 Code],'') [BUSINESS SEGMENT]
 ,[Bin Code] WHS
 ,COALESCE(dind.[Dimension Value Code],'') LOB
 ,CASE 
-	WHEN CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(h.[Order Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(h.[Order Date], 'MM/dd/yy') as varchar(8)) 
 END [ORD DATE]
 ,CASE 
-	WHEN CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(l.[Requested Delivery Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(l.[Requested Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [REQ DATE]
 ,CASE 
-	WHEN CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) 
+	WHEN CAST(FORMAT(l.[Promised Delivery Date], 'MM/dd/yy') as varchar(8)) = '01/01/53' THEN ''
+	ELSE CAST(FORMAT(l.[Promised Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [DEL DATE]
-,Quantity [QTY ORD]
-,[Quantity Shipped] [QTY DLV]
-,[Outstanding Quantity] [QTY TO DLV]
-,l.[Unit Price] [PRICE]
+,CAST(Quantity AS int) [QTY ORD]
+,CAST([Outstanding Quantity] AS int) [QTY TO DLV]
+,l.[Unit Price] [Line PRICE]
 ,[Line Discount _] [% DISC]
 ,[Outstanding Quantity] * l.[Unit Price] [SHIP BL]
-, CASE
-	WHEN l.[Unit Price] &gt; 0 THEN CAST(CAST(ROUND((COALESCE(p.[Unit Price]/l.[Unit Price],0)*100),0) as int) AS Varchar(2)) + ' %'
-	ELSE '0'
-END [Reg Mrg]
-,COALESCE(p.[Unit Price],0) [Reg Tp]
-,CASE
-	WHEN l.[Unit Price] &gt; 0 THEN CAST(CAST(ROUND((COALESCE(i.[Standard Cost]/l.[Unit Price],0)*100),0) AS int) AS varchar(2)) + ' %'
-	ELSE '0 %'
-END[Fact Mrg]
-,COALESCE(i.[Standard Cost],0) [Fact COS]
 
 
 from [ZYGO$Service Header] h
@@ -149,8 +105,6 @@ INNER JOIN [ZYGO$Service Line] l ON h.No_ = l.[Document No_] and h.[Document Typ
 
 left join	[ZYGO$Dimension Set Entry] dind on l.[Dimension Set ID] = dind.[Dimension Set ID] and dind.[Dimension Code] = 'INDUSTRY'
 left join	[ZYGO$Dimension Set Entry] dreg on l.[Dimension Set ID] = dreg.[Dimension Set ID] and dreg.[Dimension Code] = 'REGION'
-
-LEFT JOIN s1 p ON l.No_ = p.[Item No_]
 
 LEFT JOIN ZYGO$Item i ON l.No_ = i.No_
 
@@ -161,129 +115,7 @@ AND l.[Srv Line No_] &lt; 500
 AND COALESCE(dreg.[Dimension Value Code],'')  = @region
 
 
-
-
-/*
-UNION ALL
-
-
-
-select
-
-h.[Document Type]
-,h.No_ Order_No
-,[Line No_]
-,[Line No_] [SO Line No_]
-,CASE 
-	WHEN CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(h.[Order Date], 'MM-dd-yy') as varchar(8)) 
-END [Order Date]
-,h.[Customer No_] [Sell-to Customer No_]
-,h.[Bill-to Customer No_]
-,h.[Bill-to Name]
-,h.[Ship-to Name]
-,h.[Ship-to County]
-,h.[Ship-to Country_Region Code]
-,h.Name [Sell-to Customer Name]
-,l.Type
-,l.No_ AS Item_No
-,l.[Job No_]
-,l.[Location Code]
-,l.[Posting Group]
-,CASE 
-	WHEN CAST(FORMAT(l.[Planned Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Planned Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Shipment Date]
-,l.Description
-,Quantity
-,[Outstanding Quantity]
-,[Unit Price]
-,[Line Discount _]
-,[Line Discount Amount]
-,Amount
-,CASE
-	WHEN Quantity = 0 THEN 0
-	WHEN Quantity &lt;&gt; 0 THEN 
-		CASE
-			WHEN Quantity = [Outstanding Quantity] THEN Amount
-			ELSE [Outstanding Quantity] * ([Unit Price] - [Line Discount Amount])/Quantity
-		END
-END [Backlog Amount]
-,[Outstanding Amount]
-,l.[Shortcut Dimension 1 Code]
-,l.[Shortcut Dimension 2 Code]
-,l.[Gen_ Bus_ Posting Group]
-,l.[Gen_ Prod_ Posting Group]
-,l.[Item Category Code]
-,l.[Shipment No_]
-,l.[Completely Shipped]
-,CASE 
-	WHEN CAST(FORMAT(h.[Posting Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(h.[Posting Date], 'MM-dd-yy') as varchar(8)) 
-END [Posting Date]
-,l.[Qty_ Invoiced (Base)]
-,l.[Dimension Set ID]
-,COALESCE(dcos.[Dimension Value Code] ,'') COSTCENTER
-,COALESCE(dind.[Dimension Value Code],'') INDUSTRY
-,COALESCE(djob.[Dimension Value Code],'') JOB
-,COALESCE(dreg.[Dimension Value Code],'') REGION
-,COALESCE(dsit.[Dimension Value Code],'') SITE
-,COALESCE(dseg.[Dimension Value Code],'') SEGMENT
-,COALESCE(dcat.[Dimension Value Code],'') PRODCAT
-,COALESCE(dicp	.[Dimension Value Code],'') ICP
-,'Sevice Order' Order_Source
-,CASE
-	WHEN l.No_ LIKE 'FREIGHT%' THEN 'FREIGHT'
-	WHEN l.No_ LIKE 'SVC CNTRCT YR%' THEN 'PRIORITY SUPPORT'
-	WHEN l.No_ LIKE 'ADVANCE DEPOSIT%' THEN 'ADVANCE DEPOSIT'
-	ELSE 'FIN GOODS'
-END line_group
-,h.[Customer No_]
-,h.[Your Reference] [External Document No_]
-,h.[End User Customer Name]
-,CAST('' as varchar(8)) [Contract Date]
-,CASE 
-	WHEN CAST(FORMAT(l.[Orig_ Requested Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Orig_ Requested Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Orig_ Requested Delivery Date]
-,CASE 
-	WHEN CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Requested Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Requested Delivery Date]
-,CASE 
-	WHEN CAST(FORMAT(l.[Orig_ Promised Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Orig_ Promised Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Orig_ Promised Delivery Date]
-,CASE 
-	WHEN CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Promised Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Promised Delivery Date]
-,CASE 
-	WHEN CAST(FORMAT(l.[Planned Delivery Date], 'MM-dd-yy') as varchar(8)) = '01-01-53' THEN ''
-	ELSE CAST(FORMAT(l.[Planned Delivery Date], 'MM-dd-yy') as varchar(8)) 
-END [Planned Delivery Date]
-,CAST(GETDATE() as date) Backlog_Date
-
-from [ZYGO$Service Header] h
-
-INNER JOIN [ZYGO$Service Line] l ON h.No_ = l.[Document No_] and h.[Document Type] = l.[Document Type]
-
-left join	[ZYGO$Dimension Set Entry] dcos on l.[Dimension Set ID] = dcos.[Dimension Set ID] and dcos.[Dimension Code] = 'COSTCENTER'
-left join	[ZYGO$Dimension Set Entry] dseg on l.[Dimension Set ID] = dseg.[Dimension Set ID] and dseg.[Dimension Code] = 'SEGMENT'
-left join	[ZYGO$Dimension Set Entry] dind on l.[Dimension Set ID] = dind.[Dimension Set ID] and dind.[Dimension Code] = 'INDUSTRY'
-left join	[ZYGO$Dimension Set Entry] dreg on l.[Dimension Set ID] = dreg.[Dimension Set ID] and dreg.[Dimension Code] = 'REGION'
-left join	[ZYGO$Dimension Set Entry] dsit on l.[Dimension Set ID] = dsit.[Dimension Set ID] and dreg.[Dimension Code] = 'SITE'
-left join	[ZYGO$Dimension Set Entry] dicp on l.[Dimension Set ID] = dicp.[Dimension Set ID] and dicp.[Dimension Code] = 'ICP'
-left join	[ZYGO$Dimension Set Entry] dcat on l.[Dimension Set ID] = dcat.[Dimension Set ID] and dcat.[Dimension Code] = 'PRODCAT'
-left join	[ZYGO$Dimension Set Entry] djob on l.[Dimension Set ID] = djob.[Dimension Set ID] and djob.[Dimension Code] = 'JOB'
-
-WHERE [Outstanding Quantity] &lt;&gt; 0
-
-AND COALESCE(dreg.[Dimension Value Code],'')  = 'CHN'
-*/
-
 ORDER BY 
-
 
 [Business Segment]
 ,ORD
@@ -331,10 +163,6 @@ ORDER BY
           <DataField>ITEM DESCRIPTION</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="BUSINESS_SEGMENT">
-          <DataField>BUSINESS SEGMENT</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
         <Field Name="WHS">
           <DataField>WHS</DataField>
           <rd:TypeName>System.String</rd:TypeName>
@@ -357,19 +185,15 @@ ORDER BY
         </Field>
         <Field Name="QTY_ORD">
           <DataField>QTY ORD</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="QTY_DLV">
-          <DataField>QTY DLV</DataField>
+        <Field Name="Line_PRICE">
+          <DataField>Line PRICE</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="QTY_TO_DLV">
           <DataField>QTY TO DLV</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="PRICE">
-          <DataField>PRICE</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="ID__DISC">
           <DataField>% DISC</DataField>
@@ -377,22 +201,6 @@ ORDER BY
         </Field>
         <Field Name="SHIP_BL">
           <DataField>SHIP BL</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="Reg_Mrg">
-          <DataField>Reg Mrg</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Reg_Tp">
-          <DataField>Reg Tp</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="Fact_Mrg">
-          <DataField>Fact Mrg</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Fact_COS">
-          <DataField>Fact COS</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
       </Fields>
@@ -409,7 +217,7 @@ ORDER BY
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>Zygo Backlog Report</Value>
+                    <Value>="Zygo Backlog Report " + First(Fields!REGION.Value, "DataSet1")</Value>
                     <Style>
                       <FontFamily>Segoe UI Light</FontFamily>
                       <FontSize>24pt</FontSize>
@@ -444,9 +252,6 @@ ORDER BY
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.76041in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -849,47 +654,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox20</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox21">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>QTY DLV</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox21</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1372,39 +1136,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox282</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox283">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox283</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1918,43 +1649,6 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox294">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox294</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="Textbox295">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -2313,10 +2007,8 @@ ORDER BY
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                        <ColSpan>2</ColSpan>
                       </CellContents>
                     </TablixCell>
-                    <TablixCell />
                     <TablixCell>
                       <CellContents>
                         <Textbox Name="End_Customer">
@@ -2731,43 +2423,6 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="QTY_DLV">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!QTY_DLV.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>0;(0)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>QTY_DLV</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="QTY_TO_DLV">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -2805,14 +2460,14 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="PRICE">
+                        <Textbox Name="Line_PRICE">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!PRICE.Value</Value>
+                                  <Value>=Fields!Line_PRICE.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;('$'0.00)</Format>
@@ -2823,7 +2478,7 @@ ORDER BY
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>PRICE</rd:DefaultName>
+                          <rd:DefaultName>Line_PRICE</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3210,46 +2865,10 @@ ORDER BY
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox55</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Business_Segment1">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
                                   <Value>=Fields!Business_Segment.Value + " Backlog Shippable on Order " + Fields!ORD.Value + ":"</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontWeight>Bold</FontWeight>
-                                    <Format>0;(0)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -3259,7 +2878,7 @@ ORDER BY
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Business_Segment1</rd:DefaultName>
+                          <rd:DefaultName>Textbox55</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3693,41 +3312,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox106</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox107">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox107</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -4191,42 +3775,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox161</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox162">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>0;(0)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox162</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -4743,41 +4291,6 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox184">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox184</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="Textbox185">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -5256,41 +4769,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox227</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox228">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox228</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -5787,42 +5265,6 @@ ORDER BY
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox249</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox250">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>0;(0)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox250</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -6337,41 +5779,6 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox272">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox272</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="Textbox273">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -6530,7 +5937,6 @@ ORDER BY
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
-                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -6631,7 +6037,7 @@ ORDER BY
             <DataSetName>DataSet1</DataSetName>
             <Top>0.44389in</Top>
             <Height>2.81in</Height>
-            <Width>16.27083in</Width>
+            <Width>15.27083in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
