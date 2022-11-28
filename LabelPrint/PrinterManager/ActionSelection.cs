@@ -35,9 +35,9 @@ namespace PrinterManager
                 user = userBase.Name.ToUpper().Replace("AMETEK-AD\\", "");
             }
 
-            if (user != "THEPBURN" & user != "THEPBURN-SA" & user != "BPRESTASH" & user != "JEFFERY.PORTER" & user != "RZAYAN" & user != "JDIMAURO" & user != "ZFLORIAN")
+            if (user != "THEPBURN" & user != "THEPBURN-SA" & user != "BPRESTASH" & user != "JEFFERY.PORTER" & user != "RZAYAN" & user != "JDIMAURO" & user != "BPLATOSZ")
             {
-                MessageBox.Show("You are not logged in as Thepburn, BPrestash, Jeffery.Porter, or RZayan, or JDiMauro");
+                MessageBox.Show("You are not logged in as Thepburn, BPrestash, Jeffery.Porter, RZayan, BPlatosz, or JDiMauro");
                 
                 this.Close();
             }
