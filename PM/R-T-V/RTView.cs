@@ -88,7 +88,7 @@ namespace R_T_V
             //Request ID
             cmd = new SqlCommand
                 ("select ' ' as id union " +
-                 "select distinct id from Richmond_tool_requests " +
+                 "select distinct id from Ric.tool_requests " +
                  "order by id", cnxn);
 
             cnxn.Open();
@@ -104,7 +104,7 @@ namespace R_T_V
             //Project
             cmd = new SqlCommand
                 ("select ' ' as Project union " +
-                 "select distinct project from Richmond_tool_requests " +
+                 "select distinct project from Ric.tool_requests " +
                  "order by Project", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -117,7 +117,7 @@ namespace R_T_V
             //Part
             cmd = new SqlCommand
                 ("select ' ' as part union " +
-                 "select distinct part from Richmond_tool_requests " +
+                 "select distinct part from Ric.tool_requests " +
                  "order by part", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -130,7 +130,7 @@ namespace R_T_V
             //Customer
             cmd = new SqlCommand
                 ("select ' ' as customer union " +
-                 "select distinct customer from Richmond_tool_requests " +
+                 "select distinct customer from Ric.tool_requests " +
                  "order by customer", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -142,7 +142,7 @@ namespace R_T_V
 
             //Requested By
             cmd = new SqlCommand("select ' ' as requestor union all " +
-                "select distinct requestor from Richmond_tool_requests " +
+                "select distinct requestor from Ric.tool_requests " +
                 " order by requestor", cnxn);
             dr = cmd.ExecuteReader();
             dt = new DataTable();
@@ -256,7 +256,7 @@ namespace R_T_V
                 ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
                 ",Actual_Hours [Actual Hours] " +
                 ",Rejected " +
-                "from [Richmond_tool_requests] h " +
+                "from [Ric.tool_requests] h " +
                  "where " +
                  selection;
 
