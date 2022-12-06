@@ -45,12 +45,12 @@ END [Shipment Date]
 ,[Unit Price]
 ,[Line Discount _]
 ,[Line Discount Amount]
-,Amount
+,l.Amount
 ,CASE
 	WHEN Quantity = 0 THEN 0
 	WHEN Quantity &lt;&gt; 0 THEN 
 		CASE
-			WHEN Quantity = [Outstanding Quantity] THEN Amount
+			WHEN Quantity = [Outstanding Quantity] THEN l.Amount
 			ELSE [Outstanding Quantity] * ([Unit Price] - [Line Discount Amount])/Quantity
 		END
 END [Backlog Amount]
@@ -111,6 +111,7 @@ END [Promised Delivery Date]
 	ELSE CAST(FORMAT(l.[Planned Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [Planned Delivery Date]
 ,CAST(GETDATE() as date) Backlog_Date
+,COALESCE([Customer Group Code],'') [Customer Group Code]
 
 from [ZYGO$Sales Header] h
 
@@ -124,6 +125,8 @@ left join	[ZYGO$Dimension Set Entry] dsit on l.[Dimension Set ID] = dsit.[Dimens
 left join	[ZYGO$Dimension Set Entry] dicp on l.[Dimension Set ID] = dicp.[Dimension Set ID] and dicp.[Dimension Code] = 'ICP'
 left join	[ZYGO$Dimension Set Entry] dcat on l.[Dimension Set ID] = dcat.[Dimension Set ID] and dcat.[Dimension Code] = 'PRODCAT'
 left join	[ZYGO$Dimension Set Entry] djob on l.[Dimension Set ID] = djob.[Dimension Set ID] and djob.[Dimension Code] = 'JOB'
+
+LEFT JOIN ZYGO$Customer c ON h.[Sell-to Customer No_] = c.No_
 
 WHERE [Outstanding Quantity] &lt;&gt; 0
 
@@ -161,12 +164,12 @@ END [Shipment Date]
 ,[Unit Price]
 ,[Line Discount _]
 ,[Line Discount Amount]
-,Amount
+,l.Amount
 ,CASE
 	WHEN Quantity = 0 THEN 0
 	WHEN Quantity &lt;&gt; 0 THEN 
 		CASE
-			WHEN Quantity = [Outstanding Quantity] THEN Amount
+			WHEN Quantity = [Outstanding Quantity] THEN l.Amount
 			ELSE [Outstanding Quantity] * ([Unit Price] - [Line Discount Amount])/Quantity
 		END
 END [Backlog Amount]
@@ -224,6 +227,7 @@ END [Promised Delivery Date]
 	ELSE CAST(FORMAT(l.[Planned Delivery Date], 'MM/dd/yy') as varchar(8)) 
 END [Planned Delivery Date]
 ,CAST(GETDATE() as date) Backlog_Date
+,COALESCE([Customer Group Code],'') [Customer Group Code]
 
 from [ZYGO$Service Header] h
 
@@ -237,6 +241,8 @@ left join	[ZYGO$Dimension Set Entry] dsit on l.[Dimension Set ID] = dsit.[Dimens
 left join	[ZYGO$Dimension Set Entry] dicp on l.[Dimension Set ID] = dicp.[Dimension Set ID] and dicp.[Dimension Code] = 'ICP'
 left join	[ZYGO$Dimension Set Entry] dcat on l.[Dimension Set ID] = dcat.[Dimension Set ID] and dcat.[Dimension Code] = 'PRODCAT'
 left join	[ZYGO$Dimension Set Entry] djob on l.[Dimension Set ID] = djob.[Dimension Set ID] and djob.[Dimension Code] = 'JOB'
+
+LEFT JOIN ZYGO$Customer c ON h.[Customer No_] = c.No_
 
 WHERE [Outstanding Quantity] &lt;&gt; 0
 
@@ -478,6 +484,10 @@ ORDER BY
           <DataField>Backlog_Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
+        <Field Name="Customer_Group_Code">
+          <DataField>Customer Group Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
       </Fields>
     </DataSet>
   </DataSets>
@@ -488,6 +498,9 @@ ORDER BY
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -893,6 +906,43 @@ ORDER BY
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Customer Group Code</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -3101,6 +3151,41 @@ ORDER BY
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Customer_Group_Code">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Customer_Group_Code.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Customer_Group_Code</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Bill_to_Customer_No_">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -5019,6 +5104,7 @@ ORDER BY
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -5044,14 +5130,14 @@ ORDER BY
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>58.40626in</Width>
+            <Width>59.40626in</Width>
             <Style />
           </Tablix>
         </ReportItems>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>58.40626in</Width>
+      <Width>59.40626in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
