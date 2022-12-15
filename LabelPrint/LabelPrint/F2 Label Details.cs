@@ -434,7 +434,7 @@ namespace LabelPrint
              *  the image name.
              */
 
-            //g.printer = @"\\midprtsrv\zebrasn7";
+            g.printer = @"ZDesigner ZD421-201dpi ZPL";
             //Bitmap bzp = new Bitmap(@"c:\a\zygo_blk_noR_132.bmp");
             //Bitmap bxp = new Bitmap(@"c:\a\AMETEK_blk_noR_132.bmp");
             //line1 = "4\\\" Colimeter";

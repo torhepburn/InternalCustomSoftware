@@ -69,9 +69,9 @@ namespace _1000_1041_05_CE
              string desc = tbDescription.Text.Replace("\"", "\\\"");
              tbModel.Text = tbModel.Text.Replace("\"", "\\\"");
 
-            g.printer = "\\\\ct-mid-ps01\\zebrasn48";
+            //g.printer = "\\\\ct-mid-ps01\\zebrasn48";
+            g.printer = "\\\\ZDesigner ZD421-203dpi ZPL";
 
-            
 
             string str = "\nN\nq456.75Q253.75,20\n";
             //if (g.printer == @"\\CT-MID-PS01\ZEBRASN1" | g.printer == @"\\CT-MID-PS01\ZEBRASN20")
