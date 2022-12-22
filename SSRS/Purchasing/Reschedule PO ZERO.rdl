@@ -29,12 +29,9 @@ select Item from MRPresched1
 where document not like 'PRIR%'
               
 AND DueDate &lt;= '2023-06-30'
-
---AND YEAR(rescheduleDate) = '2023'
-
---AND MONTH(DueDate) &lt;&gt; MONTH(RescheduleDate)
 )
-
+,s2 AS
+(
 select DISTINCT m.* from MRPresched1 m
 
 INNER JOIN s1 ON m.Item = s1.Item
@@ -42,6 +39,16 @@ INNER JOIN s1 ON m.Item = s1.Item
 WHERE MONTH(DueDate) &lt;&gt; MONTH(RescheduleDate)
 
 AND Document not like '%Resched IN%'
+)
+
+select
+
+s2.*
+,DATEDIFF(dd,DueDate, rescheduleDate) PushoutDays
+
+FROM s2
+
+--WHERE DATEDIFF(dd,DueDate, rescheduleDate) &gt;30
 
 Order by item, duedate</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
@@ -87,6 +94,14 @@ Order by item, duedate</CommandText>
           <DataField>TwoWeekUSE</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
+        <Field Name="StockLocation">
+          <DataField>StockLocation</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="PushoutDays">
+          <DataField>PushoutDays</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
       </Fields>
     </DataSet>
   </DataSets>
@@ -125,6 +140,9 @@ Order by item, duedate</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -310,6 +328,45 @@ Order by item, duedate</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Stock Location</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -520,7 +577,7 @@ Order by item, duedate</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Two Week USE</Value>
+                                  <Value>Pushout Days</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -693,6 +750,43 @@ Order by item, duedate</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="StockLocation">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!StockLocation.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>StockLocation</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -885,14 +979,14 @@ Order by item, duedate</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="TwoWeekUSE">
+                        <Textbox Name="PushoutDays">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!TwoWeekUSE.Value</Value>
+                                  <Value>=Fields!PushoutDays.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -902,7 +996,7 @@ Order by item, duedate</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>TwoWeekUSE</rd:DefaultName>
+                          <rd:DefaultName>PushoutDays</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -925,6 +1019,7 @@ Order by item, duedate</CommandText>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -960,7 +1055,7 @@ Order by item, duedate</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>10in</Width>
+            <Width>11in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -968,7 +1063,7 @@ Order by item, duedate</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>10in</Width>
+      <Width>11in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
