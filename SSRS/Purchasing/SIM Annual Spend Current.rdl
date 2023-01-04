@@ -16,12 +16,22 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>DataSource1</DataSourceName>
-        <CommandText>WITH s1 AS
+        <CommandText>
+SET DATEFIRST 1;
+
+DECLARE @startdate date
+DECLARE @enddate date
+
+set @startdate = '2022-01-01'
+set @enddate = '2022-12-31';
+
+
+WITH s1 AS
 (
-SELECT 
+SELECT
 
 [Item No_]
-,SUM(Quantity) Quantity
+,SUM(Quantity) * -1 [Item Consumption]
 ,[Standard Cost]
 ,CASE i.SIM 
 	WHEN 0 THEN '0'
@@ -36,19 +46,27 @@ SELECT
 	WHEN 9 THEN 'C3'
 END [SIM]
 
-FROM [ZYGO$Item Ledger Entry] ile LEFT JOIN ZYGO$Item i ON ile.[Item No_] = i.No_
+FROM [ZYGO$Item Ledger Entry] ile
 
-WHERE 
+INNER JOIN ZYGO$Item i ON ile.[Item No_] = i.No_
 
-Vetted = 0 
+WHERE
 
-and [Replenishment System] = 0
+[Posting Date] &gt;= @startdate
+
+AND [Posting Date] &lt;= @enddate
 
 AND ([Entry Type] = 1 --Sale
 
 OR [Entry Type] = 5) --Consumption
 
-AND (P6 &gt; 0 OR F6 &gt; 0)
+AND [Replenishment System] = 0
+
+AND Vetted = 0
+
+--AND [Unit Cost] &gt; 0
+
+--AND [Item No_] = '1911-000-109'
 
 GROUP BY [Item No_], [Standard Cost], SIM
 )
@@ -56,7 +74,7 @@ GROUP BY [Item No_], [Standard Cost], SIM
 (
 SELECT
 	[Item No_]
-	,Quantity * -1 * [Standard Cost] [Item Spend]
+	,[Item Consumption] * [Standard Cost] [Item Spend]
 	,SIM
 
 FROM s1
@@ -66,10 +84,10 @@ FROM s1
 (
 SELECT
 
-SIM
+COALESCE(SIM,'') SIM
 ,COUNT(SIM) Parts
 ,SUM([Item Spend]) [SIM Spend]
-,LEFT(SIM, 1) [SIM Group]
+,COALESCE(LEFT(SIM, 1),'') [SIM Group]
 
 FROM s2
 
@@ -93,8 +111,6 @@ GROUP BY LEFT(SIM, 1)
 SELECT 
 
 *
-
-
 
 ,[SIM Spend]/SUM([SIM Spend]) OVER () * 100 [Pct of Total]
 
