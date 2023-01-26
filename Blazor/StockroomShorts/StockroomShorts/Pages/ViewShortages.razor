@@ -1,0 +1,91 @@
+﻿@page "/ViewShortages"
+
+<PageTitle>Stockroom Shortages</PageTitle>
+
+@using StockroomShorts.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Stockroom Shortages</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+
+<table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Stock Location</th>
+                <th>Entered On</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+                    <tr @onclick="() => Select(r[0].ToString())">
+                        <td>@r[0].ToString()</td>
+                        <td>@r[1].ToString()</td>
+                        <td>@r[2].ToString()</td>
+                        <td>@r[3].ToString()</td>
+                        <td>@r[4].ToString()</td>
+                    </tr>
+        }
+        </tbody>
+    </table>
+
+
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+        "  ID " +
+        ", COALESCE(PartNo, '') PartNo " +
+        ", COALESCE(Quantity, 0) Quantity " +
+        ", COALESCE(Stocklocation, '') [Stock Location] " +
+        ", COALESCE((CAST(Enteredon as varchar(10))), '') [Shortage Start Date] " +
+        " from StockroomShortages", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string id)
+    {
+        //g.ID = id;
+        NavMgr.NavigateTo("Comments");
+    }
+}
