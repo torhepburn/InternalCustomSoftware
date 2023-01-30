@@ -2,6 +2,163 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, Starting Index Page!</h1>
+@using StockroomShorts.Data
 
-Welcome to your new app.
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+
+<h1>Enter Production Order Number</h1>
+
+<style>
+    a:link {
+        color: rgb(220, 200, 0);
+        background-color: transparent;
+        text-decoration: none;
+    }
+
+    a:visited {
+        color: rgb(220, 0, 200);
+        background-color: transparent;
+        text-decoration: none;
+    }
+
+    a:hover {
+        color: blue;
+        background-color: transparent;
+        text-decoration: underline;
+    }
+
+    a:active {
+        color: rgb(220, 100, 0);
+        background-color: transparent;
+        text-decoration: underline;
+    }
+</style>
+
+
+
+<div class="border-0">
+    <EditForm Model="searchFilter" OnValidSubmit="getRecords">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @*<h4><i>Enter the UserName or Machine Name</i></h4>*@
+        <InputText id="num" placeholder="PDNNNNNN" @bind-Value="searchFilter" />
+
+
+        <input type="submit" class="btn btn-primary btn-sm" OnValidSubmit="getRecords" @onfocus="getRecords" title="Filter" value="Filter" />
+        @if (emptyText == true)
+        {
+            <br />
+
+            <br />
+            <h4><b>You must enter a Work Order Numbeer!</b></h4>
+        }
+        @if (dt != null && dt.Rows.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Work Order #</th>
+                        <th>WO Line #</th>
+                        <th>Component Line #</th>
+                        <th>Part #</th>
+                        <th>Part Description</th>
+                        <th>Expected Quantity</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dt != null)
+                    {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                            <tr>
+                                <td>@items[0].ToString()</td>
+                                <td>@items[1].ToString()</td>
+                                <td>@items[2].ToString()</td>
+                                <td>@items[3].ToString()</td>
+                                <td>@items[4].ToString()</td>
+                                <td>@items[5].ToString()</td>
+                                <td>@items[6].ToString()</td>
+                                @*<td>@items[7].ToString()</td>*@
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+        else if (dt != null && dt.Rows.Count == 0 && emptyText == false)
+        {
+            <br />
+
+            <br />
+            <h4><b>Nothing was found!</b></h4>
+        }
+    </EditForm>
+</div>
+
+
+@code {
+
+
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool emptyText = false;
+
+    protected override void OnInitialized()
+    {
+        
+    }
+    public void getRecords() 
+    {
+        dt = new DataTable();
+
+        SqlCommand cmd;
+        SqlConnection cnxn = new SqlConnection(g.dbNAV);
+        SqlDataReader dr;
+
+        if (searchFilter == "")
+        {
+            emptyText = true;
+        }
+        else
+        {
+            searchFilter = searchFilter.ToUpper();
+        }
+
+        cmd = new("SELECT " +
+                    "c.[Prod_ Order No_] " +
+                    ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +
+                    ",[Line No_] " +
+                    ",c.[Item No_] " +
+                    ",c.[Description] " +
+                    ",cast(c.[Expected Quantity] as int) " +
+                    ",c.[Bin Code] " +
+                    "FROM " +
+                    "[ZYGO$Prod_ Order Component] c " +
+                    "INNER JOIN [ZYGO$Item] i " +
+                    "ON c.[Item No_] = i.No_ " +
+                    "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
+                    "AND [Remaining Quantity] > 0 " +
+                    "AND [Prod_ Order No_] = '" + searchFilter + "' ", cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+}
+
+
