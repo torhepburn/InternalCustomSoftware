@@ -62,10 +62,10 @@
                     <tr>
                         <th>Work Order #</th>
                         <th>WO Line #</th>
-                        <th>Component Line #</th>
                         <th>Part #</th>
                         <th>Part Description</th>
-                        <th>Expected Quantity</th>
+                        <th>Remaining Quantity</th>
+                        <th>Bin Code</th>
                         <th>Location</th>
                     </tr>
                 </thead>
@@ -74,7 +74,7 @@
                     {
                         @foreach (DataRow items in dt.Rows)
                         {
-                            <tr>
+                            <tr @onclick="() => Select(items[11].ToString())">
                                 <td>@items[0].ToString()</td>
                                 <td>@items[1].ToString()</td>
                                 <td>@items[2].ToString()</td>
@@ -107,16 +107,19 @@
     public string searchFilter = "";
     public bool emptyText = false;
 
+    SqlCommand cmd;
+    SqlConnection cnxn;  
+
     protected override void OnInitialized()
     {
-        
+
     }
+
     public void getRecords() 
     {
         dt = new DataTable();
 
-        SqlCommand cmd;
-        SqlConnection cnxn = new SqlConnection(g.dbNAV);
+        cnxn = new SqlConnection(g.dbNAV);
         SqlDataReader dr;
 
         if (searchFilter == "")
@@ -128,21 +131,30 @@
             searchFilter = searchFilter.ToUpper();
         }
 
-        cmd = new("SELECT " +
-                    "c.[Prod_ Order No_] " +
-                    ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +
-                    ",[Line No_] " +
-                    ",c.[Item No_] " +
-                    ",c.[Description] " +
-                    ",cast(c.[Expected Quantity] as int) " +
-                    ",c.[Bin Code] " +
+        cmd = new(  "SELECT " +
+                    "c.[Prod_ Order No_] " +                                                        //0
+                    ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +                  //1
+                    ",c.[Item No_] " +                                                              //2
+                    ",c.[Description] [Part Desctiption] " +                                        //3
+                    ",cast(c.[Remaining Quantity] as int) " +                                       //4
+                    ",c.[Bin Code] " +                                                              //5
+                    ",c.[Location Code] " +                                                         //6
+                    ",o.[Buyer Planner Code] " +                                                    //7
+                    ",o.Description [Job Description] " +                                           //8
+                    ",o.[Reference] [Job Reference] " +                                             //9
+                    ",[Line No_] " +                                                                //10
+                    ",ROW_NUMBER() OVER(ORDER BY c.[Prod_ Order Line No_], [Line No_]) AS RowNo " +
+
                     "FROM " +
                     "[ZYGO$Prod_ Order Component] c " +
                     "INNER JOIN [ZYGO$Item] i " +
                     "ON c.[Item No_] = i.No_ " +
+                    "LEFT JOIN [ZYGO$Production Order] o ON c.[Prod_ Order No_] = o.[No_] " +
+
                     "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
                     "AND [Remaining Quantity] > 0 " +
-                    "AND [Prod_ Order No_] = '" + searchFilter + "' ", cnxn);
+                    "AND [Prod_ Order No_] = '" + searchFilter + "'"  +
+                    "ORDER BY [Prod_ Order Line No_], [Line No_]" ,cnxn);
         try
         {
             cnxn.Open();
@@ -158,6 +170,58 @@
             cnxn.Close();
 
         }
+    }
+
+    private void Select(string id)
+    {
+        int rN = Convert.ToInt32(id);
+        rN = rN - 1;
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("Insert into StockroomShortages (" +
+                    "[WO] " +
+                    ",[WOLine] " +
+                    ",[PartNo] " +
+                    ",[PartDescription] " +
+                    ",[Quantity] " +
+                    ",[StockLocation] " +
+                    ",[Planner] " +
+                    ",[JobDescription] " +
+                    ",[JobReference] " +
+                    ",[ComponentLine] " +
+                    ",[EnteredOn] " +
+                    ") VALUES (" +
+                    "'" + dt.Rows[rN][0].ToString() + "'" +
+                    ",'" + dt.Rows[rN][1].ToString() + "'" +
+                    ",'" + dt.Rows[rN][2].ToString() + "'" +
+                    ",'" + dt.Rows[rN][3].ToString() + "'" +
+                    ",'" + dt.Rows[rN][4].ToString() + "'" +
+                    ",'" + dt.Rows[rN][5].ToString() + "'" +
+                    ",'" + dt.Rows[rN][7].ToString() + "'" +
+                    ",'" + dt.Rows[rN][8].ToString() + "'" +
+                    ",'" + dt.Rows[rN][9].ToString() + "'" +
+                    ",'" + dt.Rows[rN][10].ToString() + "'" +
+                    ",'" + DateTime.Now + "'" +
+                    ")", cnxn);
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+
+        //g.ID = id;
+        //NavigateTo("AddShortage");
     }
 }
 
