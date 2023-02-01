@@ -1,0 +1,222 @@
+﻿@page "/editshortage"
+
+<PageTitle>Edit Shortage</PageTitle>
+
+@using StockroomShorts.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+
+<h1>Edit Shortage</h1>
+<br />
+Date : @enteredOn
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>Work Order Number</th>
+            <th>Part Number</th>
+            <th>Part Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@wo</td>
+            <td>@item</td>
+            <td>@partdescription</td>
+        </tr>
+    </tbody>
+</table>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Production Order Line Number</th>
+            <th>Job Descriptioin</th>
+            <th>Job Reference</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@woline</td>
+            <td>@job</td>
+            <td>@jobreference</td>
+        </tr>
+    </tbody>
+</table>
+ <h4>
+ <label>Quantity Shortage Part: @quantity</label>
+ </h4>
+
+<EditForm Model="item" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+        
+    <br /><br />Location :
+    <InputText id="n8" placeholder="Location" @bind-Value="location" />
+    <br /><br />Bin Code :
+    <InputText id="n8" placeholder="BinCode" @bind-Value="binCode" />
+    <br /><br />Stockroom Associate :
+    <InputText id="n9" placeholder="Skt Rm Assoc #" style="width: 20%" @bind-Value="storekeeper" />
+    <br /><br />Cost Center :
+    <InputText id="n10" placeholder="Cost Center Code" @bind-Value="costcenter" />
+    <br /><br />Planneer :
+    <InputText id="n11" placeholder="Planner" @bind-Value="planner" />
+    <br /><br />Due Date :
+    <InputText id="n11" placeholder="Due Date" @bind-Value="duedate" />
+    <InputDate id="n12" required @bind-Value="_dateSample.ddate"/>
+
+
+</EditForm>
+<br />
+<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+
+<button class="btn btn-primary " @onclick="Archive">Archive</button>
+
+
+@code {
+
+    public class DateSample
+    {
+        public DateTime ddate { get; set; }
+    }
+    private DateSample _dateSample = new DateSample();
+
+    public string enteredOn = "";
+    public string wo = "";
+    public string woline = "";
+    public string job = "";
+    public string jobreference = "";
+    public string item = "";
+    public string partdescription = "";
+    public string quantity = "";
+    public string location = "";
+    public string binCode = "";
+    public string storekeeper = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                "COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
+                ", COALESCE(WO, '') " +
+                ", COALESCE(PartNo, '') " +
+                ", COALESCE(PartDescription, '') " +
+                ", COALESCE(WOLine, '') " +
+                ", COALESCE(JobDescription, '') " +
+                ", COALESCE(JobReference, '') " +
+                ", COALESCE(Quantity, 0) " +
+                ", COALESCE(Stocklocation, '') " +
+                ", COALESCE(CostCenter, '') " +
+                ", COALESCE(StockRoomAssociate,'') " +
+                ", COALESCE(Planner, '') " +
+                ", COALESCE(FORMAT([DueDate], 'MM/dd/yy'), '') " +
+                ", COALESCE(Location, '') " +
+                ", ID " +
+                " from StockroomShortages WHERE ID = '" + g.ShortageID + "' " +
+                " AND Archived = 0 " +
+                "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                enteredOn = dr.GetString(0);
+                wo = dr.GetString(1);
+                item = dr.GetString(2);
+                partdescription = dr.GetString(3);
+                woline = dr.GetInt32(4).ToString();
+                job = dr.GetString(5);
+                jobreference = dr.GetString(6);
+                quantity = dr.GetInt32(7).ToString();
+                binCode = dr.GetString(8);
+                storekeeper = dr.GetString(9);
+                costcenter = dr.GetString(10);
+                planner = dr.GetString(11);
+                duedate = dr.GetString(12);
+                location = dr.GetString(13);
+            }
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        _dateSample.ddate = DateTime.Now;
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortages " +
+                    "SET [StockLocation] = '" + binCode + "'" +
+                    ",[StockRoomAssociate] = '" + storekeeper + "'" +
+                    ",[CostCenter] = '" + costcenter + "'" +
+                    ",[Planner] = '" + planner + "'" + 
+                    ",[DueDate] = '" + duedate + "'" +
+                    ",Location = '" + location + "' " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+    }
+
+    public void Archive()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortages " +
+                    "SET [Archived] = 1 " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+}

@@ -18,14 +18,16 @@
             <tr>
                 <th>Date</th>
                 <th>Work Order #</th>
+                <th>Part #</th>
+                <th>Part Description</th>
                 <th>WO Line #</th>
                 <th>Job Description</th>
                 <th>Job Reference</th>
-                 <th>Part #</th>
-                <th>Part Description</th>
                 <th>Quantity Short</th>
                 <th>Location</th>
+                <th>Bin Code</th>
                 <th>Cost Center</th>
+                <th>Stockrom Associate</th>
                 <th>Planner</th>
                 <th>Due Date</th>
             </tr>
@@ -33,7 +35,7 @@
         <tbody>
         @foreach (DataRow r in dt.Rows)
         {
-                    <tr @onclick="() => Select(r[0].ToString())">
+                    <tr @onclick="() => Select(r[14].ToString())">
                         <td>@r[0].ToString()</td>
                         <td>@r[1].ToString()</td>
                         <td>@r[2].ToString()</td>
@@ -46,6 +48,7 @@
                         <td>@r[9].ToString()</td>
                         <td>@r[10].ToString()</td>
                         <td>@r[11].ToString()</td>
+                        <td>@r[12].ToString()</td>
                     </tr>
         }
         </tbody>
@@ -73,21 +76,23 @@
         cnxn = new SqlConnection(g.db);
 
         cmd = new("select " +
-        " COALESCE((CAST(Enteredon as varchar(10))), '') " +
+        " COALESCE(FORMAT([EnteredOn],'MM/dd/yy'), '') " +
         ", COALESCE(WO, '') " +
-        ", COALESCE(WOLine, '') " +
-        ", COALESCE(ComponentLine, '') " +
-        ", COALESCE(JobDescription, '') " +
-        ", COALESCE(JobReference, '') " +
         ", COALESCE(PartNo, '') " +
         ", COALESCE(PartDescription, '') " +
+        ", COALESCE(WOLine, '') " +
+        ", COALESCE(JobDescription, '') " +
+        ", COALESCE(JobReference, '') " +
         ", COALESCE(Quantity, 0) " +
+        ", COALESCE(Location, '') " +
         ", COALESCE(Stocklocation, '') " +
         ", COALESCE(CostCenter, '') " +
+        ", COALESCE(StockRoomAssociate,'') " +
         ", COALESCE(Planner, '') " +
         ", COALESCE(DueDate, '') " +
-        
+        ", ID " +
         " from StockroomShortages " +
+        "WHERE Archived = 0 " +
         "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
 
         try
@@ -107,9 +112,9 @@
         }
     }
 
-    private void Select(string id)
+    private void Select(string ID)
     {
-        //g.ID = id;
-        NavMgr.NavigateTo("Comments");
+        g.ShortageID = ID;
+        NavMgr.NavigateTo("EditShortage");
     }
 }

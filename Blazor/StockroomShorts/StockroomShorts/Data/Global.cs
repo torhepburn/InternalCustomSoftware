@@ -22,7 +22,7 @@ namespace StockroomShorts.Data
 
         public DateTime Date { get; set; }
 
-        public string? RequestID { get; set; }
+        public string? ShortageID { get; set; }
 
         public int CommentID { get; set; }
 
