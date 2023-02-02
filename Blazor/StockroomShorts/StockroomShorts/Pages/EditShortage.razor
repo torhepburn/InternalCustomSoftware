@@ -44,6 +44,21 @@ Date : @enteredOn
         </tr>
     </tbody>
 </table>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date Entered</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@wo</td>
+            <td>@item</td>
+0        </tr>
+    </tbody>
+</table>
  <h4>
  <label>Quantity Shortage Part: @quantity</label>
  </h4>
@@ -73,6 +88,8 @@ Date : @enteredOn
 
 <button class="btn btn-primary " @onclick="Archive">Archive</button>
 
+<AddComment></AddComment>
+
 
 @code {
 
@@ -96,6 +113,8 @@ Date : @enteredOn
     public string costcenter = "";
     public string planner = "";
     public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
 
     SqlCommand cmd;
     SqlConnection cnxn;
@@ -109,7 +128,8 @@ Date : @enteredOn
         cnxn = new SqlConnection(g.db);
 
         cmd = new SqlCommand("SELECT " +
-                "COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
+                " ID " +
+                ", COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
                 ", COALESCE(WO, '') " +
                 ", COALESCE(PartNo, '') " +
                 ", COALESCE(PartDescription, '') " +
@@ -121,9 +141,8 @@ Date : @enteredOn
                 ", COALESCE(CostCenter, '') " +
                 ", COALESCE(StockRoomAssociate,'') " +
                 ", COALESCE(Planner, '') " +
-                ", COALESCE(FORMAT([DueDate], 'MM/dd/yy'), '') " +
+                ", COALESCE([DueDate], '') " +
                 ", COALESCE(Location, '') " +
-                ", ID " +
                 " from StockroomShortages WHERE ID = '" + g.ShortageID + "' " +
                 " AND Archived = 0 " +
                 "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
@@ -134,20 +153,20 @@ Date : @enteredOn
             dr = cmd.ExecuteReader();
             while (dr.Read())
             {
-                enteredOn = dr.GetString(0);
-                wo = dr.GetString(1);
-                item = dr.GetString(2);
-                partdescription = dr.GetString(3);
-                woline = dr.GetInt32(4).ToString();
-                job = dr.GetString(5);
-                jobreference = dr.GetString(6);
-                quantity = dr.GetInt32(7).ToString();
-                binCode = dr.GetString(8);
-                storekeeper = dr.GetString(9);
-                costcenter = dr.GetString(10);
-                planner = dr.GetString(11);
-                duedate = dr.GetString(12);
-                location = dr.GetString(13);
+                enteredOn = dr.GetString(1);
+                wo = dr.GetString(2);
+                item = dr.GetString(3);
+                partdescription = dr.GetString(4);
+                woline = dr.GetInt32(5).ToString();
+                job = dr.GetString(6);
+                jobreference = dr.GetString(7);
+                quantity = dr.GetInt32(8).ToString();
+                binCode = dr.GetString(9);
+                storekeeper = dr.GetString(10);
+                costcenter = dr.GetString(11);
+                planner = dr.GetString(12);
+                duedate = dr.GetString(13);
+                location = dr.GetString(14);
             }
 
             dt.Load(dr);
@@ -161,6 +180,32 @@ Date : @enteredOn
             cnxn.Close();
 
         }
+
+        cmd = new SqlCommand("SELECT " +
+                "COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
+                ", COALESCE(Comment, '') " +
+                " from StockroomComments WHERE ShortageID = '" + g.ShortageID + "' " +
+                "ORDER BY [EnteredOn] DESC", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                commentEntered = dr.GetString(1);
+                comment = dr.GetString(0);
+            }
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
 
         _dateSample.ddate = DateTime.Now;
     }

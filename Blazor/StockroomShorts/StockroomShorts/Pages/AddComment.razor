@@ -1,0 +1,64 @@
+﻿@page "/addcomment"
+
+<PageTitle>Add Comment</PageTitle>
+
+
+@using StockroomShorts.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>Add Comment</h1>
+
+<EditForm Model="comment" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText id="n1" placeholder="Comment" style="width: 100%; height: 50px" @bind-Value="comment" />
+    <br /><br />
+    @*<InputText id="n2" placeholder="Email To" @bind-Value="emailTo" />
+    <br /><br />
+    <InputText id="n3" placeholder="Email From" @bind-Value="emailFrom" />*@
+        
+</EditForm>
+<br />
+<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+
+
+@code
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+
+    public string comment = "";
+    //public string emailFrom = "";
+    //public string emailTo = "";
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("Insert into StockroomComments (ShortageID,Comment,EnteredOn) values ( " +
+            "'" + g.ShortageID + "'" +
+            ",'" + comment + "'" +
+            ",'" + DateTime.Now + "'" +
+            ")", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+}

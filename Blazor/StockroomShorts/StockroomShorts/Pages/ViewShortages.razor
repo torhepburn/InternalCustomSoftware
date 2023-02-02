@@ -1,4 +1,4 @@
-﻿@page "/ViewShortages"
+﻿@page "/"
 
 <PageTitle>Stockroom Shortages</PageTitle>
 
@@ -18,10 +18,9 @@
             <tr>
                 <th>Date</th>
                 <th>Work Order #</th>
-                <th>Part #</th>
+                <th>Part Number</th>
                 <th>Part Description</th>
-                <th>WO Line #</th>
-                <th>Job Description</th>
+               @* <th>WO Line #</th>*@
                 <th>Job Reference</th>
                 <th>Quantity Short</th>
                 <th>Location</th>
@@ -30,25 +29,29 @@
                 <th>Stockrom Associate</th>
                 <th>Planner</th>
                 <th>Due Date</th>
+                <th>Most Recent Comment</th>
+                <th>Comment Date</th>
             </tr>
         </thead>
         <tbody>
         @foreach (DataRow r in dt.Rows)
         {
-                    <tr @onclick="() => Select(r[14].ToString())">
-                        <td>@r[0].ToString()</td>
+                    <tr @onclick="() => Select(r[0].ToString())">
                         <td>@r[1].ToString()</td>
                         <td>@r[2].ToString()</td>
                         <td>@r[3].ToString()</td>
                         <td>@r[4].ToString()</td>
-                        <td>@r[5].ToString()</td>
-                        <td>@r[6].ToString()</td>
+                        @*<td>@r[5].ToString()</td>*@
                         <td>@r[7].ToString()</td>
                         <td>@r[8].ToString()</td>
                         <td>@r[9].ToString()</td>
                         <td>@r[10].ToString()</td>
                         <td>@r[11].ToString()</td>
                         <td>@r[12].ToString()</td>
+                        <td>@r[13].ToString()</td>
+                        <td>@r[14].ToString()</td>
+                        <td>@r[15].ToString()</td>
+                        <td>@r[16].ToString()</td>
                     </tr>
         }
         </tbody>
@@ -75,8 +78,27 @@
 
         cnxn = new SqlConnection(g.db);
 
-        cmd = new("select " +
-        " COALESCE(FORMAT([EnteredOn],'MM/dd/yy'), '') " +
+        cmd = new(
+                     "WITH s1 AS " +
+                     "( " +
+                    " SELECT " +
+                    " ShortageID " +
+                    ",MAX(CommentID) CommentID " +
+                    " FROM StockroomComments " +
+                    " GROUP BY ShortageID  " +
+                    ") " +
+                    ",s2 AS " +
+                    "( " +
+                    "	SELECT " +
+                    "	s1.ShortageID " +
+                    "	,Comment " +
+                    "   ,FORMAT([EnteredOn],'MM/dd/yy') EnteredOn " +
+                    "	FROM StockroomComments c " +
+                    " INNER JOIN s1 ON s1.ShortageID = c.ShortageID and s1.CommentID = c.CommentID " +
+                    ") " +
+        " select " +
+        " ID " +
+        ", COALESCE(FORMAT(s.[EnteredOn],'MM/dd/yy'), '') " +
         ", COALESCE(WO, '') " +
         ", COALESCE(PartNo, '') " +
         ", COALESCE(PartDescription, '') " +
@@ -90,10 +112,12 @@
         ", COALESCE(StockRoomAssociate,'') " +
         ", COALESCE(Planner, '') " +
         ", COALESCE(DueDate, '') " +
-        ", ID " +
-        " from StockroomShortages " +
+        ", COALESCE(s2.Comment,'') " +
+        ", COALESCE(s2.EnteredOn,'') " +
+        " from StockroomShortages s" +
+        " LEFT JOIN s2 ON s.ID = s2.ShortageID " +
         "WHERE Archived = 0 " +
-        "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
+        "ORDER BY s.[EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
 
         try
         {
