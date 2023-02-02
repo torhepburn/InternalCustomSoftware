@@ -7,6 +7,8 @@
 @using System.Data
 @using Microsoft.Data.SqlClient
 @inject Global g
+@inject NavigationManager NavMgr
+
 
 <h1>Edit Shortage</h1>
 <br />
@@ -18,6 +20,7 @@ Date : @enteredOn
             <th>Work Order Number</th>
             <th>Part Number</th>
             <th>Part Description</th>
+            <th>Quantity</th>
         </tr>
     </thead>
     <tbody>
@@ -25,6 +28,7 @@ Date : @enteredOn
             <td>@wo</td>
             <td>@item</td>
             <td>@partdescription</td>
+            <td>@quantity</td>
         </tr>
     </tbody>
 </table>
@@ -44,30 +48,62 @@ Date : @enteredOn
         </tr>
     </tbody>
 </table>
-<br />
+
 <table class="table">
     <thead>
         <tr>
-            <th>Date Entered</th>
+            <th>Comment Date</th>
             <th>Comment</th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>@wo</td>
-            <td>@item</td>
-0        </tr>
+        @foreach (DataRow r in dtc.Rows)
+        {
+            <tr>
+                <td>@r[0].ToString()</td>
+                <td>@r[1].ToString()</td>
+            </tr>
+        }
     </tbody>
 </table>
- <h4>
- <label>Quantity Shortage Part: @quantity</label>
- </h4>
+ 
 
 <EditForm Model="item" OnValidSubmit="DataEntry">
     <DataAnnotationsValidator />
     <ValidationSummary />
-        
-    <br /><br />Location :
+    <table>
+        <tbody>
+            <tr>
+                <td>
+                    Location :
+                    <InputText id="n8" placeholder="Location" @bind-Value="location" />
+                </td>
+                <td>
+                    Bin Code :
+                    <InputText id="n9" placeholder="BinCode" @bind-Value="binCode" /> 
+                </td>
+                <td>
+                    Stockroom Associate :
+                    <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="storekeeper" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Cost Center :
+                    <InputText id="n11" placeholder="CostCenter" @bind-Value="costcenter" />
+                </td>
+                <td>
+                    Planner :
+                    <InputText id="n12" placeholder="Planner" @bind-Value="planner" />
+                </td>
+                <td>
+                    Due Date :
+                    <InputText id="n13" placeholder="Due Date" @bind-Value="duedate" />
+                </td>
+            </tr>
+        </tbody>
+    </table>    
+    @*<br /><br />Location :
     <InputText id="n8" placeholder="Location" @bind-Value="location" />
     <br /><br />Bin Code :
     <InputText id="n8" placeholder="BinCode" @bind-Value="binCode" />
@@ -79,7 +115,7 @@ Date : @enteredOn
     <InputText id="n11" placeholder="Planner" @bind-Value="planner" />
     <br /><br />Due Date :
     <InputText id="n11" placeholder="Due Date" @bind-Value="duedate" />
-    <InputDate id="n12" required @bind-Value="_dateSample.ddate"/>
+    <InputDate id="n12" required @bind-Value="_dateSample.ddate"/>*@
 
 
 </EditForm>
@@ -120,6 +156,7 @@ Date : @enteredOn
     SqlConnection cnxn;
     SqlDataReader dr;
     DataTable dt;
+    DataTable dtc;
 
     protected override void OnInitialized()
     {
@@ -128,21 +165,21 @@ Date : @enteredOn
         cnxn = new SqlConnection(g.db);
 
         cmd = new SqlCommand("SELECT " +
-                " ID " +
-                ", COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
-                ", COALESCE(WO, '') " +
-                ", COALESCE(PartNo, '') " +
-                ", COALESCE(PartDescription, '') " +
-                ", COALESCE(WOLine, '') " +
-                ", COALESCE(JobDescription, '') " +
-                ", COALESCE(JobReference, '') " +
-                ", COALESCE(Quantity, 0) " +
-                ", COALESCE(Stocklocation, '') " +
-                ", COALESCE(CostCenter, '') " +
-                ", COALESCE(StockRoomAssociate,'') " +
-                ", COALESCE(Planner, '') " +
-                ", COALESCE([DueDate], '') " +
-                ", COALESCE(Location, '') " +
+                " ID " +                                                //0
+                ", COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +     //1
+                ", COALESCE(WO, '') " +                                 //2
+                ", COALESCE(PartNo, '') " +                             //3
+                ", COALESCE(PartDescription, '') " +                    //4
+                ", COALESCE(WOLine, '') " +                             //5
+                ", COALESCE(JobDescription, '') " +                     //6
+                ", COALESCE(JobReference, '') " +                       //7
+                ", COALESCE(Quantity, 0) " +                            //8
+                ", COALESCE(Stocklocation, '') " +                      //9
+                ", COALESCE(CostCenter, '') " +                         //10
+                ", COALESCE(StockRoomAssociate,'') " +                  //11
+                ", COALESCE(Planner, '') " +                            //12
+                ", COALESCE([DueDate], '') " +                          //13
+                ", COALESCE(Location, '') " +                           //14
                 " from StockroomShortages WHERE ID = '" + g.ShortageID + "' " +
                 " AND Archived = 0 " +
                 "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
@@ -162,8 +199,8 @@ Date : @enteredOn
                 jobreference = dr.GetString(7);
                 quantity = dr.GetInt32(8).ToString();
                 binCode = dr.GetString(9);
-                storekeeper = dr.GetString(10);
-                costcenter = dr.GetString(11);
+                storekeeper = dr.GetString(11);
+                costcenter = dr.GetString(10);
                 planner = dr.GetString(12);
                 duedate = dr.GetString(13);
                 location = dr.GetString(14);
@@ -181,6 +218,9 @@ Date : @enteredOn
 
         }
 
+
+        dtc = new DataTable();
+
         cmd = new SqlCommand("SELECT " +
                 "COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
                 ", COALESCE(Comment, '') " +
@@ -191,11 +231,8 @@ Date : @enteredOn
         {
             cnxn.Open();
             dr = cmd.ExecuteReader();
-            while (dr.Read())
-            {
-                commentEntered = dr.GetString(1);
-                comment = dr.GetString(0);
-            }
+
+            dtc.Load(dr);
         }
         catch (SqlException ex)
         {
@@ -238,7 +275,7 @@ Date : @enteredOn
             cnxn.Close();
         }
 
-
+        NavMgr.NavigateTo("/");
     }
 
     public void Archive()
@@ -263,5 +300,7 @@ Date : @enteredOn
         {
             cnxn.Close();
         }
+
+        NavMgr.NavigateTo("/");
     }
 }
