@@ -16,7 +16,9 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAVPROD</DataSourceName>
-        <CommandText>select
+        <CommandText>WITH s1 AS
+(
+select
 
 Distinct
 
@@ -25,19 +27,19 @@ h.No_ [Sales Order No.]
 ,REPLACE(h.[Assigned User ID], 'AMETEK-AD\','') [Sales Admin]
 ,h.[Sell-to Customer No_]
 ,c.Name as [Sell-to Name]
-,CASE c.Blocked
+,COALESCE(CASE c.Blocked
 	WHEN 1 THEN 'Ship'
                    WHEN 2 THEN 'Invoice'
 	WHEN 3 THEN 'All'
-END [Sell-to Blocked]
+END,'') [Sell-to Blocked]
 ,FORMAT(c.[Credit Limit (LCY)], '#0.##') [Sell-to Credit Limit]
 ,h.[Bill-to Customer No_]
 ,c1.Name [Bill-to Name]
-,CASE c1.Blocked
+,COALESCE(CASE c1.Blocked
 	WHEN 1 THEN 'Ship'
                    WHEN 2 THEN 'Invoice'
 	WHEN 3 THEN 'All'
-END [Bill-to Blocked]
+END,'') [Bill-to Blocked]
 ,FORMAT(c1.[Credit Limit (LCY)], '#0.##') [Bill-to Credit Limit]
 ,FORMAT(l.[Planned Shipment Date], 'MM-dd-yyyy') [Planned Shipment Date]
 ,CASE 
@@ -65,11 +67,11 @@ from [ZYGO$Sales Header] h
 
 INNER JOIN [ZYGO$Sales Line] l on h.No_ = l.[Document No_]
 
-INNER JOIN [ZYGO$Customer] c on h.[Bill-to Customer No_] = c.No_
+LEFT JOIN [ZYGO$Customer] c on h.[Bill-to Customer No_] = c.No_
 
-INNER JOIN [ZYGO$Customer] c1 on h.[Sell-to Customer No_] = c1.No_
+LEFT JOIN [ZYGO$Customer] c1 on h.[Sell-to Customer No_] = c1.No_
 
-INNER JOIN [ZYGO$Item] i on i.No_ = l.No_
+LEFT JOIN [ZYGO$Item] i on i.No_ = l.No_
 
 where ((c.[Credit Limit (LCY)] = .01 or c1.[Credit Limit (LCY)] = .01
 
@@ -82,6 +84,31 @@ OR LEN(h.[On Hold]) &gt; 0)
 AND [Outstanding Quantity] &gt; 0
 
 and l.[Planned Shipment Date] &lt; (GETDATE() + 21)
+)
+,s2 AS
+(
+SELECT
+
+SUM([Amount Including VAT]) ShipmentTotal
+,s1.[Sales Order No.]
+,s1.[Planned Shipment Date]
+,l.[Shortcut Dimension 2 Code]
+
+FROM [ZYGO$Sales Line] l
+
+INNER JOIN s1 ON s1.[Sales Order No.] = l.[Document No_] AND s1.[Planned Shipment Date] = l.[Planned Shipment Date]
+
+AND s1.[Business Segment] = l.[Shortcut Dimension 2 Code]
+
+GROUP BY s1.[Sales Order No.], s1.[Planned Shipment Date], l.[Shortcut Dimension 2 Code]
+)
+
+SELECT s1.*
+,s2.ShipmentTotal
+
+FROM s1 LEFT JOIN s2 ON s1.[Sales Order No.] = s2.[Sales Order No.] AND s1.[Planned Shipment Date] = s2.[Planned Shipment Date]
+
+AND s1.[Business Segment] = s2.[Shortcut Dimension 2 Code]
 
 order by [Planned Shipment Date]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
@@ -142,6 +169,10 @@ order by [Planned Shipment Date]</CommandText>
         <Field Name="On_Hold_Reason">
           <DataField>On Hold Reason</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ShipmentTotal">
+          <DataField>ShipmentTotal</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -222,6 +253,9 @@ order by [Planned Shipment Date]</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.29167in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
               </TablixColumns>
               <TablixRows>
@@ -760,6 +794,43 @@ order by [Planned Shipment Date]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox15">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Shipment Total</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -1271,12 +1342,50 @@ order by [Planned Shipment Date]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ShipmentTotal">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ShipmentTotal.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>'$'0.00;('$'0.00)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>ShipmentTotal</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1316,7 +1425,7 @@ order by [Planned Shipment Date]</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>16.02084in</Width>
+            <Width>17.02084in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1324,7 +1433,7 @@ order by [Planned Shipment Date]</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>16.02084in</Width>
+      <Width>17.02084in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
