@@ -1,0 +1,236 @@
+﻿@page "/updateData"
+
+<PageTitle>Update Data</PageTitle>
+
+@using StockroomShorts.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Data Updating</h1>
+
+@*
+<table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Work Order #</th>
+                <th>WO Line #</th>
+                <th>Job Description</th>
+                <th>Job Reference</th>
+                 <th>Part #</th>
+                <th>Part Description</th>
+                <th>Expected Quantity</th>
+                <th>Location</th>
+                <th>Cost Center</th>
+                <th>Planner</th>
+                <th>Due Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+                    <tr @onclick="() => Select(r[0].ToString())">
+                        <td>@r[0].ToString()</td>
+                        <td>@r[1].ToString()</td>
+                        <td>@r[2].ToString()</td>
+                        <td>@r[3].ToString()</td>
+                        <td>@r[4].ToString()</td>
+                        <td>@r[5].ToString()</td>
+                        <td>@r[6].ToString()</td>
+                        <td>@r[7].ToString()</td>
+                        <td>@r[8].ToString()</td>
+                        @*<td>@r[9].ToString()</td>
+                        <td>@r[10].ToString()</td>
+                        <td>@r[11].ToString()</td>
+                    </tr>
+        }
+        </tbody>
+    </table>
+*@
+
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlConnection cnxnNAV;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+    public string select = "";
+    public string tableName = "";
+
+    protected override void OnInitialized()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("TRUNCATE TABLE Item_WO_Released_MID_OFS ", cnxn);
+
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+
+        cmd = new("TRUNCATE TABLE [Item_OH_MID_OFS] ", cnxn);
+
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+
+        dt = new DataTable();
+
+        select = "SELECT " +
+                  "[Item No_] " +
+                  ",SUM([Remaining Quantity]) Quantity " +
+                  "from [ZYGO$Prod_ Order Line] " +
+                  "WHERE " +
+                  "Status = 3 " +
+                  "AND [Location Code] in ('MID','OFS') " +
+                  "AND [Remaining Quantity] > 0 " +
+                  "GROUP BY [Item No_] ";
+
+        tableName = "Item_WO_Released_MID_OFS";
+
+        MakeTables();
+
+        select = "SELECT " +
+                  "[Item No_] " +
+                  ",SUM([Quantity]) Quantity " +
+                  "from [ZYGO$Item Ledger Entry] " +
+                  "WHERE " +
+                  "[Location Code] in ('MID','OFS') " +
+                  "GROUP BY [Item No_] ";
+
+        tableName = "[Item_OH_MID_OFS]";
+
+        MakeTables();
+
+        //green first
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = '' WHERE color = 'green'", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'green' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.Quantity > 0", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        //yellow second
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = '' WHERE color = 'yellow'", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'yellow' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_WO_Released_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.Quantity > 0 " +
+                      " AND ss.color != 'green'", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        //red third
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = 'red' WHERE LEN(COALESCE(color,'') = 0 AND archived = 0 ", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        NavMgr.NavigateTo("viewShortages");
+    }
+
+    private void MakeTables()
+    {
+        cnxnNAV = new SqlConnection(g.dbNAV);
+        SqlCommand cmd = new SqlCommand(select, cnxnNAV);
+        SqlDataAdapter da = new SqlDataAdapter(select, cnxnNAV);
+        DataTable table = new DataTable();
+        da.Fill(table);
+
+        cnxn = new SqlConnection(g.db);
+
+        cnxn.Open();
+        SqlBulkCopy copy = new SqlBulkCopy(cnxn);
+        copy.DestinationTableName = tableName;
+
+        try
+        {
+            copy.WriteToServer(table);
+        }
+        catch (Exception ex)
+        {
+            //MessageBox.Show(ex.ToString());
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+
+    private void Select(string id)
+    {
+        //g.ID = id;
+        //NavMgr.NavigateTo("AddShortage");
+    }
+}
