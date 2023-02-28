@@ -104,8 +104,7 @@ namespace AVALARA_s1
                     {
                         cnxn2.Open();
                         SqlDataReader dr2 = cmd1.ExecuteReader();
-                        int nn = 0;
-
+                        
                         while (dr2.Read())
                         {
                             

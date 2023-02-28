@@ -618,28 +618,28 @@ namespace AVALARA_s1
 
                 while (dr.Read())
                 {
-                    var filePath = string.Empty;
-                    filePath = @"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx";
-                    filePath = filePath.Replace("US DocumentSummaryReport", dr.GetString(0).Trim());
-                    filePath = filePath.Replace("mod.xlsx", ".xlsx");
-                    File.Copy(@"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx", filePath);
+                    var filePath1 = string.Empty;
+                    filePath1 = @"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx";
+                    filePath1 = filePath1.Replace("US DocumentSummaryReport", dr.GetString(0).Trim());
+                    filePath1 = filePath1.Replace("mod.xlsx", ".xlsx");
+                    File.Copy(@"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx", filePath1);
 
-                    Microsoft.Office.Interop.Excel.Application xlappM;
-                    Microsoft.Office.Interop.Excel.Workbook wbookM;
-                    Microsoft.Office.Interop.Excel.Worksheet wsheetM;
+                    Microsoft.Office.Interop.Excel.Application xlappM1;
+                    Microsoft.Office.Interop.Excel.Workbook wbookM1;
+                    Microsoft.Office.Interop.Excel.Worksheet wsheetM1;
 
-                    xlappM = new Microsoft.Office.Interop.Excel.Application();
-                    xlappM.Visible = true;
-                    xlappM.DisplayAlerts = false;
-                    wbookM = xlappM.Workbooks.Open(filePath);
-                    wbookM = xlappM.ActiveWorkbook;
-                    wsheetM = xlappM.ActiveSheet;
-                    wsheetM.Delete();
-                    wsheetM = xlappM.ActiveSheet;
+                    xlappM1 = new Microsoft.Office.Interop.Excel.Application();
+                    xlappM1.Visible = true;
+                    xlappM1.DisplayAlerts = false;
+                    wbookM1 = xlappM1.Workbooks.Open(filePath1);
+                    wbookM1 = xlappM1.ActiveWorkbook;
+                    wsheetM1 = xlappM1.ActiveSheet;
+                    wsheetM1.Delete();
+                    wsheetM1 = xlappM1.ActiveSheet;
 
-                    wsheetM.Cells[9, 2] = dr.GetString(0).Trim();
+                    wsheetM1.Cells[9, 2] = dr.GetString(0).Trim();
 
-                    Microsoft.Office.Interop.Excel.Range range = wsheetM.Range["A15", "A500"];
+                    Microsoft.Office.Interop.Excel.Range range = wsheetM1.Range["A15", "A500"];
                     Microsoft.Office.Interop.Excel.Range entireRow = range.EntireRow;
 
                     entireRow.Delete();
@@ -669,22 +669,21 @@ namespace AVALARA_s1
                     string[] aDate = new string[500];
                     decimal[] aTot = new decimal[500];
                     decimal[] aDisc = new decimal[500];
-                    decimal[] aAmount = new decimal[500];
+                    decimal[] aAmount1 = new decimal[500];
                     decimal[] aAmountVAT = new decimal[500];
                     decimal[] aTax = new decimal[500];
                     string[] aName = new string[500];
-                    string[] aCity = new string[500];
-                    string[] aState = new string[500];
-                    string[] aLoc = new string[500];
+                    string[] aCity1 = new string[500];
+                    string[] aState1 = new string[500];
+                    string[] aLoc1 = new string[500];
 
-                    int i = 0;
+                    int i1 = 0;
 
                     try
                     {
                         cnxn2.Open();
                         SqlDataReader dr2 = cmd1.ExecuteReader();
-                        int nn = 0;
-
+                        
                         while (dr2.Read())
                         {
 
@@ -694,14 +693,14 @@ namespace AVALARA_s1
                             aDate[i] = dr2.GetDateTime(2).ToShortDateString().Trim();
                             aTot[i] = dr2.GetDecimal(3);
                             aDisc[i] = dr2.GetDecimal(4);
-                            aAmount[i] = dr2.GetDecimal(5);
+                            aAmount1[i] = dr2.GetDecimal(5);
                             aAmountVAT[i] = dr2.GetDecimal(6);
                             aTax[i] = dr2.GetDecimal(7);
                             aName[i] = dr2.GetString(8).Trim();
-                            aCity[i] = dr2.GetString(9).Trim();
-                            aState[i] = dr2.GetString(10).Trim();
-                            aLoc[i] = dr2.GetString(11).Trim();
-                            i++;
+                            aCity1[i] = dr2.GetString(9).Trim();
+                            aState1[i] = dr2.GetString(10).Trim();
+                            aLoc1[i] = dr2.GetString(11).Trim();
+                            i1++;
                         }
                     }
                     catch (SqlException ex)
@@ -713,23 +712,23 @@ namespace AVALARA_s1
                         cnxn2.Close();
                     }
 
-                    for (int n = 0; n < i; n++)
+                    for (int n = 0; n < i1; n++)
                     {
-                        wsheetM.Cells[(15 + n), 1] = aDoc[n];
-                        wsheetM.Cells[(15 + n), 2] = aCust[n];
-                        wsheetM.Cells[(15 + n), 3] = aDate[n];
-                        wsheetM.Cells[(15 + n), 4] = aTot[n];
-                        wsheetM.Cells[(15 + n), 5] = aDisc[n];
-                        wsheetM.Cells[(15 + n), 6] = aAmount[n];
-                        wsheetM.Cells[(15 + n), 7] = aAmountVAT[n];
-                        wsheetM.Cells[(15 + n), 8] = aTax[n];
-                        wsheetM.Cells[(15 + n), 9] = aName[n];
-                        wsheetM.Cells[(15 + n), 10] = aCity[n];
-                        wsheetM.Cells[(15 + n), 11] = aState[n];
-                        wsheetM.Cells[(15 + n), 12] = aLoc[n];
+                        wsheetM1.Cells[(15 + n), 1] = aDoc[n];
+                        wsheetM1.Cells[(15 + n), 2] = aCust[n];
+                        wsheetM1.Cells[(15 + n), 3] = aDate[n];
+                        wsheetM1.Cells[(15 + n), 4] = aTot[n];
+                        wsheetM1.Cells[(15 + n), 5] = aDisc[n];
+                        wsheetM1.Cells[(15 + n), 6] = aAmount1[n];
+                        wsheetM1.Cells[(15 + n), 7] = aAmountVAT[n];
+                        wsheetM1.Cells[(15 + n), 8] = aTax[n];
+                        wsheetM1.Cells[(15 + n), 9] = aName[n];
+                        wsheetM1.Cells[(15 + n), 10] = aCity1[n];
+                        wsheetM1.Cells[(15 + n), 11] = aState1[n];
+                        wsheetM1.Cells[(15 + n), 12] = aLoc1[n];
                     }
 
-                    wsheetM.Cells[(15 + i), 1] = "";
+                    wsheetM1.Cells[(15 + i1), 1] = "";
 
                     cmd1 = new SqlCommand("SELECT " +
                         "SUM(TotalSales) " +
@@ -759,26 +758,26 @@ namespace AVALARA_s1
                         cnxn2.Close();
                     }
 
-                    wsheetM.Cells[(15 + i + 2), 1] = "Company Total";
-                    wsheetM.Cells[(15 + i + 2), 4] = dt.Rows[0][0].ToString();
-                    wsheetM.Cells[(15 + i + 2), 5] = "0.00";
-                    wsheetM.Cells[(15 + i + 2), 6] = dt.Rows[0][1].ToString();
-                    wsheetM.Cells[(15 + i + 2), 7] = dt.Rows[0][2].ToString();
-                    wsheetM.Cells[(15 + i + 2), 8] = dt.Rows[0][3].ToString();
+                    wsheetM1.Cells[(15 + i1 + 2), 1] = "Company Total";
+                    wsheetM1.Cells[(15 + i1 + 2), 4] = dt.Rows[0][0].ToString();
+                    wsheetM1.Cells[(15 + i1 + 2), 5] = "0.00";
+                    wsheetM1.Cells[(15 + i1 + 2), 6] = dt.Rows[0][1].ToString();
+                    wsheetM1.Cells[(15 + i1 + 2), 7] = dt.Rows[0][2].ToString();
+                    wsheetM1.Cells[(15 + i1 + 2), 8] = dt.Rows[0][3].ToString();
 
-                    wsheetM.Cells[(15 + i + 4), 1] = "Grand Total";
-                    wsheetM.Cells[(15 + i + 4), 4] = dt.Rows[0][0].ToString();
-                    wsheetM.Cells[(15 + i + 4), 5] = "0.00";
-                    wsheetM.Cells[(15 + i + 4), 6] = dt.Rows[0][1].ToString();
-                    wsheetM.Cells[(15 + i + 4), 7] = dt.Rows[0][2].ToString();
-                    wsheetM.Cells[(15 + i + 4), 8] = dt.Rows[0][3].ToString();
+                    wsheetM1.Cells[(15 + i1 + 4), 1] = "Grand Total";
+                    wsheetM1.Cells[(15 + i1 + 4), 4] = dt.Rows[0][0].ToString();
+                    wsheetM1.Cells[(15 + i1 + 4), 5] = "0.00";
+                    wsheetM1.Cells[(15 + i1 + 4), 6] = dt.Rows[0][1].ToString();
+                    wsheetM1.Cells[(15 + i1 + 4), 7] = dt.Rows[0][2].ToString();
+                    wsheetM1.Cells[(15 + i1 + 4), 8] = dt.Rows[0][3].ToString();
 
-                    wbookM.Save();
+                    wbookM1.Save();
 
-                    wbookM.Close(null, null, null);
-                    xlappM.Quit();
+                    wbookM1.Close(null, null, null);
+                    xlappM1.Quit();
                     //Microsoft.Office.Interop.Excel = null;
-                    System.Runtime.InteropServices.Marshal.ReleaseComObject(xlappM);
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(xlappM1);
 
                 }
             }
