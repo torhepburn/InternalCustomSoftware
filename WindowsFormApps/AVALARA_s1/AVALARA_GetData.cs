@@ -618,11 +618,11 @@ namespace AVALARA_s1
 
                 while (dr.Read())
                 {
-                    var filePath1 = string.Empty;
-                    filePath1 = @"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx";
+                    var filePath1 = filePath;
+                    //filePath1 = @"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx";
                     filePath1 = filePath1.Replace("US DocumentSummaryReport", dr.GetString(0).Trim());
                     filePath1 = filePath1.Replace("mod.xlsx", ".xlsx");
-                    File.Copy(@"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx", filePath1);
+                    File.Copy(filePath, filePath1);
 
                     Microsoft.Office.Interop.Excel.Application xlappM1;
                     Microsoft.Office.Interop.Excel.Workbook wbookM1;
@@ -688,18 +688,18 @@ namespace AVALARA_s1
                         {
 
 
-                            aDoc[i] = dr2.GetString(0).Trim();
-                            aCust[i] = dr2.GetString(1).Trim();
-                            aDate[i] = dr2.GetDateTime(2).ToShortDateString().Trim();
-                            aTot[i] = dr2.GetDecimal(3);
-                            aDisc[i] = dr2.GetDecimal(4);
-                            aAmount1[i] = dr2.GetDecimal(5);
-                            aAmountVAT[i] = dr2.GetDecimal(6);
-                            aTax[i] = dr2.GetDecimal(7);
-                            aName[i] = dr2.GetString(8).Trim();
-                            aCity1[i] = dr2.GetString(9).Trim();
-                            aState1[i] = dr2.GetString(10).Trim();
-                            aLoc1[i] = dr2.GetString(11).Trim();
+                            aDoc[i1] = dr2.GetString(0).Trim();
+                            aCust[i1] = dr2.GetString(1).Trim();
+                            aDate[i1] = dr2.GetDateTime(2).ToShortDateString().Trim();
+                            aTot[i1] = dr2.GetDecimal(3);
+                            aDisc[i1] = dr2.GetDecimal(4);
+                            aAmount1[i1] = dr2.GetDecimal(5);
+                            aAmountVAT[i1] = dr2.GetDecimal(6);
+                            aTax[i1] = dr2.GetDecimal(7);
+                            aName[i1] = dr2.GetString(8).Trim();
+                            aCity1[i1] = dr2.GetString(9).Trim();
+                            aState1[i1] = dr2.GetString(10).Trim();
+                            aLoc1[i1] = dr2.GetString(11).Trim();
                             i1++;
                         }
                     }
