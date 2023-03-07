@@ -72,8 +72,13 @@ namespace AVALARA_s1
                        ", DocumentDate " +
                        ", TotalSales " +
                        ", 0.0 " +
-                       ", Amount " +
-                       ", [Amount Including VAT] " +
+                       ",CASE " +
+                       "    WHEN [Sales Tax] = 0 THEN Amount" +
+                       "    ELSE 0" +
+                       "END NonTaxable" +
+                       ", CASE WHEN [Sales Tax] > 0 THEN Amount" +
+                       "    ELSE 0" +
+                       "    END Taxable" +
                        ", [Sales Tax] " +
                        ", [Ship-to Name] " +
                        ", [Ship-to City] " +
@@ -90,8 +95,8 @@ namespace AVALARA_s1
                     string[] aDate = new string[500];
                     decimal[] aTot = new decimal[500];
                     decimal[] aDisc = new decimal[500];
-                    decimal[] aAmount = new decimal[500];
-                    decimal[] aAmountVAT = new decimal[500];
+                    decimal[] aAmountNT = new decimal[500];
+                    decimal[] aAmountT = new decimal[500];
                     decimal[] aTax = new decimal[500];
                     string[] aName = new string[500];
                     string[] aCity = new string[500];
@@ -114,8 +119,8 @@ namespace AVALARA_s1
                             aDate[i] = dr2.GetDateTime(2).ToShortDateString().Trim();
                             aTot[i] = dr2.GetDecimal(3);
                             aDisc[i] = dr2.GetDecimal(4);
-                            aAmount[i] = dr2.GetDecimal(5);
-                            aAmountVAT[i] = dr2.GetDecimal(6);
+                            aAmountNT[i] = dr2.GetDecimal(5);
+                            aAmountT[i] = dr2.GetDecimal(6);
                             aTax[i] = dr2.GetDecimal(7);
                             aName[i] = dr2.GetString(8).Trim();
                             aCity[i] = dr2.GetString(9).Trim();
@@ -140,8 +145,8 @@ namespace AVALARA_s1
                         wsheetM.Cells[(15 + n), 3] = aDate[n];
                         wsheetM.Cells[(15 + n), 4] = aTot[n];
                         wsheetM.Cells[(15 + n), 5] = aDisc[n];
-                        wsheetM.Cells[(15 + n), 6] = aAmount[n];
-                        wsheetM.Cells[(15 + n), 7] = aAmountVAT[n];
+                        wsheetM.Cells[(15 + n), 6] = aAmountNT[n];
+                        wsheetM.Cells[(15 + n), 7] = aAmountT[n];
                         wsheetM.Cells[(15 + n), 8] = aTax[n];
                         wsheetM.Cells[(15 + n), 9] = aName[n];
                         wsheetM.Cells[(15 + n), 10] = aCity[n];
@@ -153,8 +158,13 @@ namespace AVALARA_s1
 
                     cmd1 = new SqlCommand("SELECT " +
                         "SUM(TotalSales) " +
-                        ",SUM(Amount) " +
-                        ",SUM([Amount Including VAT]) " +
+                        ",SUM(CASE " +
+                       "    WHEN [Sales Tax] = 0 THEN Amount" +
+                       "    ELSE 0" +
+                       "END) " +
+                       ",SUM(CASE WHEN [Sales Tax] > 0 THEN Amount" +
+                       "    ELSE 0" +
+                       "    END)" +
                         ",SUM([Sales Tax]) " +
                         "FROM AVALARA_match a " +
                         " LEFT JOIN AVALARA_s1_NAVinvoiceData t ON a.CustomerNo = t.[Customer No] " +
