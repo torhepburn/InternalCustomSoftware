@@ -22,22 +22,20 @@
       <Query>
         <DataSourceName>NAV_TEST</DataSourceName>
         <QueryParameters>
-          <QueryParameter Name="@month">
-            <Value>=Parameters!month.Value</Value>
+          <QueryParameter Name="@start">
+            <Value>=Parameters!start.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
-          <QueryParameter Name="@year">
-            <Value>=Parameters!year.Value</Value>
+          <QueryParameter Name="@end">
+            <Value>=Parameters!end.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@workCenter">
+            <Value>=Parameters!workCenter.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>--DECLARE @month int
---,@year int
-
---SET @month = 10
---Set @year = 2023;
-
-
+        <CommandText>
 WITH s1 AS
 (
 select
@@ -47,15 +45,21 @@ No_
 	WHEN CHARINDEX('-',No_) = 0 THEN SUM([Capacity (Total)])
 	WHEN CHARINDEX('-',No_) &gt; 0 THEN SUM([Capacity (Effective)])
 END Capacity
+,YEAR([Date]) [Year]
+,MONTH([Date]) [Month]
 
 
-from [ZYGO$Calendar Entry] where 1=1 --LEFT(No_,3) = '161'
+from [ZYGO$Calendar Entry] 
 
-and MONTH(Date) = @month
+WHERE
 
-AND YEAR(Date) = @year
+[Date] &gt;= @start
 
-GROUP BY No_
+AND [Date] &lt;= @end
+
+AND   LEFT(No_,3) = @workCenter
+
+GROUP BY No_ ,YEAR([Date]),MONTH([Date])
 )
 ,s2 AS
 (
@@ -63,16 +67,20 @@ SELECT
 
 No_
 ,SUM([Allocated Time]) Allocated
+,YEAR([Date]) [Year]
+,MONTH([Date]) [Month]
 
 FROM [ZYGO$Prod_ Order Capacity Need]
 
-WHERE 1=1 --LEFT(No_,3) = '161'
+WHERE
 
-and MONTH(Date) = @month
+Date &gt;= @start
 
-AND YEAR(Date) = @year
+AND Date &lt;= @end
 
-GROUP BY No_
+AND   LEFT(No_,3) = @workCenter
+
+GROUP BY No_ ,YEAR([Date]),MONTH([Date])
 )
 ,s3 AS
 (
@@ -82,8 +90,6 @@ GROUP BY No_
 	,Name
 
 	FROM [ZYGO$Machine Center]
-
-	--WHERE [Work Center No_] IN ('161')
 )
 ,s4 AS
 (
@@ -104,17 +110,17 @@ END Name
 ,s1.Capacity
 ,s2.Allocated
 ,FORMAT(s2.Allocated/s1.Capacity,'P') Load
-,@month [Month]
-,@year [Year]
+, s1.[Month]
+, s1.[Year]
 
 
-FROM s1 Right JOIN s2 ON s1.No_ = s2.No_
+FROM s1 Right JOIN s2 ON s1.No_ = s2.No_ AND s1.[Year] = s2.[Year] and s1.[Month] = s2.[Month]
 
 LEFT JOIN s3 ON s2.No_ = s3.No_
 
 LEFT JOIN s4 ON s4.No_ = s2.No_
 
-ORDER BY s2.No_</CommandText>
+ORDER BY s1.No_,s1.[Month], s1.[Year]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -140,11 +146,25 @@ ORDER BY s2.No_</CommandText>
         </Field>
         <Field Name="Month">
           <DataField>Month</DataField>
-          <rd:TypeName>System.Object</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="Year">
           <DataField>Year</DataField>
-          <rd:TypeName>System.Object</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="WorkCenters">
+      <Query>
+        <DataSourceName>NAV_TEST</DataSourceName>
+        <CommandText>SELECT No_ FROM [ZYGO$Work Center]
+
+ORDER BY No_</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="No_">
+          <DataField>No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -812,105 +832,45 @@ ORDER BY s2.No_</CommandText>
     </ReportSection>
   </ReportSections>
   <ReportParameters>
-    <ReportParameter Name="month">
+    <ReportParameter Name="workCenter">
       <DataType>String</DataType>
-      <Prompt>Month</Prompt>
+      <Prompt>Work Center</Prompt>
       <ValidValues>
-        <ParameterValues>
-          <ParameterValue>
-            <Value>1</Value>
-            <Label>January</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>2</Value>
-            <Label>February</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>3</Value>
-            <Label>March</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>4</Value>
-            <Label>April</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>5</Value>
-            <Label>May</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>6</Value>
-            <Label>June</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>7</Value>
-            <Label>July</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>8</Value>
-            <Label>August</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>9</Value>
-            <Label>September</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>10</Value>
-            <Label>October</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>11</Value>
-            <Label>November</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>12</Value>
-            <Label>December</Label>
-          </ParameterValue>
-        </ParameterValues>
+        <DataSetReference>
+          <DataSetName>WorkCenters</DataSetName>
+          <ValueField>No_</ValueField>
+          <LabelField>No_</LabelField>
+        </DataSetReference>
       </ValidValues>
     </ReportParameter>
-    <ReportParameter Name="year">
-      <DataType>String</DataType>
-      <Prompt>Year</Prompt>
-      <ValidValues>
-        <ParameterValues>
-          <ParameterValue>
-            <Value>2023</Value>
-            <Label>2023</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>2024</Value>
-            <Label>2024</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>2025</Value>
-            <Label>2025</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>2026</Value>
-            <Label>2026</Label>
-          </ParameterValue>
-          <ParameterValue>
-            <Value>2027</Value>
-            <Label>2027</Label>
-          </ParameterValue>
-        </ParameterValues>
-      </ValidValues>
+    <ReportParameter Name="start">
+      <DataType>DateTime</DataType>
+      <Prompt>Starting Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="end">
+      <DataType>DateTime</DataType>
+      <Prompt>Ending Date</Prompt>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
-      <NumberOfColumns>4</NumberOfColumns>
-      <NumberOfRows>2</NumberOfRows>
+      <NumberOfColumns>3</NumberOfColumns>
+      <NumberOfRows>1</NumberOfRows>
       <CellDefinitions>
-        <CellDefinition>
-          <ColumnIndex>0</ColumnIndex>
-          <RowIndex>0</RowIndex>
-          <ParameterName>month</ParameterName>
-        </CellDefinition>
         <CellDefinition>
           <ColumnIndex>1</ColumnIndex>
           <RowIndex>0</RowIndex>
-          <ParameterName>year</ParameterName>
+          <ParameterName>start</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>2</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>end</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>workCenter</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>
