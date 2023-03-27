@@ -22,13 +22,14 @@ SELECT
 ,c.[No_] [Customer Number]
 ,c.Name [Customer Name]
 ,sh.[End User Customer Name]
+,REPLACE(sh.[Assigned User ID],'AMETEK-AD\','') AssignedUser
 ,[Document No_]
 ,[SO Line No_]
 ,sl. No_
 ,[Description]
 ,sl.[Location Code]
 ,[Outstanding Quantity]
-,sl.Amount
+,sl.[Line Amount]
 ,sl.[Amount Including VAT]
 ,sl.[Amount Including VAT] - sl.Amount [Tax]
 ,COALESCE(sh.[Ship-to County], '') [Ship-to Code]
@@ -49,8 +50,6 @@ AND [Planned Delivery Date] &lt;= (DATEADD(Wk,4, GETDATE()))
 
 AND [Ship-to Country_Region Code] = 'USA'
 
-AND sl.[Amount Including VAT] - sl.Amount &gt; 0
-
 
 UNION ALL
 
@@ -59,8 +58,9 @@ SELECT
 		
 	svl.[Planned Delivery Date]
 	,svl.[Bill-to Customer No_] [Sell-to Customer No_]
-	,c.Name
+	,c.Name [Customer Name]
 	,svh.[End User Customer Name] 
+	,REPLACE(svh.[Assigned User ID],'AMETEK-AD\','') AssignedUser
 	,svl.[Document No_]
 	,svl.[Srv Line No_]
 	,svl.No_ 
@@ -68,9 +68,9 @@ SELECT
 	,svl.[Location Code]
 	
 	,svl.[Outstanding Quantity]
-	,svl.Amount
+	,svl.[Line Amount]
 ,svl.[Amount Including VAT]
-,svl.[Amount Including VAT] - svl.Amount [Tax]
+,svl.[Amount Including VAT] - svl.[Line Amount] [Tax]
 ,COALESCE(svh.[Ship-to County], '') [Ship-to Code]
 
 	FROM [ZYGO$Service Header] svh
@@ -88,8 +88,6 @@ AND [Planned Delivery Date] &gt;= GETDATE()
 AND [Planned Delivery Date] &lt;= (DATEADD(Wk,4, GETDATE()))
 
 AND [Ship-to Country_Region Code] = 'USA'
-
-AND svl.[Amount Including VAT] - svl.Amount &gt; 0
 
 
 
@@ -117,6 +115,10 @@ ORDER BY [Planned Delivery Date]
           <DataField>End User Customer Name</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
+        <Field Name="AssignedUser">
+          <DataField>AssignedUser</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
         <Field Name="Document_No_">
           <DataField>Document No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
@@ -141,8 +143,8 @@ ORDER BY [Planned Delivery Date]
           <DataField>Outstanding Quantity</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Amount">
-          <DataField>Amount</DataField>
+        <Field Name="Line_Amount">
+          <DataField>Line Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Amount_Including_VAT">
@@ -195,6 +197,9 @@ ORDER BY [Planned Delivery Date]
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -386,6 +391,43 @@ ORDER BY [Planned Delivery Date]
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Assigned User</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -637,7 +679,7 @@ ORDER BY [Planned Delivery Date]
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Amount</Value>
+                                  <Value>Line Amount</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -944,6 +986,41 @@ ORDER BY [Planned Delivery Date]
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="AssignedUser">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!AssignedUser.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>AssignedUser</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Document_No_">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1165,14 +1242,14 @@ ORDER BY [Planned Delivery Date]
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Amount">
+                        <Textbox Name="Line_Amount">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Amount.Value</Value>
+                                  <Value>=Fields!Line_Amount.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;('$'0.00)</Format>
@@ -1185,7 +1262,7 @@ ORDER BY [Planned Delivery Date]
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Amount</rd:DefaultName>
+                          <rd:DefaultName>Line_Amount</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1340,6 +1417,7 @@ ORDER BY [Planned Delivery Date]
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1365,7 +1443,7 @@ ORDER BY [Planned Delivery Date]
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>14in</Width>
+            <Width>15in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
