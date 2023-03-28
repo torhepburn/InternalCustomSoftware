@@ -256,7 +256,7 @@ namespace R_T_V
                 ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
                 ",Actual_Hours [Actual Hours] " +
                 ",Rejected " +
-                "from [Ric.tool_requests] h " +
+                "FROM ric.Tool_Requests " +
                  "where " +
                  selection;
 
