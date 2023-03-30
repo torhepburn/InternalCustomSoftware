@@ -1,0 +1,270 @@
+﻿@page "/editrequest"
+
+<PageTitle>Edit Service Request</PageTitle>
+
+@using Service.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>Edit Service Request</h1>
+<br />
+<br />
+
+
+<div>
+    <EditForm Model="item" OnValidSubmit="DataEntry">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <table>
+            <tbody>
+                <tr>
+                    <td align="right">
+                        Date Entered :
+                        <InputText id="n1" placeholder="Date Entered" @bind-Value="dateentered" />
+                    </td>
+                    </tr>
+                    <tr>
+                    <td align="right">
+                        Equipment :
+                        <InputText id="n2" placeholder="Equipment" @bind-Value="equipment" />
+                    </td>
+                    </tr>
+                <tr>
+                    <td align="right">
+                        Model or Part Number :
+                        <InputText id="n3" placeholder="Model or Part Number" @bind-Value="modelpartnumber" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Serial Number :
+                        <InputText id="n4" placeholder="Serial Number" @bind-Value="serialnumber" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Contact or Operator :
+                        <InputText id="n5" placeholder="Contact/Operator" @bind-Value="contactoperator" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Location :
+                        <InputText id="n6" placeholder="Location" @bind-Value="location" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Cost Center :
+                        <InputText id="n7" placeholder="Cost Center" @bind-Value="costcenter" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        Description of Failure :
+                        <InputText id="n8" placeholder="Failure Description" style="width: 100%; height: 200px" @bind-Value="failuredescription" />
+                    </td>
+                </tr>
+
+
+                <tr>
+                    <td align="right">
+                        AssignedTo :
+                        <InputText id="n9" placeholder="Assigned To" @bind-Value="assignedto" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Resolution :
+                        <InputText id="n10" placeholder="Resolution" @bind-Value="resolution" />
+                    </td>
+                    
+                </tr>
+
+            </tbody>
+        </table>
+
+    </EditForm>
+
+    <br />
+    <button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+
+    <button class="btn btn-primary " @onclick="Archive">Archive</button>
+</div>
+
+
+    
+
+@code {
+    public string dateentered = "";
+    public string equipment = "";
+    public string modelpartnumber = "";
+    public string serialnumber = "";
+    public string item = "";
+    public string contactoperator = "";
+    public string location = "";
+    public string failuredescription = "";
+    public string resolution = "";
+    public string assignedto = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    DataTable dtc;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                "  COALESCE(FORMAT([DateEntered], 'MM/dd/yy'),'') " +     //1
+                ", COALESCE(EquipmentName, '') " +                                 //2
+                ", COALESCE(ModelPartNumber, '') " +                             //3
+                ", COALESCE(SerialNumber, '') " +                    //4
+                ", COALESCE(ContactOperator, '') " +                             //5
+                ", COALESCE(Location, '') " +                           
+                ", COALESCE(CostCenter, '') " +
+                ", COALESCE(FailureDescription, '') " +                       //7
+                ", COALESCE(FORMAT([CompletionDate], 'MM/dd/yy'),'')  " +                            //8
+                ", COALESCE(AssignedTo, '') " +                             //9
+                ", COALESCE(Resolution, '') " +                             
+                                                                     //", COALESCE(CostCenter, '') " +                         //10
+                                                                     //", COALESCE(StockRoomAssociate,'') " +                  //11
+                                                                     //", COALESCE(Planner, '') " +                            //12
+                                                                     //", COALESCE([DueDate], '') " +                          //13
+                                                                     //", COALESCE(Location, '') " +                           //14
+                " from ServiceRequests WHERE UID = '" + g.UID + "' " +
+                " AND Archive = 0 "
+                , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                dateentered = dr.GetString(0);
+                equipment = dr.GetString(1);
+                modelpartnumber = dr.GetString(2);
+                serialnumber = dr.GetString(3);
+                contactoperator = dr.GetString(4);
+                location = dr.GetString(5);
+                costcenter = dr.GetString(6);
+                failuredescription = dr.GetString(7);
+                assignedto = dr.GetString(8);
+                resolution = dr.GetString(10);
+                //duedate = dr.GetString(13);
+                //location = dr.GetString(14);
+            }
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+
+        //dtc = new DataTable();
+
+        ////cmd = new SqlCommand("SELECT " +
+        ////        "COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +
+        ////        ", COALESCE(Comment, '') " +
+        ////        " from StockroomComments WHERE ShortageID = '" + g.ShortageID + "' " +
+        ////        "ORDER BY [EnteredOn] DESC", cnxn);
+
+        //try
+        //{
+        //    cnxn.Open();
+        //    dr = cmd.ExecuteReader();
+
+        //    dtc.Load(dr);
+        //}
+        //catch (SqlException ex)
+        //{
+        //    ex.ToString();
+        //}
+        //finally
+        //{
+        //    cnxn.Close();
+        //}
+
+
+        
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE ServiceRequests " +
+                    "SET [Location] = '" + location + "'" +
+                    ",[AssignedTo] = '" + assignedto + "'" +
+                    ",[CostCenter] = '" + costcenter + "'" +
+                    ",[Resolution] = '" + resolution + "'" +
+                    //",[DueDate] = '" + duedate + "'" +
+                    //",Location = '" + location + "' " +
+                    "WHERE UID = '" + g.UID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("/");
+    }
+
+    public void Archive()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE ServiceRequests " +
+                    "SET [Archive] = 1 " +
+                    ",DateArchived ='" + DateTime.Now + "' " +
+                    "WHERE UID = '" + g.UID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("/");
+    }
+}

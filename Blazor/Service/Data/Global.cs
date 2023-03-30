@@ -4,6 +4,9 @@ namespace Service.Data
     {
         public string db { get; set; } = "server = CT-MID-SQL11; password = Read+Write!; " +
                                         "user = readWrite; database = AccessFrontends; encrypt=false;";
+
+        public string UID { get; set; }
+
         public DateTime Date { get; set; }
 
         public int TemperatureC { get; set; }
