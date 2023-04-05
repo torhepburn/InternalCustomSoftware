@@ -84,67 +84,57 @@
         cmd.ExecuteNonQuery();
         cnxn.Close();
 
+        cmd = new("TRUNCATE TABLE [StS_WO_Components_Issued] ", cnxn);
+
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+
         dt = new DataTable();
 
-        select = 
-        //          "[Item No_] " +
-        //          ",SUM([Remaining Quantity]) Quantity " +
-        //          "from [ZYGO$Prod_ Order Line] " +
-        //          "WHERE " +
-        //          "Status = 3 " +
-        //          "AND [Location Code] in ('MID','OFS') " +
-        //          "AND [Remaining Quantity] > 0 " +
-        //          "GROUP BY [Item No_] ";
-        "WITH OFS AS " +
-        "( " +
-        "SELECT " +
-        "[Item No_] " +
-        ", SUM([Remaining Quantity]) OFS_Q " +
-        "   FROM [ZYGO$Prod_ Order Line] " +
-        "	WHERE [Location Code] IN ('MID') " +
-        "	AND [Bin Code] LIKE '%OFS%' " +
-        "	GROUP BY [Item No_]  " +
-        "), " +
-        "IQC AS " +
-        "( " +
-        "SELECT " +
-        "[Item No_] " +
-        ", SUM([Remaining Quantity]) IQC_Q " +
-        "	FROM [ZYGO$Prod_ Order Line] " +
-        "WHERE [Location Code] IN ('MID') " +
-        "	AND [Bin Code] LIKE '%IQC%' " +
-        "	GROUP BY [Item No_]  " +
-        "), " +
-        "OH AS " +
-        "( " +
-        "SELECT " +
-        "[Item No_] " +
-        ", SUM([Remaining Quantity]) OO_Q " +
-        "	FROM [ZYGO$Prod_ Order Line] " +
-        "WHERE [Location Code] IN ('MID') " +
-        "	AND ([Bin Code] NOT LIKE '%IQC%' AND [Bin Code] NOT LIKE '%OFS%') " +
-        "	GROUP BY [Item No_]  " +
-        ") " +
-        "SELECT " +
-        "OH.[Item No_] " +
-        ",OO_Q OO " +
-        ",COALESCE(OFS_Q,0) OFS " +
-        ",COALESCE(IQC_Q,0) IQC " +
-        "FROM OH LEFT JOIN OFS ON OH.[Item No_] = OFS.[Item No_] " +
-        "LEFT JOIN IQC ON OH.[Item No_] = IQC.[Item No_] ";
+        select ="WITH OFS AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) OFS_Q " +
+                "   FROM [ZYGO$Prod_ Order Line] " +
+                "	WHERE [Location Code] IN ('MID') " +
+                "	AND [Bin Code] LIKE '%OFS%' " +
+                "	GROUP BY [Item No_]  " +
+                "), " +
+                "IQC AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) IQC_Q " +
+                "	FROM [ZYGO$Prod_ Order Line] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "	AND [Bin Code] LIKE '%IQC%' " +
+                "	GROUP BY [Item No_]  " +
+                "), " +
+                "OH AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) OO_Q " +
+                "	FROM [ZYGO$Prod_ Order Line] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "	AND ([Bin Code] NOT LIKE '%IQC%' AND [Bin Code] NOT LIKE '%OFS%') " +
+                "	GROUP BY [Item No_]  " +
+                ") " +
+                "SELECT " +
+                "OH.[Item No_] " +
+                ",OO_Q OO " +
+                ",COALESCE(OFS_Q,0) OFS " +
+                ",COALESCE(IQC_Q,0) IQC " +
+                "FROM OH LEFT JOIN OFS ON OH.[Item No_] = OFS.[Item No_] " +
+                "LEFT JOIN IQC ON OH.[Item No_] = IQC.[Item No_] ";
 
 
         tableName = "Item_WO_Released_MID_OFS";
 
         MakeTables();
 
-        //select = "SELECT " +
-        //          "[Item No_] " +
-        //          ",SUM([Quantity]) Quantity " +
-        //          "from [ZYGO$Item Ledger Entry] " +
-        //          "WHERE " +
-        //          "[Location Code] in ('MID','OFS') " +
-        //          "GROUP BY [Item No_] ";
 
         select = " WITH OFS AS " +
                  "( " +
@@ -188,6 +178,51 @@
         tableName = "[Item_OH_MID_OFS]";
 
         MakeTables();
+
+
+        select = " select " +
+                 "[Prod_ Order No_] [WO] " +
+                 ",[Prod_ Order Line No_] [WOLine] " +
+                 ",[Line No_] [ComponentLine] " +
+                 ",[Item No_] [PartNo] " +
+                 "from [ZYGO$Prod_ Order Component] " +
+                 "WHERE Status IN (3,4) " +
+                 "AND [Remaining Quantity] = 0 ";
+
+
+        tableName = "[StS_WO_Components_Issued]";
+
+        MakeTables();
+
+        //archived issued components
+
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET Archived = 1 " +
+                      " from Stockroomshortages ss " +
+                      " inner join [StS_WO_Components_Issued] s1 " +
+                      " on s1.[WO] = ss.WO " +
+                      " AND s1.WOLine = ss.WOLine " +
+                      " AND s1.ComponentLine = ss.ComponentLine " +
+                      " where archived = 0 ", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+
 
         //green first - On Hand in warehouse
 
