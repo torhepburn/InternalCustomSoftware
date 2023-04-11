@@ -10,9 +10,9 @@ namespace RichmondDesignRequest.Data
 
         public string? location { get; set; }
 
-        public string? duedate { get; set; }
+        public string? requestor { get; set; }
 
-        public string? ShortageID { get; set; }
+        public string? requestorEmail { get; set; }
 
         public int CommentID { get; set; }
 

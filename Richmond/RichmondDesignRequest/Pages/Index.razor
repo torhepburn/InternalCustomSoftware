@@ -1,39 +1,40 @@
 ﻿@page "/"
 
 @using RichmondDesignRequest.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
 
 <PageTitle>Richmond Design Request Form</PageTitle>
 
-<table align="center">
+<table width="100%">
     <tr>
-        <td>
+        <td align="center">
             <h3>Richmond Design Request</h3>
         </td>
     </tr>
     <tr>
-        <td>
+        <td align="center">
             Items marked with an asterisk <a>*</a> require an entry.<br />
         </td>
     </tr>
-    <tr>
-        <td>
-            Items marked with an asterisk <a>*</a> require an entry.<br />
+   @* <tr>
+        <td align="center">
+            <EditForm Model="data" OnValidSubmit="DataEntry">
+            <InputCheckbox @bind-Value="cbPersist"></InputCheckbox> Check this box if you want to make multiple entries and have some selections remain.
+            </EditForm>
         </td>
     </tr>
     <tr>
-        <td>
-            Submit Tool Room request prior to attaching support document (pdf format required).
+        <td align="center">
+            Submit Design request prior to attaching support document (pdf format required).
         </td>
-    </tr>
+    </tr>*@
 </table>
+   <br />         
 
-
-
-
-
-            
-            <asp:CheckBox ID="cbPersist" Text="Check this box if you want to make multiple entries and have some selections remain.   " runat="server" AutoPostBack="true" />
-            
 
 <EditForm Model="data" OnValidSubmit="DataEntry">
 <DataAnnotationsValidator />
@@ -41,109 +42,181 @@
 
 
 
-<table>
+<table width="100%" cellpadding="8">
   
-  
+    <tr>
+        <td>
+            * Name :
+                <InputSelect id="s1" class="form-control" @bind-Value="selectedID">
+.                    <option value="">Must Select an Employee</option>
+                    @foreach (DataRow r in dtEmployees.Rows)
+                    {
+                        <option value="@r[2].ToString()">@r[1].ToString()</option>
+                    }
+                </InputSelect>
+        </td>
+            <td >
+              * Priority :
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="@department">
+                    <option value="">Selection Required</option>
+                    <option value="Routine">Routine</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Production Down">Production Down</option>
+                </InputSelect>
+            </td>
+            <td >
+                Contact for Technical Information :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
      
-
- 
-    <tr>
-        <td align="right">
-            Name :
-            <InputText id="n1" placeholder="Name" @bind-Value="storekeeper" />
-        </td>
-            <td align="right">
-                Priority :
-                <InputText id="n2" placeholder="Name" @bind-Value="storekeeper" />
-            </td>
-
-     @* <td class="auto-style5">
-          <asp:DropDownList 
-            ID="DDLemployee" 
-            runat="server" 
-            AutoPostBack="true"
-            Width="240px" 
-            OnSelectedIndexChanged="DDLemployee_SelectedIndexChanged">
-          </asp:DropDownList>
-          <br />
-           <asp:Label 
-            ID="Lname" 
-            runat="server" 
-            Text="Must Select an Employee" 
-            Visible="false" 
-            BackColor="red"
-            >
-          </asp:Label>
-      </td>
-       <td align="right" > <a>*</a>Priority::</td>
-
-        <td class="auto-style3">
-            <asp:DropDownList 
-            ID="DDLPriority" 
-            runat="server" 
-            AutoPostBack="True" 
-            >
-            <asp:ListItem>Routine</asp:ListItem>
-            <asp:ListItem>Urgent</asp:ListItem>
-            <asp:ListItem>Production Down</asp:ListItem>
-        </asp:DropDownList>
-        </td>
-        <td align="right">
-            Does part need to be anodized::</td>
-        <td class="auto-style1">
-            <asp:CheckBox ID="cbAnodized" Text=" Check for YES" runat="server" AutoPostBack="true" Checked="false" /></td>
-     *@   
     </tr>
     <tr>
-            <td align="right">
+            <td align="left">
                 Contact Email :
-                <InputText id="n3" placeholder="Contact email" @bind-Value="storekeeper" />
+                <InputText id="n3" placeholder=""  style="width: 100%" @bind-Value="selectedID" />
             </td>
-            <td align="right">
-            Quantity :
-            <InputText id="n4" placeholder="Name" @bind-Value="storekeeper" />
+            <td >
+            * Quantity :
+                <InputText id="n4" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
         </td>
+         <td >
+                Deliver Completed Tooling to :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
     </tr>
 
         <tr>
-            <td align="right">
+            <td >
                 Department :
-                <InputText id="n5" placeholder="Contact email" @bind-Value="storekeeper" />
+               
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="@department">
+                    <option value="">Selection Required</option>
+                    <option value="CCOS">CCOS</option>
+                    <option value="IBF">IBF</option>
+                    <option value="Metrology">Metrology</option>
+                    <option value="CNC">CNC</option>
+                    <option value="WorkCell">Work Cell</option>
+                    <option value="QC">QC</option>
+                    <option value="Assembly">Assembly</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="SmallOptics">Small Optics</option>
+                    <option value="Other">Other</option>                    
+                </InputSelect>
+
             </td>
-            <td align="right">
-                Charge Type :
-                <InputText id="n6" placeholder="Name" @bind-Value="storekeeper" />
+            <td >
+                Charge Type : 
+                <InputCheckbox @bind-Value="cbProject"></InputCheckbox> Project Charge Number
+                <InputCheckbox @bind-Value="cbCostCenter"></InputCheckbox> Cost Center
+            </td>
+            <td >
+                Finishing :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
             </td>
         </tr>
         <tr>
-            <td align="right">
-                Customer :
-                <InputText id="n2" placeholder="Contact email" @bind-Value="storekeeper" />
-            </td>
-            <td align="right">
-                Name :
-                <InputText id="n7" placeholder="Name" @bind-Value="storekeeper" />
-            </td>
-        </tr>
-        <tr>
-            <td align="right">
+            <td >
                 Project :
-                <InputText id="n8" placeholder="Contact email" @bind-Value="storekeeper" />
+                <InputText id="n8" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
             </td>
+            <td >
+                Materials :
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+            <td >
+                Design Review Participants
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+        </tr>
+        <tr>
+            
 
         </tr>
 
         <tr>
-            <td align="right">
+            <td >
                 Optic Part # :
-                <InputText id="n9" placeholder="Contact email" @bind-Value="storekeeper" />
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
             </td>
-            <td align="right">
-                Name :
-                <InputText id="n10" placeholder="Name" @bind-Value="storekeeper" />
+            <td>Part Lookup
+                <InputSelect id="s2" class="form-control" @bind-Value="storekeeper ">
+
+                    <option value="">Part Lookup</option>
+                    @foreach (DataRow r in dtParts.Rows)
+                    {
+                        <option value="@r[0].ToString()">@r[0].ToString()</option>
+                    }
+
+                </InputSelect>
+
+            </td>
+            
+            <td>
+                Design Review Participants
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+                
+            
+        </tr>
+
+        <tr>
+            <td >
+                Optic Drawing Number and Path :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+            <td >
+                Surface of optic that will be focused on with this tool :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+            <td>
+                Design Review Participants
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
             </td>
         </tr>
-        @*<td align="right"><a>*</a>
+        <tr>
+            <td >
+                If modification of existing tool - Tool Number :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+            <td >
+                Tool Description :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+            <td>
+                Design Review Participants
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="storekeeper" />
+            </td>
+        </tr>
+        <tr>
+            <td >
+               * Describe Request/List Requirements :
+                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="storekeeper" />
+            </td>
+            <td >
+                Any Additional Information :
+                <InputText id="a13" placeholder="Additional Information" style="width: 100%; height: 100px" @bind-Value="storekeeper" />
+            </td>
+
+            <td >
+              * Select Requested Date :
+                <InputDate id="ds1" style="width: 100%; height: 100px" @bind-Value="requiredDate" />
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td >
+                <br />
+                <button class="btn btn-primary">Submit Request</button>
+            </td>
+        </tr>
+        
+   </table>  
+   
+
+  
+
+        @*<td ><a>*</a>
         Contact Email :: 
       </td>
       <td class="auto-style5">
@@ -154,56 +227,14 @@
           
         </td>
 
-        <td align="right" class="auto-style4"> 
+        <td  class="auto-style4"> 
 	    
 
 	        <a>*</a>Quantity :: 
           
       
-	    </td>
-        <td class="auto-style3">
-            <asp:TextBox 
-            ID="tbQuantity" 
-            runat="server">
-            </asp:TextBox>
-             Numeric digits only - no &quot;EA&quot;.</td>
-        <td align="right">
-            Contact for Technical Information::</td>
-        <td class="auto-style1">
-          <asp:TextBox 
-            ID="tbTechnicalContactName" 
-            runat="server" 
-            Width="236px"></asp:TextBox>
-        </td>
-
-    </tr>
-     <tr>
-        <td align="right">Department ::</td>
-         <td class="auto-style5"> 
-               <asp:DropDownList 
-            ID="ddlDepartment" 
-            runat="server" 
-            AutoPostBack="true"
-            Width="240px">
-                   <asp:ListItem>Selection Required</asp:ListItem>
-                   <asp:ListItem>CCOS</asp:ListItem>
-                   <asp:ListItem>IBF</asp:ListItem>
-                   <asp:ListItem>Metrology</asp:ListItem>
-                   <asp:ListItem>CNC</asp:ListItem>
-                   <asp:ListItem>Work Cell</asp:ListItem>
-                   <asp:ListItem>QC</asp:ListItem>
-                   <asp:ListItem>Assembly</asp:ListItem>
-                   <asp:ListItem>Engineering</asp:ListItem>
-                   <asp:ListItem>Small Optics</asp:ListItem>
-                   <asp:ListItem>Other</asp:ListItem>
-          </asp:DropDownList></td>
-         <td align="right">Charge Type::</td>
-         <td class="auto-style5"> 
-             <asp:CheckBox ID="cbProjectcharge" Text="  Project Charge #" runat="server" AutoPostBack="true" Checked="false" OnCheckedChanged="cbProjectcharge_CheckedChanged" />
-             &nbsp;
-             <asp:CheckBox ID="cbCostCenter" Text="  Cost Center" runat="server" AutoPostBack="true" Checked="false" OnCheckedChanged="cbCostCenter_CheckedChanged" />
-             </td>
-         <td align="right"></td>
+	  
+     
          <td>List Participants for Design Review::
           <asp:TextBox 
             ID="tbDesignReviewParticipants" 
@@ -213,32 +244,7 @@
          </td>
         
      </tr>
-        <tr>
-        <td align="right">Customer::</td>
-         <td class="auto-style5"> 
-               <asp:DropDownList 
-            ID="ddlCustomer" 
-            runat="server" 
-            AutoPostBack="true"
-            Width="240px">
-               
-          </asp:DropDownList></td>
-         <td align="right">
-             <asp:Label
-                 ID="LChargeType"
-                 Runat="server"
-                 AutoPostBack="true"
-                 Visible="false"
-                 ></asp:Label>
-             </td>
-            <td>
-             <asp:DropDownList 
-            ID="ddlChargeNumber" 
-            runat="server" 
-            AutoPostBack="true"
-            Visible="false"
-            Width="240px"> 
-          </asp:DropDownList>
+        
 
             </td>
             <td></td>
@@ -251,57 +257,9 @@
             </td>
             
      </tr>
-        <tr>
-        <td align="right">Project::</td>
-         <td class="auto-style5"> 
-               <asp:DropDownList 
-            ID="ddlProject" 
-            runat="server" 
-            AutoPostBack="true"
-            Width="240px">
-                 <asp:ListItem>Selection Required</asp:ListItem>
-                   <asp:ListItem>OP-COST-BIG</asp:ListItem>  
-          </asp:DropDownList></td>
-         <td align="right">Optics drawing # and path::</td>
-            <td>
-            <asp:TextBox 
-            ID="tbOpticDrawing_Path" 
-            runat="server" Width="376px"></asp:TextBox>
-            </td>
-            <td align="right"></td>
-            <td>Surface of optic that will be focused on with this tool::
-            <asp:TextBox 
-            ID="tbFocalSurface" 
-            runat="server" Width="300px"></asp:TextBox>
-            </td>
+       
             
-     </tr>
-    <tr> 
-
-      <td align="right">Part :: </td>
-      <td class="auto-style5"> 
-               <asp:DropDownList 
-            ID="ddlPart" 
-            runat="server" 
-            AutoPostBack="true"
-            Width="240px">
-                   <asp:ListItem>Selection Required</asp:ListItem>
-                   <asp:ListItem>Wedge</asp:ListItem>
-          </asp:DropDownList></td>
-         <td align="right" class="auto-style4">If modification of exsting tool, list tool number::</td>
-        
-
-        <td>
-	    
-
-            <asp:TextBox 
-            ID="tbExistingTool" 
-            runat="server">
-            </asp:TextBox>
-	    
-
-	        </td>
-        <td>
+    
 
         </td>
         <td class="auto-style1">Machine # ::<br />
@@ -319,39 +277,14 @@
          <td> 
              
          </td>
-         <td align="right" class="auto-style4">Tool Description ::</td>
+         <td  class="auto-style4">Tool Description ::</td>
          <td class="auto-style3">
             <asp:TextBox 
             ID="tbToolDescription" 
             runat="server" Width="371px"></asp:TextBox>
            </td>
 
-     </tr>
-
-       <tr>
-           <td align="right"><a>*</a>Requested Need Date :: 
-          <br/>
-           <asp:Label 
-            ID="Ldate" 
-            runat="server"
-            Text="Must Select Date" 
-            Visible="false" 
-            BackColor="red"
-            >
-          </asp:Label>
-           </td>
-           <td class="auto-style5">
-          <asp:Calendar ID="calendar1" runat="server" Width="150px" OnDayRender="calendar1_DayRender"></asp:Calendar></td>
-           <td align="right" class="auto-style4"><a>*</a>Describe Request/List Requirements ::
-          <br />
-          <asp:Label 
-            ID="Ltrouble" 
-            runat="server"
-            Text="An Entry is Required" 
-            Visible="false" 
-            BackColor="red"
-            >
-          </asp:Label>
+     
            </td>
            <td class="auto-style3">
           <asp:TextBox 
@@ -365,34 +298,7 @@
           </asp:TextBox>
            </td>
 
-           <td align="right">Any additional information (e.g., combine tooling with ID xxx)::</td>
-           <td>
-          <asp:TextBox 
-            ID="tbAdditionalInformation" 
-            runat="server" 
-            Height="120px"
-            Width="280px" 
-            TextMode="MultiLine" 
-            Font-Names="Arial"
-            >
-          </asp:TextBox>
-            </td>
-
-       </tr>
-  	
- 
-    
-    <tr>
-      <td align="right">&nbsp;</td>
-	  <td class="auto-style5">
-          &nbsp;</td>
-	  <td align="right" class="auto-style4">
-	    
-
-	        &nbsp;</td>
-        <td class="auto-style3">
-            &nbsp;</td>
-    </tr>
+          
     
     
     
@@ -472,28 +378,89 @@
             ></asp:Label></td>
          <td class="auto-style3" bgcolor="#CC99FF">This program has been modified.&nbsp; If anything does not function the way you think it should email tor.hepburn@ametek.com.</td>
 
-     </tr>
+    
+	*@
 
-    <tr>
-	 <td style="height: 102px">
-         
-     </td>
-	 <td class="auto-style2">
-         &nbsp;</td>
-	 <td class="auto-style4">&nbsp;</td>
-        <td class="auto-style3"><p>&copy; All Rights reserved.<br/>
-      Zygo Corporation</p></td>
-	</tr>*@
-</table> 
 
 </EditForm>
  
-    @code{
-
-        private string? storekeeper;
+@code{
+    private string? storekeeper;
+    private string? department;
+    private DateTime requiredDate;
     private string data = "";
+    public bool cbProject = false;
+    public bool cbCostCenter = false;
+    public bool cbPersist = false;
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    DataTable dtEmployees;
+    DataTable dtParts;
+    
+    private string? selectedID;
 
+    protected override void OnInitialized()
+    {
+        dtEmployees = new DataTable();
 
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                  "  ROW_NUMBER() OVER " +
+                  "(Order BY sn) " +
+                  ", CN " +
+                  ", mail " +
+                  "FROM EmployeesAmetekAD " +
+                  "WHERE BU = 'ca-ric' " +
+                  "order by SN "
+                  , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtEmployees.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        dtParts = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand(
+            "SELECT " + 
+            "No_ + '-:-' + Description " +
+            "from ZYGO$Item " +
+            "where [Global Dimension 2 Code] in " +
+            "('EUV','CRYSTALLINE OPTICS','GLASS OPTICS','MACHINED STRUCTURES') ORDER BY No_", cnxn);
+    
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtParts.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    
     private void DataEntry()
         {
         
