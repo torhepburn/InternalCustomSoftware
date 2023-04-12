@@ -728,7 +728,7 @@ namespace ToolRoom
                 cmd = new SqlCommand("TRmail", cnxn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 SqlParameter to1 = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
-                to1.Value = "jwelsch@zygo.com; toolroom@zygo.com";
+                to1.Value = "jim.welsch@ametek.com; ct-mid.toolroom@ametek.com";
                 SqlParameter etext1 = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
                 etext1.Value = requestReport;
                 SqlParameter subjline1 = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
