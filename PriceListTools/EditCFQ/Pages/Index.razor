@@ -1,0 +1,83 @@
+﻿@page "/"
+
+<PageTitle>CFQ List</PageTitle>
+
+@using EditCFQ.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>CFQ List</h1>
+
+
+<table class="table table-bordered">
+    <thead class="border border-dark">
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+    <tbody class="border border-dark">
+        @foreach (DataRow r in dt.Rows)
+        {
+            string bgstyle="";
+            string bgclass = "";
+            
+            <tr class=@bgclass style=@bgstyle @onclick="() => Select(r[0].ToString())">
+                <td style="width:200px">@r[0].ToString()</td>
+                <td class="border border-dark">@r[1].ToString()</td>
+                
+                    </tr>
+        }
+        </tbody>
+    </table>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    //public string item = "";
+    
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new(
+                    " SELECT " +
+                    " ItemNumber " +
+                    ",Price " +
+                    " FROM CallForQuote " +
+                    " ORDER BY ItemNumber", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string ID)
+    {
+        g.item = ID.Trim();
+        NavMgr.NavigateTo("EditCFQList");
+    }
+}
