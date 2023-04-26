@@ -7,9 +7,13 @@ namespace BLOB2
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+
+        private void BLOB2_Load(object sender, EventArgs e)
         {
+            System.Diagnostics.Debugger.Break();
             string test = "test";
+            
+            string next;
         }
     }
 }

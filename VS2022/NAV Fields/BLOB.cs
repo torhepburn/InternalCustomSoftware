@@ -12,33 +12,7 @@ namespace NAV_Fields
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            SqlConnection cnxn = new SqlConnection("server = PA-HOR-AS408; password = 2018#ameteK;user = navdb_read; database = ZYGO-NAV-PROD;");
-            cnxn.Open();
-            SqlCommand cmd = new SqlCommand("select [Metadata] from [Object Metadata] where [Object Type] = 1 AND [Object ID] = 27", cnxn);
-
-            try
-            {
-                SqlDataReader reader = cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    var ms = new MemoryStream();
-                    if (BLOB.GetDecompressedStream2013(reader, true, ref ms) == 1)
-                    {
-                        ms.Position = 0;
-                        StreamReader sr = new StreamReader(ms);
-                        string text = sr.ReadToEnd();
-                    }
-                }
-            }
-            catch (SqlException ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-            finally
-            {
-                cnxn.Close();
-            }
+            
         }
 
         public static int GetDecompressedStream2013(SqlDataReader reader, bool decompress, ref MemoryStream ResultStream)
@@ -93,6 +67,38 @@ namespace NAV_Fields
             125,
             91
         };
+
+        private void BLOB_Load(object sender, EventArgs e)
+        {
+            SqlConnection cnxn = new SqlConnection("server = PA-HOR-AS408; password = 2018#ameteK;user = navdb_read; database = ZYGO-NAV-PROD; encrypt=false;");
+            cnxn.Open();
+            SqlCommand cmd = new SqlCommand("select [Metadata] from [Object Metadata] where [Object Type] = 1 AND [Object ID] = 27", cnxn);
+
+            try
+            {
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    var ms = new MemoryStream();
+                    if (BLOB.GetDecompressedStream2013(reader, true, ref ms) == 1)
+                    {
+                        ms.Position = 0;
+                        StreamReader sr = new StreamReader(ms);
+                        string text = sr.ReadToEnd();
+                        File.WriteAllText(@"C:\A\ItemTable.txt", text);
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+        }
     }
 
     public class BlobReaderStream : System.IO.Stream
