@@ -1,0 +1,166 @@
+﻿@page "/viewAll"
+
+<PageTitle>ViewAllRequests</PageTitle>
+
+<h1>View All Requests</h1>
+@using Service.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<br />
+<h1>Click on the request and it will open a new screen to enable Editing the Service Request</h1>
+<br />
+<br />
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Date Entered</th>
+            <th>Equipment</th>
+            <th>Model/Part Number</th>
+            <th>Serial Number</th>
+            <th>Contact / Operator</th>
+            <th>Location</th>
+            <th>Cost Center</th>
+            <th>Controller/Computer Name</th>
+            <th>Failure Description</th>
+            <th>Assigned To</th>
+            <th>Resolution</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {   
+            <tr @onclick="() => Select(r[0].ToString())">
+                <td style="width:80px">@r[0].ToString()</td>
+                <td style="width:150px">@r[1].ToString()</td>
+                <td style="width:150px">@r[2].ToString()</td>
+                <td style="width:150px">@r[3].ToString()</td>
+                <td style="width:150px">@r[4].ToString()</td>
+                <td style="width:150px">@r[5].ToString()</td>
+                <td style="width:150px">@r[6].ToString()</td>
+                <td style="width:150px">@r[7].ToString()</td>
+                <td style="width:150px">@r[9].ToString()</td>
+                <td style="width:500px">@r[8].ToString()</td>
+                <td>@r[10].ToString()</td>
+                <td>@r[11].ToString()</td>
+            
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+@code {
+
+    public string enteredOn = "";
+    public string wo = "";
+    public string woline = "";
+    public string job = "";
+    public string jobreference = "";
+    public string item = "";
+    public string partdescription = "";
+    public string quantity = "";
+    public string location = "";
+    public string binCode = "";
+    public string storekeeper = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
+    public string assignedTo = "";
+    public string resolution = "";
+    public string computer = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                "  UID " +                                                //0
+                ", COALESCE(FORMAT([DateEntered], 'MM/dd/yy'),'') " +     //1
+                ", COALESCE(EquipmentName, '') " +                        //2
+                ", COALESCE(ModelPartNumber, '') " +                      //3
+                ", COALESCE(SerialNumber, '') " +                         //4
+                ", COALESCE(ContactOperator, '') " +                      //5
+                ", COALESCE(Location, '') " +                             //6
+                ", COALESCE(CostCenter, '') " +                           //7
+                ", COALESCE(FailureDescription, '') " +                   //8
+                ", COALESCE(computer, '') " +                             //9
+                ", COALESCE(AssignedTo, '') " +                           //10
+                ", COALESCE(Resolution,'') " +                            //11
+                                                                          //", COALESCE(Planner, '') " +                            //12
+                                                                          //", COALESCE([DueDate], '') " +                          //13
+                                                                          //", COALESCE(Location, '') " +                           //14
+                " from ServiceRequests " +
+                "ORDER BY [DateEntered] DESC", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    public void DataEntry()
+    {
+        //cnxn = new SqlConnection(g.db);
+
+        //cmd = new("UPDATE StockroomShortages " +
+        //            "SET [StockLocation] = '" + binCode + "'" +
+        //            ",[StockRoomAssociate] = '" + storekeeper + "'" +
+        //            ",[CostCenter] = '" + costcenter + "'" +
+        //            ",[Planner] = '" + planner + "'" +
+        //            ",[DueDate] = '" + duedate + "'" +
+        //            ",Location = '" + location + "' " +
+        //            "WHERE ID = '" + g.ShortageID + "'"
+        //            , cnxn);
+
+        //try
+        //{
+        //    cnxn.Open();
+        //    cmd.ExecuteNonQuery();
+        //}
+        //catch (SqlException ex)
+        //{
+        //    ex.ToString();
+        //}
+        //finally
+        //{
+        //    cnxn.Close();
+        //}
+
+        //NavMgr.NavigateTo("viewshortages");
+    }
+
+    private void Select(string ID)
+    {
+        g.UID = ID;
+        NavMgr.NavigateTo("editrequest");
+    }
+
+   
+}
