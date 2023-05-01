@@ -66,6 +66,7 @@ namespace Certs
                 ",[P/N] " +
                 ",FORMAT([Test Date],'MM/dd/yyyy') " +
                 ",[Type] " +
+                ",[Serial #] " +
                 " FROM " + g.dbTable +
                 " WHERE 1=1 ";
 
@@ -111,6 +112,7 @@ namespace Certs
             DGV.Columns[2].Width = 120;
             DGV.Columns[3].Width = 85;
             DGV.Columns[4].Width = 40;
+            DGV.Columns[5].Width = 120;
             DGV.Show();
         }
 
@@ -492,34 +494,33 @@ namespace Certs
             (ppd as Form).WindowState = FormWindowState.Maximized;
             ppd.ShowDialog();
 
-            /*
-             *  try
-            {
+            
+            // try
+            //{
 
-                PrintDialog pDlg = new PrintDialog();
-                // dialog box won't show without this line below.
-                pDlg.UseEXDialog = true;
-                pDlg.Document = pd;
+            //    PrintDialog pDlg = new PrintDialog();
+            //    // dialog box won't show without this line below.
+            //    pDlg.UseEXDialog = true;
+            //    pDlg.Document = pd;
 
-                //pd.PrinterSettings.Collate = true;
-                //pd.PrinterSettings.PrinterName = @"\\midprtsrv\inst_iR3235PS";
-                //pd.PrinterSettings.PrinterName = @"\\midprtsrv\mktg_iRC3220PS";
-                //pd.PrinterSettings.Copies = 2;
-                if (pDlg.ShowDialog() == DialogResult.OK)
-                {
-                    pd.Print();
-                }
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-            finally
-            {
+            //    //pd.PrinterSettings.Collate = true;
+            //    //pd.PrinterSettings.PrinterName = @"\\midprtsrv\inst_iR3235PS";
+            //    //pd.PrinterSettings.PrinterName = @"\\midprtsrv\mktg_iRC3220PS";
+            //    //pd.PrinterSettings.Copies = 2;
+            //    if (pDlg.ShowDialog() == DialogResult.OK)
+            //    {
+            //        pd.Print();
+            //    }
+            //}
+            //catch (System.Exception ex)
+            //{
+            //    MessageBox.Show(ex.ToString());
+            //}
+            //finally
+            //{
 
-            }
-             * 
-             * */
+            //}
+            
 
         }
 
@@ -546,19 +547,21 @@ namespace Certs
             if (table.Rows.Count > lineNo)
             {
 
-                ev.Graphics.DrawString("Certification #", heading, Brushes.Black, 30, 100);
-                ev.Graphics.DrawString("Customer Name", heading, Brushes.Black, 150, 100);
-                ev.Graphics.DrawString("P/N", heading, Brushes.Black, 400, 100);
-                ev.Graphics.DrawString("Test Date", heading, Brushes.Black, 600, 100);
-                ev.Graphics.DrawString("Type", heading, Brushes.Black, 700, 100);
+                ev.Graphics.DrawString("Cert #", heading, Brushes.Black, 20, 100);
+                ev.Graphics.DrawString("Customer Name", heading, Brushes.Black, 100, 100);
+                ev.Graphics.DrawString("P/N", heading, Brushes.Black, 350, 100);
+                ev.Graphics.DrawString("S/N", heading, Brushes.Black, 500, 100);
+                ev.Graphics.DrawString("Test Date", heading, Brushes.Black, 650, 100);
+                ev.Graphics.DrawString("Type", heading, Brushes.Black, 800, 100);
 
                 for (int i = 0; i < 46 & lineNo < table.Rows.Count; i++)
                 {
-                    ev.Graphics.DrawString(table.Rows[lineNo][0].ToString(), arial, Brushes.Black, 30, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][1].ToString(), arial, Brushes.Black, 150, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][2].ToString(), arial, Brushes.Black, 400, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][3].ToString(), arial, Brushes.Black, 600, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][4].ToString(), arial, Brushes.Black, 700, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][0].ToString(), arial, Brushes.Black, 20, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][1].ToString(), arial, Brushes.Black, 100, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][2].ToString(), arial, Brushes.Black, 350, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][5].ToString(), arial, Brushes.Black, 500, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][3].ToString(), arial, Brushes.Black, 650, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][4].ToString(), arial, Brushes.Black, 800, linedrop);
                     lineNo++;
                     lines();
                 }

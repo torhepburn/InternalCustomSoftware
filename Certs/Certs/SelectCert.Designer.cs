@@ -102,7 +102,7 @@
             this.DGV.Location = new System.Drawing.Point(73, 207);
             this.DGV.Name = "DGV";
             this.DGV.RowHeadersWidth = 15;
-            this.DGV.Size = new System.Drawing.Size(567, 303);
+            this.DGV.Size = new System.Drawing.Size(690, 303);
             this.DGV.TabIndex = 27;
             this.DGV.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGV_CellClick);
             // 
@@ -188,7 +188,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(115)))), ((int)(((byte)(180)))), ((int)(((byte)(165)))));
-            this.ClientSize = new System.Drawing.Size(717, 542);
+            this.ClientSize = new System.Drawing.Size(859, 542);
             this.Controls.Add(this.bSaveToFolder);
             this.Controls.Add(this.BPrint);
             this.Controls.Add(this.cbISO17025);
