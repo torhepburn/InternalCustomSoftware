@@ -1,0 +1,73 @@
+﻿@page "/addCFQ"
+
+<PageTitle>AddCFQ</PageTitle>
+
+@using EditCFQ.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+<EditForm Model="item" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table>
+        <tbody>
+            <tr>
+                <td align="right">
+                    Item Number :
+                    <InputText id="n8" placeholder="Item Code" @bind-Value="itemNumber" />
+                </td>
+                <td align="right">
+                    Price :
+                    <InputText id="n9" placeholder="CFQ" @bind-Value="price" /> 
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+
+</EditForm>
+<br />
+<button class="btn btn-primary" @onclick="DataEntry">Add</button>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+
+    public string item = "";
+    public string? itemNumber;
+    public string? price;
+
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("INSERT INTO CallForQuote " +
+                  "(itemnumber, price) values ('" +
+                  itemNumber + "' " +
+                  ",'CFQ' )"
+                 , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("/");
+    }
+}

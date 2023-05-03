@@ -1,0 +1,118 @@
+﻿@page "/deleteCFQ"
+
+<PageTitle>Edit CFQ List</PageTitle>
+
+@using EditCFQ.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Delete item from CFQ List</h1>
+
+
+
+    <table>
+        <tbody>
+            <tr>
+                <td align="left">
+                    Item Number  : @itemNumber
+                </td>
+                
+            </tr>
+            <br />
+            <tr>
+                
+                <td align="right">
+                    Price  : @price 
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <br />
+
+
+
+
+
+<button class="btn btn-primary " @onclick="Delete">Delete</button>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    //DataTable dt;
+    public string item = "";
+    public string? itemNumber;
+    public string? price;
+
+    protected override void OnInitialized()
+    {
+        //dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                " ItemNumber "+                                                
+                ", Price " +     
+                " from CallForQuote WHERE itemNumber = '" + g.item + "' " 
+               , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                itemNumber = dr.GetString(0).Trim();
+                price = dr.GetString(1);
+            }
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+       
+        
+
+    public void Delete()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("DELETE FROM CallForQuote " +
+                  "WHERE ItemNumber = '" + g.item + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("/");
+    }
+
+    
+}
