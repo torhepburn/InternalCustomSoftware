@@ -1,0 +1,271 @@
+﻿@page "/AddDisconnectedShortage"
+
+<PageTitle>Add Disconnected Shortage</PageTitle>
+
+@using StockroomShorts.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Enter Shortage Details</h1>
+
+<br />
+<EditFields></EditFields>
+<br />
+<div class="border-0">
+    <EditForm Model="searchFilter" OnValidSubmit="enterData">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <table>
+        <tbody>
+            <tr>
+                <td align="right">
+                    Work Order :
+                        <InputText id="n1" placeholder="Work Order" @bind-Value="wo" />
+                </td>
+            </tr>
+            <tr>
+                <td align="right">
+                    Work Order Line :
+                        <InputText id="n2" placeholder="Work Order Line" @bind-Value="woline" />
+                </td>
+               
+            </tr>
+                <tr>
+                <td align="right">
+                    Component Line :
+                    <InputText id="n22" placeholder="Work Order Line" @bind-Value="componentline" />
+                </td>
+            </tr>
+                <tr>
+                <td align="right">
+                    Part Number :
+                        <InputText id="n3" placeholder="Part Number" @bind-Value="partno" />
+                </td>
+            </tr>
+                <tr>
+                    <td align="right">
+                        Remaining Quantity :
+                        <InputText id="n4" placeholder="Remaining Quantity" @bind-Value="remainingquantity" />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        Location :
+                        <InputText id="n5" placeholder="Location" @bind-Value="location" />
+                    </td>
+                </tr>
+                <tr>
+            <td align="right">
+                Planner :
+                <InputText id="n12" placeholder="Planner" @bind-Value="planner" />
+            </td>
+
+                </tr>
+                 <tr>
+            <td align="right">
+                Job Reference :
+                <InputText id="n613" placeholder="JobReference" @bind-Value="jobreference" />
+            </td>
+
+                </tr>
+        </tbody>
+    </table>
+
+        <input type="submit" class="btn btn-primary btn-sm" OnValidSubmit="enterData" value="Enter Data" />
+        
+    </EditForm>
+</div>
+
+
+@code {
+
+
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool emptyText = false;
+    public string wo;
+    public string woline;
+    public string partno;
+    public string partdescription;
+    public string remainingquantity;
+    public string location;
+    public string bincode;
+    public string planner;
+    public string jobreference;
+    public string componentline;
+
+    SqlCommand cmd;
+    SqlConnection cnxn;  
+
+    protected override void OnInitialized()
+    {
+
+    }
+
+    public void enterData() 
+    {
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand("Select Description from ZYGO$Item where " +
+            "No_ = '" + partno + "'", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            object o = cmd.ExecuteScalar();
+
+            if (o == null)
+            {
+
+            }
+            else
+            {
+                partdescription = o.ToString();
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+        cmd = new SqlCommand("Select [Bin Code] from [ZYGO$Bin Content] where " +
+            "[Item No_] = '" + partno + "'", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            object o = cmd.ExecuteScalar();
+
+            if (o == null)
+            {
+
+            }
+            else
+            {
+                bincode = o.ToString();
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        /* edit rows to fields filled in */
+        if (g.storekeeper is null)
+        {
+            g.storekeeper = " ";
+        }
+
+        if (g.costcenter is null)
+        {
+            g.costcenter = " ";
+        }
+
+        if (g.duedate is null)
+        {
+            g.duedate = " ";
+        }
+
+        if (location is null)
+        {
+            location = " ";
+        }
+
+        if (jobreference is null)
+        {
+            jobreference = " ";
+        }
+
+        if (componentline is null)
+        {
+            componentline = " ";
+        }
+
+        if (planner is null)
+        {
+            planner = " ";
+        }
+
+        if (remainingquantity is null)
+        {
+            remainingquantity = " ";
+        }
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("Insert into StockroomShortages (" +
+                    "[WO] " +
+                    ",[WOLine] " +
+                    ",[PartNo] " +
+                    ",[PartDescription] " +
+                    ",[Quantity] " +
+                    ",[StockLocation] " +
+                    ",[Planner] " +
+                    ",[JobReference] " +
+                    ",[ComponentLine] " +
+                    ",[EnteredOn] " +
+                    ",[Archived] " +
+                    ",[StockRoomAssociate] " +
+                    ",[CostCenter] " +
+                    ",[DueDate] " +
+                    ") VALUES (" +
+                    "'" + wo + "'" +
+                    ",'" + woline + "'" +
+                    ",'" + partno + "'" +
+                    ",@description " +
+                    ",'" + remainingquantity + "'" +
+                    ",'" + location + "'" +
+                    ",'" + planner + "'" +
+                    ", @jobReference " +
+                    ",'" + componentline + "'" +
+                    ",'" + DateTime.Now + "'" +
+                    ",0 " +
+                    ",'" + g.storekeeper + "'" +
+                    ",'" + g.costcenter + "'" +
+                    ",'" + g.duedate + "'" +
+                    ")", cnxn);
+
+        cmd.Parameters.Add("@description", SqlDbType.VarChar, 60).Value = partdescription;
+        cmd.Parameters.Add("@jobReference", SqlDbType.VarChar, 60).Value = jobreference;
+        
+
+        try
+        {
+            cnxn.Open();
+            
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+  
+        g.storekeeper = string.Empty;
+        g.costcenter = string.Empty;
+        g.duedate = string.Empty;
+        
+        NavMgr.NavigateTo("ViewShortages");
+    }
+}
+
+
