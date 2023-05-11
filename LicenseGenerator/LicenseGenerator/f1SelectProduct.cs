@@ -24,6 +24,7 @@ namespace LicenseGenerator
         {
             g.productLine = "MX";
             g.activeDemo = "A";
+            g.user = "";
             f4Task f4 = new f4Task();
             f4.Show();
         }
@@ -32,6 +33,7 @@ namespace LicenseGenerator
         {
             g.productLine = "ZMP";
             g.activeDemo = "A";
+            g.user = "";
             f4Task f4 = new f4Task();
             f4.Show();
         }
@@ -40,10 +42,19 @@ namespace LicenseGenerator
         {
             g.productLine = "MTP";
             g.activeDemo = "A";
+            g.user = "";
             f4Task f4 = new f4Task();
             f4.Show();
         }
 
+        private void bAssembly_Click(object sender, EventArgs e)
+        {
+            g.productLine = "MX";
+            g.activeDemo = "A";
+            g.user = "Assembly";
+            f5Assembly f5 = new f5Assembly();
+            f5.Show();
+        }
     }
 
     public static class g
@@ -59,6 +70,7 @@ namespace LicenseGenerator
         public static string MkNAV;
         public static string customerName;
         public static string owner;
+        public static string user;
         public static string db = "server=CT-MID-SQL11; password = Read+Write!;" +
                                   " user = readwrite; database = ZygoProductLicenses";
         public static string dbNAV = "server = pa-hor-as408; password = 2018#ameteK; " +

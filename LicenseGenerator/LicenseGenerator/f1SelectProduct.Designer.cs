@@ -31,6 +31,7 @@ namespace LicenseGenerator
             this.bMetroPro = new System.Windows.Forms.Button();
             this.bMPX = new System.Windows.Forms.Button();
             this.bZeMaps = new System.Windows.Forms.Button();
+            this.bAssembly = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // bMetroPro
@@ -69,12 +70,25 @@ namespace LicenseGenerator
             this.bZeMaps.UseVisualStyleBackColor = false;
             this.bZeMaps.Click += new System.EventHandler(this.bZeMaps_Click);
             // 
+            // bAssembly
+            // 
+            this.bAssembly.BackColor = System.Drawing.Color.GreenYellow;
+            this.bAssembly.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bAssembly.Location = new System.Drawing.Point(240, 133);
+            this.bAssembly.Name = "bAssembly";
+            this.bAssembly.Size = new System.Drawing.Size(148, 57);
+            this.bAssembly.TabIndex = 3;
+            this.bAssembly.Text = "Assembly";
+            this.bAssembly.UseVisualStyleBackColor = false;
+            this.bAssembly.Click += new System.EventHandler(this.bAssembly_Click);
+            // 
             // f1SelectProduct
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Goldenrod;
-            this.ClientSize = new System.Drawing.Size(644, 150);
+            this.ClientSize = new System.Drawing.Size(644, 202);
+            this.Controls.Add(this.bAssembly);
             this.Controls.Add(this.bZeMaps);
             this.Controls.Add(this.bMPX);
             this.Controls.Add(this.bMetroPro);
@@ -91,6 +105,7 @@ namespace LicenseGenerator
         private System.Windows.Forms.Button bMetroPro;
         private System.Windows.Forms.Button bMPX;
         private System.Windows.Forms.Button bZeMaps;
+        private System.Windows.Forms.Button bAssembly;
     }
 }
 
