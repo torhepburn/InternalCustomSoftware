@@ -1,0 +1,870 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+  <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="NAV">
+      <DataSourceReference>NAV</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>6438f623-9c40-4444-a8c2-369ae506c717</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>--DECLARE @item varchar(20)
+--DECLARE @DueDate date 
+--SET @DueDate = '2024-12-31'
+
+DECLARE @item varchar(20)
+SET @item = '1115-802-372'
+DECLARE @DueDate date 
+SET @DueDate = '2024-12-31'
+
+DECLARE @rowDueDate date
+DECLARE @Supply decimal(38,2)
+DECLARE @Demand decimal(38,2)
+DECLARE @OH decimal(38,2)
+SET @OH = 0
+
+CREATE TABLE #Temp
+(
+[Due Date] date
+--,[Item No.] varchar(50)
+,OnHand decimal(38,2)
+,[Supply] decimal(38,2)
+,[Demand] decimal(38,2)
+--,[Quantity] decimal(38,2)
+--,[Standard Cost] decimal(38,2)
+--,[Inventory Value] decimal(38,2)
+)
+
+select @OH =
+
+--'Inventory' [Type]
+--,'Balance' [Source]
+--,@item [Item No.]
+--,''[Description]
+SUM(Quantity) 
+--GETDATE() [Due Date]
+--,0 [Supply]
+--,0 [Demand]
+--,'' [Document No_]
+
+
+from [ZYGO$Item Ledger Entry]
+
+WHERE [Item No_] = @item;
+
+
+
+DECLARE itemCursor CURSOR FOR
+
+--SELECT [Item No_] FROM [ZYGO$Item Ledger Entry] WHERE [Item No_] = '179-300625-01'
+
+/*
+WHERE [Item No_] IN
+(
+	SELECT No_ FROM ZYGO$Item
+
+	Where P6 &gt; 0 and F6 &gt; 0
+)
+GROUP BY [Item No_]
+
+HAVING SUM(Quantity) &gt; 0
+*/
+
+--GROUP BY [Item No_]
+
+--OPEN itemCursor
+
+--FETCH NEXT FROM itemCursor into @item
+--WHILE @@FETCH_STATUS = 0
+
+--BEGIN
+
+/*	Inventory Forecast Details		*/
+
+/*
+
+	First get quantities and then apply the standard cost
+
+*/
+
+
+--SET @item = '6024-0444-15'
+--SET @DueDate = '2021-08-01';
+
+--DECLARE @item varchar(20)
+--SET @item = '179-300625-01'
+--DECLARE @DueDate date 
+--SET @DueDate = '2024-12-31';
+
+--WITH s1 AS
+--(
+
+--DECLARE @item varchar(20)
+--DECLARE @DueDate date 
+
+--SET @item = '6024-0444-15'
+--SET @DueDate = '2021-08-01'
+
+
+/*	Inventory Current	*/
+
+
+--UNION ALL
+
+
+/*	requisition line	*/
+/*	MRP planned item	*/
+
+	select 
+--'MRP'[Type]
+--,CASE [Action Message]
+--	WHEN 1 THEN 
+--	CASE [MPS Order]
+--		WHEN 0 THEN 'Purchase New'
+--		WHEN 1 THEN 'Production New'
+--	END
+--	WHEN 5 THEN
+--		CASE [MPS Order]
+--		WHEN 0 THEN 'Cancel Purchase'
+--		WHEN 1 THEN 'Cancel Production'
+--	END
+	
+--END [Source]
+
+--,No_ [Item No.]
+--,Description
+--0 OnHand
+[Due Date] 
+,[Remaining Quantity] - [Original Quantity] [Quantity Change]
+,0
+--,'' [Document No.]
+
+
+	FROM [ZYGO$Requisition Line]
+
+	where 1=1
+
+	AND [Worksheet Template Name] = 'PLANNING'
+
+	AND [Journal Batch Name] = 'DEFAULT'
+
+	AND [Action Message] = 1
+
+	AND [Due Date] &lt;= @DueDate
+
+	AND No_ = @item
+
+UNION ALL
+
+/*	MRP Planned Component	*/
+
+	select 
+--'MRP'[Type]
+--,'Component New' [Source]
+--,[Item No_] [Item No.]
+--,Description
+--,0 OnHand
+[Due Date] 
+,0.0
+,[Expected Quantity] * (-1) [Quantity Change]
+--,'' [Document No.]
+
+
+	FROM [ZYGO$Planning Component]
+
+	where 1=1
+
+	AND [Worksheet Template Name] = 'PLANNING'
+
+	AND [Worksheet Batch Name] = 'DEFAULT'
+
+	AND [Due Date] &lt;= @DueDate
+
+	AND [Item No_] = @item
+
+	UNION ALL
+
+		
+		/*	top level production order plus	*/
+		
+	select
+
+	--'Production' [Type]
+	--,CASE Status
+	--	WHEN 2 THEN 'Production Firm Planned'
+	--	WHEN 3 THEN 'Production Released'
+	--	ELSE ''
+	--END [Source]
+	--,[Source No_] [Item No.]
+	--,Description
+	--,0 OnHand
+	[Due Date]
+	,Quantity [Quantity Change]
+	,0
+	--, [No_] [Document No.]
+	
+
+	from [ZYGO$Production Order]
+
+	WHERE 1=1 
+
+	AND Status IN (2,3)
+
+	AND [Due Date] &lt;= @DueDate
+
+	AND [Due Date] &gt;= GETDATE()
+
+	AND [Source No_] = @item
+
+UNION ALL
+	
+
+	/*	production components minus	*/
+
+select
+
+--'Component' [Type]
+--,CASE Status
+--		WHEN 2 THEN 'Component Firm Planned'
+--		WHEN 3 THEN 'Component Released'
+--		ELSE ''
+--	END [Source]
+--, [Item No_]
+--,Description
+--,0 OnHand
+[Due Date]
+
+,0
+,[Remaining Quantity] * (-1) [Change Quantity]
+
+--,[Prod_ Order No_] [Document No.]
+
+from [ZYGO$Prod_ Order Component]
+
+WHERE 1=1 
+
+AND [Item No_] = @item
+
+AND Status IN (2,3)
+
+AND [Remaining Quantity] &gt; 0
+
+AND [Due Date] &lt;= @DueDate
+
+	/*	sales minus	*/
+
+UNION ALL
+
+select
+
+--'Sale' [Type]
+--,'Sales Order' [Source]
+--,No_ [Item No.]
+--,[Description]
+--,0 OnHand
+[Shipment Date] [Due Date]
+,0
+,[Outstanding Quantity] * (-1) [Quantity Change]
+--,[Document No_] [Document No.]
+
+
+
+from 
+
+
+[ZYGO$Sales Line]
+
+WHERE 1=1
+
+	AND [Outstanding Quantity] &gt; 0
+
+	AND [Shipment Date] &lt;= @DueDate
+
+	AND No_ = @item
+
+
+UNION ALL
+
+select
+
+--'Job Journal Line' [Type]
+--,'Job Inventory Request' [Source]
+--,No_ [Item No.]
+--,Description
+--,0 OnHand
+[Due Date] 
+,0
+,Quantity * (-1) [Quantity Change]
+--,[Document No_] [Document No.]
+
+
+
+FROM [ZYGO$Job Journal Line]
+
+WHERE No_ = @item
+
+AND [Journal Template Name] = 'INVREQ'
+
+AND [Due Date] &lt;= @DueDate
+
+UNION ALL
+
+SELECT
+
+--'Purchaser' [Type]
+--,'Purchase Line' [Source]
+--,l.No_ [Item No.]
+--,l.Description
+--,0 OnHand
+CASE 
+   WHEN l.[Promised Receipt Date] = '01-01-1753' THEN l.[Planned Receipt Date] 
+   ELSE l.[Promised Receipt Date] 
+END [DueDate] 
+ ,CASE l.[Document Type] 
+	WHEN 1 THEN [Outstanding Quantity] 
+	WHEN 5 THEN [Outstanding Quantity] * -1 
+END [Quantity] 
+,0
+--,[Document No_] [Document]
+
+--,[PO Line No_] [POlineNo]
+
+--,[Purchaser Code] [Buyer] 
+--,[Pay-to Name] [Vendor]
+
+FROM [ZYGO$Purchase Line] l 
+
+INNER JOIN [ZYGO$Purchase Header] h on l.[Document No_] = h.No_ 
+
+WHERE l.No_ = @item
+
+AND [Outstanding Quantity] &gt; 0 
+
+AND [Document No_] NOT LIKE 'KB%' 
+
+AND h.[Document Type] IN (1,5)
+
+AND l.[Promised Receipt Date] &lt;= @DueDate
+
+ORDER BY [Due Date]
+--)
+----, s2 AS
+----(
+--SELECT
+
+--[Due Date]
+--,[Item No.]
+--,s1.OnHand
+--,s1.[Supply] [Supply]
+--,s1.Demand Demand
+
+--FROM s1
+
+--ORDER BY [Due Date]
+
+--GROUP BY MONTH([Due Date]),[Item No.]
+--)
+
+OPEN itemCursor
+
+FETCH NEXT FROM itemCursor into @rowDueDate, @Supply, @Demand
+WHILE @@FETCH_STATUS = 0
+
+BEGIN
+
+SET @OH = @OH + @Supply + @Demand
+
+
+
+INSERT INTO #Temp
+
+SELECT 
+
+@rowDueDate
+,@OH
+,@Supply
+,@Demand
+--,s2.[Item No.]
+--,s2.OnHand
+--,s2.Supply
+--,s2.Demand
+--,(s2.[OnHand] + s2.Supply + s2.Demand) 
+--,[Standard Cost]
+--,(s2.[OnHand] + s2.Supply + s2.Demand)  * [Standard Cost] [Inventory Value]
+
+--FROM s2 LEFT JOIN ZYGO$Item i ON s2.[Item No.] = i.No_
+
+
+FETCH NEXT FROM itemCursor into  @rowDueDate, @Supply, @Demand
+END
+CLOSE itemCursor
+DEALLOCATE itemCursor
+
+SELECT * FROM #Temp
+
+WHERE Supply &lt;&gt; 0.00 
+
+UNION ALL
+
+SELECT * FROM #Temp
+
+WHERE Demand &lt;&gt; 0.00
+
+
+order by [Due Date]
+
+--DROP TABLE #Temp</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="Due_Date">
+          <DataField>Due Date</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="OnHand">
+          <DataField>OnHand</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Supply">
+          <DataField>Supply</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Demand">
+          <DataField>Demand</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="textbox1">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>InventoryForecastTEST</Value>
+                    <Style>
+                      <FontFamily>Segoe UI Light</FontFamily>
+                      <FontSize>24pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>textbox1</rd:DefaultName>
+            <Height>0.43in</Height>
+            <Width>5in</Width>
+            <Style>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Tablix Name="table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.22in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Due Date</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox3">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Supply</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Demand</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>On Hand</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.21in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Due_Date">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Due_Date.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>MM/dd/yy</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Due_Date</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Supply">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Supply.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Supply</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Demand">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Demand.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Demand</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="OnHand">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!OnHand.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>OnHand</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet1</DataSetName>
+            <Top>0.43in</Top>
+            <Height>0.43in</Height>
+            <Width>4in</Width>
+            <ZIndex>1</ZIndex>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>0.86in</Height>
+        <Style />
+      </Body>
+      <Width>5in</Width>
+      <Page>
+        <LeftMargin>1in</LeftMargin>
+        <RightMargin>1in</RightMargin>
+        <TopMargin>1in</TopMargin>
+        <BottomMargin>1in</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>4</NumberOfColumns>
+      <NumberOfRows>2</NumberOfRows>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Language>en-US</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>3faacb94-9220-4b37-aca1-fac7c1419224</rd:ReportID>
+</Report>
