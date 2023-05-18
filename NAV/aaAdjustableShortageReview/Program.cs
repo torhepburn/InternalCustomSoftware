@@ -15,7 +15,7 @@ namespace aaAdjustableShortageReview
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new AoTest());
+            //Application.Run(new TEST());
             Application.Run(new FindItemCode());
         }
     }
