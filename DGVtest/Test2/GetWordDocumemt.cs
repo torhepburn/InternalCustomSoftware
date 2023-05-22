@@ -84,6 +84,7 @@ namespace Test2
 
                 //doesn't seem to be true - works for .doc
 
+                
                 if (File.Exists(fileList[i].Replace(".DOC ", ".DOCX")) == true)
                 {
                     //pull the document through Word to the clipboard
@@ -151,11 +152,23 @@ namespace Test2
 
                             line = line.Substring(boxtab + 1, line.Length - (boxtab + 1));
 
-                            int installtab = line.IndexOf('\t');
+                            if (line == "" & (line.IndexOf('\t') == -1))  //if the document is messed up and the field is not there
+                            {
+                                installon = "";
+                                kitwith = "";
+                            }
+                            else
+                            {
+                                int installtab = line.IndexOf('\t');
 
-                            installon = line.Substring(0, installtab);
+                                if (installtab > -1)
+                                {
 
-                            kitwith = line.Substring(installtab + 1, line.Length - (installtab + 1));
+                                    installon = line.Substring(0, installtab);
+
+                                    kitwith = line.Substring(installtab + 1, line.Length - (installtab + 1));
+                                }
+                            }
 
                             try
                             {
