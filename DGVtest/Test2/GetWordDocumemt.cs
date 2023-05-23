@@ -76,7 +76,12 @@ namespace Test2
                 //debug line to figure out last packing list attempted
                 File.AppendAllText(@"C:\A\PackingListUpdate.txt", fileList[i] + "  " + i.ToString() + Environment.NewLine);
 
-                document = fileList[i].ToString().Substring(fileList[i].ToString().LastIndexOf("\\") + 1, fileList[i].ToString().Length - 27);
+                //int thistest = fileList[i].ToString().LastIndexOf(".");
+                //int tthistest = fileList[i].ToString().LastIndexOf("\\");
+
+                document = fileList[i].ToString().Substring(fileList[i].ToString().LastIndexOf("\\") + 1, fileList[i].ToString().LastIndexOf(".") - (fileList[i].ToString().LastIndexOf("\\")+2));
+
+                //document = fileList[i].ToString().Substring(fileList[i].ToString().LastIndexOf("\\") + 1, fileList[i].ToString().Length - 27);
                 revision = fileList[i].ToString().Substring(fileList[i].ToString().LastIndexOf(".") - 1, 1).ToUpper();
 
                 // could be either .doc or .docx so need to check
