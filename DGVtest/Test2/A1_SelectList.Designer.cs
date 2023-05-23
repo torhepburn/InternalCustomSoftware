@@ -28,7 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.tbSearchPartNumber = new System.Windows.Forms.TextBox();
             this.bSearch = new System.Windows.Forms.Button();
@@ -46,6 +47,7 @@
             this.LNewNumber = new System.Windows.Forms.Label();
             this.rbEditByLine = new System.Windows.Forms.RadioButton();
             this.bADDfromWord = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
@@ -85,7 +87,7 @@
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(52, 152);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(649, 16);
+            this.label4.Size = new System.Drawing.Size(648, 16);
             this.label4.TabIndex = 34;
             this.label4.Text = "CLICK ON THE PACKING LIST PART NUMBER TO GET THE LIST YOU WANT TO WORK ON.";
             // 
@@ -105,8 +107,8 @@
             // 
             this.DGV.AllowUserToAddRows = false;
             this.DGV.AllowUserToDeleteRows = false;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.DGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.DGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             this.DGV.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -124,7 +126,7 @@
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(52, 9);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(255, 16);
+            this.label1.Size = new System.Drawing.Size(254, 16);
             this.label1.TabIndex = 39;
             this.label1.Text = "SELECT WHAT YOU WANT TO DO.";
             // 
@@ -232,6 +234,8 @@
             this.bADDfromWord.Size = new System.Drawing.Size(200, 35);
             this.bADDfromWord.TabIndex = 49;
             this.bADDfromWord.Text = "Add from Word";
+            this.toolTip1.SetToolTip(this.bADDfromWord, "File name needs to be saved in A drive \r\nwith rev number.  \r\n\r\nExample: PL6317-03" +
+        "01-03A");
             this.bADDfromWord.UseVisualStyleBackColor = false;
             this.bADDfromWord.Click += new System.EventHandler(this.bADDfromWord_Click);
             // 
@@ -288,5 +292,6 @@
         private System.Windows.Forms.Label LNewNumber;
         private System.Windows.Forms.RadioButton rbEditByLine;
         private System.Windows.Forms.Button bADDfromWord;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
