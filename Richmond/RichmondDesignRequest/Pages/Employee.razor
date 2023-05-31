@@ -1,8 +1,8 @@
 ﻿@page "/employee"
 
-<PageTitle>Employee</PageTitle>
+<PageTitle>Employee List</PageTitle>
 
-<h1>Select Employee as Requestor</h1>
+<h1>Select Employee as Reviewer</h1>
 
 @using RichmondDesignRequest.Data
 @using System.Data;
@@ -11,54 +11,22 @@
 @inject Global g
 @inject NavigationManager NavMgr
 
-@*<table class="table table-bordered">
-    <thead class="border border-dark">
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            @*<th width="170">Part Number</th>*@
-            @*<th>Part Description</th>
-            @* <th>WO Line #</th>*@
-            @*<th>Job Reference</th>
-            <th>Quantity Short</th>
-            @*<th>Location</th>*@
-            @*<th width="140">Bin Code</th>
-            <th width="40">Cost Center</th>
-            <th>Stockrom Associate</th>
-            *@@*<th>Planner</th>
-            <th>Due Date</th>
-            <th>Most Recent Comment</th>
-            <th>Comment Date</th>*@
-  @*      </tr>
-    </thead>
-    <tbody class="border border-dark">
-        @foreach (DataRow r in dt.Rows)
-        {
-            string bgstyle = "";
-            string bgclass = "";
-            
-
-            <tr class=@bgclass style=@bgstyle @onclick="() => Select(r[0].ToString())">
-                <td >@r[1].ToString()</td>
-                <td class="border border-dark">@r[2].ToString()</td>
-            </tr>
-        }
-    </tbody>
-</table>*@
-
 <EditForm Model="data" OnValidSubmit="dataEntry">
-   <select class="form-control" @bind="@selectedID">
-
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+   <InputSelect ID="s1 "class="form-control" @bind-Value="selectedID">
         <option value=""></option>
        @foreach (DataRow r in dt.Rows)
     {
-        <option value="@r[0].ToString()">@r[1].ToString()</option>
+        <option value="@r[1].ToString()">@r[1].ToString()</option>
     }
-
-    </select>
+    </InputSelect>
 
 </EditForm>
-
+<br />
+Reviewers:
+<br />
+@reviewer
 
 @code {
 
@@ -68,6 +36,7 @@
     DataTable dt;
     private string data ="";
     private string? selectedID;
+    private string? reviewer;
 
     protected override void OnInitialized()
     {
@@ -76,12 +45,7 @@
         cnxn = new SqlConnection(g.db);
 
         cmd = new("select " +
-        //         "' ' as ID " +
-        //         ",' ' as Name " +
-        //         ",' ' as Email " +
-        //         "UNION ALL " +
-                 //"SELECT " +
-                 "  ROW_NUMBER() OVER " +
+                  "  ROW_NUMBER() OVER " +
                  "(Order BY sn) " +
                  ", CN " +
                  ", mail " +
@@ -89,7 +53,7 @@
                  "WHERE BU = 'ca-ric' " +
                  "order by SN "
                  , cnxn);
-                 
+
         try
         {
             cnxn.Open();
@@ -109,13 +73,13 @@
 
     private void Select(string ID)
     {
-        g.requestorEmail = ID;
-        NavMgr.NavigateTo("/index");
+        //g.requestorEmail = ID;
+        //NavMgr.NavigateTo("/index");
     }
 
-    private void dataEntry()
+    public void dataEntry()
     {
-
+        reviewer = reviewer + selectedID;
     }
     
 }
