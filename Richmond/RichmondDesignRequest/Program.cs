@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<Global>();
+builder.Services.AddSingleton<FormModel>();
 
 var app = builder.Build();
 

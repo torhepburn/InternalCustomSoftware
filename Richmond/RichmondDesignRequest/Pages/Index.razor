@@ -1,10 +1,12 @@
 ﻿@page "/"
 
 @using RichmondDesignRequest.Data
-@using System.Data
+@*@using System.Data
 @using Microsoft.Data.SqlClient
+@using System.ComponentModel.DataAnnotations*@
 
 @inject Global g
+@inject FormModel f
 @inject NavigationManager NavMgr
 
 <PageTitle>Richmond Design Request Form</PageTitle>
@@ -58,7 +60,7 @@
     </tr>
 </table>
 
-<EditForm Model="data" OnValidSubmit="DataEntry">
+<EditForm Model="dataModel" OnValidSubmit="DataEntry">
 <DataAnnotationsValidator />
 <ValidationSummary />
 
@@ -73,7 +75,7 @@
         </td>
             <td >
               * Priority :
-                <InputSelect class="form-control" style="width: 100%" @bind-Value="priority">
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="f.priority">
                     <option value="">Selection Required</option>
                     <option value="Routine">Routine</option>
                     <option value="Urgent">Urgent</option>
@@ -278,13 +280,16 @@
 
  
 @code{
+
+    private FormModel dataModel = new FormModel();
+
     private string requestor = "";
     private string index = "";
     private string? department;
     private string? ContactEmail;
     private DateTime requestedDate;
     private string? quantity;
-    private string? priority;
+    //private string? priority;
     private string? project;
     private string? techContact;
     private string? deliverTo;
@@ -302,7 +307,9 @@
     private string? toolDescription;
     private string? requirements;
     private string? additional;
-    private string data = "";
+
+    
+
     private string? chargeNo;
     private string? LCostCenter = " Cost Center  ";
     private string? LProjectNumber = " Project Number  ";
@@ -359,7 +366,7 @@
 
     protected override void OnInitialized()
     {
-        EditContext = new EditContext(data);
+        EditContext = new EditContext(dataModel);
         EditContext.OnFieldChanged += EditContext_OnFieldChanged;
 
         dtEmployees = new DataTable();
@@ -495,7 +502,7 @@
             "\n\r" +
             "Name............: " + requestor + "\n\r" +
             "Contact eMail...: " + ContactEmail + "\n\r" +
-            "Priority........: " + priority + "\r" +
+            "Priority........: " + f.priority + "\r" +
             "Quantity........: " + quantity + "\r" +
             "Need Date.......: " + requestedDate.ToString() + "\r" +
             "Project.........: " + project + "\r" +
@@ -522,7 +529,7 @@
                     "Quantity.......: " + quantity + "\r\r\r" +
                     "Name...........: " + requestor + "\n\r" +
                     "Contact eMail..: " + ContactEmail + "\n\r" +
-                    "Priority........: " + priority + "\r" +
+                    "Priority........: " + f.priority + "\r" +
                     "Quantity........: " + quantity + "\r" +
                     "Need Date.......: " + requestedDate.ToString() + "\r" +
                     "Project.........: " + project + "\r" +
@@ -558,7 +565,7 @@
         pContactEmail.Value = ContactEmail;
         
         SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
-        pPriority.Value = priority;
+        pPriority.Value = f.priority;
         
         SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
         report.Value = requestReport;
