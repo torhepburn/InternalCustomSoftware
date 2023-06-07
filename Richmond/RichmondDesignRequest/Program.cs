@@ -9,7 +9,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<Global>();
 builder.Services.AddSingleton<FormModel>();
-builder.Services.AddSingleton<Popup>();
+
+
 
 var app = builder.Build();
 
