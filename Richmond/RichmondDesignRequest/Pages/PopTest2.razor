@@ -1,0 +1,84 @@
+﻿@page "/poptest2"
+
+@*@page "/form-example-4"*@
+@using Microsoft.Extensions.Logging
+@using Microsoft.AspNetCore.Components.Web
+@implements IDisposable
+@*@inject ILogger<FormExample4> Logger*@
+
+
+    <style>
+        .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s;
+}
+
+.popup-overlay.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.popup-content h3 {
+    margin-top: 0;
+}
+   </style>
+
+
+
+<div class="popup-overlay @(IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@Title</h3>
+        <p>@Message</p>
+        <button @onclick="ClosePopup">Close</button>
+    </div>
+</div>
+
+<button @onclick="ShowPopup">Show Popup</button>
+
+@code {
+    private Data.Popup popup = new Data.Popup();
+
+    private void ShowPopup()
+    {
+        popup.IsVisible = true;
+    }
+
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public string Message { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    public bool IsVisible { get; set; }
+
+    protected async Task ClosePopup()
+    {
+        IsVisible = false;
+        await OnClose.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        ClosePopup().Wait(); // Ensures the popup is closed when the component is disposed
+    }
+}

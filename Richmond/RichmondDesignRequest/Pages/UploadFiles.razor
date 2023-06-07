@@ -1,0 +1,150 @@
+﻿@page "/uploadFiles"
+
+<PageTitle>Upload Files</PageTitle>
+
+<h1>Select Employee as Reviewer</h1>
+
+@using RichmondDesignRequest.Data
+@using System.Data;
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+@*<EditForm Model="data" OnValidSubmit="dataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+   <InputSelect ID="s1 "class="form-control" @bind-Value="selectedID">
+        <option value=""></option>
+       @foreach (DataRow r in dt.Rows)
+    {
+        <option value="@r[1].ToString()">@r[1].ToString()</option>
+    }
+    </InputSelect>
+
+</EditForm>*@
+<InputFile OnChange="@SingleUpload" />
+
+@code {
+
+
+
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    DataTable dt;
+    private string data ="";
+    private string? selectedID;
+    private string? reviewer;
+
+    //protected override void OnInitialized()
+    //{
+    //    //dt = new DataTable();
+
+    //    //cnxn = new SqlConnection(g.db);
+
+    //    //cmd = new("select " +
+    //    //          "  ROW_NUMBER() OVER " +
+    //    //         "(Order BY sn) " +
+    //    //         ", CN " +
+    //    //         ", mail " +
+    //    //         "FROM EmployeesAmetekAD " +
+    //    //         "WHERE BU = 'ca-ric' " +
+    //    //         "order by SN "
+    //    //         , cnxn);
+
+    //    //try
+    //    //{
+    //    //    cnxn.Open();
+    //    //    dr = cmd.ExecuteReader();
+    //    //    dt.Load(dr);
+    //    //}
+    //    //catch (SqlException ex)
+    //    //{
+    //    //    //Popup popup = new Pupup();  ex.ToString();
+    //    //}
+    //    //finally
+    //    //{
+    //    //    cnxn.Close();
+
+    //    //}
+    //}
+
+    private async Task SingleUpload(InputFileChangeEventArgs e)
+    {
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        //do something with bytes
+
+
+        SqlConnection cnxn = new SqlConnection(g.db);
+
+        if (e.File.ContentType == "application/pdf")
+        {
+
+            SqlParameter prm1 = new SqlParameter
+                ("@file", SqlDbType.Image, Convert.ToInt32(bytes.Length));
+            prm1.Value = bytes;
+
+            SqlCommand cmd = new SqlCommand
+                ("Update RIC.DesignRequests set uploaded_pdf = " + prm1 + "  " +
+                 " where id = " + g.requestID + " ", cnxn);
+            cmd.Parameters.Add(prm1);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+            /*
+            * If there are two files to be uploaded the first will always be the pdf
+            * and the second the dxf.  The 'true' flag is used to determine if there is a dxf.
+            */
+
+            //if (Ftwofiles)
+            //{
+            //    Ftwofiles = false;
+            //    filetypeSelected = "dxf";
+            //    FileUpload();
+            //}
+
+
+            //if (Ftwofiles2BUploaded == false)
+            //{
+            //    //Email();
+            //    //Response.Redirect("trThankYou.aspx");
+            //}
+        }
+        else
+        {
+            SqlParameter prm1 = new SqlParameter
+                ("@file", SqlDbType.Image, Convert.ToInt32(bytes.Length));
+            prm1.Value = bytes;
+
+            SqlCommand cmd = new SqlCommand
+                ("Update RIC.DesignRequests set uploaded_dxf = " + prm1 + "  " +
+                 " ,uploaded_filename = '" + e.File.Name + "' " +
+                 " where id = " + g.requestID + " ", cnxn);
+            cmd.Parameters.Add(prm1);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("/");
+
+    }
+
+    private void Select(string ID)
+    {
+        //g.requestorEmail = ID;
+        //NavMgr.NavigateTo("/index");
+    }
+
+    public void dataEntry()
+    {
+        reviewer = reviewer + selectedID;
+    }
+    
+}

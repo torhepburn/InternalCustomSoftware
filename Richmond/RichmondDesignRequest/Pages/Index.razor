@@ -1,13 +1,24 @@
 ﻿@page "/"
 
 @using RichmondDesignRequest.Data
-@*@using System.Data
+
 @using Microsoft.Data.SqlClient
-@using System.ComponentModel.DataAnnotations*@
+@using System.ComponentModel.DataAnnotations
+
 
 @inject Global g
 @inject FormModel f
+@*@inject Popup p*@
+
 @inject NavigationManager NavMgr
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
 
 <PageTitle>Richmond Design Request Form</PageTitle>
 
@@ -30,9 +41,9 @@
         </td>*@
     </tr>
     <tr>
-        @*<td align="center">
+        <td align="center">
             Submit Design request prior to attaching support document (pdf format required).
-        </td>*@
+        </td>
     </tr>
 </table>
    <br />
@@ -44,7 +55,7 @@
     <p>
         <label>
             * Name :
-            <InputSelect class="form-control" style="width=100%" @bind-Value="index">
+            <InputSelect class="form-control" style="width=100%" @bind-Value="employeeIndex">
                 
                 <option value="">Must Select an Employee</option>
                 
@@ -60,13 +71,41 @@
     </tr>
 </table>
 
-<EditForm Model="dataModel" OnValidSubmit="DataEntry">
+<EditForm EditContext="EditContext" OnValidSubmit="DataEntry">
+
+@*<EditForm Model="dataModel" OnValidSubmit="DataEntry">*@
 <DataAnnotationsValidator />
 <ValidationSummary />
 
 
 
 <table width="100%" cellpadding="8">
+
+    <tr>
+        @*<td>
+            <p>
+        <label>
+            * Name :
+            <InputSelect class="form-control" style="width=100%" @bind-Value="index">
+                
+                <option value="">Must Select an Employee</option>
+                
+                @foreach (DataRow r in dtEmployees.Rows)
+                {
+                    <option value="@r[0].ToString()">@r[1].ToString()</option>
+                }
+            </InputSelect>
+        </label>
+    </p>
+        </td>*@
+            <td>
+                <InputCheckbox @bind-Value="cbPDF"></InputCheckbox> Check if attaching pdf document.
+            </td>
+            <td>
+                <InputCheckbox @bind-Value="cbDXF"></InputCheckbox> Check if attaching dxf document - must be Scale 1:1 - no Step files.
+            </td>
+
+    </tr>
   
     <tr>
         <td>
@@ -81,6 +120,8 @@
                     <option value="Urgent">Urgent</option>
                     <option value="Production Down">Production Down</option>
                 </InputSelect>
+
+                <ValidationMessage For="()=> dataModel.priority" style="display:inline" />
             </td>
             <td >
                 Contact for Technical Information :
@@ -96,7 +137,9 @@
             </td>
             <td >
             * Quantity :
-                <InputText id="n4" style="width: 100%" placeholder="" @bind-Value="quantity" />
+                <InputText id="n4" style="width: 100%" placeholder="" @bind-Value="f.quantity" />
+
+                <ValidationMessage For="()=> dataModel.quantity" style="display:inline" />
         </td>
          <td >
                 Deliver Completed Tooling to :
@@ -250,8 +293,10 @@
         </tr>
         <tr>
             <td >
-               * Describe Request/List Requirements :
-                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="requirements" />
+                <ValidationMessage For="()=> dataModel.requirements" style="display:inline" />* Describe Request/List Requirements :
+                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="f.requirements" />
+
+               
             </td>
             <td >
                 Any Additional Information :
@@ -264,11 +309,13 @@
             </td>
         </tr>
         <tr>
-            <td></td>
-            <td></td>
-            <td >
+            <td>
                 <br />
                 <button class="btn btn-primary">Submit Request</button>
+            </td>
+            <td></td>
+            <td >
+                
             </td>
         </tr>
         
@@ -283,12 +330,17 @@
 
     private FormModel dataModel = new FormModel();
 
+    private EditContext? EditContext;
+    private ValidationMessageStore? messageStore;
+
+    Popup pop = new Popup();
+
     private string requestor = "";
-    private string index = "";
+    private string employeeIndex = "";
     private string? department;
     private string? ContactEmail;
     private DateTime requestedDate;
-    private string? quantity;
+    //private string? quantity;
     //private string? priority;
     private string? project;
     private string? techContact;
@@ -305,21 +357,23 @@
     private string? surface;
     private string? toolNo;
     private string? toolDescription;
-    private string? requirements;
+    //private string? requirements;
     private string? additional;
-
-    
+    private string? pdf;
+    private string? dxf;
 
     private string? chargeNo;
     private string? LCostCenter = " Cost Center  ";
     private string? LProjectNumber = " Project Number  ";
+    private string? Lpdf = " Check if attaching pdf document.  ";
     public bool cbProject = false;
     public bool cbCostCenter = false;
     public bool cbPersist = false;
+    private bool cbPDF = false;
+    private bool cbDXF = false;
 
-    private EditContext EditContext;
 
-    static string SqlTable = "RIC.Tool_Requests";
+    static string SqlTable = "RIC.DesignRequests";
     static string filetypeSelected;
     static string filetypeLoaded;
     static bool Ftwofiles = false;
@@ -338,6 +392,7 @@
     DataTable dtParts;
     DataTable dtProjectCharges;
     DataTable dtCostCenters;
+
 
     private string? selectedID;
 
@@ -368,6 +423,10 @@
     {
         EditContext = new EditContext(dataModel);
         EditContext.OnFieldChanged += EditContext_OnFieldChanged;
+        EditContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(EditContext);
+
+        //popup = new PopUp();
 
         dtEmployees = new DataTable();
 
@@ -379,7 +438,7 @@
                   ", CN " +
                   ", mail " +
                   "FROM EmployeesAmetekAD " +
-                  "WHERE BU = 'ca-ric' " +
+                  "WHERE BU = 'sca-ric' " +
                   "order by SN "
                   , cnxn);
 
@@ -391,7 +450,9 @@
         }
         catch (SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
         }
         finally
         {
@@ -399,32 +460,6 @@
 
         }
 
-        //dtParts = new DataTable();
-
-        //cnxn = new SqlConnection(g.dbNAV);
-
-        //cmd = new SqlCommand(
-        //    "SELECT " + 
-        //    "No_ + '-:-' + Description " +
-        //    "from ZYGO$Item " +
-        //    "where [Global Dimension 2 Code] in " +
-        //    "('EUV','CRYSTALLINE OPTICS','GLASS OPTICS','MACHINED STRUCTURES') ORDER BY No_", cnxn);
-
-        //try
-        //{
-        //    cnxn.Open();
-        //    dr = cmd.ExecuteReader();
-        //    dtParts.Load(dr);
-        //}
-        //catch (SqlException ex)
-        //{
-        //    ex.ToString();
-        //}
-        //finally
-        //{
-        //    cnxn.Close();
-
-        //}
 
         dtProjectCharges = new DataTable();
 
@@ -476,6 +511,19 @@
         }
     }
 
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+
+        DataEntry();
+        //// Custom validation logic
+        //if (!holodeck.Options)
+        //{
+        //    messageStore?.Add(() => holodeck.Options, "Select at least one.");
+        //}
+    }
+
     public void Reviewers()
     {
         NavMgr.NavigateTo("Employee");
@@ -484,70 +532,94 @@
 
     public void DataEntry()
     {
-        if (requestor.Length < 1)
-        {
-            
-        }
+        //PopUp popup = new PopUp();
 
         //string emailto = ContactEmail;
         string submitDate = DateTime.Now.ToString();
 
         requestResponse =
-            "Dear " + requestor +  "," +
-            "\n\r" +
-            "Here is the information which you submitted on your recent tool request:" +
-            "\n\r" +
-            "Date and Time of Submission: " +
-            submitDate + "  Eastern Standard Time" +
-            "\n\r" +
-            "Name............: " + requestor + "\n\r" +
-            "Contact eMail...: " + ContactEmail + "\n\r" +
-            "Priority........: " + f.priority + "\r" +
-            "Quantity........: " + quantity + "\r" +
-            "Need Date.......: " + requestedDate.ToString() + "\r" +
-            "Project.........: " + project + "\r" +
-            "Part............: " + part + "\r" +
-            "Department......: " + department + "\r" +
-            "Tool Request Description: " +
-            "\r\r" +
-            requirements +
-            "\r\r" +
-            additional +
-            "\r\r" +
-            "Link to View Request Status:" + "\r" +
+            //"Dear " + requestor +  "," +
+            //"\n\r" +
+            //"Here is the information which you submitted on your recent design request:" +
+            //"\n\r" +
+            //"Date and Time of Submission: " +
+            //submitDate + "  Eastern Standard Time" +
+            //"\n\r" +
+            //"Name............: " + requestor + "\n\r" +
+            //"Contact eMail...: " + ContactEmail + "\n\r" +
+            //"Priority........: " + dataModel.priority + "\r" +
+            //"Quantity........: " + dataModel.quantity + "\r" +
+            //"Need Date.......: " + requestedDate.ToString() + "\r" +
+            //"Project.........: " + project + "\r" +
+            //"Part............: " + part + "\r" +
+            //"Department......: " + department + "\r" +
+            //"Tool Request Description: " +
+            //"\r\r" +
+            //dataModel.requirements +
+            //"\r\r" +
+            //additional +
+            //"\r\r" +
+            //"Link to View Request Status:" + "\r" +
             "If you have any questions, please visit us as out Tooling Office Hours on XXXX";
 
         // email to tool room to report request
 
         subjectline = "Design Request: " + ContactEmail;
-                  
+
         requestReport =
-                    "Design Request Description: " +
-                    "\r\r" +
-                    requirements +
-                    "\r\r" +
-                    "Quantity.......: " + quantity + "\r\r\r" +
-                    "Name...........: " + requestor + "\n\r" +
-                    "Contact eMail..: " + ContactEmail + "\n\r" +
-                    "Priority........: " + f.priority + "\r" +
-                    "Quantity........: " + quantity + "\r" +
-                    "Need Date.......: " + requestedDate.ToString() + "\r" +
-                    "Project.........: " + project + "\r" +
-                    "Part............: " + part + "\r" +
-                    "Department......: " + department + "\r" +
-                    "Date of Submission: " +
-        submitDate;
-        
+                    //"Design Request Description: " +
+                    //"\r\r" +
+                    //dataModel.requirements +
+                    //"\r\r" +
+                    //"Quantity.......: " + dataModel.quantity + "\r\r\r" +
+                    //"Name...........: " + requestor + "\n\r" +
+                    //"Contact eMail..: " + ContactEmail + "\n\r" +
+                    //"Priority........: " + f.priority + "\r" +
+                    //"Quantity........: " + dataModel.quantity + "\r" +
+                    //"Need Date.......: " + requestedDate.ToString() + "\r" +
+                    //"Project.........: " + project + "\r" +
+                    //"Part............: " + part + "\r" +
+                    //"Department......: " + department + "\r" +
+                    "Date of Submission: " + submitDate;
+
         cnxn = new SqlConnection(g.db);
-                
+
+        requestor = "";
+        employeeIndex = "2";
+        department = "2";
+        ContactEmail = "2";
+        //requestedDate = "2023-06-01";
+        f.quantity = "1";
+        f.priority = "a";
+        project = "a";
+        techContact = "a";
+        deliverTo = "a";
+        materials = "a";
+        part = "a";
+        finishing = "a";
+        reviewer1 = "a";
+        reviewer2 = "a";
+        reviewer3 = "a";
+        reviewer4 = "a";
+        opticPart = "a";
+        opticDrawing = "a";
+        surface = "a";
+        toolNo = "a";
+        toolDescription = "a";
+        f.requirements = "a";
+        additional = "a";
+        pdf = "a";
+        dxf = "a";
+        chargeNo = "506";
+
         SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
         pSubjectLine.Value = subjectline;
-        
+
         SqlParameter pName = new SqlParameter("@name", SqlDbType.VarChar, 100);
         pName.Value = requestor;
 
         SqlParameter Request_Text = new SqlParameter("@request_text", SqlDbType.VarChar, 4000);
-        Request_Text.Value = requirements;
+        Request_Text.Value = f.requirements;
 
         SqlParameter pDepartment = new SqlParameter("@department", SqlDbType.VarChar, 50);
         pDepartment.Value = department;
@@ -559,20 +631,20 @@
         pPart.Value = part;
 
         SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
-        pQuantity.Value = quantity;
-        
+        pQuantity.Value = Convert.ToInt32(f.quantity);
+
         SqlParameter pContactEmail = new SqlParameter("@ContactEmail", SqlDbType.VarChar, 50);
         pContactEmail.Value = ContactEmail;
-        
+
         SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
         pPriority.Value = f.priority;
-        
+
         SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
         report.Value = requestReport;
-        
+
         SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
         response.Value = requestResponse;
-        
+
         SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectChargeNumber", SqlDbType.VarChar, 50);
         pProjectChargeNumber.Value=chargeNo;
 
@@ -591,7 +663,7 @@
 
         SqlParameter pFinishing = new SqlParameter("@Finishing", SqlDbType.VarChar,50);
         pFinishing.Value = finishing;
-        
+
 
         SqlParameter pTechnicalContactName = new SqlParameter("@TechnicalContactName", SqlDbType.VarChar, 50);
         pTechnicalContactName.Value = techContact;
@@ -605,7 +677,12 @@
         SqlParameter pAdditionalInformation = new SqlParameter("@AdditionalInformation", SqlDbType.VarChar, 1000);
         pAdditionalInformation.Value = additional;
 
-        
+        /* defining the paramater as output to be able to get the id of the row from the data being input into the database  */
+
+        SqlParameter pRequestID = new SqlParameter("@ID", SqlDbType.Int);
+        pRequestID.Direction = ParameterDirection.Output; 
+
+
         cnxn.Open();
 
         SqlCommand cmd = new SqlCommand("Insert into " + SqlTable + " (" +
@@ -628,7 +705,7 @@
                 ",project_charge_number " +
                 ",Part" +
                 ",AdditionalInformation" +
-                ",Anodized " +
+                ",Finish " +
                 ",TechnicalContactName " +
                 //",DesignReviewParticipants " +
                 ",FocalSurface " +
@@ -656,7 +733,7 @@
                 "," + pTechnicalContactName +
                 //"," + pDesignReviewParticipants +
                 "," + pFocalSurface +
-                ")", cnxn);
+                ") SET @ID = SCOPE_IDENTITY() ", cnxn);
         cmd.Parameters.Add(Request_Text);
         cmd.Parameters.Add(pQuantity);
         cmd.Parameters.Add(pContactEmail);
@@ -678,13 +755,18 @@
         cmd.Parameters.Add(pTechnicalContactName);
         //cmd.Parameters.Add(pDesignReviewParticipants);
         cmd.Parameters.Add(pFocalSurface);
+        cmd.Parameters.Add(pRequestID);
 
         try
         {
             int rowsReturned = cmd.ExecuteNonQuery();
+            g.requestID = (int)cmd.Parameters["@ID"].Value;
         }
         catch (SqlException ex)
         {
+            //popup.Title = "Error";
+            //popup.Message = ex.ToString();
+            //popup.ShowPopup();
             //Lerror.Visible = true;
             //Lerror.Text = ex.ToString();
             return;
@@ -696,7 +778,33 @@
 
         cmd.Dispose();
 
-        Email();
+        //Email();
+
+        if (!cbPDF & !cbDXF)
+        {
+
+            Email();
+            uid = 0;
+
+            //Response.Redirect("trThankYou.aspx");
+        }
+        else if (cbPDF & !cbDXF)
+        {
+            filetypeSelected = "pdf";
+            NavMgr.NavigateTo("uploadfiles");
+        }
+        else if (cbPDF & cbDXF)
+        {
+            Ftwofiles = true;
+            Ftwofiles2BUploaded = true;
+            filetypeSelected = "pdf";
+            NavMgr.NavigateTo("uploadfiles");
+        }
+        else if (!cbPDF & cbDXF)
+        {
+            NavMgr.NavigateTo("uploadfiles");
+        }
+
 
     }
 
@@ -707,9 +815,9 @@
 
     private void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
     {
-        if (e.FieldIdentifier.FieldName == "index")
+        if (e.FieldIdentifier.FieldName == "employeeIndex")
         {
-            int rr = Convert.ToInt32(((RichmondDesignRequest.Pages.Index)e.FieldIdentifier.Model).index);
+            int rr = Convert.ToInt32(((RichmondDesignRequest.Pages.Index)e.FieldIdentifier.Model).employeeIndex);
             requestor = dtEmployees.Rows[rr-1][1].ToString();
             ContactEmail = dtEmployees.Rows[rr-1][2].ToString();
         }

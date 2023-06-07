@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Components;
 using System.ComponentModel.DataAnnotations;
 
 namespace RichmondDesignRequest.Data
 {
     public class FormModel
     {
-        [Required]
+        [Required(ErrorMessage ="* Entry Required")]
 
         //public string db { get; set; } = "server = CT-MID-SQL11; password = Read+Write!; " +
         //                                "user = readWrite; database = AccessFrontends; encrypt=false;";
@@ -14,9 +15,11 @@ namespace RichmondDesignRequest.Data
 
         public string? priority { get; set; }
 
-        //public string? requestor { get; set; }
+        [Required(ErrorMessage = "* Entry Required")]
+        public string? quantity { get; set; }
 
-        //public string? requestorEmail { get; set; }
+        [Required(ErrorMessage = "* Entry Required")]
+        public string? requirements { get; set; }
 
         //public int CommentID { get; set; }
 
@@ -29,4 +32,6 @@ namespace RichmondDesignRequest.Data
 
         //public string? planner { get; set; }
     }
+
+    
 }

@@ -14,6 +14,8 @@ namespace RichmondDesignRequest.Data
 
         public string? requestorEmail { get; set; }
 
+        public int requestID { get; set; }
+
         public int CommentID { get; set; }
 
         public string? Comment { get; set; }
