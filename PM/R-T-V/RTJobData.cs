@@ -30,7 +30,7 @@ namespace R_T_V
 
         private void RTJobData_Load(object sender, EventArgs e)
         {
-            LID.Text = "Tool Room Request ID #  " + g.ID;
+            LID.Text = "Design Request ID #  " + g.ID;
 
             if (g.permission == "VIEW")
             {
@@ -142,7 +142,7 @@ namespace R_T_V
             {
 
                 SqlCommand cmd = new SqlCommand(
-                    "Update Richmond_Tool_Requests SET " +
+                    "Update Ric.designRequests SET " +
                     " request_completed = '" + requestCompleted + "'" +
                     ",completion_date = '" + dtpCompletionDate.Value + "'" +
                     ",comments = " + pComments +
@@ -196,7 +196,7 @@ namespace R_T_V
                 {
 
                     SqlCommand cmd = new SqlCommand(
-                        "Update Richmond_Tool_Requests  set " +
+                        "Update Ric.designRequests  set " +
                         "request_completed = 'true' " +
                         ",Rejected = 'true' " +
                         ", completion_date = GETDATE() " +
@@ -236,14 +236,14 @@ namespace R_T_V
         private void BOpenDxf_Click(object sender, EventArgs e)
         {
             SqlCommand cmd = new SqlCommand
-                ("Select uploaded_dxf from richmond_tool_requests where id = '" + g.ID + "' and uploaded_dxf is not null", cnxn);
+                ("Select uploaded_dxf from ric.designrequests where id = '" + g.ID + "' and uploaded_dxf is not null", cnxn);
             cnxn.Open();
             object o = cmd.ExecuteScalar();
             cnxn.Close();
             if (o != null)
             {
                 cmd = new SqlCommand
-                    ("Select uploaded_dxf from richmond_tool_requests where id = '" + g.ID + "' and uploaded_dxf is not null", cnxn);
+                    ("Select uploaded_dxf from ric.designrequests where id = '" + g.ID + "' and uploaded_dxf is not null", cnxn);
                 cnxn.Open();
 
                 SqlDataReader dr = cmd.ExecuteReader();
@@ -281,14 +281,14 @@ namespace R_T_V
             System.Diagnostics.Process pdfReader = new System.Diagnostics.Process();
 
             cmd = new SqlCommand
-                ("Select uploaded_pdf from richmond_tool_requests where id = '" + g.ID + "' and uploaded_pdf is not null", cnxn);
+                ("Select uploaded_pdf from ric.designrequests where id = '" + g.ID + "' and uploaded_pdf is not null", cnxn);
             cnxn.Open();
             object o = cmd.ExecuteScalar();
             cnxn.Close();
             if (o != null)
             {
                 cmd = new SqlCommand
-                    ("Select uploaded_pdf from richmond_tool_requests where id = '" + g.ID + "' and uploaded_pdf is not null", cnxn);
+                    ("Select uploaded_pdf from ric.designrequests where id = '" + g.ID + "' and uploaded_pdf is not null", cnxn);
                 cnxn.Open();
 
                 SqlDataReader dr = cmd.ExecuteReader();
@@ -341,8 +341,8 @@ namespace R_T_V
                 ",[Estimated Design Time (hrs)] " +
                 ",[Estimated Due Date] " +
                 ",[Job] " +
-          /*10*/",[Code] " +
-                ",[Number] " +
+          /*10*/",COALESCE([Code],'0') " +
+                ",COALESCE([Number],'0') " +
                 ",[ToolDescription] " +
                 ",Designer " +
                 ",Machinist " +
@@ -354,12 +354,14 @@ namespace R_T_V
                 "  ELSE 'FALSE' " +
                 "End Request_Completed " +
                ",Completion_Date " +
-                "from RICHMOND_tool_requests where " +
+                "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
+
+            DataTable table = new DataTable();
 
             try
             {
-                DataTable table = new DataTable();
+                
 
                 cnxn.Open();
                 dr = cmd.ExecuteReader();

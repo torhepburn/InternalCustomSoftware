@@ -30,7 +30,7 @@ namespace R_T_V
 
         private void RTView_Load(object sender, EventArgs e)
         {
-            this.Text = "View Richmond Tool Requests v" + Application.ProductVersion;
+            this.Text = "View Richmond Design Requests v" + Application.ProductVersion;
 
             cnxn = new SqlConnection(g.db);
 
@@ -88,7 +88,7 @@ namespace R_T_V
             //Request ID
             cmd = new SqlCommand
                 ("select ' ' as id union " +
-                 "select distinct id from Ric.tool_requests " +
+                 "select distinct id from Ric.Designrequests " +
                  "order by id", cnxn);
 
             cnxn.Open();
@@ -104,7 +104,7 @@ namespace R_T_V
             //Project
             cmd = new SqlCommand
                 ("select ' ' as Project union " +
-                 "select distinct project from Ric.tool_requests " +
+                 "select distinct project from Ric.designrequests " +
                  "order by Project", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -117,7 +117,7 @@ namespace R_T_V
             //Part
             cmd = new SqlCommand
                 ("select ' ' as part union " +
-                 "select distinct part from Ric.tool_requests " +
+                 "select distinct part from Ric.designrequests " +
                  "order by part", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -130,7 +130,7 @@ namespace R_T_V
             //Customer
             cmd = new SqlCommand
                 ("select ' ' as customer union " +
-                 "select distinct customer from Ric.tool_requests " +
+                 "select distinct customer from Ric.designrequests " +
                  "order by customer", cnxn);
 
             dr = cmd.ExecuteReader();
@@ -142,7 +142,7 @@ namespace R_T_V
 
             //Requested By
             cmd = new SqlCommand("select ' ' as requestor union all " +
-                "select distinct requestor from Ric.tool_requests " +
+                "select distinct requestor from Ric.designrequests " +
                 " order by requestor", cnxn);
             dr = cmd.ExecuteReader();
             dt = new DataTable();
@@ -248,7 +248,7 @@ namespace R_T_V
                 ",Request_Text [Tool Requirements] " +
                 ",TechnicalContactName [Contact for technical info] " +
                 ",AdditionalInformation [Additional Info] " +
-                ",Anodized [Part need to be anodized ?] " +
+                ",Finish [Part need to be anodized ?] " +
                 ",OpticDrawing_Path [Optic Drawing number and path] " +
                 ",FocalSurface [surface of optic that will be focused on with this tool] " +
                 ",DesignReviewParticipants [list of people for design review] " +
@@ -256,7 +256,7 @@ namespace R_T_V
                 ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
                 ",Actual_Hours [Actual Hours] " +
                 ",Rejected " +
-                "FROM ric.Tool_Requests " +
+                "FROM ric.DesignRequests " +
                  "where " +
                  selection;
 
