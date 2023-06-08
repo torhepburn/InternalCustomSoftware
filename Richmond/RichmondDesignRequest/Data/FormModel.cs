@@ -5,7 +5,7 @@ namespace RichmondDesignRequest.Data
 {
     public class FormModel
     {
-        [Required(ErrorMessage ="* Entry Required")]
+        //[Required(ErrorMessage ="* Entry Required")]
 
         //public string db { get; set; } = "server = CT-MID-SQL11; password = Read+Write!; " +
         //                                "user = readWrite; database = AccessFrontends; encrypt=false;";
@@ -13,13 +13,13 @@ namespace RichmondDesignRequest.Data
         //public string dbNAV { get; set; } = "server = PA-HOR-AS408; password = 2018#ameteK; " +
         //                                "user = navdb_read; database = ZYGO-NAV-PROD; encrypt=false;";
 
-        public string? priority { get; set; }
+        //public string? priority { get; set; }
 
-        [Required(ErrorMessage = "* Entry Required")]
-        public string? quantity { get; set; }
+        //[Required(ErrorMessage = "* Entry Required")]
+        //public string? quantity { get; set; }
 
-        [Required(ErrorMessage = "* Entry Required")]
-        public string? requirements { get; set; }
+        //[Required(ErrorMessage = "* Entry Required")]
+        //public string? requirements { get; set; }
 
         //public int CommentID { get; set; }
 

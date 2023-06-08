@@ -32,7 +32,7 @@
     </tr>
     <tr>
         <td align="center">
-            Items marked with an asterisk <a>*</a> require an entry.<br />
+            Items marked with an asterisk * require an entry.<br />
         </td>
     </tr>
     <tr>
@@ -50,65 +50,40 @@
 </table>
    <br />
 
-<table width="100%">
+
+<EditForm EditContext="EditContext">
+    <table width="100%" cellpadding="8">
     <tr>
         <td>
-<EditForm EditContext="EditContext">
     <p>
-        <label>
-            * Name :
-            <InputSelect class="form-control" style="width=100%" @bind-Value="employeeIndex">
-                
-                <option value="">Must Select an Employee</option>
-                
-                @foreach (DataRow r in dtEmployees.Rows)
-                {
-                    <option value="@r[0].ToString()">@r[1].ToString()</option>
-                }
-            </InputSelect>
-        </label>
-    </p>
-</EditForm>
-        </td>
-    </tr>
-</table>
-
-<EditForm EditContext="EditContext" OnValidSubmit="DataEntry">
-
-@*<EditForm Model="dataModel" OnValidSubmit="DataEntry">*@
-@*<DataAnnotationsValidator />*@
-@*<ValidationSummary />*@
-
-
-
-<table width="100%" cellpadding="8">
-
-    <tr>
-        @*<td>
-            <p>
-        <label>
-            * Name :
-            <InputSelect class="form-control" style="width=100%" @bind-Value="index">
-                
-                <option value="">Must Select an Employee</option>
+        <label for="employees">
+                        * Employee :
+                    </label>
+               <InputSelect id="employees" style="width: 100%" @bind-Value="eIndex">
+               <option value="">Must Select an Employee</option>
                 
                 @foreach (DataRow r in dtEmployees.Rows)
                 {
                     <option value="@r[0].ToString()">@r[1].ToString()</option>
                 }
             </InputSelect>
-        </label>
     </p>
-        </td>*@
-            <td>
+        </td>     
+    <td>
                 <InputCheckbox @bind-Value="cbPDF"></InputCheckbox> Check if attaching pdf document.
             </td>
             <td>
                 <InputCheckbox @bind-Value="cbDXF"></InputCheckbox> Check if attaching dxf document - must be Scale 1:1 - no Step files.
             </td>
-
     </tr>
-  
+    </table>
+</EditForm>
+
+    <EditForm Model="validations" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table width="100%" cellpadding="8">
+
     <tr>
         <td>
             Contact Email :
@@ -116,14 +91,14 @@
         </td>
             <td >
               * Priority :
-                <InputSelect class="form-control" style="width: 100%" @bind-Value="f.priority">
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="validations.Priority">
                     <option value="">Selection Required</option>
                     <option value="Routine">Routine</option>
                     <option value="Urgent">Urgent</option>
                     <option value="Production Down">Production Down</option>
                 </InputSelect>
 
-                <ValidationMessage For="()=> dataModel.priority" style="display:inline" />
+                <ValidationMessage For="()=> validations.Priority" style="display:inline" />
             </td>
             <td >
                 Contact for Technical Information :
@@ -135,13 +110,14 @@
             <td align="left">
                 
                 Contact :
-                <InputText id="n13" placeholder="" style="width: 100%" @bind-Value="requestor" />
+                <InputText id="n13" placeholder="" style="width: 100%" @bind-Value="validations.Employee" />
+                <ValidationMessage For="() => validations.Employee" />
             </td>
             <td >
             * Quantity :
-                <InputText id="n4" style="width: 100%" placeholder="" @bind-Value="f.quantity" />
+                <InputNumber id="n4" style="width: 100%" placeholder="" @bind-Value="validations.Quantity" />
 
-                <ValidationMessage For="()=> dataModel.quantity" style="display:inline" />
+                <ValidationMessage For="()=> validations.Quantity" />
         </td>
          <td >
                 Deliver Completed Tooling to :
@@ -169,7 +145,7 @@
 
             </td>
             <td >
-               * Charge Type :
+                * Must Check Charge Type to select Charge Number:<br />
                
                @if (!cbCostCenter)
                {
@@ -183,7 +159,7 @@
 
                 @if (cbProject)
                 {
-                    <InputSelect id="s3" class="form-control" @bind-Value="chargeNo">
+                    <InputSelect id="s3" class="form-control" @bind-Value="validations.ChargeNumber">
 
                         <option value="">Charge Number Lookup</option>
                         @foreach (DataRow r in dtProjectCharges.Rows)
@@ -196,7 +172,7 @@
 
                 @if (cbCostCenter)
                 {
-                    <InputSelect id="s4" class="form-control" @bind-Value="chargeNo">
+                    <InputSelect id="s4" class="form-control" @bind-Value="validations.ChargeNumber">
 
                         <option value="">Charge Number Lookup</option>
                         @foreach (DataRow r in dtCostCenters.Rows)
@@ -206,7 +182,7 @@
 
                     </InputSelect>
                 }
-                
+                 <ValidationMessage For="()=> validations.ChargeNumber" />
                
             </td>
             <td >
@@ -295,10 +271,11 @@
         </tr>
         <tr>
             <td >
-                <ValidationMessage For="()=> dataModel.requirements" style="display:inline" />* Describe Request/List Requirements :
-                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="f.requirements" />
-
-               
+                
+                * Describe Request/List Requirements : 
+                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="validations.Requirements" />
+                <ValidationMessage For="()=> validations.Requirements" />
+                
             </td>
             <td >
                 Any Additional Information :
@@ -307,7 +284,9 @@
 
             <td >
               * Select Requested Date :
-                <InputDate id="ds1" style="width: 100%; height: 100px" @bind-Value="requestedDate" />
+                <InputDate id="ds1" style="width: 100%; height: 100px" @bind-Value="validations.RequestedDate" />
+                <ValidationMessage For="()=> validations.RequestedDate" />
+                    
             </td>
         </tr>
         <tr>
@@ -333,36 +312,37 @@
     private FormModel dataModel = new FormModel();
 
     public EditContext? EditContext;
-    private ValidationMessageStore? messageStore;
+    //private ValidationMessageStore? messageStore;
 
     PopUp pop = new PopUp();
 
-    private string requestor = "";
-    public string employeeIndex = "";
-    private string? department;
-    private string? ContactEmail;
-    private DateTime requestedDate;
+    //private string requestor = "";
+    //public string employeeIndex = "";
+    public int eIndex;
+    private string department = "";
+    private string ContactEmail = "";
+    //private DateTime requestedDate;
     //private string? quantity;
     //private string? priority;
-    private string? project;
-    private string? techContact;
-    private string? deliverTo;
-    private string? materials;
-    private string? part;
-    private string? finishing;
-    private string? reviewer1;
-    private string? reviewer2;
-    private string? reviewer3;
-    private string? reviewer4;
-    private string? opticPart;
-    private string? opticDrawing;
-    private string? surface;
-    private string? toolNo;
-    private string? toolDescription;
+    private string project = "";
+    private string techContact = "";
+    private string deliverTo = "";
+    private string materials = "";
+    private string part = "";
+    private string finishing = "";
+    private string reviewer1 = "";
+    private string reviewer2 = "";
+    private string reviewer3 = "";
+    private string reviewer4 = "";
+    private string opticPart = "";
+    private string opticDrawing = "";
+    private string surface = "";
+    private string toolNo = "";
+    private string toolDescription = "";
     //private string? requirements;
-    private string? additional;
-    private string? pdf;
-    private string? dxf;
+    private string additional = "";
+    private string pdf = "";
+    private string dxf = "";
 
     private string? chargeNo;
     private string? LCostCenter = " Cost Center  ";
@@ -398,6 +378,13 @@
 
     private string? selectedID;
 
+    private ValidationComponents validations = new ValidationComponents();
+
+    private void HandleValidSubmit()
+    {
+        DataEntry();
+    }
+
     protected override void OnParametersSet()
     {   
         base.OnParametersSet();
@@ -423,10 +410,11 @@
 
     protected override void OnInitialized()
     {
+
         EditContext = new EditContext(dataModel);
         EditContext.OnFieldChanged += EditContext_OnFieldChanged;
-        EditContext.OnValidationRequested += HandleValidationRequested;
-        messageStore = new(EditContext);
+        //EditContext.OnValidationRequested += HandleValidationRequested;
+        //messageStore = new(EditContext);
 
         //popup = new PopUp();
 
@@ -513,24 +501,18 @@
         }
     }
 
-    private void HandleValidationRequested(object? sender,
-        ValidationRequestedEventArgs args)
-    {
-        messageStore?.Clear();
+    //private void HandleValidationRequested(object? sender,
+    //    ValidationRequestedEventArgs args)
+    //{
+    //    //messageStore?.Clear();
 
-        DataEntry();
-        //// Custom validation logic
-        //if (!holodeck.Options)
-        //{
-        //    messageStore?.Add(() => holodeck.Options, "Select at least one.");
-        //}
-    }
-
-    public void Reviewers()
-    {
-        NavMgr.NavigateTo("Employee");
-    }
-
+    //    DataEntry();
+    //    //// Custom validation logic
+    //    //if (!holodeck.Options)
+    //    //{
+    //    //    messageStore?.Add(() => holodeck.Options, "Select at least one.");
+    //    //}
+    //}
 
     public void DataEntry()
     {
@@ -586,42 +568,42 @@
 
         cnxn = new SqlConnection(g.db);
 
-        requestor = "";
-        employeeIndex = "2";
-        department = "2";
-        ContactEmail = "2";
-        //requestedDate = "2023-06-01";
-        f.quantity = "1";
-        f.priority = "a";
-        project = "a";
-        techContact = "a";
-        deliverTo = "a";
-        materials = "a";
-        part = "a";
-        finishing = "a";
-        reviewer1 = "a";
-        reviewer2 = "a";
-        reviewer3 = "a";
-        reviewer4 = "a";
-        opticPart = "a";
-        opticDrawing = "a";
-        surface = "a";
-        toolNo = "a";
-        toolDescription = "a";
-        f.requirements = "a";
-        additional = "a";
-        pdf = "a";
-        dxf = "a";
-        chargeNo = "506";
+        //requestor = "";
+        //employeeIndex = "2";
+        //department = "2";
+        //ContactEmail = "2";
+        ////requestedDate = "2023-06-01";
+        //f.quantity = "1";
+        //f.priority = "a";
+        //project = "a";
+        //techContact = "a";
+        //deliverTo = "a";
+        //materials = "a";
+        //part = "a";
+        //finishing = "a";
+        //reviewer1 = "a";
+        //reviewer2 = "a";
+        //reviewer3 = "a";
+        //reviewer4 = "a";
+        //opticPart = "a";
+        //opticDrawing = "a";
+        //surface = "a";
+        //toolNo = "a";
+        //toolDescription = "a";
+        //f.requirements = "a";
+        //additional = "a";
+        //pdf = "a";
+        //dxf = "a";
+        //chargeNo = "506";
 
         SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
         pSubjectLine.Value = subjectline;
 
         SqlParameter pName = new SqlParameter("@name", SqlDbType.VarChar, 100);
-        pName.Value = requestor;
+        pName.Value = validations.Employee;
 
         SqlParameter Request_Text = new SqlParameter("@request_text", SqlDbType.VarChar, 4000);
-        Request_Text.Value = f.requirements;
+        Request_Text.Value = validations.Requirements;
 
         SqlParameter pDepartment = new SqlParameter("@department", SqlDbType.VarChar, 50);
         pDepartment.Value = department;
@@ -633,13 +615,13 @@
         pPart.Value = part;
 
         SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
-        pQuantity.Value = Convert.ToInt32(f.quantity);
+        pQuantity.Value = validations.Quantity;
 
         SqlParameter pContactEmail = new SqlParameter("@ContactEmail", SqlDbType.VarChar, 50);
         pContactEmail.Value = ContactEmail;
 
         SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
-        pPriority.Value = f.priority;
+        pPriority.Value = validations.Priority;
 
         SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
         report.Value = requestReport;
@@ -648,7 +630,7 @@
         response.Value = requestResponse;
 
         SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectChargeNumber", SqlDbType.VarChar, 50);
-        pProjectChargeNumber.Value=chargeNo;
+        pProjectChargeNumber.Value=validations.ChargeNumber;
 
         SqlParameter pOpticDrawingPath = new SqlParameter("@OpticDrawingPath", SqlDbType.VarChar, 200);
         pOpticDrawingPath.Value=opticDrawing;
@@ -707,7 +689,7 @@
                 ",project_charge_number " +
                 ",Part" +
                 ",AdditionalInformation" +
-                ",aFinish " +
+                ",Finish " +
                 ",TechnicalContactName " +
                 //",DesignReviewParticipants " +
                 ",FocalSurface " +
@@ -715,7 +697,7 @@
                 "'" + DateTime.Now.Date + "'" +       //1
                 "," + Request_Text +
                 "," + pQuantity +
-                ",'" + requestedDate +
+                ",'" + validations.RequestedDate +
                 "'," + pPriority +                                //10
                 "," + pName +
                 "," + pContactEmail +
@@ -807,21 +789,21 @@
             NavMgr.NavigateTo("uploadfiles");
         }
 
+        //NavMgr.NavigateTo("/");
+
 
     }
 
-    public void test1(string a)
-    {
-        requestor = a;
-    }
 
     public void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
     {
-        if (e.FieldIdentifier.FieldName == "employeeIndex")
+        if (e.FieldIdentifier.FieldName == "eIndex")
         {
-            int rr = Convert.ToInt32(((RichmondDesignRequest.Pages.IndexZach)e.FieldIdentifier.Model).employeeIndex);
-            requestor = dtEmployees.Rows[rr-1][1].ToString();
-            ContactEmail = dtEmployees.Rows[rr-1][2].ToString();
+            //int rr = Convert.ToInt32(((RichmondDesignRequest.Pages.IndexZach)e.FieldIdentifier.Model).eIndex);
+            //requestor = dtEmployees.Rows[rr-1][1].ToString();
+            //ContactEmail = dtEmployees.Rows[rr-1][2].ToString();
+            validations.Employee = dtEmployees.Rows[eIndex - 1][1].ToString();
+            ContactEmail = dtEmployees.Rows[eIndex - 1][2].ToString();
         }
     }
 
