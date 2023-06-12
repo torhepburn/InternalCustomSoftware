@@ -37,7 +37,6 @@ namespace R_T_V
             this.tbComments = new System.Windows.Forms.TextBox();
             this.tbCode = new System.Windows.Forms.TextBox();
             this.tbJob = new System.Windows.Forms.TextBox();
-            this.tbDesignReviewParticipants = new System.Windows.Forms.TextBox();
             this.tbNumber = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -67,6 +66,10 @@ namespace R_T_V
             this.tbMachinist = new System.Windows.Forms.TextBox();
             this.tbDesigner = new System.Windows.Forms.TextBox();
             this.tbToolDescription = new System.Windows.Forms.TextBox();
+            this.tbDesignReview1 = new System.Windows.Forms.TextBox();
+            this.tbDesignReview2 = new System.Windows.Forms.TextBox();
+            this.tbDesignReview3 = new System.Windows.Forms.TextBox();
+            this.tbDesignReview4 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // tbDesignTime
@@ -137,15 +140,6 @@ namespace R_T_V
             this.tbJob.Name = "tbJob";
             this.tbJob.Size = new System.Drawing.Size(100, 21);
             this.tbJob.TabIndex = 6;
-            // 
-            // tbDesignReviewParticipants
-            // 
-            this.tbDesignReviewParticipants.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbDesignReviewParticipants.Location = new System.Drawing.Point(687, 422);
-            this.tbDesignReviewParticipants.Multiline = true;
-            this.tbDesignReviewParticipants.Name = "tbDesignReviewParticipants";
-            this.tbDesignReviewParticipants.Size = new System.Drawing.Size(270, 100);
-            this.tbDesignReviewParticipants.TabIndex = 9;
             // 
             // tbNumber
             // 
@@ -445,12 +439,48 @@ namespace R_T_V
             this.tbToolDescription.Size = new System.Drawing.Size(369, 21);
             this.tbToolDescription.TabIndex = 37;
             // 
+            // tbDesignReview1
+            // 
+            this.tbDesignReview1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbDesignReview1.Location = new System.Drawing.Point(687, 422);
+            this.tbDesignReview1.Name = "tbDesignReview1";
+            this.tbDesignReview1.Size = new System.Drawing.Size(275, 21);
+            this.tbDesignReview1.TabIndex = 43;
+            // 
+            // tbDesignReview2
+            // 
+            this.tbDesignReview2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbDesignReview2.Location = new System.Drawing.Point(687, 449);
+            this.tbDesignReview2.Name = "tbDesignReview2";
+            this.tbDesignReview2.Size = new System.Drawing.Size(275, 21);
+            this.tbDesignReview2.TabIndex = 44;
+            // 
+            // tbDesignReview3
+            // 
+            this.tbDesignReview3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbDesignReview3.Location = new System.Drawing.Point(687, 476);
+            this.tbDesignReview3.Name = "tbDesignReview3";
+            this.tbDesignReview3.Size = new System.Drawing.Size(275, 21);
+            this.tbDesignReview3.TabIndex = 45;
+            // 
+            // tbDesignReview4
+            // 
+            this.tbDesignReview4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbDesignReview4.Location = new System.Drawing.Point(687, 503);
+            this.tbDesignReview4.Name = "tbDesignReview4";
+            this.tbDesignReview4.Size = new System.Drawing.Size(275, 21);
+            this.tbDesignReview4.TabIndex = 46;
+            // 
             // RTJobData
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(200)))), ((int)(((byte)(240)))));
             this.ClientSize = new System.Drawing.Size(1376, 684);
+            this.Controls.Add(this.tbDesignReview4);
+            this.Controls.Add(this.tbDesignReview3);
+            this.Controls.Add(this.tbDesignReview2);
+            this.Controls.Add(this.tbDesignReview1);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label13);
             this.Controls.Add(this.label14);
@@ -479,7 +509,6 @@ namespace R_T_V
             this.Controls.Add(this.Benter);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.tbDesignReviewParticipants);
             this.Controls.Add(this.tbNumber);
             this.Controls.Add(this.tbCode);
             this.Controls.Add(this.tbJob);
@@ -507,7 +536,6 @@ namespace R_T_V
         private System.Windows.Forms.TextBox tbComments;
         private System.Windows.Forms.TextBox tbCode;
         private System.Windows.Forms.TextBox tbJob;
-        private System.Windows.Forms.TextBox tbDesignReviewParticipants;
         private System.Windows.Forms.TextBox tbNumber;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
@@ -537,5 +565,9 @@ namespace R_T_V
         private System.Windows.Forms.TextBox tbMachinist;
         private System.Windows.Forms.TextBox tbDesigner;
         private System.Windows.Forms.TextBox tbToolDescription;
+        private System.Windows.Forms.TextBox tbDesignReview1;
+        private System.Windows.Forms.TextBox tbDesignReview2;
+        private System.Windows.Forms.TextBox tbDesignReview3;
+        private System.Windows.Forms.TextBox tbDesignReview4;
     }
 }

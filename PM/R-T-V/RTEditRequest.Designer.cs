@@ -29,8 +29,6 @@
         private void InitializeComponent()
         {
             this.tbToolRequirements = new System.Windows.Forms.TextBox();
-            this.label11 = new System.Windows.Forms.Label();
-            this.cbddCustomer = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.dtpDateNeeded = new System.Windows.Forms.DateTimePicker();
@@ -55,7 +53,6 @@
             this.tbOpticDrawing_Path = new System.Windows.Forms.TextBox();
             this.Bexit = new System.Windows.Forms.Button();
             this.Benter = new System.Windows.Forms.Button();
-            this.cbAnodized = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // tbToolRequirements
@@ -67,31 +64,6 @@
             this.tbToolRequirements.Name = "tbToolRequirements";
             this.tbToolRequirements.Size = new System.Drawing.Size(450, 62);
             this.tbToolRequirements.TabIndex = 6;
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label11.Location = new System.Drawing.Point(23, 61);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(72, 17);
-            this.label11.TabIndex = 38;
-            this.label11.Text = "Customer:";
-            // 
-            // cbddCustomer
-            // 
-            this.cbddCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.cbddCustomer.FormattingEnabled = true;
-            this.cbddCustomer.Items.AddRange(new object[] {
-            "",
-            "Completed",
-            "On Hold",
-            "Design Review",
-            "In Progress"});
-            this.cbddCustomer.Location = new System.Drawing.Point(187, 58);
-            this.cbddCustomer.Name = "cbddCustomer";
-            this.cbddCustomer.Size = new System.Drawing.Size(450, 24);
-            this.cbddCustomer.TabIndex = 37;
             // 
             // label6
             // 
@@ -287,9 +259,9 @@
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label10.Location = new System.Drawing.Point(23, 593);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(337, 17);
+            this.label10.Size = new System.Drawing.Size(336, 17);
             this.label10.TabIndex = 58;
-            this.label10.Text = "Surface of potic that will be dofuced on with this tool:";
+            this.label10.Text = "Surface of optic that will be focused on with this tool:";
             // 
             // tbFocalSurface
             // 
@@ -341,24 +313,12 @@
             this.Benter.UseVisualStyleBackColor = false;
             this.Benter.Click += new System.EventHandler(this.Benter_Click);
             // 
-            // cbAnodized
-            // 
-            this.cbAnodized.AutoSize = true;
-            this.cbAnodized.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.cbAnodized.Location = new System.Drawing.Point(26, 556);
-            this.cbAnodized.Name = "cbAnodized";
-            this.cbAnodized.Size = new System.Drawing.Size(403, 21);
-            this.cbAnodized.TabIndex = 63;
-            this.cbAnodized.Text = "Part need to be anodized?  checked = Yes unchecked = No";
-            this.cbAnodized.UseVisualStyleBackColor = true;
-            // 
             // RTEditRequest
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(200)))), ((int)(((byte)(190)))));
             this.ClientSize = new System.Drawing.Size(685, 759);
-            this.Controls.Add(this.cbAnodized);
             this.Controls.Add(this.Bexit);
             this.Controls.Add(this.Benter);
             this.Controls.Add(this.label12);
@@ -383,8 +343,6 @@
             this.Controls.Add(this.label5);
             this.Controls.Add(this.dtpDateNeeded);
             this.Controls.Add(this.tbQuantity);
-            this.Controls.Add(this.label11);
-            this.Controls.Add(this.cbddCustomer);
             this.Controls.Add(this.tbToolRequirements);
             this.Name = "RTEditRequest";
             this.Text = "RTEditRequest";
@@ -397,8 +355,6 @@
         #endregion
 
         private System.Windows.Forms.TextBox tbToolRequirements;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.ComboBox cbddCustomer;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.DateTimePicker dtpDateNeeded;
@@ -423,6 +379,5 @@
         private System.Windows.Forms.TextBox tbOpticDrawing_Path;
         private System.Windows.Forms.Button Bexit;
         private System.Windows.Forms.Button Benter;
-        private System.Windows.Forms.CheckBox cbAnodized;
     }
 }

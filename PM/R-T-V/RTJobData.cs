@@ -123,8 +123,8 @@ namespace R_T_V
             SqlParameter pMachinist = new SqlParameter("@machinist", SqlDbType.VarChar, 50);
             pMachinist.Value = tbMachinist.Text.Trim();
 
-            SqlParameter pDesignReviewParticipants = new SqlParameter("@designReviewParticipants", SqlDbType.VarChar, 500);
-            pDesignReviewParticipants.Value = tbDesignReviewParticipants.Text.Trim();
+            //SqlParameter pDesignReviewParticipants = new SqlParameter("@designReviewParticipants", SqlDbType.VarChar, 500);
+            //pDesignReviewParticipants.Value = tbDesignReviewParticipants.Text.Trim();
 
 
             SqlParameter pCompletiondDate = new SqlParameter("@completionDate", SqlDbType.Date);
@@ -155,7 +155,7 @@ namespace R_T_V
                     ",ToolDescription = " + pToolDescription +
                     ",Designer = " + pDesigner +
                     ",Machinist = " + pMachinist +
-                    ",DesignReviewParticipants = " + pDesignReviewParticipants +
+                    //",DesignReviewParticipants = " + pDesignReviewParticipants +
                     ",[Status] = '" + cbddStatus.Text.Trim() + "'" +
                     " WHERE ID = " + g.ID + " ", cnxn); ;
 
@@ -169,7 +169,7 @@ namespace R_T_V
                 cmd.Parameters.Add(pToolDescription);
                 cmd.Parameters.Add(pDesigner);
                 cmd.Parameters.Add(pMachinist);
-                cmd.Parameters.Add(pDesignReviewParticipants);
+                //cmd.Parameters.Add(pDesignReviewParticipants);
 
                 cmd.ExecuteNonQuery();
             }
@@ -347,13 +347,16 @@ namespace R_T_V
                 ",Designer " +
                 ",Machinist " +
           /*15*/",TechnicalContactName " +
-                ",DesignReviewParticipants " +
+                ",DesignReview1 " +
                 ",Comments " +
                 ", CASE Request_Completed " +
                 "  WHEN 1 THEN 'TRUE' " +
                 "  ELSE 'FALSE' " +
                 "End Request_Completed " +
                ",Completion_Date " +
+               ",DesignReview2 " +
+               ",DesignReview3 " +
+               ",DesignReview4 " +
                 "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
 
@@ -448,7 +451,7 @@ namespace R_T_V
 
                 if (table.Rows[0][16].ToString().Length > 0)
                 {
-                    tbDesignReviewParticipants.Text = table.Rows[0][16].ToString();
+                    tbDesignReview1.Text = table.Rows[0][16].ToString();
                 }
 
                 if (table.Rows[0][17].ToString().Length > 0)
@@ -468,6 +471,19 @@ namespace R_T_V
                 if (table.Rows[0][19].ToString().Length > 0)
                 {
                     dtpCompletionDate.Text = table.Rows[0][19].ToString();
+                }
+
+                if (table.Rows[0][20].ToString().Length > 0)
+                {
+                    tbDesignReview2.Text = table.Rows[0][20].ToString();
+                }
+                if (table.Rows[0][21].ToString().Length > 0)
+                {
+                    tbDesignReview3.Text = table.Rows[0][21].ToString();
+                }
+                if (table.Rows[0][22].ToString().Length > 0)
+                {
+                    tbDesignReview4.Text = table.Rows[0][22].ToString();
                 }
             }
             catch (SqlException ex)
