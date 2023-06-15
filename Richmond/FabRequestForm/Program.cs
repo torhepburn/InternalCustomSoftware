@@ -17,7 +17,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddSingleton<Global>();
+builder.Services.AddSingleton<FormModel>();
 
 var app = builder.Build();
 
