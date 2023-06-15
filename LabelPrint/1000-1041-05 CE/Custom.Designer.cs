@@ -112,6 +112,7 @@
             this.bPrint.TabIndex = 71;
             this.bPrint.Text = "PRINT LABEL";
             this.bPrint.UseVisualStyleBackColor = false;
+            this.bPrint.Click += new System.EventHandler(this.bPrint_Click_1);
             // 
             // label10
             // 

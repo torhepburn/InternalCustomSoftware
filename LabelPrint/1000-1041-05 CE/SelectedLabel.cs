@@ -56,92 +56,60 @@ namespace _1000_1041_05_CE
         private void bPrint_Click(object sender, EventArgs e)
         {
             labelQuantity = "1";
-
+                       
+            Bitmap byp = Properties.Resources.CE25;
             Bitmap bzp = Properties.Resources.zygo_blk_noR_203;
             Bitmap bxp = Properties.Resources.ametek_blk_noR_132;
-            Bitmap byp = Properties.Resources.CE25;
+
             /*
              *  Add the image to the resources folder or elsewhere, then add the file to the
              *  resourses.resx file and it will take in the file and reclassify it as an image.
              *  It should then be available under properties.resources - the case does matter for 
              *  the image name.
              */
-             string desc = tbDescription.Text.Replace("\"", "\\\"");
+            string desc = tbDescription.Text.Replace("\"", "\\\"");
              tbModel.Text = tbModel.Text.Replace("\"", "\\\"");
 
             //g.printer = "\\\\ct-mid-ps01\\zebrasn48";
-            g.printer = "\\\\ZDesigner ZD421-203dpi ZPL";
+            g.printer = "ZDesigner ZD421-203dpi ZPL";
 
 
             string str = "\nN\nq456.75Q253.75,20\n";
             //if (g.printer == @"\\CT-MID-PS01\ZEBRASN1" | g.printer == @"\\CT-MID-PS01\ZEBRASN20")
             //{
-                str += SendImageToPrinter(20, 15, bzp);
-                str += SendImageToPrinter(370, 160, byp);
-                str += SendImageToPrinter(310, 15, bxp);
-                str += "A155,10,0,3,1,1,N,\"®\"\n";
-                if (desc.Length > 30)
-                {
-                    str += "A20,85,0,2,1,1,N,\"" + desc + "\"\n";
-                }
-                else
-                {
-                    str += "A20,85,0,3,1,1,N,\"" + desc + "\"\n";
-                }
+            //str += SendImageToPrinter(30, 15, bzp);
+            //str += SendImageToPrinter(320, 15, bxp);
 
-                str += "A20,110,0,3,1,1,N,\"P/N\"\n";
-                str += "A70,110,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
+            str += SendImageToPrinter(370, 170, byp);
+            //str += "A155,10,0,3,1,1,N,\"®\"\n";
+            if (desc.Length > 30)
+            {
+                str += "A20,90,0,2,1,1,N,\"" + desc + "\"\n";
+            }
+            else
+            {
+                str += "A20,90,0,3,1,1,N,\"" + desc + "\"\n";
+            }
 
-                str += "A20,135,0,3,1,1,N,\"" + "MODEL" + "\"\n";
-                str += "A100,135,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
-                str += "A20,160,0,3,1,1,N,\"S/N\"\n";
-                str += "A70,160,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
-                str += "A232,185,0,3,1,1,N,\"AMPS\"\n";
-                str += "A298,185,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
-                str += "A20,185,0,3,1,1,N,\"VOLTS\"\n";
-                str += "A100,185,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
-                str += "A260,160,0,3,1,1,N,\"Hz\"\n";
-                str += "A300,160,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
-                str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
+            str += "A110,5,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+                str += "A80,30,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
+                str += "A130,55,0,3,1,1,N,\"MADE IN USA\"\n";
+
+                str += "A20,120,0,3,1,1,N,\"P/N\"\n";
+                str += "A70,120,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
+
+                str += "A20,145,0,3,1,1,N,\"" + "MODEL" + "\"\n";
+                str += "A100,145,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
+                str += "A20,170,0,3,1,1,N,\"S/N\"\n";
+                str += "A70,170,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
+                str += "A262,195,0,3,1,1,N,\"AMPS\"\n";
+                str += "A323,195,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
+                str += "A20,195,0,3,1,1,N,\"VOLTS\"\n";
+                str += "A100,195,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
+                str += "A290,170,0,3,1,1,N,\"Hz\"\n";
+                str += "A325,170,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
 
-            //}
-            //else
-            //{
-            //    str += SendImageToPrinter(10, 15, bzp);
-            //    str += SendImageToPrinter(360, 160, byp);
-            //    str += SendImageToPrinter(295, 15, bxp);
-
-
-            //    if (desc.Length > 30)
-            //    {
-            //        str += "A10,85,0,2,1,1,N,\"" + desc + "\"\n";
-            //    }
-            //    else
-            //    {
-            //        str += "A10,85,0,3,1,1,N,\"" + desc + "\"\n";
-            //    }
-
-            //    str += "A10,110,0,3,1,1,N,\"P/N\"\n";
-            //    str += "A60,110,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
-
-            //    str += "A10,135,0,3,1,1,N,\"" + "MODEL" + "\"\n";
-            //    str += "A90,135,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
-            //    /*  custm labels for Dennis below    */
-            //    //str += "A30,110,0,3,1,1,N,\"" + "P/N" +  "\"\n";
-            //    //str += "A80,110,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
-            //    //str += "A30,135,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
-            //    str += "A10,160,0,3,1,1,N,\"S/N\"\n";
-            //    str += "A60,160,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
-            //    str += "A222,185,0,3,1,1,N,\"AMPS\"\n";
-            //    str += "A288,185,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
-            //    str += "A10,185,0,3,1,1,N,\"VOLTS\"\n";
-            //    str += "A90,185,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
-            //    str += "A250,160,0,3,1,1,N,\"Hz\"\n";
-            //    str += "A290,160,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
-            //    str += "A20,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
-            //    str += "P" + labelQuantity + "\n";
-            //}
             RawPrinterHelper.SendStringToPrinter(g.printer, str);
 
             tbSerialNumber.Text = "";
