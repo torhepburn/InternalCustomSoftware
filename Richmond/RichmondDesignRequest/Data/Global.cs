@@ -26,5 +26,19 @@ namespace RichmondDesignRequest.Data
         public string? costcenter { get; set; }
 
         public string? planner { get; set; }
+
+        public bool Ftwofiles { get; set;}
+
+        public bool Ftwofiles2BUploaded { get; set; }
+
+        public string filetypeSelected { get; set; }
+
+        public string requestResponse { get; set; }
+
+        public string subjectLine { get; set; }
+
+        public string requestReport { get; set; }
+
+        public string contactEmail { get; set; }
     }
 }

@@ -1,0 +1,88 @@
+﻿@page "/uploadPdfFiles"
+
+<PageTitle>Upload pdf File</PageTitle>
+
+<h1>Select pdf file to upload.</h1>
+
+@using RichmondDesignRequest.Data
+@using System.Data;
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<InputFile OnChange="@SingleUpload" accept=".pdf"/>
+
+@code {
+
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    DataTable dt;
+    private string data ="";
+    private string? selectedID;
+    private string? reviewer;
+    private byte[]? bytes;
+    private bool pdf;
+
+    static string uploadedFilename;
+
+    private async Task SingleUpload(InputFileChangeEventArgs e)
+    {
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        bytes = ms.ToArray();
+
+        uploadedFilename = e.File.Name;
+
+        if (e.File.ContentType == "application/pdf")
+        {
+            pdf = true;
+            dataEntry();
+        }
+        else
+        {
+            pdf = false;
+            NavMgr.NavigateTo("/uploaddxffiles");
+        }
+    }
+
+
+    public void dataEntry()
+    {
+        
+            cnxn = new SqlConnection(g.db);
+
+            SqlParameter prm1 = new SqlParameter
+                ("@file", SqlDbType.Image, Convert.ToInt32(bytes.Length));
+            prm1.Value = bytes;
+
+            SqlCommand cmd = new SqlCommand
+                ("Update RIC.DesignRequests set uploaded_pdf = " + prm1 + "  " +
+                 " where id = " + g.requestID + " ", cnxn);
+            cmd.Parameters.Add(prm1);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+            /*
+            * If there are two files to be uploaded the first will always be the pdf
+            * and the second the dxf.  The 'true' flag is used to determine if there is a dxf.
+            */
+
+            if (g.Ftwofiles)
+            {
+                g.Ftwofiles = false;
+                g.filetypeSelected = "dxf";
+                NavMgr.NavigateTo("/uploaddxffiles");
+            }
+
+
+            if (g.Ftwofiles2BUploaded == false)
+            {
+                NavMgr.NavigateTo("/ThankYou");
+            }
+        
+    }
+}

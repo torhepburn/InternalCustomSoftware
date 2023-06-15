@@ -356,14 +356,14 @@
 
 
     static string SqlTable = "RIC.DesignRequests";
-    static string filetypeSelected;
+    //static string filetypeSelected;
     static string filetypeLoaded;
-    static bool Ftwofiles = false;
-    static bool Ftwofiles2BUploaded = false;
-    static string uploadedFilename;
-    static string requestResponse;
-    static string requestReport;
-    static string subjectline;
+    //static bool Ftwofiles = false;
+    //static bool Ftwofiles2BUploaded = false;
+    
+    //static string requestResponse;
+    //static string requestReport;
+    //static string subjectline;
     static string ename;
     static int uid;
 
@@ -503,7 +503,7 @@
     {        
         string submitDate = DateTime.Now.ToString();
 
-        requestResponse =
+        g.requestResponse =
             "Dear " + validations.Employee +  "," +
             "\n\r" +
             "Here is the information which you submitted on your recent design request:" +
@@ -525,14 +525,14 @@
             "\r\r" +
             additional +
             "\r\r" +
-            "Link to View Request Status:" + "\r" +
-            "If you have any questions, please visit us as out Tooling Office Hours on XXXX";
+            //"Link to View Request Status:" + "\r" +
+            "If you have any questions, please visit us at our Tooling Office Hours on XXXX";
 
         // email to tool room to report request
 
-        subjectline = "Design Request: " + ContactEmail;
+        g.subjectLine = "Design Request: " + ContactEmail;
 
-        requestReport =
+        g.requestReport =
                     "Design Request Description: " +
                     "\r\r" +
                     validations.Requirements +
@@ -550,7 +550,7 @@
         cnxn = new SqlConnection(g.db);
 
         SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
-        pSubjectLine.Value = subjectline;
+        pSubjectLine.Value = g.subjectLine;
 
         SqlParameter pName = new SqlParameter("@name", SqlDbType.VarChar, 100);
         pName.Value = validations.Employee;
@@ -571,16 +571,16 @@
         pQuantity.Value = validations.Quantity;
 
         SqlParameter pContactEmail = new SqlParameter("@ContactEmail", SqlDbType.VarChar, 50);
-        pContactEmail.Value = ContactEmail;
+        pContactEmail.Value = g.contactEmail;
 
         SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
         pPriority.Value = validations.Priority;
 
         SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
-        report.Value = requestReport;
+        report.Value = g.requestReport;
 
         SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
-        response.Value = requestResponse;
+        response.Value = g.requestResponse;
 
         SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectChargeNumber", SqlDbType.VarChar, 50);
         pProjectChargeNumber.Value=validations.ChargeNumber;
@@ -738,23 +738,25 @@
             Email();
             uid = 0;
 
-            //Response.Redirect("trThankYou.aspx");
+            NavMgr.NavigateTo("/Thanks");
         }
         else if (cbPDF & !cbDXF)
         {
-            filetypeSelected = "pdf";
-            NavMgr.NavigateTo("uploadfiles");
+            g.filetypeSelected = "pdf";
+            g.Ftwofiles = false;
+            NavMgr.NavigateTo("uploadpdffiles");
         }
         else if (cbPDF & cbDXF)
         {
-            Ftwofiles = true;
-            Ftwofiles2BUploaded = true;
-            filetypeSelected = "pdf";
-            NavMgr.NavigateTo("uploadfiles");
+            g.Ftwofiles = true;
+            g.Ftwofiles2BUploaded = true;
+            g.filetypeSelected = "pdf";
+            NavMgr.NavigateTo("uploadpdffiles");
         }
         else if (!cbPDF & cbDXF)
         {
-            NavMgr.NavigateTo("uploadfiles");
+            g.Ftwofiles = false;
+            NavMgr.NavigateTo("uploaddxffiles");
         }
 
 
@@ -770,53 +772,8 @@
     {
         if (e.FieldIdentifier.FieldName == "eIndex")
         {
-            //int rr = Convert.ToInt32(((RichmondDesignRequest.Pages.IndexZach)e.FieldIdentifier.Model).eIndex);
-            //requestor = dtEmployees.Rows[rr-1][1].ToString();
-            //ContactEmail = dtEmployees.Rows[rr-1][2].ToString();
             validations.Employee = dtEmployees.Rows[eIndex - 1][1].ToString();
-            ContactEmail = dtEmployees.Rows[eIndex - 1][2].ToString();
+            g.contactEmail = dtEmployees.Rows[eIndex - 1][2].ToString();
         }
     }
-
-    protected void Email()
-    {
-        //if (testing != "YES")
-        //{
-        /*    REQUEST RESPONSE    */
-
-        SqlCommand cmd = new SqlCommand("spTRmailRic", cnxn);
-        cmd.CommandType = CommandType.StoredProcedure;
-        SqlParameter to = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
-        to.Value = ContactEmail;
-        SqlParameter etext = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
-        etext.Value = requestResponse;
-        SqlParameter subjline = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
-        subjline.Value = subjectline;
-
-        cmd.Connection = cnxn;
-        cnxn.Open();
-        cmd.ExecuteNonQuery();
-        cnxn.Close();
-        cmd.Dispose();
-
-        /*    REQUEST REPORT to TOOL ROOM    */
-
-        cmd = new SqlCommand("spTRmailRic", cnxn);
-        cmd.CommandType = CommandType.StoredProcedure;
-        SqlParameter to1 = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
-        to1.Value = "tor.hepburn@ametek.com;"; 
-            //to1.Value = "tor.hepburn@ametek.com; collin.smith@ametek.com; sabrina.smith@ametek.com";
-            //to1.Value = "sabrina.ng@ametek.com; ca-ric.ToolRoom@ametek.com";
-            SqlParameter etext1 = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
-            etext1.Value = requestReport;
-            SqlParameter subjline1 = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
-            subjline1.Value = subjectline;
-            cmd.Connection = cnxn;
-            cnxn.Open();
-            cmd.ExecuteNonQuery();
-            cnxn.Close();
-            cmd.Dispose();
-       // }
-    }
-
 }
