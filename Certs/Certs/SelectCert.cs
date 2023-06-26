@@ -633,5 +633,41 @@ namespace Certs
                 g.subtask = string.Empty;
             }
         }
+
+        private void bExport_Click_1(object sender, EventArgs e)
+        {
+            try
+            {
+                string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CertData.csv");
+
+                var lines = new List<string>();
+
+                string[] columnNames = table.Columns
+                    .Cast<DataColumn>()
+                    .Select(column => column.ColumnName)
+                    .ToArray();
+
+                var header = string.Join(",", columnNames.Select(name => $"\"{name}\""));
+                lines.Add(header);
+
+
+                System.Collections.Generic.IEnumerable<string> valueLines;
+                valueLines = table.AsEnumerable()
+                    .Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val}\"")));
+
+                lines.AddRange(valueLines);
+
+                File.WriteAllLines(filepath, lines);
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+        }
     }
 }

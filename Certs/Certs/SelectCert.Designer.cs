@@ -41,6 +41,7 @@
             this.cbISO17025 = new System.Windows.Forms.CheckBox();
             this.BPrint = new System.Windows.Forms.Button();
             this.bSaveToFolder = new System.Windows.Forms.Button();
+            this.bExport = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.gbType.SuspendLayout();
             this.SuspendLayout();
@@ -183,12 +184,25 @@
             this.bSaveToFolder.Visible = false;
             this.bSaveToFolder.Click += new System.EventHandler(this.button1_Click);
             // 
+            // bExport
+            // 
+            this.bExport.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(200)))), ((int)(((byte)(200)))));
+            this.bExport.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bExport.Location = new System.Drawing.Point(660, 79);
+            this.bExport.Name = "bExport";
+            this.bExport.Size = new System.Drawing.Size(103, 53);
+            this.bExport.TabIndex = 33;
+            this.bExport.Text = "Export to Excel";
+            this.bExport.UseVisualStyleBackColor = false;
+            this.bExport.Click += new System.EventHandler(this.bExport_Click_1);
+            // 
             // SelectCert
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(115)))), ((int)(((byte)(180)))), ((int)(((byte)(165)))));
             this.ClientSize = new System.Drawing.Size(859, 542);
+            this.Controls.Add(this.bExport);
             this.Controls.Add(this.bSaveToFolder);
             this.Controls.Add(this.BPrint);
             this.Controls.Add(this.cbISO17025);
@@ -222,5 +236,6 @@
         private System.Windows.Forms.CheckBox cbISO17025;
         private System.Windows.Forms.Button BPrint;
         private System.Windows.Forms.Button bSaveToFolder;
+        private System.Windows.Forms.Button bExport;
     }
 }
