@@ -636,9 +636,22 @@ namespace Certs
 
         private void bExport_Click_1(object sender, EventArgs e)
         {
+             string directory = @"C:\A";
+            
+            if (Directory.Exists(directory))
+            {
+
+            }
+            else
+            {
+                Directory.CreateDirectory(@"C:\A");
+                
+                return;
+            }
+
             try
             {
-                string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CertData.csv");
+                //string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CertData.csv");
 
                 var lines = new List<string>();
 
@@ -657,7 +670,8 @@ namespace Certs
 
                 lines.AddRange(valueLines);
 
-                File.WriteAllLines(filepath, lines);
+                //File.WriteAllLines(filepath, lines);
+                File.WriteAllLines(@"C:\A\CertData.csv", lines);
 
             }
             catch (Exception ex)
