@@ -1,58 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" MustUnderstand="df">
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
-    <DataSource Name="DataSource1">
-      <ConnectionProperties>
-        <DataProvider>SQL</DataProvider>
-        <ConnectString>Data Source=pa-hor-as408;Initial Catalog=ZYGO-NAV-PROD</ConnectString>
-      </ConnectionProperties>
-      <rd:SecurityType>DataBase</rd:SecurityType>
-      <rd:DataSourceID>c77dcdef-8040-45f4-bfd3-224d569cf6ff</rd:DataSourceID>
+    <DataSource Name="NAV">
+      <DataSourceReference>NAV</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>23a3b8c5-eca6-4672-bfa5-556de2c6ab20</rd:DataSourceID>
     </DataSource>
   </DataSources>
   <DataSets>
     <DataSet Name="DataSet1">
       <Query>
-        <DataSourceName>DataSource1</DataSourceName>
-        <CommandText>WITH s1 AS
-(
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>SELECT
 
-SELECT
-
-h.No_ [Sales Order No_]
-, [SO Line No_]
-,h.[Order Date]
-,h.[Assigned User ID]
-,CASE h.[Document Type]
-	WHEN 1 THEN 'Order'
-	WHEN 4 THEN 'Blanket Order'
-	WHEN 5 THEN 'Return Order'
-END [Document Type]
-,CASE l.[Type]
-	WHEN 1 THEN 'G/L Account'
-	WHEN 2 THEN 'Item'
-	WHEN 3 THEN 'Resource'
-	WHEN 4 THEN 'Fixed Asset'
-	WHEN 5 THEN 'Charge(Item)'
-END [Line Type]
-
-FROM [ZYGO$Sales Header] h
-
-INNER JOIN [ZYGO$Sales Line] l ON h.No_ = l.[Document No_]
-
-WHERE h.[Order Date] &gt;= GETDATE() - 7
-
-AND h.[Document Type] IN (1,4,5)
-)
-, s2 AS
-
-(
-
-SELECT
-
-h.No_ [Shipment Document No_]
+h.No_ [Document No_]
 ,h.[Order No_] [Sales Order no_]
 , [SO Line No_]
 ,h.[Order Date]
@@ -67,43 +30,19 @@ FROM [ZYGO$Sales Shipment Header] h
 
 INNER JOIN [ZYGO$Sales Shipment Line] l ON h.No_ = l.[Document No_]
 
-WHERE 
-
-h.[Order Date] &gt;= GETDATE() - 7
---h.[Order Date] &gt;= '2022-01-01'
-
---AND h.[User ID] like '%CSOM%'
+WHERE h.[Order Date] &gt;= '2021-01-01'
 
 
-)
-
-SELECT
-
-[Shipment Document No_]
-,[Sales Order No_]
-,s1.[SO Line No_]
-,s1.[Order Date]
-,[User ID] [Shipment Creator]
-,[Assigned User ID] [Sales Order Creator]
-,[Document Type]
-,[Line Type]
-
-
-
-FROM s2 INNER JOIN s1 ON s2.[Sales Order no_] = s1.[Sales Order No_]
-
-AND s2.[SO Line No_] = s1.[SO Line No_]
-
-AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
+ORDER BY [Order Date], [Document No_], [SO Line No_]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
-        <Field Name="Shipment_Document_No_">
-          <DataField>Shipment Document No_</DataField>
+        <Field Name="Document_No_">
+          <DataField>Document No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="Sales_Order_No_">
-          <DataField>Sales Order No_</DataField>
+        <Field Name="Sales_Order_no_">
+          <DataField>Sales Order no_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="SO_Line_No_">
@@ -114,20 +53,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
           <DataField>Order Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
-        <Field Name="Shipment_Creator">
-          <DataField>Shipment Creator</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Sales_Order_Creator">
-          <DataField>Sales Order Creator</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Document_Type">
-          <DataField>Document Type</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Line_Type">
-          <DataField>Line Type</DataField>
+        <Field Name="User_ID">
+          <DataField>User ID</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -144,7 +71,7 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>Sales Shipment Audit past 7 days</Value>
+                    <Value>Sales Shipment Audit</Value>
                     <Style>
                       <FontFamily>Segoe UI Light</FontFamily>
                       <FontSize>24pt</FontSize>
@@ -157,7 +84,6 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
             </Paragraphs>
             <rd:DefaultName>textbox1</rd:DefaultName>
             <Height>0.43in</Height>
-            <Width>8in</Width>
             <Style>
               <PaddingLeft>2pt</PaddingLeft>
               <PaddingRight>2pt</PaddingRight>
@@ -169,25 +95,16 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
             <TablixBody>
               <TablixColumns>
                 <TablixColumn>
-                  <Width>2.33333in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1.66667in</Width>
-                </TablixColumn>
-                <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.8125in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>2in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1.61458in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -206,7 +123,7 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Shipment Document No </Value>
+                                  <Value>Document No </Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -219,6 +136,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -244,7 +163,7 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Sales Order No </Value>
+                                  <Value>Sales Order no </Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -257,6 +176,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -298,6 +219,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -336,6 +259,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -361,7 +286,7 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Shipment Creator</Value>
+                                  <Value>User ID</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -374,120 +299,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox6</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox7">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Sales Order Creator</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox7</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox8">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Document Type</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox8</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox9">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Line Type</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox9</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -511,14 +324,14 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Shipment_Document_No_">
+                        <Textbox Name="Document_No_">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Shipment_Document_No_.Value</Value>
+                                  <Value>=Fields!Document_No_.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -528,7 +341,9 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Shipment_Document_No_</rd:DefaultName>
+                          <rd:DefaultName>Document_No_</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -547,14 +362,14 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Sales_Order_No_">
+                        <Textbox Name="Sales_Order_no_">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Sales_Order_No_.Value</Value>
+                                  <Value>=Fields!Sales_Order_no_.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -564,7 +379,9 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Sales_Order_No_</rd:DefaultName>
+                          <rd:DefaultName>Sales_Order_no_</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -601,6 +418,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SO_Line_No_</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -629,7 +448,6 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                                   <Value>=Fields!Order_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -638,6 +456,8 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Order_Date</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -656,14 +476,14 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Shipment_Creator">
+                        <Textbox Name="User_ID">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Shipment_Creator.Value</Value>
+                                  <Value>=Fields!User_ID.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -673,115 +493,9 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Shipment_Creator</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Sales_Order_Creator">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Sales_Order_Creator.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Sales_Order_Creator</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Document_Type">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Document_Type.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Document_Type</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Line_Type">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Line_Type.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Line_Type</rd:DefaultName>
+                          <rd:DefaultName>User_ID</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -804,9 +518,6 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
-                <TablixMember />
-                <TablixMember />
-                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -836,16 +547,13 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
             </TablixRowHierarchy>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
-            <Height>0.43in</Height>
-            <Width>12.42708in</Width>
-            <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
         </ReportItems>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>12.42708in</Width>
+      <Width>5in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -863,6 +571,6 @@ AND s2.[User ID] = s1.[Assigned User ID]</CommandText>
   </ReportParametersLayout>
   <Language>en-US</Language>
   <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
-  <rd:ReportUnitType>Inch</rd:ReportUnitType>
-  <rd:ReportID>a5b926b5-b67b-47ef-87ff-23490a3305f8</rd:ReportID>
+  <rd:ReportUnitType>Invalid</rd:ReportUnitType>
+  <rd:ReportID>985eaea1-a29d-41e7-ada2-4e604f44da69</rd:ReportID>
 </Report>
