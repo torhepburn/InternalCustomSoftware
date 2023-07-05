@@ -12,17 +12,17 @@
 @inject Global g
 @inject NavigationManager NavMgr
 
-<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+@*<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
     <div class="popup-content">
         <h3>@pop.Title</h3>
         <p>@pop.Message</p>
         <button @onclick="pop.ClosePopup">Close</button>
     </div>
-</div>
+</div>*@
 
 
 <h1>Stockroom Shortages</h1>
-<button class="btn btn-primary" @onclick="Export">Export to Excel</button>
+
 <table class="table table-bordered">
     <thead class="border border-dark">
             <tr>
@@ -99,6 +99,7 @@
                 bgclass = "";
                 bgstyle = "background-color:rgb(213,128,255)";
             }
+            
 
             <tr class=@bgclass style=@bgstyle @onclick="() => Select(r[0].ToString())">
                 <td style="width:80px">@r[1].ToString()</td>
@@ -208,43 +209,6 @@
         NavMgr.NavigateTo("EditShortage");
     }
 
-    private void Export()
-    {
-        try
-        {
-            //string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "StockroomShortages.csv");
-            string filepath = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\StockroomShortages.csv";
-
-            var lines = new List<string>();
-
-            string[] columnNames = dt.Columns
-                .Cast<DataColumn>()
-                .Select(column => column.ColumnName)
-                .ToArray();
-
-            var header = string.Join(",", columnNames.Select(name => $"\"{name}\""));
-            lines.Add(header);
-
-
-            System.Collections.Generic.IEnumerable<string> valueLines;
-            valueLines = dt.AsEnumerable()
-                .Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val}\"")));
-
-            lines.AddRange(valueLines);
-
-            File.WriteAllLines(filepath, lines);
-
-        }
-        catch (Exception ex)
-        {
-            pop.Title = "Error";
-            pop.Message = ex.ToString();
-            pop.ShowPopup();
-        }
-        finally
-        {
-            cnxn.Close();
-        }
-    }
+    
 }
-}
+
