@@ -9,8 +9,8 @@ namespace NAV_MRP_Cancel
 {
     public partial class Form1 : Form
     {
-        //private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
-        private string directory = "C:\\A";
+        private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+        //private string directory = "C:\\A";
 
         private string[] aItemNo = new string[20000];
         private string[] abuyerPlanner = new string[20000];
@@ -174,16 +174,19 @@ namespace NAV_MRP_Cancel
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            this.Text = "MRP_Cancel_PDF v." + Application.ProductVersion;
+            
             /*  Use Replace //MessageBox.Show  MessageBox.Show to be able to see errors.
              *  MacroScheduler needs no interrupts in AutoRun
              */
+            
 
             /*
              *  Conection used by loop within the reader
              */
 
             SqlConnection cnxn = new SqlConnection("server=pa-hor-as408.ametek.com; password=2018#ameteK; " +
-                                        "user=navdb_read; database=ZYGO-NAV-PROD;");
+                                        "user=navdb_read; database=ZYGO-NAV-PROD; encrypt=false;");
 
             /*SqlConnection cnxn = new SqlConnection("server=pa-hor-as406.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-TEST;");*/
@@ -194,7 +197,7 @@ namespace NAV_MRP_Cancel
 
 
             SqlConnection cnxnR = new SqlConnection("server=pa-hor-as408.ametek.com; password=2018#ameteK; " +
-                           "user=navdb_read; database=ZYGO-NAV-PROD;");
+                           "user=navdb_read; database=ZYGO-NAV-PROD; encrypt=false;");
 
             /*SqlConnection cnxnR = new SqlConnection("server=pa-hor-as406.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-TEST;");*/
@@ -208,14 +211,14 @@ namespace NAV_MRP_Cancel
              */
 
             SqlConnection cnxnDash = new SqlConnection("server=MIDDB01.zygo.com; password=views; " +
-              "user=views; database=Dashboard;");
+              "user=views; database=Dashboard; encrypt=false;");
 
             /*
              *Connection used to get the old MK data
              */
 
             SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11; password=views; " +
-                          "user=views; database=AccessFrontEnds;");
+                          "user=views; database=AccessFrontEnds; encrypt=false;");
 
             /*
              *  Get the list of MRP purchased parts for which reports are needed 
@@ -251,7 +254,7 @@ namespace NAV_MRP_Cancel
               //"AND Quantity > [Original Quantity]  " +
               "AND i.[Selection Code] not like 'K%' " +
               "AND i.[Selection Code] not like 'CFM%' " +
-              "AND [Action Message] not in (5) " +                  // 5 = Cancel 1=Add 2=ChangeQuantity 3=Reschedule 4=Reschedule and change quantity
+              "AND [Action Message] in (5) " +                  // 5 = Cancel 1=Add 2=ChangeQuantity 3=Reschedule 4=Reschedule and change quantity
               "AND i.No_ != 'SERVICE ITEM' " +
 
                /*  moved start date filter to report selection as Irvine different.  */
@@ -267,7 +270,7 @@ namespace NAV_MRP_Cancel
                //"AND [Buyer Planner Code] != 'TIFFANEY K' " +
                //"AND [Buyer Planner Code] in ('ANDREW T', 'OLGA D','BOB H', 'JANET L',  'DAVE K') " +  //this one works
                //"AND LEN(r.[Buyer Planner Code]) > 0 " + 
-               "AND r.No_ = '1355-350-002' " +
+              // "AND r.No_ = '1355-350-002' " +
               //"AND r.No_ LIKE " +
               //"'X700620%' " +
               //"AND r.No_ IN " +
@@ -303,9 +306,9 @@ namespace NAV_MRP_Cancel
                         ItemNo = drMain.GetString(0);
                         buyerPlanner = drMain.GetString(1);
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -1588,20 +1591,20 @@ namespace NAV_MRP_Cancel
                         }
                         i++;
                     }
-                    catch //(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ItemNo + " " + i.ToString() + "    " + ex.ToString());
+                        MessageBox.Show(ItemNo + " " + i.ToString() + "    " + ex.ToString());
                     }
                 }
             }
-            catch //(SqlException ex)
+            catch (SqlException ex)
             {
-                //MessageBox.Show(ex.ToString());
+                MessageBox.Show(ex.ToString());
             }
 
             /*  colins and back slashes in the date time make the path unreadable    */
             string today = DateTime.Now.ToString("MM-dd-yy hh.mm.ss");
-            string file = "MRP " + g.ReportSelection + today + ".pdf";
+            string file = "MRP Cancel " + g.ReportSelection + today + ".pdf";
 
 
             PrintDocument pd = new PrintDocument();

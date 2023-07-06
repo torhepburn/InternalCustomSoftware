@@ -11,7 +11,8 @@ namespace NAV_MRP_Cancel
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new MRP_PrintedReport_Cancel());
+            //Application.Run(new Form1());
+            Application.Run(new AutoRunMRPCancel());
         }
     }
 }

@@ -76,6 +76,7 @@ namespace NAV_MRP_Cancel
                         "     WHEN 2 THEN '+Qty' " +
                         "     WHEN 3 THEN 'Resched' " +
                         "     WHEN 4 THEN '+Qty+Date' " +
+                        "     WHEN 5 THEN 'Cancel' " +
                         " END " +
                         ",CONVERT(varchar(10),l.[Original Due Date], 1) " +
                         ",CASE COALESCE(pl.[Best Delivery],0) " +
