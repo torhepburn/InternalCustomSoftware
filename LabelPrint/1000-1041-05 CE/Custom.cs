@@ -252,7 +252,7 @@ namespace _1000_1041_05_CE
             str += SendImageToPrinter(320, 15, bxp);
 
             str += SendImageToPrinter(370, 150, byp);
-            //str += "A155,10,0,3,1,1,N,\"®\"\n";
+            str += "A155,10,0,3,1,1,N,\"®\"\n";
             if (desc.Length > 30)
             {
                 str += "A30,85,0,2,1,1,N,\"" + desc + "\"\n";

@@ -16,8 +16,9 @@ namespace _1000_1041_05_CE
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new SelectNumber());
+            //Application.Run(new SelectNumber());
             //Application.Run(new Custom());
+            Application.Run(new Old_Registered());
         }
     }
 }
