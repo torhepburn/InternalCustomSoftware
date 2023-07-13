@@ -1,0 +1,147 @@
+﻿
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+
+<div class="@TableStyle" style="min-height:60px">
+    <table>
+        <thead>
+            <tr>
+                @for (int i = 0; i < n; i++)
+                {
+                    int index = i; // Create a local variable and assign it to i
+                <th style="background-color:@color">
+                        <button @onclick="() => SortTable(index)">
+                            @dt.Columns[i]
+                            @if (isVisible[i])
+                            {
+                                <section class="sort-arrow-down @(isSortedDescending[i] ? "rotate" : "")"></section>
+                            }
+                        </button>
+                    </th>
+                }
+
+
+
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt != null)
+            {
+                int j = 0;
+                @foreach (DataRow items in dt.Rows)
+                {
+                    
+                    <tr>
+                        @if(j == 0)
+                        {
+                            <td style="background-color:yellow">@items[0].ToString()</td>
+                        }
+                        else
+                        {
+                            <td>@items[0].ToString()</td>
+                        }
+                        @for (int i = 1; i < n; i++)
+                        {
+                            <td>@items[i].ToString()</td>
+                        }
+                    </tr>
+                    j++;
+                }
+
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public DataTable? dt { get; set; }
+    [Parameter]
+    public string? TableStyle { get; set; }
+    [Parameter]
+    public string? prodLine { get; set; }
+    public string? color = "white";
+
+    PopUp pop = new PopUp();
+
+    public int currentColNum = 0;
+
+    private bool newBrowse = true;
+    int n;
+    private List<bool>? isSortedDescending;
+
+    private List<bool>? isVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        n = dt.Columns.Count;
+        if (n > 0)
+        {
+            isSortedDescending = Enumerable.Repeat(true, n - 1).ToList();
+            isSortedDescending.Insert(0, false);
+
+            isVisible = Enumerable.Repeat(false, n - 1).ToList();
+            isVisible.Insert(0, true);
+        }
+
+        if (prodLine == "INST")
+        {
+            color = "lightyellow";
+        }
+        else if(prodLine == "PPS")
+        {
+            color = "lightgreen";
+        }else if(prodLine == "OPT")
+        {
+            color = "lightcyan"; 
+        }else if(prodLine == "EPO")
+        {
+            color = "plum";
+        }
+
+    }
+    public void SortTable(int columnNum, bool forceAsc = false)
+    {
+        currentColNum = columnNum;
+        string ascendingString = "ASC";
+        for (int i = 0; i < n; i++)
+        {
+            if (columnNum == i)
+            {
+                isVisible[i] = true;
+
+                if (isSortedDescending[i] | forceAsc)
+                {
+                    isSortedDescending[i] = false;
+                    ascendingString = "ASC";
+                }
+                else
+                {
+                    isSortedDescending[i] = true;
+                    ascendingString = "DESC";
+                }
+            }
+            else
+            {
+                isSortedDescending[i] = true;
+                isVisible[i] = false;
+            }
+        }
+
+        dt.DefaultView.Sort = dt.Columns[columnNum] + " " + ascendingString;
+        dt = dt.DefaultView.ToTable();
+        StateHasChanged();
+
+    }
+}

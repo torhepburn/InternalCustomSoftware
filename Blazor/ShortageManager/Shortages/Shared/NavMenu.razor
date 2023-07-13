@@ -1,0 +1,164 @@
+﻿@inject NavigationManager Nav
+@inject ViewShortageService Views
+@using Pages
+
+
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+    <nav style="display:flex;">
+        <div class="nav-item">
+            <button class="nav-item" @onclick="HomeNav">
+                <div class="oi oi-home" aria-hidden="true"></div> Home
+            </button>
+        </div>
+        <div class="nav-item">
+                <button @onclick="addShortageNav" class="nav-item">
+                    <div class="oi oi-plus" aria-hidden="true"></div> Add Shortage
+                </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(inst)" class="nav-item">
+                <div class="oi oi-bullhorn" aria-hidden="true"></div> INST
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(pps)" class="nav-item">
+                <div class="oi oi-fire" aria-hidden="true"></div> PPS
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(opt)" class="nav-item">
+                <div class="oi oi-eye" aria-hidden="true"></div> OPTICS
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(irv)" class="nav-item">
+                <div class="oi oi-briefcase" aria-hidden="true"></div> IRVINE
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(war)" class="nav-item">
+                <div class="oi oi-flag" aria-hidden="true"></div> WAR ROOM
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(epo)" class="nav-item">
+                <div class="oi oi-lightbulb" aria-hidden="true"></div> EPO
+            </button>
+        </div>
+        <img style="background-color:transparent;" src="Images/zygoLogo.png">
+        <label style="position:fixed;right:1%">Version 1.0 07-13-23</label>
+    </nav>
+
+@code {
+    public PopUp pop = new PopUp();
+    private bool collapseNavMenu = true;
+    private bool isLoading = false;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    public string inst = "INST";
+    public string opt = "OPT";
+    public string war = "WAR";
+    public string pps = "PPS";
+    public string irv = "IRV";
+    public string epo = "EPO";
+
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async void HomeNav()
+    {
+        Nav.NavigateTo("");
+    }
+
+    private async void addShortageNav()
+    {
+        Nav.NavigateTo("AddShortage");
+    }
+
+    private async void goToMeeting(string prodLine)
+    {
+        isLoading = true;
+        StateHasChanged();
+        Views.currentProdLine = prodLine;
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        await cnxn.OpenAsync();
+
+        DataTable ProdLineDT = GetDataTable(new SqlCommand("SELECT ID, ProductLine " +
+                                    "FROM shortage_list " +
+                                    "WHERE DateArchived IS NULL " +
+                                    "AND ProductLine = '" + Views.currentProdLine + "'" +
+                                    "ORDER BY ID", cnxn));
+        cnxn.Close();
+
+        if(ProdLineDT.Rows.Count != 0)
+        {
+            if (Nav.Uri.Contains("viewshortage"))
+            {
+                Nav.NavigateTo("");
+                Nav.NavigateTo("viewshortage");
+            }
+            else
+            {
+                Nav.NavigateTo("viewshortage");
+                
+            }
+        }
+
+        await Task.Delay(1000);
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+
+
+    }
+
+    public DataTable GetDataTable(SqlCommand cmd)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                dt.Load(dr);
+                return (dt);
+            }
+            else
+            {
+                pop.Title = "Error";
+                pop.Message = "No shortages here"; 
+                pop.ShowPopup();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        return (new DataTable());
+
+    }
+}

@@ -1,0 +1,548 @@
+﻿@page "/"
+@using Microsoft.Data.SqlClient
+@using System.Data
+@using Simplify.Web.MessageBox
+@using static PopUp
+@using static Databases
+@inject ViewShortageService Views
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider auth
+@inject NavigationManager uriHelper;
+@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Components.Web
+
+
+
+<div style="display:flex">
+<h3>shortage</h3><h3 style="color:red; margin-right:50px">manager</h3>
+    <div>
+        <LoginDisplay />
+    </div>
+    
+</div>
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+
+<div style="display:flex;max-height:600px">
+    <div>
+<PageTitle>Shortage Manager</PageTitle>
+
+
+        <input type="text" id="code" @bind="item.code" />
+        <button type="button" @onclick="HandleSubmit" class="button-85" style="margin-right:30px;border-color:red">Search by Item Code</button>
+
+        <input type="text" id="shortageID" @bind="item.ID" />
+        <button type="button" @onclick="getID" class="button-85" style="margin-right:30px;border-color:red">Get ID</button>
+
+
+<br />
+<br />
+@if (dt != null && dt.Rows.Count > 0)
+{
+    <div class="table-container" style="min-width:700px;">
+        <table class="table" style="min-width:600px;padding-right:20px;">
+        <thead>
+            <tr >
+                <th>
+                    <button @onclick="() => SortTable(0)" style="font-family:Arial,Verdana;font-weight:bold;width:90%;border:none;background:none;margin-left:2px">
+                        Item Code
+                            @if (isVisible[0])
+                            {
+                                <div class="sort-arrow-down @(isSortedDescending[0] ? "rotate" : "")"></div>
+                            }
+                    </button>      
+                </th>
+
+                <th width="20%">
+                        <button @onclick="() => SortTable(1)" style="font-family:Arial,Verdana;font-weight:bold;width:100%;position:center;margin-left:1px;border:none;background:none">Line
+                            @if (isVisible[1])
+                            {
+                                <div class="sort-arrow-down @(isSortedDescending[1] ? "rotate" : "")"></div>
+                            }
+                        </button>
+                </th>
+                <th width="40%">
+                        <button @onclick="() => SortTable(2)" style="font-family:Arial,Verdana;font-weight:bold;width:70%;margin-left:30px;border:none;background:none">Planner Date Required
+                            @if (isVisible[2])
+                            {
+                                <div class="sort-arrow-down @(isSortedDescending[2] ? "rotate" : "")"></div>
+                            }
+                        </button>
+                </th>
+                <th>
+                        <button @onclick="() => SortTable(3)" style="font-family:Arial,Verdana;font-weight:bold;width:70%;margin-left:8px;border:none;background:none">ID
+                            @if (isVisible[3])
+                            {
+                                <div class="sort-arrow-down @(isSortedDescending[3] ? "rotate" : "")"></div>
+                            }
+
+                        </button>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt != null)
+            {
+                @foreach (DataRow items in dt.Rows)
+                {
+                    <tr>
+                        <td><button @onclick="(() => OpenIndividual(items[3].ToString()))" class="clickable-cell" style="color:red">@items[0]</button></td>
+                        <td>@items[1].ToString()</td>
+                        <td>@items[2].ToString().Replace("12:00:00 AM", "")</td>
+                        <td>@items[3].ToString()</td>
+                    </tr>
+                }
+
+            }
+
+        </tbody>
+    </table>
+
+    </div>
+}
+    </div>
+    
+    <div style="height:700px">
+
+        <div style="position:relative;top:50%;transform: translateY(-60%)">
+            
+            <div class="print-inst"><button @onclick="() => PrintReport(inst)" style="border-color:yellow" class="button-85">Print INST Report</button><br /><br /></div>
+            <div class="print-pps"><button @onclick="() => PrintReport(pps)" style=" border-color:palegreen" class="button-85">Print PPS Report</button><br /><br /></div>
+            <div class="print-optics"><button @onclick="() => PrintReport(opt)" style=" border-color:cyan" class="button-85">Print OPTICS Report</button><br /><br /></div>
+            <div class="print-irvine"><button @onclick="() => PrintReport(irv)" style=" border-color:rgb(255, 30, 30)" class="button-85">Print IRVINE Report</button><br /><br /></div>
+            <div class="print-war"><button @onclick="() => PrintReport(war)" style="border-color:red" class="button-85">Print WAR Report</button><br /><br /></div>
+            <div class="print-epo"><button @onclick="() => PrintReport(epo)" style="border-color:purple" class="button-85">Print EPO Report</button><br /><br /></div>
+        </div>
+        
+    </div>
+    
+    
+</div>
+@if (admin)
+{
+  <h4><a style="color:red" href="admin">Admin Controls</a></h4>
+}
+
+
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+
+
+
+@code{
+    public string inst = "INST";
+    public string opt = "OPT";
+    public string war = "WAR";
+    public string pps = "PPS";
+    public string irv = "IRV";
+    public string epo = "EPO";
+
+
+    private Shortage item = new();
+    public int currentColNum = 0;
+    public DataTable? dt;
+    SqlDataReader dr;
+    PopUp pop = new PopUp();
+    private bool newBrowse = true;
+    private string viewShortageUrl = "viewshortage";
+    private string viewShortageIndUrl = "viewshortageindividual";
+    public bool isLoading = false;
+    private bool admin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dt = new DataTable();
+        SqlCommand cmd = new SqlCommand(" Select UserName from applicationsetup " +
+         "WHERE Application = 'ShortageManager' AND Permission = 'ADMIN' AND PermissionValue = 'TRUE'", cnxn);
+        cnxn.Open();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            dt.Load(dr);
+        }
+        cnxn.Close();
+        string user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+
+        foreach (DataRow row in dt.Rows)
+        {
+            if (row[0].ToString().ToUpper().Trim().Equals(user.ToUpper()))
+            {
+                admin = true;
+            }
+        }
+        
+
+        if (Databases.db != "")
+        {
+            HandleSubmit();
+        }
+
+    }
+
+    public void getID()
+    {   
+        if (item.ID == null)
+        {
+            item.ID = "";
+        }
+        OpenIndividual(item.ID);
+    }
+
+    public async Task OpenIndividual(string shortageID)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pID = new SqlParameter("@ID", shortageID);
+        SqlCommand cmd = new SqlCommand(" Select ID " +
+                 " FROM shortage_list " +
+                 " WHERE ID = @ID",  cnxn);
+        cmd.Parameters.Add(pID);
+        try
+        {
+            cnxn.Open();
+            using(SqlDataReader reader = cmd.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    isLoading = true;
+                    StateHasChanged();
+                    Views.currentShortageID = shortageID;
+                    Nav.NavigateTo("viewshortageindividual");
+                }
+                else
+                {
+                    pop.Title = "Error";
+                    pop.Message = "Shortage not found";
+                    pop.ShowPopup();
+                }
+            }
+        }catch(SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+    }
+
+
+    private void HandleSubmit()
+    {
+        SortTable(0, true);
+    }
+
+    // Define a Dictionary to store the sorting order for each column
+    private List<bool> isSortedDescending = new List<bool> {false, true, true, true};
+    private List<bool> isVisible = new List<bool> { true, false, false, false };
+
+    public void SortTable(int columnNum, bool forceAsc=false)
+    {
+        currentColNum = columnNum;
+        string ascendingString = "ASC";
+        for(int i = 0; i < 4; i++)
+        {
+            if (columnNum == i)
+            {
+                isVisible[i] = true;
+
+                if (isSortedDescending[i] | forceAsc)
+                {
+                    isSortedDescending[i] = false;
+                    ascendingString = "ASC";
+                }
+                else
+                {
+                    isSortedDescending[i] = true;
+                    ascendingString = "DESC";
+                }
+            }
+            else
+            {
+                isSortedDescending[i] = true;
+                isVisible[i] = false;
+            }
+        }
+
+
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlCommand cmd = new SqlCommand(" Select ItemCode [Item Code], ProductLine Line, PlannerRequiredDate,  ID " +
+                 " FROM shortage_list " +
+                 " WHERE DateArchived IS NULL AND ItemCode like '%" + item.code + "%' " +
+                 " ORDER BY " + (columnNum + 1).ToString() + " " + ascendingString, cnxn);
+
+        try
+        {
+            cnxn.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                dt = new();
+                dt.Load(dr);
+            }
+            else
+            {
+                pop.Message = "No data from query";
+                pop.Title = "Error";
+                pop.ShowPopup();
+            }
+        }
+        catch (SqlException ex)
+        {
+
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+            this.StateHasChanged();
+        }
+
+    }
+
+    public DataTable GetDataTable(SqlCommand cmd)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        return (dt);
+    }
+
+    public async Task PrintReport(string prodLine)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dtReport = new DataTable();
+
+        /*  part A for the non IQC data    */
+        SqlCommand cmd = new SqlCommand("spShortageReportV05a");
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd.Connection = cnxn;
+
+        /*  part B for the IQC data    */
+        SqlCommand cmd1 = new SqlCommand("spShortageReportV05b");
+        cmd1.CommandType = CommandType.StoredProcedure;
+        cmd1.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd1.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd1.Connection = cnxn;
+
+        cnxn.Open();
+
+        try
+        {
+            /*  table A non-IQC data    */
+            SqlDataReader sr = cmd.ExecuteReader();
+            DataTable dta = new DataTable();
+            dta.Load(sr);
+
+            /*  table B IQC data    */
+            sr = cmd1.ExecuteReader();
+            DataTable dtb = new DataTable();
+            dtb.Load(sr);
+
+            /*  merge the two tables a before b  */
+            dta.Merge(dtb);
+            dtReport = dta;
+        }
+        catch (Exception ex)
+        {
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        cnxn.Close();
+
+        int x = dtReport.Columns.IndexOf("Orig_ Requested Receipt Date");
+        dtReport.Columns[x].SetOrdinal(x + 1);
+
+        var rows = new StringBuilder();
+        bool firstLoop = true;
+        bool firstNonHOT = true;
+        string currentStatus = "";
+
+        foreach (DataRow items in dtReport.Rows)
+        {
+            if (items[1].ToString() == "HOT" && firstLoop)
+            {
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px red;\">STATUS: HOT</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+                firstLoop = false;
+            }
+            else
+            {
+                if(items[1].ToString() != "HOT" && firstNonHOT)
+                {
+                    rows.AppendLine("<tr>");
+                    for ( int i = 0; i < dtReport.Columns.Count - 3; i++)
+                    {
+                        rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                    }
+                    rows.AppendLine("</tr>");
+                    firstNonHOT = false;
+                }
+            }
+
+            if (items[dtReport.Columns.Count - 1].ToString() != currentStatus)
+            {
+                currentStatus = items[dtReport.Columns.Count - 1].ToString();
+
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px green;\">Item Status: " + 
+                currentStatus + "</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px green;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+            }
+
+
+            rows.AppendLine("<tr>");
+
+            rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" + items[0].ToString() + "</td> ");
+
+
+
+            for (int i = 2; i < dtReport.Columns.Count; i++)
+            {
+                if(dtReport.Columns[i].ColumnName.ToString() == "GROUP")
+                {
+                    if (items[i].ToString() == "SERS" || items[i].ToString() == "SER's")
+                    {
+                        rows.AppendLine("<td style=\"color:red;border-top:solid 1px blue\">" + items[i+2].ToString() + "<br/>" +
+                        items[i].ToString() + " " + items[i + 1].ToString() + "</td> ");
+                    }
+                    else
+                    {
+                        rows.AppendLine("<td style=\"border-top:solid 1px blue\">" + items[i + 2].ToString() + "<br/>" + items[i].ToString() + "</td> ");
+                    }
+                    break;
+                }
+                else
+                {
+                    rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" + 
+                    items[i].ToString().Replace("12:00:00 AM", "").Replace("1/1/1900", "").Replace("1/1/1753", "").Replace("1/1/1990", "") +
+                    "</td> ");
+                }
+
+            }
+            rows.AppendLine("</tr>");
+
+        }
+
+
+        string html = @"
+        <head>
+          <style>
+            @media print{
+              @page {
+                size: landscape;
+              }
+            }
+
+            body {
+              margin: 20px;
+              /* Adjust the value to set the desired margin size */
+            }
+
+            colName {
+              margin: 20px;
+              font-size: 10px;
+            }
+
+            tr {
+              font-size: 12px;
+            }
+            td {
+              font-size: 10px;
+              text-align:center;
+            }
+                .status td{
+                    border-top:solid red;
+                }
+            th {
+              font-size: 10px;
+              text-align:center;
+            }
+
+          </style>
+        </head>
+
+        <body>
+
+            <h2>ZYGO " + prodLine + " ACTIVE SHORTAGE LIST REPORT</h2>" + @"
+
+          <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID              </th>
+                        <th>Insp Code       </th>
+                        <th>ItemCode        </th>
+                        <th>Description     </th>
+                        <th>Comments        </th>
+                        <th>Rqd Qty         </th>
+                        <th>Require         </th>
+                        <th>Request         </th>
+                        <th>Promise         </th>
+                        <th>IQCmplt         </th>
+                        <th>Buyer           </th>
+                        <th>Qty             </th>
+                        <th>PO/WO           </th>
+                        <th>Supplier        </th>
+                        <th>Date Added      </th>
+                        <th>Group           </th>
+                    </tr>
+                </thead>
+                <tbody> " +
+                rows.ToString() + @"
+                </tbody >
+            </table>
+        </body>
+        ";
+        await JSRuntime.InvokeVoidAsync("printContent", html);
+        Task.Delay(3000);
+        Nav.NavigateTo("", forceLoad: true);
+    }
+
+
+}
