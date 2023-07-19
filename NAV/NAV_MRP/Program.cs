@@ -16,7 +16,7 @@ namespace NAV_MRP
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new F1_ReportSelection());
+            Application.Run(new F0_SelectSource());
             //Application.Run(new AutoRun());
             //Application.Run(new KBP());  /* for testing  */
         }

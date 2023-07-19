@@ -29,19 +29,19 @@ namespace NAV_MRP
             {
                 ///* Main report     */
 
-                //g.SQLselection = g.Main;
-                //g.ReportSelection = "";
+                g.SQLselection = g.Main;
+                g.ReportSelection = "";
 
-                //MRP_PrintedReport r = new MRP_PrintedReport();
-                //r.ShowDialog();
+                MRP_PrintedReport r = new MRP_PrintedReport();
+                r.ShowDialog();
 
 
                 /*  MinMAx    */
 
-                g.SQLselection = g.MinMax;
-                g.ReportSelection = "minmax ";
-                MRP_PrintedReport t = new MRP_PrintedReport();
-                t.ShowDialog();
+                //g.SQLselection = g.MinMax;
+                //g.ReportSelection = "minmax ";
+                //MRP_PrintedReport t = new MRP_PrintedReport();
+                //t.ShowDialog();
 
                 /////*  X    */
 

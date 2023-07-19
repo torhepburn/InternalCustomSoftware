@@ -184,26 +184,13 @@ namespace NAV_MRP
              *  Conection used by loop within the reader
              */
 
-            SqlConnection cnxn = new SqlConnection("server=pa-hor-as408.ametek.com; password=2018#ameteK; " +
-                                        "user=navdb_read; database=ZYGO-NAV-PROD;");
-
-            /*SqlConnection cnxn = new SqlConnection("server=pa-hor-as406.ametek.com; password=2018#ameteK; " +
-                            "user=navdb_read; database=ZYGO-NAV-TEST;");*/
+            SqlConnection cnxn = new SqlConnection(g.server);
 
             /*
              *  Connection used to get the items in the loop for processing
              */
 
-
-            SqlConnection cnxnR = new SqlConnection("server=pa-hor-as408.ametek.com; password=2018#ameteK; " +
-                           "user=navdb_read; database=ZYGO-NAV-PROD;");
-
-            /*SqlConnection cnxnR = new SqlConnection("server=pa-hor-as406.ametek.com; password=2018#ameteK; " +
-                            "user=navdb_read; database=ZYGO-NAV-TEST;");*/
-
-            /*    SqlConnection cnxnR = new SqlConnection("server=pa-hor-as406.ametek.com; password=2018#ameteK; " +
-                                "user=navdb_read; database=ZYGO-NAV-COPY;");*/
-
+            SqlConnection cnxnR = new SqlConnection(g.server);
 
             /*
              *Connection used to get the Dashboard data
@@ -269,7 +256,7 @@ namespace NAV_MRP
                //"AND [Buyer Planner Code] != 'TIFFANEY K' " +
                //"AND [Buyer Planner Code] in ('ANDREW T', 'OLGA D','BOB H', 'JANET L',  'DAVE K') " +  //this one works
                //"AND LEN(r.[Buyer Planner Code]) > 0 " + 
-               "AND r.No_ = '1355-350-002' " +
+               "AND r.No_ = '1115-801-243' " +
                //"AND r.No_ LIKE " +
                //"'X700620%' " +
                //"AND r.No_ IN " +
