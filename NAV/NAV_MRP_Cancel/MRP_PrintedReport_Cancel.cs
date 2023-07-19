@@ -9,6 +9,9 @@ namespace NAV_MRP_Cancel
 {
     public partial class Form1 : Form
     {
+
+        //string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CertData.csv");
+
         private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
         //private string directory = "C:\\A";
 
@@ -1606,10 +1609,14 @@ namespace NAV_MRP_Cancel
             string today = DateTime.Now.ToString("MM-dd-yy hh.mm.ss");
             string file = "MRP Cancel " + g.ReportSelection + today + ".pdf";
 
+            //string filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CertData.csv");
+
 
             PrintDocument pd = new PrintDocument();
             pd.DefaultPageSettings.PrinterSettings.PrinterName = "Microsoft Print to PDF";
             pd.PrinterSettings.PrintToFile = true;
+
+            //pd.PrinterSettings.PrintFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), file);
             pd.PrinterSettings.PrintFileName = Path.Combine(directory, file);
             StandardPrintController pc = new StandardPrintController();
             pd.PrintController = pc;
