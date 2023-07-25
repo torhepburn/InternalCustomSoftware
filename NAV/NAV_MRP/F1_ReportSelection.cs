@@ -87,7 +87,9 @@ namespace NAV_MRP
     {
         public static string SQLselection;
         public static string server;
+        public static string rptName;
         public static bool messageCancel;
+        public static string messageChoice;
         public static string ReportSelection;
         public static string Main = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Vetted] <> '1' " +
@@ -144,6 +146,7 @@ namespace NAV_MRP
                                  "WHEN l.Quantity<l.[Original Quantity] THEN '-Qty:Date' " +
                                  "WHEN l.Quantity > l.[Original Quantity] THEN '+Qty:Date' " +
                              "END " +
+                             "WHEN 5 THEN 'Cancel' " +
                         " END " +
                         ",CONVERT(varchar(10),l.[Original Due Date], 1) " +
                         ",CASE COALESCE(pl.[Best Delivery],0) " +

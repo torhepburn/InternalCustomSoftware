@@ -214,17 +214,8 @@ namespace NAV_MRP
              */
 
             SqlCommand cmd = new SqlCommand(
-              //"WITH s1 AS " +
-              //"(" +
-              //"SELECT " +
-              //"  [Item No_] " +
-              //", COALESCE(FORMAT(SUM([Quantity]), 'N', 'en-us'), '0.00') Nettable " +
-              //"FROM[ZYGO$Item Ledger Entry] " +
-              ////"WHERE [Non-Nettable] = 0 " +
-              //"GROUP BY[Item No_] " +
-              //")" +
               "SELECT " +
-              //"TOP 1 " +    /*  for testing purposes        */
+              //"TOP 5 " +    /*  for testing purposes        */
               "DISTINCT " +    /* should always be faster than group by   */
               "r.No_  " +
               ",r.[Buyer Planner Code]" +
@@ -240,31 +231,14 @@ namespace NAV_MRP
               //"AND Quantity > [Original Quantity]  " +
               "AND i.[Selection Code] not like 'K%' " +
               "AND i.[Selection Code] not like 'CFM%' " +
-              "AND [Action Message] not in (5) " +                  // 5 = Cancel 1=Add 2=ChangeQuantity 3=Reschedule 4=Reschedule and change quantity
+              "AND [Action Message] " + g.messageChoice + " IN  (5) " +                  // 5 = Cancel 1=Add 2=ChangeQuantity 3=Reschedule 4=Reschedule and change quantity
               "AND i.No_ != 'SERVICE ITEM' " +
-               
-              /*  moved start date filter to report selection as Irvine different.  */
-               
-              //"AND [Reference Component] <> 1 " +
-               //"AND ([Reference Component] = 1 AND[Item Group Code] = 'CNT' AND[Selection Code] = 'SIC') " +
-               /*
-                  * Various selection modifications used while testing:
-                  * 
-                  * */
-               //"AND r.[Buyer Planner Code] in ('KEN L') " +
-               //" 'ANDREW T', 'OLGA D', 'BOB H', 'JANET L', 'DAVE K') " +  //this one works
-               //"AND [Buyer Planner Code] != 'TIFFANEY K' " +
-               //"AND [Buyer Planner Code] in ('ANDREW T', 'OLGA D','BOB H', 'JANET L',  'DAVE K') " +  //this one works
-               //"AND LEN(r.[Buyer Planner Code]) > 0 " + 
-               "AND r.No_ = '1115-801-243' " +
+              /*    for testing   */ 
+              "AND r.No_ = '8070-0115-02' " +
+              //"AND r.No_ IN ('1116-800-107','1420-255-052','1420-380-154') " +
                //"AND r.No_ LIKE " +
                //"'X700620%' " +
-               //"AND r.No_ IN " +
-               //"('6450-2001-03','8070-0107-01','6450-8224-01') " +
-              //"('1541-341-012','4035.200.12532','6024-2466-01','6068-2066-01','6191-2229-01','6300-5032-02','6401-1007-01','6401-1044-01'," +
-              //"'6401-1044-01','6500-3209-03','6500-3210-03','6505-4266-02','6505-8347-01','6505-8348-01','8070-1014-01','8070-1760-01') " +
-              //  "'1924-600-098','6090-1461-01','6300-0239-11','6301-0167-01','6307-0106-01', " +
-              //" ('1577-175-003') " +
+               
               g.SQLselection +
 
               "ORDER BY " +
@@ -1590,8 +1564,17 @@ namespace NAV_MRP
 
             /*  colins and back slashes in the date time make the path unreadable    */
             string today = DateTime.Now.ToString("MM-dd-yy hh.mm.ss");
-            string file = "MRP " + g.ReportSelection + today + ".pdf";
-           
+
+            string file = string.Empty;
+
+            if (g.messageCancel)
+            {
+                file = "MRP CANCEL " + g.rptName + g.ReportSelection + today + ".pdf";
+            }
+            else
+            {
+                file = "MRP " + g.rptName + g.ReportSelection + today + ".pdf";
+            }
 
             PrintDocument pd = new PrintDocument();
             pd.DefaultPageSettings.PrinterSettings.PrinterName = "Microsoft Print to PDF";

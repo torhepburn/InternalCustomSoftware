@@ -25,17 +25,23 @@ namespace NAV_MRP
         private void BNotCancel_Click(object sender, EventArgs e)
         {
             g.messageCancel = false;
+            g.messageChoice = " not ";
+            Nexxt();
         }
 
         private void BCancel_Click(object sender, EventArgs e)
         {
             g.messageCancel = true;
+            g.messageChoice = " ";
+            Nexxt();
         }
 
         private void Nexxt()
         {
             AutoRun a = new AutoRun();
             a.ShowDialog();
+
+            this.Close();
         }
     }
 }
