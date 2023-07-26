@@ -27,16 +27,27 @@ namespace BinLabels
             SqlConnection cnxn = new SqlConnection(
                 "server = ct-mid-sql11; password = views; user = views; database = accessfrontends;");
 
+            //SqlCommand cmd = new SqlCommand(
+            //"SELECT TOP 100 " +
+            //" [Component] " +
+            //",[Description] " +
+            //",COALESCE([Bin Num#],'0.0') " +
+            //", COALESCE(CAST([Full Bin Quant#] as varchar (3)),'') " +
+            //",CAST([Warehouse] as varchar(3)) " +
+            //"  FROM[AccessFrontEnds].[dbo].[JD_GPI_Labels] " +
+            //"WHERE [Component] > '8070-1355-01' " +
+            //"ORDER BY [Component],  ", cnxn);
+
             SqlCommand cmd = new SqlCommand(
-            "SELECT TOP 100 " +
+            "SELECT " +
             " [Component] " +
             ",[Description] " +
-            ",COALESCE([Bin Num#],'0.0') " +
-            ", COALESCE(CAST([Full Bin Quant#] as varchar (3)),'') " +
-            ",CAST([Warehouse] as varchar(3)) " +
-            "  FROM[AccessFrontEnds].[dbo].[JD_GPI_Labels] " +
-            "WHERE [Component] > '8070-1355-01' " +
-            "ORDER BY [Component] ", cnxn);
+            ",COALESCE([BinNumber],'0.0') " +
+            ",COALESCE(TRIM(STR(FullQuantity,25,0)),' ')  " +
+            ",'26' " +
+            "  FROM[AccessFrontEnds].[dbo].[JD_BinLabels] " +
+            "ORDER BY [Component], BinNumber  ", cnxn);
+
 
             cnxn.Open();
                         
@@ -57,16 +68,16 @@ namespace BinLabels
                 //str += "A30,20,0,4,1,1,N,\"SFO#\"\n";
                 //str += "B100,20,0,1,2,4,32,B,\"" + dr.GetString(2) + "\"\n";
                 //str += "A30,10,0,4,1,1,N,\"PN#\"\n";
-                str += "B200,10,0,1,2,4,32,B,\"" + dr.GetString(0) + "\"\n";
+                str += "B100,10,0,1,2,4,32,B,\"" + dr.GetString(0) + "\"\n";
 
                 //str += "A300,80,0,3,1,1,N,\"DESC:\"\n";
-                str += "A200,80,0,4,1,1,N,\"" + dr.GetString(1) + "\"\n";
-                str += "A200,110,0,4,1,1,N,\"Bin # :\"\n";
-                str += "A300,110,0,4,1,1,N,\"" + dr.GetDouble(2).ToString() + "\"\n";
-                str += "A400,110,0,4,1,1,N,\"FULL BIN: \"\n";
-                str += "A500,110,0,4,1,1,N,\"" + dr.GetString(3) + "\"\n";
-                str += "A200,150,0,4,1,1,N,\"WAREHOUSE: \"\n";
-                str += "A370,150,0,4,1,1,N,\"" + dr.GetString(4) + "\"\n";
+                str += "A100,80,0,4,1,1,N,\"" + dr.GetString(1) + "\"\n";
+                str += "A100,110,0,4,1,1,N,\"Bin # :\"\n";
+                str += "A200,110,0,4,1,1,N,\"" + dr.GetDouble(2).ToString() + "\"\n";
+                str += "A300,110,0,4,1,1,N,\"FULL BIN: \"\n";
+                str += "A450,110,0,4,1,1,N,\"" + dr.GetString(3) + "\"\n";
+                str += "A100,150,0,4,1,1,N,\"WAREHOUSE: \"\n";
+                str += "A270,150,0,4,1,1,N,\"" + dr.GetString(4) + "\"\n";
                 //str += "A350,500,0,4,1,1,N,\"Pulled on:\"\n";
                 //str += "LO30,550,800,2\n";
                 //str += "LO30,700,800,2\n";
