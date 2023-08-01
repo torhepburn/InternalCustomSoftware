@@ -23,16 +23,17 @@
           <QueryParameter Name="@workCenter">
             <Value>=Parameters!workCenter.Value</Value>
           </QueryParameter>
+          <QueryParameter Name="@status">
+            <Value>=Parameters!Status.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
         </QueryParameters>
         <CommandText>WITH s1 AS
 (
 select
 
 No_
-, CASE 
-	WHEN CHARINDEX('-',No_) = 0 THEN SUM([Capacity (Total)])
-	WHEN CHARINDEX('-',No_) &gt; 0 THEN SUM([Capacity (Effective)])
-END Capacity
+,SUM([Capacity (Effective)]) Capacity
 ,YEAR(Date) [Year]
 ,MONTH(Date) [Month]
 
@@ -55,6 +56,8 @@ No_
 FROM [ZYGO$Prod_ Order Capacity Need]
 
 WHERE Date &gt;= @start and Date &lt;= @end
+
+AND Status IN (@status)
 
 GROUP BY No_,YEAR(Date),MONTH(Date)
 
@@ -6896,6 +6899,27 @@ ORDER BY No_</CommandText>
       </ValidValues>
       <MultiValue>true</MultiValue>
     </ReportParameter>
+    <ReportParameter Name="Status">
+      <DataType>String</DataType>
+      <Prompt>Status</Prompt>
+      <ValidValues>
+        <ParameterValues>
+          <ParameterValue>
+            <Value>1</Value>
+            <Label>Planned</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>2</Value>
+            <Label>Firm Planned</Label>
+          </ParameterValue>
+          <ParameterValue>
+            <Value>3</Value>
+            <Label>Released</Label>
+          </ParameterValue>
+        </ParameterValues>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
+    </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
@@ -6916,6 +6940,11 @@ ORDER BY No_</CommandText>
           <ColumnIndex>2</ColumnIndex>
           <RowIndex>0</RowIndex>
           <ParameterName>workCenter</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>Status</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>
