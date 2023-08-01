@@ -32,7 +32,7 @@
                     {
                         <button class="button-save" type="submit" @onclick="Archive">Archive</button>
                     }
-                    
+
 
                 </div>
                 @*STATUS*@
@@ -119,6 +119,8 @@
                 <input type="date" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.shipDate" />
                 <label>Sales Order Date:</label>
                 <input type="date" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.salesOrderDate" />
+                <label>Change Buyer:</label>
+                <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.buyer" />
             </div>
         </div>
         @*COMMENT TABLE*@
@@ -355,7 +357,8 @@
         "SalesOrder = @SalesOrder, " +
         "ShipDate = @ShipDate, " +
         "SODate = @SODate, " +
-        "SOLineNo = @SOLineNo " +
+        "SOLineNo = @SOLineNo, " +
+        "Buyer = @Buyer " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@HOT", item.hot ? -1 : 0));
@@ -382,6 +385,7 @@
         ? new DateTime(1990, 01, 01) : item.salesOrderDate));
         cmd.Parameters.Add(new SqlParameter("@SOLineNo", (item.SOLineNum == null)
         ? DBNull.Value : item.SOLineNum));
+        cmd.Parameters.Add(new SqlParameter("@Buyer", item.buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", item.ID));
 
 
@@ -409,8 +413,9 @@
             await JSRuntime.InvokeVoidAsync("console.log", newComment);
             addComment(newComment.Trim());
             await ReloadComments();
-        }
 
+        }
+        await ReloadBuyer();
 
         StateHasChanged();
     }
@@ -424,7 +429,7 @@
         pComment.Value = comment;
 
         SqlParameter pEnteredBy = new SqlParameter("@EnteredBy", SqlDbType.VarChar);
-        
+
         string user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
         if (user.StartsWith("Z"))
         {
@@ -457,7 +462,7 @@
         {
             cnxn.Open();
             cmd.ExecuteNonQuery();
-            
+
         }
         catch (SqlException ex)
         {
@@ -485,6 +490,37 @@
         CommentsDT = GetDataTable(cmd);
         cnxn.Close();
     }
+
+    public async Task ReloadBuyer()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pShortageID = new SqlParameter("@ID", item.ID);
+        SqlCommand cmd = new SqlCommand("select " +
+                                                "[ID]," +
+                                                "[GROUP]," +
+                                                "[STKOUT]," +
+                                                "[QtyNeeded]," +
+                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
+                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
+                                                "[Custom Item]," +
+                                                "[PO]," +
+                                                "[QTY], " +
+                                                "[WarBoardDate]," +
+                                                "[whoAdded]," +
+                                                "[Project]," +
+                                                "[PROJECTDESC]," +
+                                                "[Supplier]," +
+                                                "[Buyer]," +
+                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                        "FROM Shortage_List " +
+                                        "WHERE [ID] = " + pShortageID, cnxn);
+        cmd.Parameters.Add(pShortageID);
+        await cnxn.OpenAsync();
+        ShortageDT = GetDataTable(cmd);
+        cmd.Parameters.Clear();
+        cnxn.Close();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         SqlConnection cnxn = new SqlConnection(Databases.db);
@@ -580,6 +616,7 @@
                     item.salesOrderDate = reader.IsDBNull(13) ? null : reader.GetDateTime(13);
                     item.shipDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14);
                     item.reqDate = reader.GetDateTime(15);
+                    item.buyer = reader.GetString(17);
                     item.hot = (reader.GetInt32(18) == -1);
                     item.reason = reader.IsDBNull(19) ? null : reader.GetString(19).Trim();
                     item.status = reader.IsDBNull(20) ? null : reader.GetString(20);
@@ -1021,7 +1058,7 @@
             pop.ShowPopup();
         }
 
-        
+
         Allocation = string.Format("{0:0}", (Convert.ToDouble(AS1) + Convert.ToDouble(AS2) + Convert.ToDouble(AS3) + Convert.ToDouble(AS4)));
 
 
