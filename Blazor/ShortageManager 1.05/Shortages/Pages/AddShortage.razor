@@ -1,0 +1,1038 @@
+﻿@page "/addshortage"
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider auth
+<style>
+    .edit-form-content div {
+        margin-bottom: 20px;
+    }
+
+    .edit-form-content label {
+        text-align: right;
+        width: 150px;
+    }
+</style>
+
+@*ERROR MESSAGE POPUP*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+@*CONFIRM YES/NO POPUP*@
+<div class="popup-overlay @(popYesNo.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@popYesNo.Title</h3>
+        <p>@popYesNo.Message</p>
+        <button class="button-85" @onclick="() => { EnterItem(); popYesNo.ClosePopup(); }" >Yes</button>
+        <button class="button-85" @onclick="popYesNo.ClosePopup">No</button>
+    </div>
+</div>
+
+@*PURCHASE ORDER SELECTOR*@
+@if (POPop)
+{
+    <div class="overlay-container">
+        <AddPO ExitPOCallback="ExitPO" item="@item"/>
+        <button @onclick="ExitPO" style="position:fixed;top:82%;left:50%">Cancel</button>  
+    </div>
+}
+
+    <div style="display:flex;justify-content:center">
+        <div style="display:relative">
+            <div style="display:flex;">
+                <h3>add</h3><h3 style="display:inline;color:red">shortage</h3>
+            </div>
+        <br />
+            <EditForm Model="@item" id="shortageForm" OnValidSubmit="@HandleValidSubmit">
+
+                <DataAnnotationsValidator />
+                <div class="edit-form-content">
+                    <h6 style="display:flex">
+                        <div>
+                            @*PRODUCT LINE*@
+                            <div>
+                                <label>Product Line:</label>
+                                <InputSelect id="prodLine" tabindex=0 list="prodLines" @bind-Value="item.prodLine">
+                                    <option value="">-- Select an option --</option>
+                                    <option value="INST">INST</option>
+                                    <option value="PPS">PPS</option>
+                                    <option value="OPT">OPT</option>
+                                    <option value="EPO">EPO</option>
+                                    <option value="ZEOs">ZEOs</option>
+                                    <option value="SERrpt">SERrpt</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => item.prodLine" style="display:inline" />
+                            </div>
+                            @*GROUP*@
+                            <div>
+                                <label>Group:</label>
+                                <InputText id="group" @bind-Value="item.group" />
+                                <div style="display:inline">
+                                    Stock Out:<InputCheckbox id="stockOut" @bind-Value=item.stockOut />
+                                </div>
+                            </div>
+                            @*QUANTITY*@
+                            <div>
+                                <label>Quantity Required:</label>
+                                <InputNumber id="quantityReq" @bind-Value="item.quantityReq" />
+                                <ValidationMessage For="() => item.quantityReq" style="display:inline" />
+                            </div>
+                            @*ITEM CODE and CUSTOM ITEM*@
+                            <div>
+                                <label>Item Code:</label>
+                                <InputText id="code" disabled="@isLoading" list="itemCodes" onclick="this.select()" @oninput="POReset" @bind-Value="item.code" @onfocusout="itemCodeInput" />
+                                <datalist id="itemCodes">
+                                    @((MarkupString)xmlString)
+                                </datalist>
+                                <ValidationMessage For="() => item.code" style="display:inline" />
+                                Custom Item:<InputCheckbox id="customItem" @bind-Value=item.customItem />
+                            </div>
+                            @*DESCRIPTION*@
+                            <div>
+                                <label>Description</label>
+                                <InputText id="description" @bind-Value="item.description" />
+                                <ValidationMessage For="() => item.description" style="display:inline" />
+                            </div>
+                            @*PROJECT*@
+                            <div>
+                                <label>Project:</label>
+                                <InputText id="project" @bind-Value="item.project" />
+                            </div>
+                            @*PROJECT DESCRIPTION*@
+                            <div>
+                                <label>Project Description:</label>
+                                <InputText id="projectDesc" @bind-Value="item.projectDesc" />
+                            </div>
+                            @*PURCHASE ORDER(Brings up purchase order selector)*@
+                            <div>
+                                <label>Purchase Order:</label>
+                                <InputText readonly="true" @onfocus="EnterPO" id="purchaseOrder" @bind-Value="item.PurchaseOrder.OrderNo" />
+                                Add all lines of PO:<InputCheckbox id="addLinesPO" @bind-Value="item.addLinesPO" />
+                            </div>
+                            @*SUBMIT BUTTON*********@
+                            <div>
+                                <label></label>
+                                <button class="button-save" type="submit">Add Shortage to Database</button>
+                            </div>
+
+                        </div>
+
+
+                        <div>
+                            @*PRODUCTION ORDER*@
+                            <div>
+                                <label>Production Order:</label>
+                                <InputText id="productionOrder" @bind-Value="item.productionOrder" />
+                            </div>
+                            @*SALES ORDER*@
+                            <div>
+                                <label>Sales Order:</label>
+                                <InputText id="salesOrder" @bind-Value="item.salesOrder" />
+                            </div>
+                            @*SO LINE NUMBER*@
+                            <div>
+                                <label>SO Line No.</label>
+                                <InputNumber id="SOLineNum" @bind-Value="item.SOLineNum" />
+                            </div>
+                            @*SALES ORDER DATE*@
+                            <div>
+                                <label>Sales Order Date:</label>
+                                <InputDate id="salesOrderDate" @bind-Value="item.salesOrderDate" />
+                            </div>
+                            @*SHIP DATE*@
+                            <div>
+                                <label>Ship Date:</label>
+                                <InputDate id="shipDate" @bind-Value="item.shipDate" />
+                            </div>
+                            @*REQUIRED DATE*@
+                            <div>
+                                <label>Required Date:</label>
+                                <InputDate id="reqDate" @bind-Value="item.reqDate" />
+                            </div>
+                            @*COMMENTS*@
+                            <div>
+                                <label>Comments:</label>
+                                <InputText id="comments" list="commentList" @bind-Value="item.comments" />
+                                <datalist id="commentList">
+                                    <option>Confirm Delivery.</option>
+                                    <option>Expedite Delivery.</option>
+                                    <option>Pull In.</option>
+                                </datalist>
+                            </div>
+                            @*PLANNER/BUYER*@
+                            <div>
+                                <label>Planner/Buyer:</label>
+                                <InputText id="buyer" @bind-Value="item.buyer" />
+                            </div>
+                            @*HOT*@
+                            <div>
+                                <label>Hot:</label>
+                                <InputCheckbox id="hot" @bind-Value="item.hot" />
+
+                            </div>
+                        </div>
+                    </h6>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+@code {
+    public bool isLoading = true; //Disables item code text box until items are loaded
+    public string xmlString; //HTML for item code drop down
+    public bool POPop = false; 
+    private int currentCount = 0;
+
+    private int id;
+    PopUp pop = new PopUp();
+    PopUp popYesNo = new PopUp();
+    Shortage item = new Shortage();
+    string user = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+        await Task.Run(() => getItemCodes()); //runs in background so rest of form loads
+    }
+
+    public async Task getItemCodes()
+    {
+        try
+        {
+            if (xmlString == null)
+            {
+                using (SqlConnection connection = new SqlConnection(Databases.dbNAV))
+                {
+                    connection.Open();
+                    string sql = "DECLARE @HTMLTable VARCHAR(MAX)" +
+
+                                "SET @HTMLTable = " +
+
+                                "CAST((SELECT " +
+
+                                    "td = [No_], '' " +
+                                "FROM [ZYGO$Item]" +
+
+                                "FOR XML PATH('option'), TYPE )" +
+                                "AS NVARCHAR(MAX) )" +
+
+                                "select @HTMLTable as HTMLText";
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+
+                                xmlString = reader.GetString(0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+        isLoading = false; //reactivates item code textbox
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+    public void EnterPO() //activates Purchase order selector
+    {
+        POPop = true;
+        StateHasChanged();
+    }
+
+    public void ExitPO() //Exits purchase order selector
+    {
+        POPop = false;
+        StateHasChanged();
+        if (item.PurchaseOrder.PurchaserCode == "")
+        {
+            pop.Title = "Error";
+            pop.Message = "No purchase orders for this item";
+            pop.ShowPopup();
+        }
+    }
+
+    private void POReset() //will reset the chosen purchase order if item code changes
+    {
+        item.PurchaseOrder = new PurchaseOrder();
+    }
+
+
+    private bool handleDate()
+    {
+        return false;
+    }
+
+    private void itemCodeInput() //gets item code description for the user
+    {
+        isLoading = true;
+        StateHasChanged();
+        string dbNAV = "server=pa-hor-as408; password=2018#ameteK; " +
+                        "user=navdb_read; database=ZYGO-NAV-PROD; encrypt=false";
+        SqlConnection cnxn = new SqlConnection (dbNAV);
+        SqlCommand cmd1 = new SqlCommand("select [Description] FROM [ZYGO$Item] " +
+                        "WHERE [No_] = '" + item.code + "'", cnxn);
+        cnxn.Open();
+        using (SqlDataReader reader = cmd1.ExecuteReader())
+        {  
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    item.description = reader.GetString(0);
+                }
+            }
+            else
+            {
+                item.description = "";
+            }
+
+        }
+        isLoading=false;
+        StateHasChanged();
+    }
+
+    private void HandleValidSubmit()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlConnection NAVcnxn = new SqlConnection(Databases.dbNAV);
+
+        /*  if all the lines of the PO are going to be entered    */
+
+        if (item.addLinesPO)
+        {
+            /* make sure that the PO is a valid number  */
+
+            if(item.group == null)
+            {
+                item.group = item.prodLine;
+            }
+
+            /*  get the lines and enter them in the shortage database    */
+
+            SqlCommand cmd = new SqlCommand(
+                "SELECT " +
+                "  L.No_ " +
+                ", L.Description " +
+                ",CONVERT(varchar(10),L.[Orig_ Requested Receipt Date], 1) " + //put in RequiredDate field as this is automated
+                ",CONVERT(varchar(10), L.[Planned Receipt Date], 1) " +
+                ", H.[Buy-from Vendor Name] " +
+                ",CASE " +
+                        "   WHEN LEN(COALESCE(H.[Purchaser Code],'')) > 0 THEN H.[Purchaser Code] " +
+                        "   WHEN LEN(COALESCE(H.[Purchaser Code],'')) = 0 THEN (" +
+                        "SELECT CASE " +
+                            " WHEN LEN([Buyer Planner Code]) > 0 THEN [Buyer Planner Code] " +
+                            "   ELSE 'CHRIS O' " +
+                            "END " +
+                            "FROM ZYGO$Item " +
+                        "       WHERE No_ = '" + item.code + "') " +
+                        "END [Purchaser Code]" +
+                ", CAST(FORMAT(L.[Outstanding Quantity], '##.##') as varchar(5)) " +
+                "from [ZYGO$Purchase Line] L " +
+                "INNER JOIN [ZYGO$Purchase Header] H on L.[Document No_] = H.No_ " +
+                "where[Document No_] = '" + item.PurchaseOrder.OrderNo + "'", NAVcnxn);
+
+            try
+            {
+                NAVcnxn.Open();
+                SqlDataReader dr;
+
+                dr = cmd.ExecuteReader();
+                int x = 0;
+                while (dr.Read())
+                {
+                    try
+                    {
+                        x++;
+                        SqlParameter pComments = new SqlParameter("@comments", SqlDbType.VarChar);
+                        if (item.comments != null)
+                        {
+                            pComments.Value = item.comments.Trim();
+                        }
+                        else
+                        {
+                            pComments.Value = "New Shortage - no comments entered.";
+                        }
+
+                        SqlParameter pCommentsWhoEntered = new SqlParameter("@commentsWhoEntered", SqlDbType.VarChar);
+                        pCommentsWhoEntered.Value = WindowsIdentity.GetCurrent().Name;
+
+
+                        SqlParameter pProductLine = new SqlParameter("@productLine", SqlDbType.VarChar);
+                        pProductLine.Value = item.prodLine;
+
+                        SqlParameter pGroup = new SqlParameter("@pGroup", SqlDbType.VarChar);
+                        pGroup.Value = item.group;
+
+                        SqlParameter pQuantityRequired = new SqlParameter("@quantityRequired", SqlDbType.VarChar);
+                        pQuantityRequired.Value = dr.GetString(6);
+
+                        SqlParameter pItemCode = new SqlParameter("@itemCode", SqlDbType.VarChar);
+                        pItemCode.Value = dr.GetString(0);
+
+                        SqlParameter pDescription = new SqlParameter("@pDescription", SqlDbType.VarChar);
+                        pDescription.Value = dr.GetString(1);
+
+                        SqlParameter pPurchaseOrder = new SqlParameter("@purchaseOrder", SqlDbType.VarChar);
+                        pPurchaseOrder.Value = item.PurchaseOrder.OrderNo;
+
+                        SqlParameter pOrigRqstRcptDate = new SqlParameter("@origRqstRcptDate", SqlDbType.Date);
+                        pOrigRqstRcptDate.Value = dr.GetString(2);
+
+                        SqlParameter pPlannedReceiptDate = new SqlParameter("@plannedReceiptlDate", SqlDbType.VarChar);
+                        pPlannedReceiptDate.Value = dr.GetString(3);
+
+                        SqlParameter pSupplier = new SqlParameter("@supplier", SqlDbType.VarChar);
+                        pSupplier.Value = dr.GetString(4);
+
+                        SqlParameter pPlannerBuyer = new SqlParameter("@plannerBuyer", SqlDbType.VarChar);
+                        pPlannerBuyer.Value = dr.GetString(5);
+
+                        SqlParameter pPOqty = new SqlParameter("@POqty", SqlDbType.VarChar);
+                        pPOqty.Value = dr.GetString(6);
+
+                        if (user.StartsWith("Z"))
+                        {
+                            user = user.Replace("ZYGOMIS\\", "");
+                        }
+                        else
+                        {
+                            user = user.Replace("AMETEK-AD\\", "");
+                        }
+
+                        SqlParameter pWhoEntered = new SqlParameter("@whoEntered", SqlDbType.VarChar);
+                        pWhoEntered.Value = user;
+
+                        SqlParameter pShortageID = new SqlParameter("@ID", SqlDbType.Int);
+                        pShortageID.Direction = ParameterDirection.Output;
+
+                        SqlParameter pInstOptic = new SqlParameter("@instOptic", SqlDbType.Bit);
+                        if (pProductLine.Value.ToString() == "INST" & pGroup.Value.ToString().ToUpper() == "OPTICS")
+                        {
+                            pInstOptic.Value = 1;
+                        }
+                        else
+                        {
+                            pInstOptic.Value = 0; ;
+                        }
+
+                        SqlParameter pHot = new SqlParameter("@hot", SqlDbType.Int);
+                        if (item.hot)
+                        {
+                            pHot.Value = -1;
+                        }
+                        else
+                        {
+                            pHot.Value = 0;
+                        }
+
+
+                        cnxn = new SqlConnection(Databases.db);
+
+                        SqlCommand cmd1 = new SqlCommand(
+                            "Insert into Shortage_List (" +
+                            " ProductLine " +
+                            ",[Group] " +
+                            ",StkOut " +
+                            ",QtyNeeded " +
+                            ",[Custom Item] " +
+                            ",ItemCode " +
+                            ",[Description] " +
+                            ",[Project] " +
+                            ",[ProjectDesc] " +
+                            ",PO " +
+                            ",[Orig Date] " +
+                            ",PlannerRequiredDate " +
+                            ",PlannedReceiptDate " +
+                            ",Supplier " +
+                            ",Buyer " +
+                            ",POQty " +
+                            ",WhoAdded " +
+                            ",FlagField " +
+                            ",DateAddedToList " +
+                            ",InstrumentOptic " +
+                            ",HOT " +
+                            ") values (" +
+                            pProductLine + "," +
+                            pGroup + "," +
+                            "'', " +                    //stock out value
+                            pQuantityRequired + "," +
+                            "'', " +                    //custom item value
+                            pItemCode + "," +
+                            pDescription + "," +
+                            "'', " +                    //project value
+                            "'', " +                    //project desc value
+                            pPurchaseOrder + "," +
+                            pOrigRqstRcptDate + "," +
+                            pOrigRqstRcptDate + "," +
+                            pPlannedReceiptDate + "," +
+                            pSupplier + "," +
+                            pPlannerBuyer + "," +
+                            pPOqty + "," +
+                            pWhoEntered + "," +
+                            "-1, " +
+                            "GETDATE() ," +
+                            pInstOptic + "," +
+                            pHot +
+                            ") SET @ID = SCOPE_IDENTITY() ", cnxn);
+
+                        cmd1.Parameters.Add(pProductLine);
+                        cmd1.Parameters.Add(pGroup);
+                        cmd1.Parameters.Add(pQuantityRequired);
+                        cmd1.Parameters.Add(pItemCode);
+                        cmd1.Parameters.Add(pDescription);
+                        cmd1.Parameters.Add(pPurchaseOrder);
+                        cmd1.Parameters.Add(pOrigRqstRcptDate);
+                        cmd1.Parameters.Add(pPlannerBuyer);
+                        cmd1.Parameters.Add(pWhoEntered);
+                        cmd1.Parameters.Add(pShortageID);
+                        cmd1.Parameters.Add(pPlannedReceiptDate);
+                        cmd1.Parameters.Add(pSupplier);
+                        cmd1.Parameters.Add(pPOqty);
+                        cmd1.Parameters.Add(pInstOptic);
+                        cmd1.Parameters.Add(pHot);
+
+                        try
+                        {
+                            cnxn.Open();
+                            cmd1.ExecuteNonQuery();
+
+                            id = (int)cmd1.Parameters["@ID"].Value;
+
+
+
+                            if (id > 0 & pComments.Value.ToString().Length > 0)
+                            {
+                                SqlCommand cmd2 = new SqlCommand(
+                                "Insert into ShortageListComments (" +
+                                " ShortageID " +
+                                ",Comment " +
+                                ",EnteredBy " +
+                                ",EnteredOn " +
+                                ") values (" +
+                                id + "," +
+                                pComments + "," +
+                                pCommentsWhoEntered + "," +
+                                "GETDATE() " +
+                                ")", cnxn);
+
+                                try
+                                {
+                                    cmd2.Parameters.Add(pComments);
+                                    cmd2.Parameters.Add(pCommentsWhoEntered);
+                                    cmd2.ExecuteNonQuery();
+                                }
+                                catch (SqlException ex)
+                                {
+                                    pop.Title = "Error";
+                                    pop.Message = ex.ToString();
+                                    pop.ShowPopup();
+                                }
+                                finally
+                                {
+                                    cmd2.Parameters.Clear();
+                                }
+
+                            }
+
+                        }
+                        catch (SqlException ex)
+                        {
+                            pop.Title = "Error";
+                            pop.Message = ex.ToString();
+                            pop.ShowPopup();
+                        }
+                        finally
+                        {
+                            cnxn.Close();
+                            cmd1.Parameters.Clear();
+                        }
+
+                    }
+                    catch (SqlException ex)
+                    {
+                        pop.Title = "Error";
+                        pop.Message = ex.ToString();
+                        pop.ShowPopup();
+                    }
+                    finally
+                    {
+                        cnxn.Close();
+
+                    }
+                }
+                pop.Title = "Success";
+                pop.Message = x.ToString() + " shortage was added";
+                pop.ShowPopup();
+
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+                NAVcnxn.Close();
+            }
+        }
+
+        else{
+            if (item.prodLine != "WAR")
+            {
+
+                object x = null;
+                try
+                {
+                    cnxn.Open();
+                    SqlCommand cmd1 = new SqlCommand("Select ID from Shortage_List " +
+                        "WHERE itemCode = '" + item.code + "' and DateArchived is null ", cnxn);
+                    x = cmd1.ExecuteScalar();
+                }
+                catch (SqlException ex)
+                {
+                    pop.Title = "Error";
+                    pop.Message = ex.ToString();
+                    pop.ShowPopup();
+                }
+                finally
+                {
+                    cnxn.Close();
+                }
+
+
+                if (x is null)
+                {
+                    EnterItem();
+                }
+                else
+                {
+                    popYesNo.Title = "Warning";
+                    popYesNo.Message = "A shortage for this item already exists. Would you like to add it again?";
+                    popYesNo.ShowPopup();
+                }
+            }
+
+            //loaded = false;
+            //noProductLine = true;
+            //checkedLoopInProgress = false;
+            //itemLoopInProgress = false;
+        }
+    }
+
+    private void EnterItem()
+    {
+        SqlParameter pComments = new SqlParameter("@comments", SqlDbType.VarChar);
+        if (item.comments != null)
+        {
+            pComments.Value = item.comments.Trim();
+        }
+        else
+        {
+            pComments.Value = "New Shortage - no comments entered.";
+        }
+
+
+        SqlParameter pProductLine = new SqlParameter("@productLine", SqlDbType.VarChar);
+        pProductLine.Value = item.prodLine.Trim();
+
+
+        SqlParameter pGroup = new SqlParameter("@pGroup", SqlDbType.VarChar);
+        if (item.group != null)
+        {
+            pGroup.Value = item.group.Trim();
+        }
+        else
+        {
+            pGroup.Value = DBNull.Value;
+        }
+
+        SqlParameter pQuantityRequired = new SqlParameter("@quantityRequired", SqlDbType.VarChar);
+        pQuantityRequired.Value = item.quantityReq.ToString().Trim();
+
+
+        SqlParameter pItemCode = new SqlParameter("@itemCode", SqlDbType.VarChar);
+        pItemCode.Value = item.code.Trim();
+
+        SqlParameter pDescription = new SqlParameter("@pDescription", SqlDbType.VarChar);
+        if (item.description != null)
+        {
+            pDescription.Value = item.description.Trim();
+        }
+        else
+        {
+            pDescription.Value = DBNull.Value;
+        }
+
+        SqlParameter pProject = new SqlParameter("@pProject", SqlDbType.VarChar);
+        if (item.project != null)
+        {
+            pProject.Value = item.project.Trim();
+        }
+        else
+        {
+            pProject.Value = DBNull.Value;
+        }
+
+        SqlParameter pProjectDescription = new SqlParameter("@projectDescription", SqlDbType.VarChar);
+        if (item.projectDesc != null)
+        {
+            pProjectDescription.Value = item.projectDesc.Trim();
+        }
+        else
+        {
+            pProjectDescription.Value = DBNull.Value;
+        }
+
+        SqlParameter pPurchaseOrder = new SqlParameter("@purchaseOrder", SqlDbType.VarChar);
+        if (item.PurchaseOrder.OrderNo != null)
+        {
+            pPurchaseOrder.Value = item.PurchaseOrder.OrderNo.Trim();
+        }
+        else
+        {
+            pPurchaseOrder.Value = DBNull.Value;
+        }
+
+        SqlParameter pProdOrder = new SqlParameter("@prodOrder", SqlDbType.VarChar);
+        if (item.productionOrder != null)
+        {
+            pProdOrder.Value = item.productionOrder.Trim();
+        }
+        else
+        {
+            pProdOrder.Value = DBNull.Value;
+        }
+
+        SqlParameter pSalesOrder = new SqlParameter("@salesOrder", SqlDbType.VarChar);
+        if (item.salesOrder != null)
+        {
+            pSalesOrder.Value = item.salesOrder.Trim();
+        }
+        else
+        {
+            pSalesOrder.Value = DBNull.Value;
+        }
+
+        SqlParameter pSOLineNo = new SqlParameter("@sOLineNo", SqlDbType.VarChar);
+        if (item.SOLineNum != null)
+        {
+            pSOLineNo.Value = item.SOLineNum.ToString().Trim();
+        }
+        else
+        {
+            pSOLineNo.Value = DBNull.Value;
+        }
+
+        SqlParameter pRequiredDate = new SqlParameter("@requiredDate", SqlDbType.Date);
+
+        if (item.reqDate != null)
+        {
+            pRequiredDate.Value = item.reqDate.ToString().Trim();
+        }
+        else
+        {
+            pRequiredDate.Value = "01-01-1900";
+        }
+
+        SqlParameter pSalesODate = new SqlParameter("@salesODate", SqlDbType.Date);
+        if (item.salesOrderDate != null)
+        {
+            pSalesODate.Value = item.salesOrderDate.ToString().Trim();
+        }
+        else
+        {
+            pSalesODate.Value = "01-01-1900";
+        }
+
+        SqlParameter pShipDate = new SqlParameter("@shipDate", SqlDbType.Date);
+        if (item.shipDate != null)
+        {
+            pShipDate.Value = item.shipDate.ToString().Trim();
+        }
+        else
+        {
+            pShipDate.Value = "01-01-1900";
+        }
+
+
+
+        SqlParameter pPlannerBuyer = new SqlParameter("@plannerBuyer", SqlDbType.VarChar);
+        if (item.buyer != null)
+        {
+            pPlannerBuyer.Value = item.buyer.Trim().ToUpper();
+        }
+        else
+        {
+            pPlannerBuyer.Value = "CHRIS O";
+        }
+
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+
+        SqlParameter pWhoEntered = new SqlParameter("@whoEntered", SqlDbType.VarChar);
+        pWhoEntered.Value = user;
+
+        SqlParameter pStockOut = new SqlParameter("@stockOut", SqlDbType.VarChar);
+        if (item.stockOut)
+        {
+            pStockOut.Value = 'Y';
+        }
+        else
+        {
+            pStockOut.Value = DBNull.Value;
+        }
+
+        SqlParameter pCustomItem = new SqlParameter("@customItem", SqlDbType.VarChar);
+        if (item.customItem)
+        {
+            pCustomItem.Value = 'Y';
+        }
+        else
+        {
+            pCustomItem.Value = DBNull.Value;
+        }
+
+        SqlParameter pSupplier = new SqlParameter("@supplier", SqlDbType.VarChar);
+        if (item.PurchaseOrder.Supplier != null)
+        {
+            pSupplier.Value = item.PurchaseOrder.Supplier.Trim();
+        }
+        else
+        {
+            pSupplier.Value = DBNull.Value;
+        }
+
+
+        SqlParameter pPOqty = new SqlParameter("@POqty", SqlDbType.VarChar);
+        if (item.PurchaseOrder.Quantity != null)
+        {
+            pPOqty.Value = item.PurchaseOrder.Quantity.ToString();
+
+        }
+        else
+        {
+            pPOqty.Value = DBNull.Value;
+        }
+
+
+        SqlParameter pOrigRqstRcptDate = new SqlParameter("@origRqstRcptDate", SqlDbType.VarChar);
+        if (item.PurchaseOrder.OrigRqstDate != null)
+        {
+            pOrigRqstRcptDate.Value = item.PurchaseOrder.OrigRqstDate.ToString();
+        }
+        else
+        {
+            pOrigRqstRcptDate.Value = "1900-01-01";
+        }
+
+        SqlParameter pPlannedReceiptDate = new SqlParameter("@plannedReceiptlDate", SqlDbType.VarChar);
+        if (item.PurchaseOrder.PlannedDate != null)
+        {
+            pPlannedReceiptDate.Value = item.PurchaseOrder.PlannedDate.ToString();
+        }
+        else
+        {
+            pPlannedReceiptDate.Value = "1900-01-01";
+        }
+
+        SqlParameter pHot = new SqlParameter("@hot", SqlDbType.Int);
+        if (item.hot)
+        {
+            pHot.Value = -1;
+        }
+        else
+        {
+            pHot.Value = 0; ;
+        }
+
+        SqlParameter pInstOptic = new SqlParameter("@instOptic", SqlDbType.Bit);
+        if (pProductLine.Value.ToString() == "INST" & pGroup.Value.ToString().ToUpper() == "OPTICS")
+        {
+            pInstOptic.Value = 1;
+        }
+        else
+        {
+            pInstOptic.Value = 0; ;
+        }
+
+
+        /*
+        *
+        *  use output parameter to get ShortageID for comment tracking
+        *
+        * */
+
+        SqlParameter pShortageID = new SqlParameter("@ID", SqlDbType.Int);
+        pShortageID.Direction = ParameterDirection.Output;
+
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+
+        SqlCommand cmd = new SqlCommand(
+            "Insert into Shortage_List (" +
+            " ProductLine " +
+            ",[Group] " +
+            ",StkOut " +
+            ",QtyNeeded " +
+            ",[Custom Item] " +
+            ",ItemCode " +
+            ",[Description] " +
+            ",[Project] " +
+            ",[ProjectDesc] " +
+            ",PO " +
+            ",[Orig_ Requested Receipt Date] " +
+            ",PlannerRequiredDate " +
+            ",PlannedReceiptDate " +
+            ",CurrDueDate " +
+            ",previousCurrDueDate " +
+            ",Supplier " +
+            ",Buyer " +
+            ",POQty " +
+            ",WhoAdded " +
+            ",FlagField " +
+            ",DateAddedToList " +
+            ",Hot " +
+            ",InstrumentOptic " +
+            ",ProdOrder " +
+            ",SalesOrder " +
+            ",SOLineNo " +
+            ",SODate " +
+            ",ShipDate " +
+            ") values (" +
+            pProductLine + "," +
+            pGroup + "," +
+            pStockOut + "," +
+            pQuantityRequired + "," +
+            pCustomItem + "," +
+            pItemCode + "," +
+            pDescription + "," +
+            pProject + "," +
+            pProjectDescription + "," +
+            pPurchaseOrder + "," +
+            pOrigRqstRcptDate + "," +
+            pRequiredDate + "," +
+            pPlannedReceiptDate + "," +
+            "'01-01-1900'," +
+            "'01-01-1900'," +
+            pSupplier + "," +
+            pPlannerBuyer + "," +
+            pPOqty + "," +
+            pWhoEntered + "," +
+            "-1, " +
+            "GETDATE() " +
+            "," + pHot +
+            "," + pInstOptic +
+            "," + pProdOrder +
+            "," + pSalesOrder +
+            "," + pSOLineNo +
+            "," + pSalesODate +
+            "," + pShipDate +
+            ") SET @ID = SCOPE_IDENTITY() ", cnxn);
+
+        cmd.Parameters.Add(pProductLine);
+        cmd.Parameters.Add(pGroup);
+        cmd.Parameters.Add(pStockOut);
+        cmd.Parameters.Add(pQuantityRequired);
+        cmd.Parameters.Add(pCustomItem);
+        cmd.Parameters.Add(pItemCode);
+        cmd.Parameters.Add(pDescription);
+        cmd.Parameters.Add(pProject);
+        cmd.Parameters.Add(pProjectDescription);
+        cmd.Parameters.Add(pPurchaseOrder);
+        cmd.Parameters.Add(pRequiredDate);
+        cmd.Parameters.Add(pPlannerBuyer);
+        cmd.Parameters.Add(pWhoEntered);
+        cmd.Parameters.Add(pShortageID);
+        cmd.Parameters.Add(pOrigRqstRcptDate);
+        cmd.Parameters.Add(pPlannedReceiptDate);
+        cmd.Parameters.Add(pSupplier);
+        cmd.Parameters.Add(pPOqty);
+        cmd.Parameters.Add(pHot);
+        cmd.Parameters.Add(pInstOptic);
+        cmd.Parameters.Add(pProdOrder);
+        cmd.Parameters.Add(pSalesOrder);
+        cmd.Parameters.Add(pSOLineNo);
+        cmd.Parameters.Add(pSalesODate);
+        cmd.Parameters.Add(pShipDate);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+
+            id = (int)cmd.Parameters["@ID"].Value;
+
+            if (id > 0 & pComments.Value.ToString().Length > 0)
+            {
+                cmd.Parameters.Clear();
+
+                cmd = new SqlCommand(
+                "Insert into ShortageListComments (" +
+                " ShortageID " +
+                ",Comment " +
+                ",EnteredBy " +
+                ",EnteredOn " +
+                ") values (" +
+                id + "," +
+                pComments + "," +
+                pWhoEntered + "," +
+                "GETDATE() " +
+                ")", cnxn);
+
+                cmd.Parameters.Add(pComments);
+                cmd.Parameters.Add(pWhoEntered);
+                cmd.ExecuteNonQuery();
+                cmd.Parameters.Clear();
+
+                //cbddComments.Text = "";
+                //cbddProductLine.Text = "";
+                //cbddGroup.Text = "";
+                //tbQuantityRequired.Text = "";
+                //tbDescription.Text = "";
+                //loaded = false;
+                //cbddItemCode.Text = "";
+                //tbProject.Text = "";
+                //tbProjectDescription.Text = "";
+                //tbPO.Text = "";
+                //cbddPlannerBuyer.Text = "";
+
+                item = new Shortage(); //reset fields for new shortage
+                StateHasChanged();
+            }
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+            cmd.Parameters.Clear();
+            pop.Title = "Success";
+            pop.Message = "ShortageID " + id.ToString() + " entered in database.";
+            pop.ShowPopup();
+        }
+    }
+
+}
+
