@@ -32,7 +32,7 @@
                     {
                         <button class="button-save" type="submit" @onclick="Archive">Archive</button>
                     }
-
+                    
 
                 </div>
                 @*STATUS*@
@@ -209,6 +209,7 @@
     public PopUp pop = new PopUp();
 
     public Shortage item = new Shortage();
+    public DateTime? OrigCurrDueDate;
 
     public DataTable? ShortageDT;
     public DataTable? ReceiptsDT;
@@ -337,6 +338,55 @@
         StateHasChanged();
     }
 
+    private void UpdatePromised()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+
+        if (OrigCurrDueDate != item.promisedReceiptDate)
+        {
+            cnxn.Open();
+            //First handle saving edits and reloading comments
+            SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
+            "CurrDueDate = @Promised " +
+            "WHERE ID = @ID", cnxn);
+            cmd.Parameters.Add(new SqlParameter("@Promised", (item.promisedReceiptDate == null)
+            ? new DateTime(1900, 01, 01) : item.promisedReceiptDate));
+            cmd.Parameters.Add(new SqlParameter("@ID", item.ID));
+
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+
+                SqlCommand cmd1 = new SqlCommand("UPDATE Shortage_List " +
+                           "SET PreviousCurrDueDate = '" + item.promisedReceiptDate + "' " +
+                           "WHERE ID = @ID", cnxn);
+                cmd1.Parameters.Add(new SqlParameter("@ID", item.ID));
+
+                try
+                {
+                    cmd1.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+
+                }
+
+
+                cnxn.Close();
+            }
+        }
+
+    }
 
     public async void UpdateShortage()
     {
@@ -350,7 +400,6 @@
         "Reason = @Reason, " +
         "FlagField = @FlagField," +
         "ShipmentTrackingNumber = @ShipmentTrackingNumber, " +
-        "CurrDueDate = @Promised, " +
         "IQCCompleteDate = @IQCCompleteDate, " +
         "PlannerRequiredDate = @PlannerRequiredDate, " +
         "ProdOrder = @ProdOrder, " +
@@ -369,8 +418,6 @@
         cmd.Parameters.Add(new SqlParameter("@FlagField", (item.flagField) ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ShipmentTrackingNumber", (item.trackingNo == null)
         ? DBNull.Value : item.trackingNo));
-        cmd.Parameters.Add(new SqlParameter("@Promised", (item.promisedReceiptDate == null)
-        ? new DateTime(1990, 01, 01) : item.promisedReceiptDate));
         cmd.Parameters.Add(new SqlParameter("@IQCCompleteDate", (item.iqcCompleteDate == null)
         ? new DateTime(1990, 01, 01) : item.iqcCompleteDate));
         cmd.Parameters.Add(new SqlParameter("@PlannerRequiredDate", (item.reqDate == null)
@@ -415,6 +462,7 @@
             await ReloadComments();
 
         }
+        UpdatePromised();
         await ReloadBuyer();
 
         StateHasChanged();
@@ -621,6 +669,7 @@
                     item.reason = reader.IsDBNull(19) ? null : reader.GetString(19).Trim();
                     item.status = reader.IsDBNull(20) ? null : reader.GetString(20);
                     item.promisedReceiptDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    OrigCurrDueDate = item.promisedReceiptDate;
                     item.iqcCompleteDate = reader.IsDBNull(22) ? null : reader.GetDateTime(22);
                     item.trackingNo = reader.IsDBNull(23) ? null : reader.GetString(23);
                     item.flagField = (reader.GetInt32(24) == -1);
@@ -643,6 +692,20 @@
 
             }
             cmd.Parameters.Clear();
+
+        }
+
+        SqlCommand cmd1 = new SqlCommand("UPDATE Shortage_List " +
+                           "SET PreviousCurrDueDate = '" + item.promisedReceiptDate + "' " +
+                           "WHERE ID = " + pShortageID, cnxn);
+        cmd1.Parameters.Add(pShortageID);
+        try
+        {
+            cmd1.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+
         }
 
         //SHORTAGE TABLE
@@ -1058,7 +1121,7 @@
             pop.ShowPopup();
         }
 
-
+        
         Allocation = string.Format("{0:0}", (Convert.ToDouble(AS1) + Convert.ToDouble(AS2) + Convert.ToDouble(AS3) + Convert.ToDouble(AS4)));
 
 

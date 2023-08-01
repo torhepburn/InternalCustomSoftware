@@ -17,7 +17,7 @@
     <div class="popup-content">
         <h3>@pop.Title</h3>
         <p>@pop.Message</p>
-        <button @onclick="pop.ClosePopup">Close</button>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
     </div>
 </div>
 
@@ -26,8 +26,8 @@
     <div class="popup-content">
         <h3>@popYesNo.Title</h3>
         <p>@popYesNo.Message</p>
-        <button @onclick="() => { EnterItem(); popYesNo.ClosePopup(); }" >Yes</button>
-        <button @onclick="popYesNo.ClosePopup">No</button>
+        <button class="button-85" @onclick="() => { EnterItem(); popYesNo.ClosePopup(); }" >Yes</button>
+        <button class="button-85" @onclick="popYesNo.ClosePopup">No</button>
     </div>
 </div>
 
@@ -39,141 +39,146 @@
         <button @onclick="ExitPO" style="position:fixed;top:82%;left:50%">Cancel</button>  
     </div>
 }
-<div style="display:flex">
-    <h3>add</h3><h3 style="display:inline;color:red">shortage</h3>
-</div>
-<br />
-<EditForm Model="@item" id="shortageForm" OnValidSubmit="@HandleValidSubmit" >
-    
-    <DataAnnotationsValidator />
-        <div class="edit-form-content">
-        <h6 style="display:flex">
-                <div>
-                    @*PRODUCT LINE*@
-                    <div>
-                        <label>Product Line:</label>
-                        <InputSelect id="prodLine" tabindex=0 list="prodLines" @bind-Value="item.prodLine">
-                            <option value="">-- Select an option --</option>
-                            <option value="INST">INST</option>
-                            <option value="PPS">PPS</option>
-                            <option value="OPT">OPT</option>
-                            <option value="EPO">EPO</option>
-                            <option value="ZEOs">ZEOs</option>
-                            <option value="SERrpt">SERrpt</option>
-                        </InputSelect>
-                        <ValidationMessage For="() => item.prodLine" style="display:inline" />
-                    </div>
-                    @*GROUP*@
-                    <div>
-                        <label>Group:</label>
-                        <InputText id="group" @bind-Value="item.group" />
-                        <div style="display:inline">
-                            Stock Out:<InputCheckbox id="stockOut" @bind-Value=item.stockOut />
+
+    <div style="display:flex;justify-content:center">
+        <div style="display:relative">
+            <div style="display:flex;">
+                <h3>add</h3><h3 style="display:inline;color:red">shortage</h3>
+            </div>
+        <br />
+            <EditForm Model="@item" id="shortageForm" OnValidSubmit="@HandleValidSubmit">
+
+                <DataAnnotationsValidator />
+                <div class="edit-form-content">
+                    <h6 style="display:flex">
+                        <div>
+                            @*PRODUCT LINE*@
+                            <div>
+                                <label>Product Line:</label>
+                                <InputSelect id="prodLine" tabindex=0 list="prodLines" @bind-Value="item.prodLine">
+                                    <option value="">-- Select an option --</option>
+                                    <option value="INST">INST</option>
+                                    <option value="PPS">PPS</option>
+                                    <option value="OPT">OPT</option>
+                                    <option value="EPO">EPO</option>
+                                    <option value="ZEOs">ZEOs</option>
+                                    <option value="SERrpt">SERrpt</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => item.prodLine" style="display:inline" />
+                            </div>
+                            @*GROUP*@
+                            <div>
+                                <label>Group:</label>
+                                <InputText id="group" @bind-Value="item.group" />
+                                <div style="display:inline">
+                                    Stock Out:<InputCheckbox id="stockOut" @bind-Value=item.stockOut />
+                                </div>
+                            </div>
+                            @*QUANTITY*@
+                            <div>
+                                <label>Quantity Required:</label>
+                                <InputNumber id="quantityReq" @bind-Value="item.quantityReq" />
+                                <ValidationMessage For="() => item.quantityReq" style="display:inline" />
+                            </div>
+                            @*ITEM CODE and CUSTOM ITEM*@
+                            <div>
+                                <label>Item Code:</label>
+                                <InputText id="code" disabled="@isLoading" list="itemCodes" onclick="this.select()" @oninput="POReset" @bind-Value="item.code" @onfocusout="itemCodeInput" />
+                                <datalist id="itemCodes">
+                                    @((MarkupString)xmlString)
+                                </datalist>
+                                <ValidationMessage For="() => item.code" style="display:inline" />
+                                Custom Item:<InputCheckbox id="customItem" @bind-Value=item.customItem />
+                            </div>
+                            @*DESCRIPTION*@
+                            <div>
+                                <label>Description</label>
+                                <InputText id="description" @bind-Value="item.description" />
+                                <ValidationMessage For="() => item.description" style="display:inline" />
+                            </div>
+                            @*PROJECT*@
+                            <div>
+                                <label>Project:</label>
+                                <InputText id="project" @bind-Value="item.project" />
+                            </div>
+                            @*PROJECT DESCRIPTION*@
+                            <div>
+                                <label>Project Description:</label>
+                                <InputText id="projectDesc" @bind-Value="item.projectDesc" />
+                            </div>
+                            @*PURCHASE ORDER(Brings up purchase order selector)*@
+                            <div>
+                                <label>Purchase Order:</label>
+                                <InputText readonly="true" @onfocus="EnterPO" id="purchaseOrder" @bind-Value="item.PurchaseOrder.OrderNo" />
+                                Add all lines of PO:<InputCheckbox id="addLinesPO" @bind-Value="item.addLinesPO" />
+                            </div>
+                            @*SUBMIT BUTTON*********@
+                            <div>
+                                <label></label>
+                                <button class="button-save" type="submit">Add Shortage to Database</button>
+                            </div>
+
                         </div>
-                    </div>
-                    @*QUANTITY*@
-                    <div>
-                        <label>Quantity Required:</label>
-                        <InputNumber id="quantityReq" @bind-Value="item.quantityReq" />
-                        <ValidationMessage For="() => item.quantityReq" style="display:inline" />
-                    </div>
-                    @*ITEM CODE and CUSTOM ITEM*@
-                    <div>
-                        <label>Item Code:</label>
-                        <InputText id="code" disabled="@isLoading" list="itemCodes" onclick="this.select()" @oninput="POReset" @bind-Value="item.code" @onfocusout="itemCodeInput" />
-                        <datalist id="itemCodes">
-                            @((MarkupString)xmlString)
-                        </datalist>
-                        <ValidationMessage For="() => item.code" style="display:inline" />
-                        Custom Item:<InputCheckbox id="customItem" @bind-Value=item.customItem />
-                    </div>
-                    @*DESCRIPTION*@
-                    <div>
-                        <label>Description</label>
-                        <InputText id="description" @bind-Value="item.description" />
-                        <ValidationMessage For="() => item.description" style="display:inline" />
-                    </div>
-                    @*PROJECT*@
-                    <div>
-                        <label>Project:</label>
-                        <InputText id="project" @bind-Value="item.project" />
-                    </div>
-                    @*PROJECT DESCRIPTION*@
-                    <div>
-                        <label>Project Description:</label>
-                        <InputText id="projectDesc" @bind-Value="item.projectDesc" />
-                    </div>
-                    @*PURCHASE ORDER(Brings up purchase order selector)*@
-                    <div>
-                        <label>Purchase Order:</label>
-                        <InputText readonly="true" @onfocus="EnterPO" id="purchaseOrder" @bind-Value="item.PurchaseOrder.OrderNo" />
-                        Add all lines of PO:<InputCheckbox id="addLinesPO" @bind-Value="item.addLinesPO" />
-                    </div>
-                @*SUBMIT BUTTON*********@
-                <div>
-                    <label></label>
-                    <button class="button-save" type="submit">Add Shortage to Database</button>
-                </div>
 
-                </div>
-                
 
-                <div>
-                    @*PRODUCTION ORDER*@
-                    <div>
-                        <label>Production Order:</label>
-                        <InputText id="productionOrder" @bind-Value="item.productionOrder" />
-                    </div>
-                    @*SALES ORDER*@
-                    <div>
-                        <label>Sales Order:</label>
-                        <InputText id="salesOrder" @bind-Value="item.salesOrder" />
-                    </div>
-                    @*SO LINE NUMBER*@
-                    <div>
-                        <label>SO Line No.</label>
-                        <InputNumber id="SOLineNum" @bind-Value="item.SOLineNum" />
-                    </div>
-                    @*SALES ORDER DATE*@
-                    <div>
-                        <label>Sales Order Date:</label>
-                        <InputDate id="salesOrderDate" @bind-Value="item.salesOrderDate" />
-                    </div>
-                    @*SHIP DATE*@
-                    <div>
-                        <label>Ship Date:</label>
-                        <InputDate id="shipDate" @bind-Value="item.shipDate" />
-                    </div>
-                    @*REQUIRED DATE*@
-                    <div>
-                        <label>Required Date:</label>
-                        <InputDate id="reqDate" @bind-Value="item.reqDate" />
-                    </div>
-                    @*COMMENTS*@
-                    <div>
-                        <label>Comments:</label>
-                        <InputText id="comments" list="commentList" @bind-Value="item.comments" />
-                        <datalist id="commentList">
-                            <option>Confirm Delivery.</option>
-                            <option>Expedite Delivery.</option>
-                            <option>Pull In.</option>
-                        </datalist>
-                    </div>
-                    @*PLANNER/BUYER*@
-                    <div>
-                        <label>Planner/Buyer:</label>
-                        <InputText id="buyer" @bind-Value="item.buyer" />
-                    </div>
-                    @*HOT*@
-                    <div>
-                        <label>Hot:</label>
-                        <InputCheckbox id="hot" @bind-Value="item.hot" />
+                        <div>
+                            @*PRODUCTION ORDER*@
+                            <div>
+                                <label>Production Order:</label>
+                                <InputText id="productionOrder" @bind-Value="item.productionOrder" />
+                            </div>
+                            @*SALES ORDER*@
+                            <div>
+                                <label>Sales Order:</label>
+                                <InputText id="salesOrder" @bind-Value="item.salesOrder" />
+                            </div>
+                            @*SO LINE NUMBER*@
+                            <div>
+                                <label>SO Line No.</label>
+                                <InputNumber id="SOLineNum" @bind-Value="item.SOLineNum" />
+                            </div>
+                            @*SALES ORDER DATE*@
+                            <div>
+                                <label>Sales Order Date:</label>
+                                <InputDate id="salesOrderDate" @bind-Value="item.salesOrderDate" />
+                            </div>
+                            @*SHIP DATE*@
+                            <div>
+                                <label>Ship Date:</label>
+                                <InputDate id="shipDate" @bind-Value="item.shipDate" />
+                            </div>
+                            @*REQUIRED DATE*@
+                            <div>
+                                <label>Required Date:</label>
+                                <InputDate id="reqDate" @bind-Value="item.reqDate" />
+                            </div>
+                            @*COMMENTS*@
+                            <div>
+                                <label>Comments:</label>
+                                <InputText id="comments" list="commentList" @bind-Value="item.comments" />
+                                <datalist id="commentList">
+                                    <option>Confirm Delivery.</option>
+                                    <option>Expedite Delivery.</option>
+                                    <option>Pull In.</option>
+                                </datalist>
+                            </div>
+                            @*PLANNER/BUYER*@
+                            <div>
+                                <label>Planner/Buyer:</label>
+                                <InputText id="buyer" @bind-Value="item.buyer" />
+                            </div>
+                            @*HOT*@
+                            <div>
+                                <label>Hot:</label>
+                                <InputCheckbox id="hot" @bind-Value="item.hot" />
 
-                    </div>
+                            </div>
+                        </div>
+                    </h6>
                 </div>
-            </h6>
+            </EditForm>
         </div>
-</EditForm>
+    </div>
 
 @code {
     public bool isLoading = true; //Disables item code text box until items are loaded

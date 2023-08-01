@@ -1,5 +1,6 @@
 ﻿@inject NavigationManager Nav
 @inject ViewShortageService Views
+@inject IJSRuntime JSRuntime
 @using Pages
 
 
@@ -13,6 +14,14 @@
     </div>
 </div>
 
+<div class="popup-overlay @(showAddShortage ? "visible" : "")">
+    <div class="popup-content">
+        <Shortages.Pages.AddShortage></Shortages.Pages.AddShortage>
+        <button class="button-85" @onclick="closeAddShortage">Close</button>
+    </div>
+</div>
+
+
 
 @if (isLoading)
 {
@@ -24,6 +33,7 @@
 }
 
     <nav style="display:flex;">
+    <h3 style="padding-top:10px">shortage</h3><h3 style="color:red; margin-right:50px;padding-top:10px">manager</h3>
         <div class="nav-item">
             <button class="nav-item" @onclick="HomeNav">
                 <div class="oi oi-home" aria-hidden="true"></div> Home
@@ -64,15 +74,32 @@
                 <div class="oi oi-lightbulb" aria-hidden="true"></div> EPO
             </button>
         </div>
+        <div class="nav-item" style="cursor:pointer">
+            <div class="dropdown">
+                <button class="nav-item" style="cursor:auto">
+                    <div class="oi oi-print" aria-hidden="true"></div> Print Reports
+                </button>
+                    <div class="dropdown-content">
+                    <div class="print-inst"><button @onclick="() => PrintReport(inst)" style="border-color:yellow;width:150px" class="button-85">INST</button><br /><br /></div>
+                <div class="print-pps"><button @onclick="() => PrintReport(pps)" style=" border-color:palegreen;width:150px" class="button-85">PPS</button><br /><br /></div>
+                <div class="print-optics"><button @onclick="() => PrintReport(opt)" style=" border-color:cyan;width:150px" class="button-85">OPTICS</button><br /><br /></div>
+                <div class="print-irvine"><button @onclick="() => PrintReport(irv)" style=" border-color:rgb(255, 30, 30);width:150px" class="button-85">IRVINE</button><br /><br /></div>
+                <div class="print-war"><button @onclick="() => PrintReport(war)" style="border-color:red;width:150px" class="button-85">WAR</button><br /><br /></div>
+                <div class="print-epo"><button @onclick="() => PrintReport(epo)" style="border-color:purple;width:150px" class="button-85">EPO</button><br /><br /></div>
+                </div>
+            </div>
+        </div>
+
         <img style="background-color:transparent;" src="Images/zygoLogo.png">
-        <label style="position:fixed;right:1%">Version 1.01 07-17-23</label>
+        <label style="font-size:10px;position:fixed;bottom:1%;right:1%">Version 1.03 07-24-23</label>
     </nav>
 
 @code {
     public PopUp pop = new PopUp();
-    private bool collapseNavMenu = true;
+
     private bool isLoading = false;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool showAddShortage = false;
+
     public string inst = "INST";
     public string opt = "OPT";
     public string war = "WAR";
@@ -80,20 +107,21 @@
     public string irv = "IRV";
     public string epo = "EPO";
 
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-
     private async void HomeNav()
     {
         Nav.NavigateTo("");
     }
 
-    private async void addShortageNav()
+    private void addShortageNav()
     {
-        Nav.NavigateTo("AddShortage");
+        showAddShortage = true;
+        StateHasChanged();
+    }
+
+    private void closeAddShortage()
+    {
+        showAddShortage = false;
+        StateHasChanged();
     }
 
     private async void goToMeeting(string prodLine)
@@ -160,5 +188,207 @@
         }
         return (new DataTable());
 
+    }
+
+    public async Task PrintReport(string prodLine)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dtReport = new DataTable();
+
+        /*  part A for the non IQC data    */
+        SqlCommand cmd = new SqlCommand("spShortageReportV05a");
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd.Connection = cnxn;
+
+        /*  part B for the IQC data    */
+        SqlCommand cmd1 = new SqlCommand("spShortageReportV05b");
+        cmd1.CommandType = CommandType.StoredProcedure;
+        cmd1.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd1.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd1.Connection = cnxn;
+
+        cnxn.Open();
+
+        try
+        {
+            /*  table A non-IQC data    */
+            SqlDataReader sr = cmd.ExecuteReader();
+            DataTable dta = new DataTable();
+            dta.Load(sr);
+
+            /*  table B IQC data    */
+            sr = cmd1.ExecuteReader();
+            DataTable dtb = new DataTable();
+            dtb.Load(sr);
+
+            /*  merge the two tables a before b  */
+            dta.Merge(dtb);
+            dtReport = dta;
+        }
+        catch (Exception ex)
+        {
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        cnxn.Close();
+
+        int x = dtReport.Columns.IndexOf("Orig_ Requested Receipt Date");
+        dtReport.Columns[x].SetOrdinal(x + 1);
+
+        var rows = new StringBuilder();
+        bool firstLoop = true;
+        bool firstNonHOT = true;
+        string currentStatus = "";
+
+        foreach (DataRow items in dtReport.Rows)
+        {
+            if (items[1].ToString() == "HOT" && firstLoop)
+            {
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px red;\">STATUS: HOT</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+                firstLoop = false;
+            }
+            else
+            {
+                if (items[1].ToString() != "HOT" && firstNonHOT)
+                {
+                    rows.AppendLine("<tr>");
+                    for (int i = 0; i < dtReport.Columns.Count - 3; i++)
+                    {
+                        rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                    }
+                    rows.AppendLine("</tr>");
+                    firstNonHOT = false;
+                }
+            }
+
+            if (items[dtReport.Columns.Count - 1].ToString() != currentStatus)
+            {
+                currentStatus = items[dtReport.Columns.Count - 1].ToString();
+
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px green;\">Item Status: " +
+                currentStatus + "</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px green;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+            }
+
+
+            rows.AppendLine("<tr>");
+
+            rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" + items[0].ToString() + "</td> ");
+
+
+
+            for (int i = 2; i < dtReport.Columns.Count; i++)
+            {
+                if (dtReport.Columns[i].ColumnName.ToString() == "GROUP")
+                {
+                    if (items[i].ToString() == "SERS" || items[i].ToString() == "SER's")
+                    {
+                        rows.AppendLine("<td style=\"color:red;border-top:solid 1px blue\">" + items[i + 2].ToString() + "<br/>" +
+                        items[i].ToString() + " " + items[i + 1].ToString() + "</td> ");
+                    }
+                    else
+                    {
+                        rows.AppendLine("<td style=\"border-top:solid 1px blue\">" + items[i + 2].ToString() + "<br/>" + items[i].ToString() + "</td> ");
+                    }
+                    break;
+                }
+                else
+                {
+                    rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" +
+                    items[i].ToString().Replace("12:00:00 AM", "").Replace("1/1/1900", "").Replace("1/1/1753", "").Replace("1/1/1990", "") +
+                    "</td> ");
+                }
+
+            }
+            rows.AppendLine("</tr>");
+
+        }
+
+
+        string html = @"
+        <head>
+          <style>
+            @media print{
+              @page {
+                size: landscape;
+              }
+            }
+
+            body {
+              margin: 20px;
+              /* Adjust the value to set the desired margin size */
+            }
+
+            colName {
+              margin: 20px;
+              font-size: 10px;
+            }
+
+            tr {
+              font-size: 12px;
+            }
+            td {
+              font-size: 10px;
+              text-align:center;
+            }
+                .status td{
+                    border-top:solid red;
+                }
+            th {
+              font-size: 10px;
+              text-align:center;
+            }
+
+          </style>
+        </head>
+
+        <body>
+
+            <h2>ZYGO " + prodLine + " ACTIVE SHORTAGE LIST REPORT</h2>" + @"
+
+          <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID              </th>
+                        <th>Insp Code       </th>
+                        <th>ItemCode        </th>
+                        <th>Description     </th>
+                        <th>Comments        </th>
+                        <th>Rqd Qty         </th>
+                        <th>Require         </th>
+                        <th>Request         </th>
+                        <th>Promise         </th>
+                        <th>IQCmplt         </th>
+                        <th>Buyer           </th>
+                        <th>Qty             </th>
+                        <th>PO/WO           </th>
+                        <th>Supplier        </th>
+                        <th>Date Added      </th>
+                        <th>Group           </th>
+                    </tr>
+                </thead>
+                <tbody> " +
+                rows.ToString() + @"
+                </tbody >
+            </table>
+        </body>
+        ";
+        await JSRuntime.InvokeVoidAsync("printContent", html);
+        Task.Delay(3000);
+        Nav.NavigateTo("", forceLoad: true);
     }
 }
