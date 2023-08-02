@@ -416,7 +416,14 @@ namespace AVALARA
                 {
                     aCustomer[i] = dr.GetString(0);
                     aCity[i] = dr.GetString(1);
-                    aState[i] = dr.GetString(2);
+                    if (dr.GetString(2).Length > 0)
+                    {
+                        aState[i] = dr.GetString(2);
+                    }
+                    else
+                    {
+                        aState[i] = "NoState";
+                    }
                     aLocation[i] = dr.GetString(3);
                     i++;
                 }
@@ -458,7 +465,7 @@ namespace AVALARA
             wsheetM.Columns.AutoFit();
 
             wbookM.Save();
-            //xlappM.Quit();
+            
 
             /*  Mismatch Report  */
 
@@ -591,7 +598,6 @@ namespace AVALARA
                 }
             }
 
-            //this.Close();
             /*      State Section       */
 
             SqlConnection cnxn2 = new SqlConnection("server = CT-MID-SQL11; Database = AccessFrontEnds; " +
@@ -612,8 +618,18 @@ namespace AVALARA
                 while (dr.Read())
                 {
                     var filePath1 = filePath;
+                    var state = string.Empty;
                     //filePath1 = @"c:\A\US DocumentSummaryReport - 2023.01 mod.xlsx";
-                    filePath1 = filePath1.Replace("US DocumentSummaryReport", dr.GetString(0).Trim());
+                    if (dr.GetString(0).Length > 0)
+                    {
+                        state = dr.GetString(0);
+                    }
+                    else
+                    {
+                        state = "NoState";
+                    }
+
+                    filePath1 = filePath1.Replace("US",state + " US" );
                     filePath1 = filePath1.Replace("mod.xlsx", ".xlsx");
                     File.Copy(filePath, filePath1);
 
