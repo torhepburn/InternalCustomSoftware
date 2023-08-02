@@ -74,6 +74,8 @@ namespace NAV_MRP
         private string[] aHTS = new string[20000];
         private string[] aNetWeight = new string[20000];
         private string[] aNonDomesticVendor = new string[20000];
+        private string[] aDampenerPeriod = new string[20000];
+        private string[] aDampenerQuantity = new string[20000];
 
         private string[,] acOrderDate = new string[10000, 100];
         private string[,] acDeliveryDate = new string[10000, 100];
@@ -103,12 +105,12 @@ namespace NAV_MRP
         private string[,] aReceiptDeliveredQuantity = new string[20000, 5];
         private string[,] aReceiptNetAmount = new string[20000, 5];
         private string[,] aItemText = new string[20000, 10];
-        private string[,] aPO = new string[20000, 10];
-        private string[,] aPOLine = new string[20000, 10];
-        private string[,] aPOLineQty = new string[20000, 10];
-        private string[,] aPOLineRequestedDate = new string[20000, 10];
-        private string[,] aPOLinePromisedDate = new string[20000, 10];
-        private string[,] aPOBest = new string[20000, 10];
+        private string[,] aPO = new string[20000, 20];
+        private string[,] aPOLine = new string[20000, 20];
+        private string[,] aPOLineQty = new string[20000, 20];
+        private string[,] aPOLineRequestedDate = new string[20000, 20];
+        private string[,] aPOLinePromisedDate = new string[20000, 20];
+        private string[,] aPOBest = new string[20000, 20];
 
         private int[] aMRPCurrentCount = new int[20000];
         private int[] aMRPCurrentPagePlus1 = new int[20000];
@@ -197,7 +199,8 @@ namespace NAV_MRP
              */
 
             SqlConnection cnxnDash = new SqlConnection("server=MIDDB01.zygo.com; password=views; " +
-              "user=views; database=Dashboard;");
+              
+                "user=views; database=Dashboard;");
 
             /*
              *Connection used to get the old MK data
@@ -214,6 +217,37 @@ namespace NAV_MRP
              */
 
             SqlCommand cmd = new SqlCommand(
+              "WITH s1 AS " +  /*  has cancel messages */
+              "(" + 
+              "     SELECT " +
+              "     r.No_ " +
+              "    ,COUNT(r.No_) X " +
+              "     from [ZYGO$Requisition Line] r " +
+              "     WHERE [Action Message] = 5 " +              /*  5 = cancel  */
+              "     GROUP BY r.No_ " +
+              ") " +
+              ", s2 AS " +    /* all messages  */
+              "( " +
+              "     SELECT " +
+              "     r.No_ " +
+              "    ,COUNT(r.No_) X " +
+              "     from [ZYGO$Requisition Line] r " +
+              "     GROUP BY r.No_ " +
+              ") " +
+              ",s3 as " +
+              "( " +
+              "     select " +  /*part number has only cancel messages */
+              "     s1.No_ " +
+              "     FROM s1 INNER JOIN s2 ON s1.No_ = s2.No_ " +
+              "     AND s1.X = s2.X " +
+              ") " +
+              ",s4 AS " +   /* chose all cancel (in) or mixed (not in)  */
+              "( " +
+              "     SELECT " +
+              "     No_ FROM s2 " +
+              "     WHERE No_ " + g.messageChoice + " IN (select No_ from s3) " +
+              ") " +
+
               "SELECT " +
               //"TOP 5 " +    /*  for testing purposes        */
               "DISTINCT " +    /* should always be faster than group by   */
@@ -223,21 +257,19 @@ namespace NAV_MRP
               "from [" + NAVprefix + "Requisition Line] r " +
               "LEFT JOIN [" + NAVprefix + "Item] i " +
               "ON r.No_ = i.No_ " +
+              "INNER JOIN s4 ON r.No_ = s4.No_ " +
               "WHERE r.[Ref_ Order Type] = 1 " +                    // 1 = purchase
               "AND r.Type = 2 " +                                   // type 2 = item
               "AND i.[Replenishment System] = 0 " +                 //0 = purchased 
               "AND r.[Worksheet Template Name] = 'PLANNING' " +
               "AND r.[Journal Batch Name] = 'DEFAULT' " +
-              //"AND Quantity > [Original Quantity]  " +
-              "AND i.[Selection Code] not like 'K%' " +
               "AND i.[Selection Code] not like 'CFM%' " +
-              "AND [Action Message] " + g.messageChoice + " IN  (5) " +                  // 5 = Cancel 1=Add 2=ChangeQuantity 3=Reschedule 4=Reschedule and change quantity
+              "AND i.No_ <> '9999' " +
               "AND i.No_ != 'SERVICE ITEM' " +
               /*    for testing   */ 
-              "AND r.No_ = '8070-0115-02' " +
-              //"AND r.No_ IN ('1116-800-107','1420-255-052','1420-380-154') " +
-               //"AND r.No_ LIKE " +
-               //"'X700620%' " +
+              //"AND r.No_ = '8070-0549-01' " +
+              //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
+               //"AND r.No_ LIKE'X700620%' " +
                
               g.SQLselection +
 
@@ -266,9 +298,9 @@ namespace NAV_MRP
                         ItemNo = drMain.GetString(0);
                         buyerPlanner = drMain.GetString(1);
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -451,7 +483,18 @@ namespace NAV_MRP
                         "    WHEN '' THEN 'FALSE' " +
                         "    ELSE 'TRUE' " +
                         "END NonDomesticVendor " +
-
+                         ",CASE " +
+                        "   WHEN CHARINDEX(CHAR(3),[Dampener Period]) > 0 THEN " +  // --work days 
+                        "        REPLACE([Dampener Period], CHAR(3), '') " +
+                        "    WHEN CHARINDEX(CHAR(4),[Dampener Period]) > 0 THEN " + // --week 
+                        "       REPLACE([Dampener Period], CHAR(4), '') * 5	" +       //--convert to days 
+                        "    WHEN CHARINDEX(CHAR(5),[Dampener Period]) > 0 THEN " + // --month 
+                        "       REPLACE([Dampener Period], CHAR(5), '') * 20	" +       //--convert to days 
+                        "   WHEN CHARINDEX(CHAR(2),[Dampener Period]) > 0 THEN " +      //-- days 
+                        "       REPLACE([Dampener Period], CHAR(2), '')		" +
+                        "   WHEN LEN([Dampener Period]) = 0 THEN '0' " +
+                        " END [Dampener Period]" +
+                        ",FORMAT([Dampener Quantity],'N', 'en-us') " +    /*FORMAT([Order Multiple],'N', 'en-us') */
                         "FROM [" + NAVprefix + "Item] i " +
                         "LEFT JOIN [" + NAVprefix + "Commodity] c ON i.[Commodity] = c.Code " +
                         "LEFT JOIN [" + NAVprefix + "Product Types] p ON i.[Product Types] = p.Code " +
@@ -503,9 +546,9 @@ namespace NAV_MRP
                         cnxn.Open();
                         n = loopCmd.ExecuteScalar();
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -514,7 +557,7 @@ namespace NAV_MRP
 
                     if (n == null)
                     {
-                        ////MessageBox.Show("This item does not exist.");
+                        MessageBox.Show("This item does not exist.");
                     }
                     else
                     {
@@ -540,9 +583,9 @@ namespace NAV_MRP
                         cnxn.Open();
                         nn = loopCmd.ExecuteScalar();
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -903,13 +946,13 @@ namespace NAV_MRP
 
                     /*
                      * 
-                     * PO Lines (next 10)
+                     * PO Lines (next 20)
                      * 
                      */
 
                     loopCmd = new SqlCommand(
 
-                      "SELECT TOP 10 " +
+                      "SELECT TOP 20 " +
                       " [Document No_] a " +
                       ",[PO Line No_] b " +
                       ",FORMAT([Outstanding Quantity],'N', 'en-us') c " +
@@ -1274,16 +1317,25 @@ namespace NAV_MRP
                                 aHTS[i] = dtItem.Rows[0][30].ToString();
                                 aNetWeight[i] = dtItem.Rows[0][31].ToString();
                                 aNonDomesticVendor[i] = dtItem.Rows[0][32].ToString();
-                                /*
-                                if (F6 != "0")
-                                {
-                                    int F6x = Convert.ToInt32(F6);
-                                    Double Step1 = (Convert.ToDouble(dtItem.Rows[0][20].ToString()) * F6x * 2);
 
-                                    spend = string.Format("{0:$0.00}", Step1);
+                                try
+                                {
+                                    //object y = dtItem.Rows[0][7].GetType();
+                                    //decimal lt = Convert.ToDecimal(dtItem.Rows[0][33].ToString());
+                                    /*  Dampener Period Time is always in work days - the symbol for work days is \u0003
+                                         if greater than one week then add extra week  replace \u00003 with ""*/
+
+                                    //aLeadTime[i] = lt.ToString() + " Days (" + Convert.ToInt32(Math.Ceiling(lt / 5)).ToString() + " Weeks)";
+
+                                    aDampenerPeriod[i] = dtItem.Rows[0][33].ToString() + " Days";
                                 }
-                               
-                                */
+                                catch //(SqlException ex)
+                                {
+                                    //MessageBox.Show(aItemNo[i] + "     " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString());
+                                }
+
+                                aDampenerQuantity[i] = dtItem.Rows[0][34].ToString();
+
                             }
                             catch //(SqlException ex)
                             {
@@ -1442,7 +1494,7 @@ namespace NAV_MRP
 
                         if (dtPOLines.Rows.Count > 0)
                         {
-                            for (int ii = 0; ii < dtPOLines.Rows.Count & ii < 10; ii++)
+                            for (int ii = 0; ii < dtPOLines.Rows.Count & ii < 20; ii++)
                             {
                                 try
                                 {
@@ -1557,9 +1609,9 @@ namespace NAV_MRP
                     }
                 }
             }
-            catch //(SqlException ex)
+            catch (SqlException ex)
             {
-                //MessageBox.Show(ex.ToString());
+                MessageBox.Show(ex.ToString());
             }
 
             /*  colins and back slashes in the date time make the path unreadable    */
@@ -1666,7 +1718,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString("Two Pages Required for " + aItemNo[lineNo], A9R, Brushes.Black, 25, 50);
             }
 
-            ev.Graphics.DrawString("Data as of: " + date, A9R, Brushes.Black, 25, 25);
+            ev.Graphics.DrawString(g.rptName + " Data as of: " + date, A9R, Brushes.Black, 25, 25);
             ev.Graphics.DrawString(abuyerPlanner[lineNo], heading, Brushes.Black, 350, 25);
             ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
             ev.Graphics.DrawString("Page  " + pageNo + " of " + NumPages, A9R, Brushes.Black, 600, 50);
@@ -1919,30 +1971,38 @@ namespace NAV_MRP
                     ev.Graphics.DrawString(aNetWeight[lineNo], A9R, Brushes.Black, 340, 335);
                 }
 
-                ev.Graphics.DrawString("Dampener Days Late: ", heading, Brushes.Black, 25, 350);
-                ev.Graphics.DrawString(aDampnerDaysLate[lineNo], A9R, Brushes.Black, 185, 350);
+                ev.Graphics.DrawString("Dampener Period: ", heading, Brushes.Black, 25, 350);
+                ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 185, 350);
+
+                ev.Graphics.DrawString("Dampener Quantity: ", heading, Brushes.Black, 260, 350);
+                ev.Graphics.DrawString(aDampenerQuantity[lineNo], A9R, Brushes.Black, 400, 350);
+
+
+                ev.Graphics.DrawString("Dampener Days Late: ", heading, Brushes.Black, 25, 365);
+                ev.Graphics.DrawString(aDampnerDaysLate[lineNo], A9R, Brushes.Black, 185, 365);
+
 
                 /* using rectangles to get data to line up correctly    */
 
-                ev.Graphics.DrawString("P6: ", heading, Brushes.Black, 25, 365);
-                var box = new Rectangle(40, 365, 35, 20);
+                ev.Graphics.DrawString("P6: ", heading, Brushes.Black, 25, 380);
+                var box = new Rectangle(40, 380, 35, 20);
                 ev.Graphics.DrawString(aP6[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("F6: ", heading, Brushes.Black, 100, 365);
-                box = new Rectangle(115, 365, 35, 20);
+                ev.Graphics.DrawString("F6: ", heading, Brushes.Black, 100, 380);
+                box = new Rectangle(115, 380, 35, 20);
                 ev.Graphics.DrawString(aF6[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("EAU: ", heading, Brushes.Black, 175, 365);
-                box = new Rectangle(200, 365, 35, 20);
+                ev.Graphics.DrawString("EAU: ", heading, Brushes.Black, 175, 380);
+                box = new Rectangle(200, 380, 35, 20);
                 ev.Graphics.DrawString(aEAU[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("Order Method: ", heading, Brushes.Black, 260, 365);
-                ev.Graphics.DrawString(aOrderMethod[lineNo], A9R, Brushes.Black, 350, 365);
+                ev.Graphics.DrawString("Order Method: ", heading, Brushes.Black, 260, 380);
+                ev.Graphics.DrawString(aOrderMethod[lineNo], A9R, Brushes.Black, 350, 380);
 
                 //box = new Rectangle(400, 350, 100, 20);
-                ev.Graphics.DrawString("SDS Doc No: ", heading, Brushes.Black, 260, 350);
+                ev.Graphics.DrawString("SDS Doc No: ", heading, Brushes.Black, 260, 365);
                 //box = new Rectangle(500, 350, 55, 20);
-                ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, 350);
+                ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, 365);
 
 
             }
@@ -2049,51 +2109,51 @@ namespace NAV_MRP
                 //MessageBox.Show(ex.ToString() + "  Stock Data");
             }
 
-            ev.Graphics.DrawLine(pen, 25, 380, 800, 380);
+            ev.Graphics.DrawLine(pen, 25, 395, 800, 395);
 
             try
             {
 
                 /*  Manufacturer Data   */
 
-                ev.Graphics.DrawString("Manuf Name", U9, Brushes.Black, 25, 385);
-                ev.Graphics.DrawString("Manuf Part Number", U9, Brushes.Black, 275, 385);
+                ev.Graphics.DrawString("Manuf Name", U9, Brushes.Black, 25, 405);
+                ev.Graphics.DrawString("Manuf Part Number", U9, Brushes.Black, 275, 405);
                 //ev.Graphics.DrawString("Qualification", U9, Brushes.Black, 425, 385);
-                ev.Graphics.DrawString("Preferred?", U9, Brushes.Black, 525, 385);
-                ev.Graphics.DrawString("Description", U9, Brushes.Black, 625, 385);
+                ev.Graphics.DrawString("Preferred?", U9, Brushes.Black, 525, 405);
+                ev.Graphics.DrawString("Description", U9, Brushes.Black, 625, 405);
 
-                ev.Graphics.DrawString(aMfrName[lineNo], A9R, Brushes.Black, 25, 405);
-                ev.Graphics.DrawString(aMfrPartNumber[lineNo], A9R, Brushes.Black, 275, 405);
+                ev.Graphics.DrawString(aMfrName[lineNo], A9R, Brushes.Black, 25, 420);
+                ev.Graphics.DrawString(aMfrPartNumber[lineNo], A9R, Brushes.Black, 275, 420);
                 //ev.Graphics.DrawString(aQualification[lineNo], A9R, Brushes.Black, 425, 399);
-                ev.Graphics.DrawString(aPreferred[lineNo], A9R, Brushes.Black, 540, 411);
-                ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, 405);
+                ev.Graphics.DrawString(aPreferred[lineNo], A9R, Brushes.Black, 540, 426);
+                ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, 420);
             }
             catch //(SqlException ex)
             {
                 //MessageBox.Show(ex.ToString() + "  Manufacturer Data");
             }
 
-            ev.Graphics.DrawLine(pen, 25, 425, 800, 425);
-            ev.Graphics.DrawLine(pen, 490, 425, 490, 975);
+            ev.Graphics.DrawLine(pen, 25, 440, 800, 440);
+            ev.Graphics.DrawLine(pen, 490, 440, 490, 975);
 
             try
             {
 
                 /*  MRP Recommended Orders   */
 
-                ev.Graphics.DrawString("MRP RECOMMENDED ORDERS", U9, Brushes.Black, 25, 430);
-                ev.Graphics.DrawString("Start", U9, Brushes.Black, 25, 450);
-                ev.Graphics.DrawString("Orig", U9, Brushes.Black, 90, 450);
-                ev.Graphics.DrawString("Rqstd", U9, Brushes.Black, 150, 450);
-                ev.Graphics.DrawString("Order Qty", U9, Brushes.Black, 200, 450);
-                ev.Graphics.DrawString("Ext Cost", U9, Brushes.Black, 270, 450);
-                ev.Graphics.DrawString("Loc", U9, Brushes.Black, 335, 450);
-                ev.Graphics.DrawString("Action", U9, Brushes.Black, 390, 450);
-                ev.Graphics.DrawString("Best", U9, Brushes.Black, 450, 450);
+                ev.Graphics.DrawString("MRP RECOMMENDED ORDERS", U9, Brushes.Black, 25, 445);
+                ev.Graphics.DrawString("Start", U9, Brushes.Black, 25, 465);
+                ev.Graphics.DrawString("Orig", U9, Brushes.Black, 90, 465);
+                ev.Graphics.DrawString("Rqstd", U9, Brushes.Black, 150, 465);
+                ev.Graphics.DrawString("Order Qty", U9, Brushes.Black, 200, 465);
+                ev.Graphics.DrawString("Ext Cost", U9, Brushes.Black, 270, 465);
+                ev.Graphics.DrawString("Loc", U9, Brushes.Black, 335, 465);
+                ev.Graphics.DrawString("Action", U9, Brushes.Black, 390, 465);
+                ev.Graphics.DrawString("Best", U9, Brushes.Black, 450, 465);
 
-                ev.Graphics.DrawString("Current Order (inside 2 weeks)", A9R, Brushes.Black, 25, 470);
+                ev.Graphics.DrawString("Current Order (inside 2 weeks)", A9R, Brushes.Black, 25, 485);
 
-                linedrop = 490;
+                linedrop = 505;
 
 
                 var box = new Rectangle(620, 220, 180, 20);
@@ -2130,23 +2190,23 @@ namespace NAV_MRP
                 * 
                 * */
 
-                ev.Graphics.DrawString("OPEN PURCHASE ORDERS", U9, Brushes.Black, 500, 430);
-                ev.Graphics.DrawString("P.O", U9, Brushes.Black, 500, 450);
-                ev.Graphics.DrawString("Line", U9, Brushes.Black, 580, 450);
-                ev.Graphics.DrawString("Qty", U9, Brushes.Black, 630, 450);
-                ev.Graphics.DrawString("Requested", U9, Brushes.Black, 680, 450);
-                ev.Graphics.DrawString("Promised", U9, Brushes.Black, 750, 450);
+                ev.Graphics.DrawString("OPEN PURCHASE ORDERS", U9, Brushes.Black, 500, 445);
+                ev.Graphics.DrawString("P.O", U9, Brushes.Black, 500, 460);
+                ev.Graphics.DrawString("Line", U9, Brushes.Black, 580, 465);
+                ev.Graphics.DrawString("Qty", U9, Brushes.Black, 630, 465);
+                ev.Graphics.DrawString("Requested", U9, Brushes.Black, 680, 465);
+                ev.Graphics.DrawString("Promised", U9, Brushes.Black, 750, 465);
 
                 try
                 {
-                    for (int ii = 0; ii < 10; ii++)
+                    for (int ii = 0; ii < 20; ii++)
                     {
-                        ev.Graphics.DrawString(aPO[lineNo, ii], A9R, Brushes.Black, 500, 470 + (ii * 20));
-                        ev.Graphics.DrawString(aPOBest[lineNo, ii], A9R, Brushes.Black, 560, 470 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLine[lineNo, ii], A9R, Brushes.Black, 580, 470 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLineQty[lineNo, ii], A9R, Brushes.Black, 630, 470 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLineRequestedDate[lineNo, ii], A9R, Brushes.Black, 680, 470 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLinePromisedDate[lineNo, ii], A9R, Brushes.Black, 750, 470 + (ii * 20));
+                        ev.Graphics.DrawString(aPO[lineNo, ii], A9R, Brushes.Black, 500, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPOBest[lineNo, ii], A9R, Brushes.Black, 560, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPOLine[lineNo, ii], A9R, Brushes.Black, 580, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPOLineQty[lineNo, ii], A9R, Brushes.Black, 630, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPOLineRequestedDate[lineNo, ii], A9R, Brushes.Black, 680, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPOLinePromisedDate[lineNo, ii], A9R, Brushes.Black, 750, 485 + (ii * 20));
                     }
                 }
                 catch //(SqlException ex)
@@ -2215,10 +2275,10 @@ namespace NAV_MRP
                     }
                 }
             }
-            catch //(SqlException ex)
+            catch (SqlException ex)
             {
                 ////File.AppendAllText(@"C:\A\MRPerrors.txt", ItemNo[lineNo].ToString() + "  " + ex.ToString());
-                //MessageBox.Show(ex.ToString());
+                MessageBox.Show(ex.ToString());
             }
 
             int MRPc = aMRPCurrentCount[lineNo];
@@ -2309,7 +2369,7 @@ namespace NAV_MRP
                 //MessageBox.Show(ex.ToString() + "  Item Text");
             }
 
-            ev.Graphics.DrawString("Date PO Placed:  _______________     PO Number _______________", A9R, Brushes.Black, 50, 1000);
+            //ev.Graphics.DrawString("Date PO Placed:  _______________     PO Number _______________", A9R, Brushes.Black, 50, 1000);
 
 
         }

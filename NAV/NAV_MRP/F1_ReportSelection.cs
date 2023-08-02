@@ -78,8 +78,12 @@ namespace NAV_MRP
         private void bKBP_Click(object sender, EventArgs e)
         {
             /*  MRP KBP    */
-            KBP k = new KBP();
-            k.ShowDialog();
+            bKBP.BackColor = Color.FromArgb(100, 50, 100);
+            bKBP.Refresh();
+            g.SQLselection = g.KBP;
+            g.ReportSelection = "KBP";
+            MRP_PrintedReport r = new MRP_PrintedReport();
+            r.ShowDialog();
         }
     }
 
@@ -92,6 +96,7 @@ namespace NAV_MRP
         public static string messageChoice;
         public static string ReportSelection;
         public static string Main = "AND i.[Selection Code] <> 'MMX' " +
+                             "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 " +
@@ -100,6 +105,7 @@ namespace NAV_MRP
                              "AND r.[Location Code]  NOT IN ('IRV', 'IRV MRB', 'RIC', 'RIC MRB') ";
 
         public static string Irvine = "AND i.[Selection Code] <> 'MMX' " +
+                             "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND [Reference Component] <> 1 " +
                              "AND r.[Starting Date] <= (GETDATE() + 28) " +
@@ -110,6 +116,7 @@ namespace NAV_MRP
                              "OR ([Reference Component] = 1 AND ([Item Group Code] = 'CNT' OR [Selection Code] = 'SIC'))) " +
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI' " +
+                             "AND i.[Selection Code] not like 'K%' " +
                              "AND r.[Starting Date] <= (GETDATE() + 7) " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 ";
 
@@ -117,9 +124,16 @@ namespace NAV_MRP
                             "AND [Reference Component] <> 1 " +
                             "AND r.[Starting Date] <= (GETDATE() + 7) " +
                             "AND r.[Location Code] NOT IN ('IRV', 'IRV MRB') " +
+                            "AND i.[Selection Code] not like 'K%' " +
+                            "AND i.[Item Group Code] <> 'VMI'  ";
+
+        public static string KBP = "AND i.[Selection Code] = 'KBP' " +
+                            "AND [Reference Component] <> 1 " +
+                            "AND r.[Starting Date] <= (GETDATE() + 28) " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
 
         public static string Richmond = "AND i.[Selection Code] <> 'MMX' " +
+                             "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 " +

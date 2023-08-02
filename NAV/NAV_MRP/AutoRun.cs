@@ -27,7 +27,7 @@ namespace NAV_MRP
         {
             if (run is false)
             {
-                ///* Main report     */
+                /* Main report     */
 
                 g.SQLselection = g.Main;
                 g.ReportSelection = "";
@@ -38,38 +38,41 @@ namespace NAV_MRP
 
                 /*  MinMAx    */
 
-                //g.SQLselection = g.MinMax;
-                //g.ReportSelection = "minmax ";
-                //MRP_PrintedReport t = new MRP_PrintedReport();
-                //t.ShowDialog();
+                g.SQLselection = g.MinMax;
+                g.ReportSelection = "minmax ";
+                MRP_PrintedReport t = new MRP_PrintedReport();
+                t.ShowDialog();
 
-                /////*  X    */
+                /*  X    */
 
-                //g.SQLselection = g.X;
-                //g.ReportSelection = "X Report ";
-                //MRP_PrintedReport u = new MRP_PrintedReport();
-                //u.ShowDialog();
+                g.SQLselection = g.X;
+                g.ReportSelection = "X Report ";
+                MRP_PrintedReport u = new MRP_PrintedReport();
+                u.ShowDialog();
 
-                ///*  Irvine    */
+                /*  Irvine    */
 
-                //g.SQLselection = g.Irvine;
-                //g.ReportSelection = "Irvine ";
-                //MRP_PrintedReport s = new MRP_PrintedReport();
-                //s.ShowDialog();
-                ////run = true;
+                g.SQLselection = g.Irvine;
+                g.ReportSelection = "Irvine ";
+                MRP_PrintedReport s = new MRP_PrintedReport();
+                s.ShowDialog();
+                //run = true;
 
-                ///*  Richmond    */
+                /*  Richmond    */
 
-                //g.SQLselection = g.Richmond;
-                //g.ReportSelection = "Richmond ";
-                //MRP_PrintedReport v = new MRP_PrintedReport();
-                //v.ShowDialog();
-                ////run = true;
+                g.SQLselection = g.Richmond;
+                g.ReportSelection = "Richmond ";
+                MRP_PrintedReport v = new MRP_PrintedReport();
+                v.ShowDialog();
+                //run = true;
 
-                ///*  MRP KBP    */
-                //KBP k = new KBP();
-                //k.ShowDialog();
-                ////run = true;
+                /*  MRP KBP    */
+                g.ReportSelection = "KBP ";
+                g.SQLselection = g.KBP;
+                MRP_PrintedReport k = new MRP_PrintedReport();
+                k.ShowDialog();
+               
+                //run = true;
 
                 this.Close();
             }

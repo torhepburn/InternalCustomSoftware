@@ -12,8 +12,8 @@ namespace NAV_MRP
     public partial class KBP : Form
     {
         /*  for testing     */
-        private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
-        //private string directory = "C:\\A"; /* testing   */
+        //private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+        private string directory = "C:\\A"; /* testing   */
 
 
         private string[] aItemNo = new string[20000];
