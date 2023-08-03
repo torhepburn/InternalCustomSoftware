@@ -12,8 +12,8 @@ namespace NAV_MRP
 {
     public partial class MRP_PrintedReport : Form
     {
-       //private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
-       private string directory = "C:\\A";
+       private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+       //private string directory = "C:\\A";
 
         private string[] aItemNo = new string[20000];
         private string[] abuyerPlanner = new string[20000];
