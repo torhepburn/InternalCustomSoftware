@@ -37,43 +37,41 @@ namespace R_T_V
             System.Security.Principal.WindowsIdentity userBase;
             userBase = System.Security.Principal.WindowsIdentity.GetCurrent();
 
-            string user = userBase.Name.ToUpper(); ;
-
             if (userBase.Name.IndexOf("Z") == 0)
             {
-                user = userBase.Name.Replace("ZYGOMIS\\", "");
+                g.user = userBase.Name.Replace("ZYGOMIS\\", "");
             }
             else
             {
-                user = userBase.Name.Replace("AMETEK-AD\\", "");
+                g.user = userBase.Name.Replace("AMETEK-AD\\", "");
             }
 
             try
             {
-                //cmd = new SqlCommand(
-                // " Select permission, permissionvalue from applicationsetup " +
-                // " where application = 'ViewRicToolRequests' and " +
-                // " username = '" + user + "' " +
-                // " order by permission desc ", cnxn);
-                //DataTable table1 = new DataTable();
+                cmd = new SqlCommand(
+                 " Select permission, permissionvalue from applicationsetup " +
+                 " where application = 'R-T-V' and " +
+                 " username = '" + g.user + "' " +
+                 " order by permission desc ", cnxn);
+                DataTable table1 = new DataTable();
 
-                //cnxn.Open();
+                cnxn.Open();
 
-                //dr = cmd.ExecuteReader();
-                //table1.Load(dr);
-
-
-                //if (table1.Rows.Count > 0)
-                //{
-                //    g.permission = "EDIT";
-                //}
-                //else
-                //{
-                //    MessageBox.Show("This user " + user + " has read only permission to use this program: ViewRicToolRequests.exe");
-                //    g.permission = "VIEW";
-                //}
+                dr = cmd.ExecuteReader();
+                table1.Load(dr);
 
 
+                if (table1.Rows.Count > 0)
+                {
+                    g.permission = "EDIT";
+                }
+                else
+                {
+                    MessageBox.Show("This user " + g.user + " has read only permission to use this program: R-T-V.exe");
+                    g.permission = "VIEW";
+                }
+
+                
             }
             catch (SqlException ex)
             {
@@ -127,18 +125,18 @@ namespace R_T_V
             cbddPart.DataSource = dt;
             cbddPart.DisplayMember = "part";
 
-            //Customer
+            //Designer
             cmd = new SqlCommand
-                ("select ' ' as customer union " +
-                 "select distinct customer from Ric.designrequests " +
-                 "order by customer", cnxn);
+                ("select ' ' as Designer union " +
+                 "select distinct Designer from Ric.designrequests " +
+                 "order by Designer", cnxn);
 
             dr = cmd.ExecuteReader();
 
             dt = new DataTable();
             dt.Load(dr);
-            cbddCustomer.DataSource = dt;
-            cbddCustomer.DisplayMember = "customer";
+            cbddDesigner.DataSource = dt;
+            cbddDesigner.DisplayMember = "Designer";
 
             //Requested By
             cmd = new SqlCommand("select ' ' as requestor union all " +
@@ -180,9 +178,9 @@ namespace R_T_V
                 selection += " and part = '" + cbddPart.Text.Trim() + "' ";
             }
 
-            if (cbddCustomer.SelectedIndex > 0)
+            if (cbddDesigner.SelectedIndex > 0)
             {
-                selection += " and Customer = '" + cbddCustomer.Text.Trim() + "' ";
+                selection += " and Designer = '" + cbddDesigner.Text.Trim() + "' ";
             }
 
             if (cbddDepartment.SelectedIndex > 0)
@@ -198,20 +196,10 @@ namespace R_T_V
 
             if (cbddStatus.SelectedIndex > 0)
             {
-                if (cbddStatus.SelectedIndex == 1)
-                {
-                    selection += " and request_completed = 1 ORDER BY REQUEST_NEED_DATE DESC ";
-                }
-                else
-                {
-                    selection += " and request_completed = 0 " +
-                        "or request_completed is null ORDER BY REQUEST_NEED_DATE DESC ";
-                }
+                    selection += " and status = '" + cbddStatus.Text.Trim() + "' ";
             }
-            else
-            {
-                selection += " ORDER BY REQUEST_NEED_DATE DESC ";
-            }
+
+                selection += " ORDER BY REQUEST_NEED_DATE ";
 
             GridData();
         }
@@ -222,7 +210,6 @@ namespace R_T_V
 
             BasicSelection = "Select " +
                 " ID " +
-                ",Customer " +
                 ",COALESCE(PROJECT,'') Project " +
                 ",Part " +
                 ",TRIM(Project_Charge_Number) [Project Charge Number]" +
@@ -251,11 +238,11 @@ namespace R_T_V
                 ",Finish [Part need to be anodized ?] " +
                 ",OpticDrawing_Path [Optic Drawing number and path] " +
                 ",FocalSurface [surface of optic that will be focused on with this tool] " +
-                ",DesignReviewParticipants [list of people for design review] " +
                 ",IIF (Uploaded_pdf is null, 'No', 'Yes') [Pdf]  " +
                 ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
                 ",Actual_Hours [Actual Hours] " +
                 ",Rejected " +
+                ",Requestor_email " +
                 "FROM ric.DesignRequests " +
                  "where " +
                  selection;
@@ -319,7 +306,7 @@ namespace R_T_V
             //DGV.Columns[19].Width = 50;
             //DGV.Columns[20].Width = 300;
             //DGV.Columns[21].Width = 50;
-            //DGV.Columns[22].Width = 50;
+            DGV.Columns[33].Visible = false;
             /*  DGV_ShortageItem.Columns[3].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;    */
 
             /*  LrecordCount.Text = "RECORD COUNT: " + (DGV.RowCount - 1).ToString();  */
@@ -339,6 +326,31 @@ namespace R_T_V
                 DataGridViewTextBoxCell cell =
                     (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[0];
                 g.ID = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[1];
+                g.project = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[2];
+                g.part = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[4];
+                g.department = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[5];
+                g.contact = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[8];
+                g.priority = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[15];
+                g.requestDate = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[16];
+                g.needbyDate = cell.EditedFormattedValue.ToString().Trim();
+
+                cell = (DataGridViewTextBoxCell)DGV.Rows[e.RowIndex].Cells[33];
+                g.contactEmail = cell.EditedFormattedValue.ToString().Trim();
+
 
                 RTJobData j = new RTJobData();
                 j.ShowDialog();
@@ -396,20 +408,33 @@ namespace R_T_V
                 cnxn.Close();
             }
         }
-
-       
     }
 
 
     public static class g
     {
-        //public static string site;
-        //public static string serial;
+        public static string user;
         public static string permission;
 
+        public static string contact;
+        public static string contactEmail;
+
+        public static string project;
+        public static string part;
+        public static string department;
+        public static string requestDate;
+        public static string priority;
+        public static string needbyDate;
+
+        public static string emailTo;
+
+
         public static string ID;
-        //public static string model;
-        //public static bool RequestEntered2History;
+        
+        //public static string emailBody;
+        //public static string requestorEmail;
+        
+        
         public static string dbNAV = "server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
                            "database=ZYGO-NAV-PROD";
         public static string db = "server = ct-mid-sql11; password = Read+Write!; " +

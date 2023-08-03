@@ -39,7 +39,7 @@ namespace R_T_V
             this.label9 = new System.Windows.Forms.Label();
             this.cbddRequestedBy = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.cbddCustomer = new System.Windows.Forms.ComboBox();
+            this.cbddDesigner = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.cbddPart = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -88,7 +88,7 @@ namespace R_T_V
             this.panel1.Controls.Add(this.label9);
             this.panel1.Controls.Add(this.cbddRequestedBy);
             this.panel1.Controls.Add(this.label7);
-            this.panel1.Controls.Add(this.cbddCustomer);
+            this.panel1.Controls.Add(this.cbddDesigner);
             this.panel1.Controls.Add(this.label6);
             this.panel1.Controls.Add(this.cbddPart);
             this.panel1.Controls.Add(this.label5);
@@ -165,17 +165,17 @@ namespace R_T_V
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(77, 174);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(75, 15);
+            this.label7.Size = new System.Drawing.Size(70, 15);
             this.label7.TabIndex = 13;
-            this.label7.Text = "CUSTOMER";
+            this.label7.Text = "DESIGNER";
             // 
-            // cbddCustomer
+            // cbddDesigner
             // 
-            this.cbddCustomer.FormattingEnabled = true;
-            this.cbddCustomer.Location = new System.Drawing.Point(210, 171);
-            this.cbddCustomer.Name = "cbddCustomer";
-            this.cbddCustomer.Size = new System.Drawing.Size(140, 23);
-            this.cbddCustomer.TabIndex = 12;
+            this.cbddDesigner.FormattingEnabled = true;
+            this.cbddDesigner.Location = new System.Drawing.Point(210, 171);
+            this.cbddDesigner.Name = "cbddDesigner";
+            this.cbddDesigner.Size = new System.Drawing.Size(140, 23);
+            this.cbddDesigner.TabIndex = 12;
             // 
             // label6
             // 
@@ -250,7 +250,8 @@ namespace R_T_V
             "Completed",
             "On Hold",
             "Design Review",
-            "In Progress"});
+            "In Prog - Design",
+            "In Prog - Fab"});
             this.cbddStatus.Location = new System.Drawing.Point(210, 55);
             this.cbddStatus.Name = "cbddStatus";
             this.cbddStatus.Size = new System.Drawing.Size(140, 23);
@@ -322,7 +323,7 @@ namespace R_T_V
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ComboBox cbddRequest;
         private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ComboBox cbddCustomer;
+        private System.Windows.Forms.ComboBox cbddDesigner;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox cbddPart;
         private System.Windows.Forms.Label label5;

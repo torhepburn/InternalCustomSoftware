@@ -16,7 +16,6 @@ namespace R_T_V
         SqlConnection cnxn;
         SqlConnection cNAV;
         SqlCommand cmd;
-        DataTable dtCustomer;
         DataTable dtProject;
         DataTable dtProjectChargeNumber;
         SqlDataReader dr;
@@ -122,6 +121,9 @@ namespace R_T_V
             SqlParameter pOpticDrawingPath = new SqlParameter("@OpticDrawingPath", SqlDbType.VarChar, 200);
             pOpticDrawingPath.Value = tbOpticDrawing_Path.Text.Trim();
 
+            
+
+
 
             SqlParameter pRequiredDate = new SqlParameter("@requiredDate", SqlDbType.Date);
 
@@ -147,7 +149,6 @@ namespace R_T_V
                     ",Quantity = " + pQuantity +
                     ",request_text = " + pRequest_Text +
                     ",AdditionalInformation = " + pAdditionalInformation +
-                    //",Finish = " + pAnodized +
                     ",FocalSurface = " + pFocalSurface +
                     ",OpticDrawing_Path = " + pOpticDrawingPath +
                     " WHERE ID = " + g.ID, cnxn);
@@ -160,11 +161,10 @@ namespace R_T_V
             cmd.Parameters.Add(pQuantity);
             cmd.Parameters.Add(pRequest_Text);
             cmd.Parameters.Add(pAdditionalInformation);
-            //cmd.Parameters.Add(pAnodized);
             cmd.Parameters.Add(pFocalSurface);
             cmd.Parameters.Add(pOpticDrawingPath);
             cmd.Parameters.Add(pRequiredDate);
-
+            
 
             try
             {
@@ -207,6 +207,7 @@ namespace R_T_V
                 ",DesignReview2 " +
                 ",DesignReview3 " +
                 ",DesignReview4 " +
+                ",TechnicalContactName " +
                 "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
 
@@ -218,7 +219,6 @@ namespace R_T_V
                 DataTable table = new DataTable();
                 table.Load(dr);
                 {
-                    //cbddCustomer.Text = table.Rows[0][0].ToString();
                     cbddProject.Text = table.Rows[0][1].ToString();
                     cbddProjectChargeNumber.Text = table.Rows[0][2].ToString();
                     cbddPriority.Text = table.Rows[0][3].ToString();
@@ -228,10 +228,11 @@ namespace R_T_V
                     tbQuantity.Text = table.Rows[0][7].ToString();
                     tbToolRequirements.Text = table.Rows[0][8].ToString();
                     tbAdditionalInformation.Text = table.Rows[0][9].ToString();
-                    
-
+ 
                     tbFocalSurface.Text = table.Rows[0][11].ToString();
                     tbOpticDrawing_Path.Text = table.Rows[0][12].ToString();
+                    
+                    tbTechnicalContact.Text = table.Rows[0][17].ToString();
                 }
             }
             catch (SqlException ex)
@@ -242,6 +243,8 @@ namespace R_T_V
             {
                 cnxn.Close();
             }
+
+
         }
 
         private void Bexit_Click(object sender, EventArgs e)

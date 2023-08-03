@@ -17,11 +17,15 @@ namespace R_T_V
         SqlConnection cnxn;
         SqlCommand cmd;
         SqlDataReader dr;
+        DataTable dtComments;
         private string xtract = @"C:\pm\xtract.pdf";
         private string dxtract = @"C:\pm\";
         private bool requestCompleted;
         private double FabHours;
         private double DesignHours;
+        private string requestor_Email;
+        private string technicalContactEmail;
+        private string emailBody;
 
         public RTJobData()
         {
@@ -45,6 +49,56 @@ namespace R_T_V
             dtpCompletionDate.Checked = false;
 
             GetData();
+
+            GetComments();
+
+        }
+
+        private void GetComments()
+        {
+            //    COMMENTS
+
+            //dtComments = new DataTable();
+
+            try
+            {
+                string SQL = " SELECT " +
+                    "  RTRIM(Comment) Comment " +
+                    " ,RTRIM(EnteredBy) as [by] " +
+                    " ,EnteredOn AS [Date of Change] " +
+                    " FROM RIC.DesignComments " +
+                    " WHERE RequestID = " + g.ID +
+                    " ORDER BY CommentID  DESC";
+
+                if (cnxn.State == ConnectionState.Closed)
+                {
+                    cnxn.Open();
+                }
+
+                cmd = new SqlCommand(SQL, cnxn);
+                cmd.CommandTimeout = 30;
+
+                dr = cmd.ExecuteReader();
+
+                dtComments = new DataTable();
+                dtComments.Load(dr);
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+
+            DGV.DataSource = dtComments;
+            DGV.Show();
+            DGV.Columns[0].MinimumWidth = 400;
+            DGV.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            DGV.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            DGV.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+
         }
 
         private void Benter_Click(object sender, EventArgs e)
@@ -91,9 +145,62 @@ namespace R_T_V
                 return;
             }
 
+            SqlParameter pUser = new SqlParameter("@user", SqlDbType.VarChar, 50);
+
+            if (tbComments.Text.Length > 500)
+            {
+                    MessageBox.Show("Exceeded Maximum Allowed Comment Length of 500.");
+                    tbComments.Focus();
+                    return;
+                
+            }
+
 
             SqlParameter pComments = new SqlParameter("@comments", SqlDbType.VarChar, 4000);
-            pComments.Value = tbComments.Text.Trim();
+            
+            if (tbComments.Text.Length > 0)
+            {
+                pUser.Value = g.user;
+                pComments.Value = tbComments.Text.Trim();
+
+                try
+                {
+                    SqlCommand cmd = new SqlCommand
+                        ("Insert into RIC.DesignComments (" +
+                            " RequestID " +
+                            ",Comment " +
+                            ",EnteredBy " +
+                            ",EnteredOn " +
+                            ") values (" +
+                          g.ID.ToString().Trim() +
+                          "," + pComments +
+                          "," + pUser +
+                          ",GETDATE() " +
+                          ")", cnxn);
+
+                    cmd.Parameters.Add(pComments);
+                    cmd.Parameters.Add(pUser);
+
+                    if (cnxn.State == ConnectionState.Closed)
+                    {
+                        cnxn.Open();
+                    }
+
+                    cmd.CommandTimeout = 30;
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.Clear();
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+                finally
+                {
+                    cnxn.Close();
+                    tbComments.Text = "";
+                }
+            }
+            
 
             SqlParameter pEstimatedDueDate = new SqlParameter("@estimatedDueDate", SqlDbType.Date);
             if (dtpEstimatedDueDate.Checked)
@@ -123,10 +230,24 @@ namespace R_T_V
             SqlParameter pMachinist = new SqlParameter("@machinist", SqlDbType.VarChar, 50);
             pMachinist.Value = tbMachinist.Text.Trim();
 
-            //SqlParameter pDesignReviewParticipants = new SqlParameter("@designReviewParticipants", SqlDbType.VarChar, 500);
-            //pDesignReviewParticipants.Value = tbDesignReviewParticipants.Text.Trim();
+            SqlParameter pTechnicalContact = new SqlParameter("@TechnicalContact", SqlDbType.VarChar, 50);
+            pTechnicalContact.Value = tbTechnicalContactName.Text.Trim();
 
+            SqlParameter pTechnicalContactEmail = new SqlParameter("@TechnicalContactEmail", SqlDbType.VarChar, 50);
+            pTechnicalContactEmail.Value = tbTechnicalContactEmail.Text.Trim();
 
+            SqlParameter pDesignReview1 = new SqlParameter("@DesignReview1", SqlDbType.VarChar, 50);
+            pDesignReview1.Value = tbDesignReview1.Text.Trim();
+
+            SqlParameter pDesignReview2 = new SqlParameter("@DesignReview2", SqlDbType.VarChar, 50);
+            pDesignReview2.Value = tbDesignReview2.Text.Trim();
+
+            SqlParameter pDesignReview3 = new SqlParameter("@DesignReview3", SqlDbType.VarChar, 50);
+            pDesignReview3.Value = tbDesignReview3.Text.Trim();
+
+            SqlParameter pDesignReview4 = new SqlParameter("@DesignReview4", SqlDbType.VarChar, 50);
+            pDesignReview4.Value = tbDesignReview4.Text.Trim();
+            
             SqlParameter pCompletiondDate = new SqlParameter("@completionDate", SqlDbType.Date);
             if (dtpCompletionDate.Checked)
             {
@@ -137,7 +258,6 @@ namespace R_T_V
                 pCompletiondDate.Value = "01-01-1900";
             }
 
-
             try
             {
 
@@ -145,7 +265,6 @@ namespace R_T_V
                     "Update Ric.designRequests SET " +
                     " request_completed = '" + requestCompleted + "'" +
                     ",completion_date = '" + dtpCompletionDate.Value + "'" +
-                    ",comments = " + pComments +
                     ",[Estimated Fab Time (hrs)] = " + FabHours +
                     ",[Estimated Design Time (hrs)] = " + DesignHours +
                     ",[Estimated Due Date] = " + pEstimatedDueDate +
@@ -155,13 +274,17 @@ namespace R_T_V
                     ",ToolDescription = " + pToolDescription +
                     ",Designer = " + pDesigner +
                     ",Machinist = " + pMachinist +
-                    //",DesignReviewParticipants = " + pDesignReviewParticipants +
                     ",[Status] = '" + cbddStatus.Text.Trim() + "'" +
+                    ",TechnicalContactName = " + pTechnicalContact +
+                    ",TechnicalContactEmail = " + pTechnicalContactEmail +
+                    ",DesignReview1 = " + pDesignReview1 +
+                    ",DesignReview2 = " + pDesignReview2 +
+                    ",DesignReview3 = " + pDesignReview3 +
+                    ",DesignReview4 = " + pDesignReview4 +
                     " WHERE ID = " + g.ID + " ", cnxn); ;
 
                 cnxn.Open();
 
-                cmd.Parameters.Add(pComments);
                 cmd.Parameters.Add(pEstimatedDueDate);
                 cmd.Parameters.Add(pJob);
                 cmd.Parameters.Add(pCode);
@@ -169,7 +292,12 @@ namespace R_T_V
                 cmd.Parameters.Add(pToolDescription);
                 cmd.Parameters.Add(pDesigner);
                 cmd.Parameters.Add(pMachinist);
-                //cmd.Parameters.Add(pDesignReviewParticipants);
+                cmd.Parameters.Add(pTechnicalContact);
+                cmd.Parameters.Add(pTechnicalContactEmail);
+                cmd.Parameters.Add(pDesignReview1);
+                cmd.Parameters.Add(pDesignReview2);
+                cmd.Parameters.Add(pDesignReview3);
+                cmd.Parameters.Add(pDesignReview4);
 
                 cmd.ExecuteNonQuery();
             }
@@ -183,6 +311,7 @@ namespace R_T_V
             }
 
             GetData();
+            GetComments();
         }
 
         private void Breject_Click(object sender, EventArgs e)
@@ -192,20 +321,22 @@ namespace R_T_V
                 SqlParameter pComments = new SqlParameter("@comments", SqlDbType.VarChar, 4000);
                 pComments.Value = tbComments.Text.Trim();
 
+                SqlParameter pUser = new SqlParameter("@user", SqlDbType.VarChar, 50);
+                pUser.Value = g.user;
+
                 try
                 {
 
                     SqlCommand cmd = new SqlCommand(
-                        "Update Ric.designRequests  set " +
+                        "Update Ric.designRequest  set " +
                         "request_completed = 'true' " +
                         ",Rejected = 'true' " +
                         ", completion_date = GETDATE() " +
-                        ", comments = " + pComments +
                         " where id = " + g.ID + " ", cnxn);
 
                     cnxn.Open();
 
-                    cmd.Parameters.Add(pComments);
+                    //cmd.Parameters.Add(pComments);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -216,6 +347,43 @@ namespace R_T_V
                 finally
                 {
                     cnxn.Close();
+                }
+
+                try
+                {
+                    SqlCommand cmd = new SqlCommand
+                        ("Insert into DesignComments (" +
+                            " RequestID " +
+                            ",Comment " +
+                            ",EnteredBy " +
+                            ",EnteredOn " +
+                            ") values (" +
+                          g.ID.ToString().Trim() +
+                          "," + pComments +
+                          "," + pUser +
+                          ",GETDATE() " +
+                          ")", cnxn);
+
+                    cmd.Parameters.Add(pComments);
+                    cmd.Parameters.Add(pUser);
+
+                    if (cnxn.State == ConnectionState.Closed)
+                    {
+                        cnxn.Open();
+                    }
+
+                    cmd.CommandTimeout = 30;
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.Clear();
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+                finally
+                {
+                    cnxn.Close();
+                    tbComments.Text = "";
                 }
             }
             else
@@ -357,10 +525,13 @@ namespace R_T_V
                ",DesignReview2 " +
                ",DesignReview3 " +
                ",DesignReview4 " +
+               ",Requestor_email " +
                 "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
 
             DataTable table = new DataTable();
+
+            /*  leaving comments in so as not to need to renumber the columns    */
 
             try
             {
@@ -447,6 +618,7 @@ namespace R_T_V
                 if (table.Rows[0][15].ToString().Length > 0)
                 {
                     tbTechnicalContactName.Text = table.Rows[0][15].ToString();
+                    technicalContactEmail = table.Rows[0][15].ToString().Substring(10);
                 }
 
                 if (table.Rows[0][16].ToString().Length > 0)
@@ -456,7 +628,7 @@ namespace R_T_V
 
                 if (table.Rows[0][17].ToString().Length > 0)
                 {
-                    tbComments.Text = table.Rows[0][17].ToString();
+                    //tbComments.Text = table.Rows[0][17].ToString();
                 }
 
                 if (table.Rows[0][18].ToString() == "TRUE")
@@ -485,6 +657,10 @@ namespace R_T_V
                 {
                     tbDesignReview4.Text = table.Rows[0][22].ToString();
                 }
+                if (table.Rows[0][23].ToString().Length > 0)
+                {
+                    requestor_Email = table.Rows[0][23].ToString();
+                }
             }
             catch (SqlException ex)
             {
@@ -499,6 +675,120 @@ namespace R_T_V
         private void cbCompleted_CheckedChanged(object sender, EventArgs e)
         {
             cbddStatus.Text = "Completed";
+        }
+
+        private void bRequestorEmail_Click(object sender, EventArgs e)
+        {
+            g.emailTo = requestor_Email;
+            eMail();
+        }
+
+        private void bTechnicalContactEmail_Click(object sender, EventArgs e)
+        {
+            g.emailTo = tbTechnicalContactEmail.Text.Trim();
+            eMail();
+        }
+
+        private void bEmailBoth_Click(object sender, EventArgs e)
+        {
+            g.emailTo = requestor_Email + ";" + tbTechnicalContactEmail.Text.Trim();
+        }
+
+        private void eMail()
+        {
+            cnxn = new SqlConnection(g.db);
+
+            string comment1 = "";
+            string comment2 = "";
+            string comment3 = "";
+            string comment4 = "";
+            string comment5 = "";
+
+            if (dtComments.Rows.Count > 0)
+            {
+                comment1 = dtComments.Rows[0][2].ToString() + ":" + dtComments.Rows[0][1].ToString() + ":  " + dtComments.Rows[0][0].ToString();
+
+                if (dtComments.Rows.Count > 1)
+                {
+                    comment2 = dtComments.Rows[1][2].ToString() + ":" + dtComments.Rows[1][1].ToString() + ":  " + dtComments.Rows[1][0].ToString();
+                }
+                else 
+                {
+                    comment2 = "";
+                }
+                if (dtComments.Rows.Count > 2)
+                {
+                    comment3 = dtComments.Rows[2][2].ToString() + ":" + dtComments.Rows[2][1].ToString() + ":  " + dtComments.Rows[2][0].ToString();
+                }
+                else
+                {
+                    comment3 = "";
+                }
+                if (dtComments.Rows.Count > 3)
+                {
+                    comment4 = dtComments.Rows[3][2].ToString() + ":" + dtComments.Rows[3][1].ToString() + ":  " + dtComments.Rows[3][0].ToString();
+                }
+                else
+                {
+                    comment4 = "";
+                }
+                if (dtComments.Rows.Count > 4)
+                {
+                    comment5 = dtComments.Rows[4][2].ToString() + ":" + dtComments.Rows[4][1].ToString() + ":  " + dtComments.Rows[4][0].ToString();
+                }
+                else
+                {
+                    comment5 = "";
+                }
+            }
+            else
+            {
+                comment1 = "";
+            }
+
+
+            
+            emailBody =
+                    "Design Request Comments: " +
+                    "\r\r" +
+                    comment1 + "\r\n" +
+                    comment2 + "\r\n" +
+                    comment3 + "\r\n" +  
+                    comment4 + "\r\n" +
+                    comment5 + "\r\n" +
+
+                    "Design Requirements:" +
+                    "\r\r" +
+                    tbRequest.Text.Trim() + "\r\n" +
+                    tbAdditionalInformation.Text.Trim() + "\r\r" +
+                    "Name...........: " + g.contact + "\n\r" +
+                    "Contact eMail..: " + g.contactEmail + "\n\r" +
+                    "Priority........: " + g.priority + "\r" +
+                    "Need Date.......: " + g.needbyDate + "\r" +
+                    "Project.........: " + g.project + "\r" +
+                    "Part............: " + g.part + "\r" +
+                    "Department......: " + g.department + "\r" +
+                    "Date of Submission: " + g.requestDate;
+
+            
+
+
+            SqlCommand cmd = new SqlCommand("spTRmailRic", cnxn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            SqlParameter to = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
+            //to.Value = "tor.hepburn@ametek.com";
+            to.Value = g.emailTo;//requestor_Email;
+            SqlParameter etext = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
+            etext.Value = emailBody;
+            SqlParameter subjline = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
+            subjline.Value = "Design Request " + g.ID + " Comment/Note ";
+
+            cmd.Connection = cnxn;
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            cmd.Dispose();
+
         }
     }
 }

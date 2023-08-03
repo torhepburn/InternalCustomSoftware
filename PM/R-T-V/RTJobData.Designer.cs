@@ -29,6 +29,7 @@ namespace R_T_V
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tbDesignTime = new System.Windows.Forms.TextBox();
             this.tbTechnicalContactName = new System.Windows.Forms.TextBox();
             this.tbFabTime = new System.Windows.Forms.TextBox();
@@ -70,6 +71,14 @@ namespace R_T_V
             this.tbDesignReview2 = new System.Windows.Forms.TextBox();
             this.tbDesignReview3 = new System.Windows.Forms.TextBox();
             this.tbDesignReview4 = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.DGV = new System.Windows.Forms.DataGridView();
+            this.bRequestorEmail = new System.Windows.Forms.Button();
+            this.bTechnicalContactEmail = new System.Windows.Forms.Button();
+            this.bEmailBoth = new System.Windows.Forms.Button();
+            this.label16 = new System.Windows.Forms.Label();
+            this.tbTechnicalContactEmail = new System.Windows.Forms.TextBox();
+            ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
             // tbDesignTime
@@ -119,7 +128,7 @@ namespace R_T_V
             // tbComments
             // 
             this.tbComments.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbComments.Location = new System.Drawing.Point(54, 469);
+            this.tbComments.Location = new System.Drawing.Point(54, 521);
             this.tbComments.Multiline = true;
             this.tbComments.Name = "tbComments";
             this.tbComments.Size = new System.Drawing.Size(600, 110);
@@ -155,25 +164,25 @@ namespace R_T_V
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.label1.Location = new System.Drawing.Point(62, 67);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(132, 17);
+            this.label1.Size = new System.Drawing.Size(148, 17);
             this.label1.TabIndex = 10;
-            this.label1.Text = "Tool Requirements:";
+            this.label1.Text = "Design Requirements:";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label2.Location = new System.Drawing.Point(51, 449);
+            this.label2.Location = new System.Drawing.Point(51, 501);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(119, 17);
+            this.label2.Size = new System.Drawing.Size(157, 17);
             this.label2.TabIndex = 11;
-            this.label2.Text = "Notes/Comments:";
+            this.label2.Text = "Enter Notes/Comments:";
             // 
             // Breject
             // 
             this.Breject.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(200)))), ((int)(((byte)(100)))));
             this.Breject.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Breject.Location = new System.Drawing.Point(246, 606);
+            this.Breject.Location = new System.Drawing.Point(246, 658);
             this.Breject.Name = "Breject";
             this.Breject.Size = new System.Drawing.Size(150, 50);
             this.Breject.TabIndex = 19;
@@ -185,7 +194,7 @@ namespace R_T_V
             // 
             this.Bexit.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.Bexit.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Bexit.Location = new System.Drawing.Point(425, 606);
+            this.Bexit.Location = new System.Drawing.Point(425, 658);
             this.Bexit.Name = "Bexit";
             this.Bexit.Size = new System.Drawing.Size(150, 50);
             this.Bexit.TabIndex = 18;
@@ -197,7 +206,7 @@ namespace R_T_V
             // 
             this.Benter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(150)))), ((int)(((byte)(240)))));
             this.Benter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Benter.Location = new System.Drawing.Point(65, 606);
+            this.Benter.Location = new System.Drawing.Point(65, 658);
             this.Benter.Name = "Benter";
             this.Benter.Size = new System.Drawing.Size(150, 50);
             this.Benter.TabIndex = 17;
@@ -209,7 +218,7 @@ namespace R_T_V
             // 
             this.BOpenDxf.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(180)))), ((int)(((byte)(120)))));
             this.BOpenDxf.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.BOpenDxf.Location = new System.Drawing.Point(335, 215);
+            this.BOpenDxf.Location = new System.Drawing.Point(68, 215);
             this.BOpenDxf.Name = "BOpenDxf";
             this.BOpenDxf.Size = new System.Drawing.Size(123, 52);
             this.BOpenDxf.TabIndex = 23;
@@ -229,7 +238,7 @@ namespace R_T_V
             // 
             this.bOpenPDF.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(120)))), ((int)(((byte)(240)))));
             this.bOpenPDF.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.bOpenPDF.Location = new System.Drawing.Point(482, 215);
+            this.bOpenPDF.Location = new System.Drawing.Point(215, 215);
             this.bOpenPDF.Name = "bOpenPDF";
             this.bOpenPDF.Size = new System.Drawing.Size(123, 52);
             this.bOpenPDF.TabIndex = 21;
@@ -272,7 +281,7 @@ namespace R_T_V
             "In Prog - Fab",
             "Completed",
             "On Hold"});
-            this.cbddStatus.Location = new System.Drawing.Point(771, 233);
+            this.cbddStatus.Location = new System.Drawing.Point(612, 233);
             this.cbddStatus.Name = "cbddStatus";
             this.cbddStatus.Size = new System.Drawing.Size(121, 21);
             this.cbddStatus.TabIndex = 25;
@@ -379,7 +388,7 @@ namespace R_T_V
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label11.Location = new System.Drawing.Point(710, 234);
+            this.label11.Location = new System.Drawing.Point(551, 234);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(52, 17);
             this.label11.TabIndex = 36;
@@ -389,7 +398,7 @@ namespace R_T_V
             // 
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label12.Location = new System.Drawing.Point(811, 379);
+            this.label12.Location = new System.Drawing.Point(811, 331);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(71, 17);
             this.label12.TabIndex = 42;
@@ -399,7 +408,7 @@ namespace R_T_V
             // 
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label13.Location = new System.Drawing.Point(811, 332);
+            this.label13.Location = new System.Drawing.Point(811, 284);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(69, 17);
             this.label13.TabIndex = 41;
@@ -409,7 +418,7 @@ namespace R_T_V
             // 
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.label14.Location = new System.Drawing.Point(811, 289);
+            this.label14.Location = new System.Drawing.Point(811, 241);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(115, 17);
             this.label14.TabIndex = 40;
@@ -418,7 +427,7 @@ namespace R_T_V
             // tbMachinist
             // 
             this.tbMachinist.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbMachinist.Location = new System.Drawing.Point(962, 379);
+            this.tbMachinist.Location = new System.Drawing.Point(962, 331);
             this.tbMachinist.Name = "tbMachinist";
             this.tbMachinist.Size = new System.Drawing.Size(100, 21);
             this.tbMachinist.TabIndex = 39;
@@ -426,7 +435,7 @@ namespace R_T_V
             // tbDesigner
             // 
             this.tbDesigner.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbDesigner.Location = new System.Drawing.Point(962, 332);
+            this.tbDesigner.Location = new System.Drawing.Point(962, 284);
             this.tbDesigner.Name = "tbDesigner";
             this.tbDesigner.Size = new System.Drawing.Size(100, 21);
             this.tbDesigner.TabIndex = 38;
@@ -434,7 +443,7 @@ namespace R_T_V
             // tbToolDescription
             // 
             this.tbToolDescription.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbToolDescription.Location = new System.Drawing.Point(962, 289);
+            this.tbToolDescription.Location = new System.Drawing.Point(962, 241);
             this.tbToolDescription.Name = "tbToolDescription";
             this.tbToolDescription.Size = new System.Drawing.Size(369, 21);
             this.tbToolDescription.TabIndex = 37;
@@ -471,12 +480,96 @@ namespace R_T_V
             this.tbDesignReview4.Size = new System.Drawing.Size(275, 21);
             this.tbDesignReview4.TabIndex = 46;
             // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label15.Location = new System.Drawing.Point(983, 367);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(148, 17);
+            this.label15.TabIndex = 48;
+            this.label15.Text = "View Notes/Comments";
+            // 
+            // DGV
+            // 
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.LightGray;
+            this.DGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            this.DGV.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.DGV.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DGV.Location = new System.Drawing.Point(986, 387);
+            this.DGV.Name = "DGV";
+            this.DGV.Size = new System.Drawing.Size(345, 268);
+            this.DGV.TabIndex = 49;
+            // 
+            // bRequestorEmail
+            // 
+            this.bRequestorEmail.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(150)))), ((int)(((byte)(240)))));
+            this.bRequestorEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.bRequestorEmail.Location = new System.Drawing.Point(986, 679);
+            this.bRequestorEmail.Name = "bRequestorEmail";
+            this.bRequestorEmail.Size = new System.Drawing.Size(150, 50);
+            this.bRequestorEmail.TabIndex = 50;
+            this.bRequestorEmail.Text = "EMAIL Requestor";
+            this.bRequestorEmail.UseVisualStyleBackColor = false;
+            this.bRequestorEmail.Click += new System.EventHandler(this.bRequestorEmail_Click);
+            // 
+            // bTechnicalContactEmail
+            // 
+            this.bTechnicalContactEmail.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(150)))), ((int)(((byte)(240)))));
+            this.bTechnicalContactEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.bTechnicalContactEmail.Location = new System.Drawing.Point(1181, 679);
+            this.bTechnicalContactEmail.Name = "bTechnicalContactEmail";
+            this.bTechnicalContactEmail.Size = new System.Drawing.Size(150, 50);
+            this.bTechnicalContactEmail.TabIndex = 51;
+            this.bTechnicalContactEmail.Text = "EMAIL Technical Contact";
+            this.bTechnicalContactEmail.UseVisualStyleBackColor = false;
+            this.bTechnicalContactEmail.Click += new System.EventHandler(this.bTechnicalContactEmail_Click);
+            // 
+            // bEmailBoth
+            // 
+            this.bEmailBoth.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(250)))), ((int)(((byte)(240)))));
+            this.bEmailBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.bEmailBoth.Location = new System.Drawing.Point(1181, 317);
+            this.bEmailBoth.Name = "bEmailBoth";
+            this.bEmailBoth.Size = new System.Drawing.Size(150, 50);
+            this.bEmailBoth.TabIndex = 52;
+            this.bEmailBoth.Text = "EMAIL Both";
+            this.bEmailBoth.UseVisualStyleBackColor = false;
+            this.bEmailBoth.Click += new System.EventHandler(this.bEmailBoth_Click);
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label16.Location = new System.Drawing.Point(54, 458);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(163, 17);
+            this.label16.TabIndex = 54;
+            this.label16.Text = "Technical Contact Email:";
+            // 
+            // tbTechnicalContactEmail
+            // 
+            this.tbTechnicalContactEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbTechnicalContactEmail.Location = new System.Drawing.Point(246, 458);
+            this.tbTechnicalContactEmail.Name = "tbTechnicalContactEmail";
+            this.tbTechnicalContactEmail.Size = new System.Drawing.Size(197, 21);
+            this.tbTechnicalContactEmail.TabIndex = 53;
+            // 
             // RTJobData
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(200)))), ((int)(((byte)(240)))));
-            this.ClientSize = new System.Drawing.Size(1376, 684);
+            this.ClientSize = new System.Drawing.Size(1376, 741);
+            this.Controls.Add(this.label16);
+            this.Controls.Add(this.tbTechnicalContactEmail);
+            this.Controls.Add(this.bEmailBoth);
+            this.Controls.Add(this.bTechnicalContactEmail);
+            this.Controls.Add(this.bRequestorEmail);
+            this.Controls.Add(this.DGV);
+            this.Controls.Add(this.label15);
             this.Controls.Add(this.tbDesignReview4);
             this.Controls.Add(this.tbDesignReview3);
             this.Controls.Add(this.tbDesignReview2);
@@ -521,6 +614,7 @@ namespace R_T_V
             this.Name = "RTJobData";
             this.Text = "Job Data";
             this.Load += new System.EventHandler(this.RTJobData_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.DGV)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -569,5 +663,12 @@ namespace R_T_V
         private System.Windows.Forms.TextBox tbDesignReview2;
         private System.Windows.Forms.TextBox tbDesignReview3;
         private System.Windows.Forms.TextBox tbDesignReview4;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.DataGridView DGV;
+        private System.Windows.Forms.Button bRequestorEmail;
+        private System.Windows.Forms.Button bTechnicalContactEmail;
+        private System.Windows.Forms.Button bEmailBoth;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox tbTechnicalContactEmail;
     }
 }
