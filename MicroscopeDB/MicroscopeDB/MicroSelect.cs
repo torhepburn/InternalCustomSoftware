@@ -31,9 +31,73 @@ namespace MicroscopeDB
         private void MicroSelect_Load(object sender, EventArgs e)
         {
             this.Text = "Microscope Database v" + Application.ProductVersion;
+
+            System.Security.Principal.WindowsIdentity userBase;
+            userBase = System.Security.Principal.WindowsIdentity.GetCurrent();
+
+            string user = string.Empty;
+
+            if (userBase.Name.IndexOf("Z") == 0)
+            {
+                user = userBase.Name.ToUpper().Replace("ZYGOMIS\\", "");
+            }
+            else
+            {
+                user = userBase.Name.ToUpper().Replace("AMETEK-AD\\", "");
+            }
+
+            cnxn = new SqlConnection(g.dbAFE);
+
+            try
+            {
+                cnxn.Open();
+
+                cmd = new SqlCommand(
+                 " Select permission, permissionvalue from applicationsetup " +
+                 " where application = 'MicroscopeDB.exe' and " +
+                 " userName = '" + user + "' " +
+                 " order by permission desc ", cnxn);
+                DataTable table = new DataTable();
+
+                
+                SqlDataReader dr = cmd.ExecuteReader();
+                table.Load(dr);
+
+                
+
+                if (table.Rows.Count > 0)
+                {
+                    g.permission = table.Rows[0][0].ToString().Trim();
+                }
+                else
+                {
+                    MessageBox.Show("This user (" + user + ") does not have permission to use this program.");
+                    this.Close();
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+
+            if (g.permission == "VIEW")
+            {
+                bImport.Visible = false;
+                bEdit.Visible = false;
+                BaddAccessory.Visible = false;
+            }
+
         }
 
-        private void productline()
+
+    
+
+    private void productline()
         {
             if (rbNexView.Checked)
             {
@@ -1172,6 +1236,7 @@ namespace MicroscopeDB
         public static string serialNumber;
         public static string ProductLine;
         public static string task;
+        public static string permission;
         public static string LimIllumLoss;
         public static string LimCnf50;
         public static string LimCnfMax;
@@ -1201,6 +1266,8 @@ namespace MicroscopeDB
         public static string initialMIDpath = @"\\midfile01.zygo.com\departments\archives\";
 
         public static string db = "server = CT-MID-SQL11; password = Read+Write!; " +
-                            "user = readwrite; database = ProductionControl;";       
+                            "user = readwrite; database = ProductionControl;";
+        public static string dbAFE = "server = CT-MID-SQL11; password = Read+Write!; " +
+                            "user = readwrite; database = AccessFrontEnds;";
     }
 }
