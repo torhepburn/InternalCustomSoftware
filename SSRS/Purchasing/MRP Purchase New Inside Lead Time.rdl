@@ -31,12 +31,17 @@ No_
 ,[Item Group Code]
 
 FROM ZYGO$Item i
+
+WHERE Vetted = 0  --vetted = 0 is vetted
+
+AND [Item Group Code] != 'VMI'
 )
 
 select 
 
 r.No_
-,CAST([Due Date] as date) [Due Date]
+,CAST([Due Date] as date) [Requested Date]
+--,CAST([Starting Date] as date) [Starting Date]
 ,s1.[Lead Time Calculation]
 ,CAST(GETDATE() + s1.[Lead Time Calculation] as date) [Today+Leadtime]
 ,r.[Vendor No_]
@@ -52,17 +57,21 @@ LEFT JOIN ZYGO$Vendor v on r.[Vendor No_] = v.No_
 
 where 
 
-r.[Ref_ Order Type] = 1
+r.[Ref_ Order Type] = 1  --purchased
 
-AND r.Type = 2
+AND r.Type = 2  --item
 
 AND r.[Worksheet Template Name] = 'PLANNING'
 
 AND r.[Journal Batch Name] = 'DEFAULT'
 
-AND [Action Message] = 1
+AND [Action Message] = 1 --purchase new
 
-AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])</CommandText>
+AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])
+
+--AND [Due Date] &gt; GETDATE()
+
+order by [Due Date]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -70,8 +79,8 @@ AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])</CommandText>
           <DataField>No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="Due_Date">
-          <DataField>Due Date</DataField>
+        <Field Name="Requested_Date">
+          <DataField>Requested Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="Lead_Time_Calculation">
@@ -212,7 +221,7 @@ AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Due Date</Value>
+                                  <Value>Requested Date</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -515,14 +524,14 @@ AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Due_Date">
+                        <Textbox Name="Requested_Date">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Due_Date.Value</Value>
+                                  <Value>=Fields!Requested_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>MM/dd/yy</Format>
@@ -535,7 +544,7 @@ AND r.[Due Date] &lt; (GETDATE() + s1.[Lead Time Calculation])</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Due_Date</rd:DefaultName>
+                          <rd:DefaultName>Requested_Date</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
