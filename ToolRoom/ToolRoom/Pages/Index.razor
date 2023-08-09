@@ -1,0 +1,778 @@
+﻿@page "/"
+@page "/index"
+
+@using ToolRoom.Data
+
+@using Microsoft.Data.SqlClient
+@using System.ComponentModel.DataAnnotations
+@using static PopUp
+
+@inject Global g
+@inject FormModel f
+
+
+@inject NavigationManager NavMgr
+
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+<PageTitle>Richmond Design Request Form</PageTitle>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <h3>Richmond Design Request</h3>
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            Items marked with an asterisk * require an entry.<br />
+        </td>
+    </tr>
+    <tr>
+        @*<td align="center">
+        <EditForm Model="data" OnValidSubmit="DataEntry">
+        <InputCheckbox @bind-Value="cbPersist"></InputCheckbox> Check this box if you want to make multiple entries and have some selections remain.
+        </EditForm>
+        </td>*@
+    </tr>
+    <tr>
+        <td align="center">
+            Click Submit button with form filled out to attach supporting document when check box checked.
+        </td>
+    </tr>
+</table>
+<br />
+
+
+<EditForm EditContext="EditContext">
+    <table width="100%" cellpadding="8">
+        <tr>
+            <td>
+                <p>
+                    <label for="employees">
+                        * Employee :
+                    </label>
+                    <InputSelect id="employees" style="width: 100%" @bind-Value="eIndex">
+                        <option value="">Must Select an Employee</option>
+
+                        @foreach (DataRow r in dtEmployees.Rows)
+                        {
+                            <option value="@r[0].ToString()">@r[1].ToString()</option>
+                        }
+                    </InputSelect>
+                </p>
+            </td>
+            <td>
+                <InputCheckbox @bind-Value="cbPDF"></InputCheckbox> Check if attaching pdf document.
+            </td>
+            <td>
+                <InputCheckbox @bind-Value="cbDXF"></InputCheckbox> Check if attaching dxf document - must be Scale 1:1 - no Step files.
+            </td>
+        </tr>
+    </table>
+</EditForm>
+
+<EditForm Model="validations" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table width="100%" cellpadding="8">
+
+        <tr>
+            <td>
+                Contact Email :
+                <InputText id="n3" placeholder="" style="width: 100%" @bind-Value="g.contactEmail" />
+            </td>
+            <td>
+                * Priority :
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="validations.Priority">
+                    <option value="">Selection Required</option>
+                    <option value="Routine">Routine</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Production Down">Production Down</option>
+                </InputSelect>
+
+                <ValidationMessage For="()=> validations.Priority" style="display:inline" />
+            </td>
+            <td>
+                Contact for Technical Information :
+                <InputText id="n10" style="width: 100%" placeholder="use format = name:email" @bind-Value="techContact" />
+            </td>
+
+        </tr>
+        <tr>
+            <td align="left">
+
+                Contact :
+                <InputText id="n13" placeholder="" style="width: 100%" @bind-Value="validations.Employee" />
+                <ValidationMessage For="() => validations.Employee" />
+            </td>
+            <td>
+                * Quantity :
+                <InputNumber id="n4" style="width: 100%" placeholder="" @bind-Value="validations.Quantity" />
+
+                <ValidationMessage For="()=> validations.Quantity" />
+            </td>
+            <td>
+                Deliver Completed Tooling to :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="deliverTo" />
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                Department :
+
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="department">
+                    <option value="">Selection Required</option>
+                    <option value="CCOS">CCOS</option>
+                    <option value="IBF">IBF</option>
+                    <option value="Metrology">Metrology</option>
+                    <option value="CNC">CNC</option>
+                    <option value="WorkCell">Work Cell</option>
+                    <option value="QC">QC</option>
+                    <option value="Assembly">Assembly</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="SmallOptics">Small Optics</option>
+                    <option value="Other">Other</option>
+                </InputSelect>
+
+            </td>
+            <td>
+                * Must Check Charge Type to select Charge Number:<br />
+
+                @if (!cbCostCenter)
+                {
+                    <InputCheckbox @bind-Value="testBoolP" DisplayName="Project"></InputCheckbox> @LProjectNumber
+                }
+
+                @if (!cbProject)
+                {
+                    <InputCheckbox @bind-Value="cbCostCenter"></InputCheckbox>
+
+                    @LCostCenter
+                }
+
+                @if (cbProject)
+                {
+                    <InputSelect id="s3" class="form-control" @bind-Value="validations.ChargeNumber">
+
+                        <option value="">Charge Number Lookup</option>
+                        @foreach (DataRow r in dtProjectCharges.Rows)
+                        {
+                            <option value="@r[0].ToString()">@r[0].ToString()</option>
+                        }
+
+                    </InputSelect>
+                }
+
+                @if (cbCostCenter)
+                {
+                    <InputSelect id="s4" class="form-control" @bind-Value="validations.ChargeNumber">
+
+                        <option value="">Charge Number Lookup</option>
+                        @foreach (DataRow r in dtCostCenters.Rows)
+                        {
+                            <option value="@r[0].ToString()">@r[0].ToString()</option>
+                        }
+
+                    </InputSelect>
+                }
+                <ValidationMessage For="()=> validations.ChargeNumber" />
+
+            </td>
+            <td>
+                Finishing :
+
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="finishing" />
+
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                Project :
+                <InputText id="n8" style="width: 100%" placeholder="" @bind-Value="project" />
+            </td>
+            <td>
+                Materials :
+                <InputText id="n7" style="width: 100%" placeholder="" @bind-Value="materials" />
+            </td>
+            <td>
+                Design Review Participant 1
+                <InputText id="n6" style="width: 100%" placeholder="use format = name:email" @bind-Value="reviewer1" />
+
+                @*<button class ="btn btn-primary" @onclick=Reviewers>Select Design Review Participants</button>*@
+            </td>
+        </tr>
+        <tr>
+        </tr>
+
+        <tr>
+            <td>
+                Optic Part # :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="opticPart" />
+            </td>
+            <td>
+                Part
+                @*<InputSelect id="s2" class="form-control" @bind-Value="part">
+
+                <option value="">Part Lookup</option>
+                @foreach (DataRow r in dtParts.Rows)
+                {
+                <option value="@r[0].ToString()">@r[0].ToString()</option>
+                }
+
+                </InputSelect>*@
+                <InputText id="s2" style="width: 100%" placeholder="" @bind-Value="part" />
+
+            </td>
+
+            <td>
+                Design Review Participant 2
+                <InputText id="n7" style="width: 100%" placeholder="use format = name:email" @bind-Value="reviewer2" />
+            </td>
+
+
+        </tr>
+
+        <tr>
+            <td>
+                Optic Drawing Number and Path :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="opticDrawing" />
+            </td>
+            <td>
+                Surface of optic that will be focused on with this tool :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="surface" />
+            </td>
+            <td>
+                Design Review Participant 3
+                <InputText id="n7" style="width: 100%" placeholder="use format = name:email" @bind-Value="reviewer3" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                If modification of existing tool - Tool Number :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="toolNo" />
+            </td>
+            <td>
+                Tool Description :
+                <InputText id="n10" style="width: 100%" placeholder="" @bind-Value="toolDescription" />
+            </td>
+            <td>
+                Design Review Participant 4
+                <InputText id="n7" style="width: 100%" placeholder="use format = name:email" @bind-Value="reviewer4" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+
+                * Describe Request/List Requirements :
+                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="validations.Requirements" />
+                <ValidationMessage For="()=> validations.Requirements" />
+
+            </td>
+            <td>
+                Any Additional Information :
+                <InputText id="a13" placeholder="Additional Information" style="width: 100%; height: 100px" @bind-Value="additional" />
+            </td>
+
+            <td>
+                * Select Requested Date :
+                <InputDate id="ds1" style="width: 100%; height: 100px" @bind-Value="validations.RequestedDate" />
+                <ValidationMessage For="()=> validations.RequestedDate" />
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <br />
+                <button class="btn btn-primary">Submit Request</button>
+            </td>
+            <td></td>
+            <td>
+            </td>
+        </tr>
+
+    </table>
+
+</EditForm>
+
+
+
+
+@code {
+
+    private FormModel dataModel = new FormModel();
+
+    public EditContext? EditContext;
+    //private ValidationMessageStore? messageStore;
+
+    PopUp pop = new PopUp();
+
+    //private string requestor = "";
+    //public string employeeIndex = "";
+    public int eIndex;
+    private string department = "";
+    //private string ContactEmail = "";
+    //private DateTime requestedDate;
+    //private string? quantity;
+    //private string? priority;
+    private string project = "";
+    private string techContact = "";
+    private string deliverTo = "";
+    private string materials = "";
+    private string part = "";
+    private string finishing = "";
+    private string reviewer1 = "";
+    private string reviewer2 = "";
+    private string reviewer3 = "";
+    private string reviewer4 = "";
+    private string opticPart = "";
+    private string opticDrawing = "";
+    private string surface = "";
+    private string toolNo = "";
+    private string toolDescription = "";
+    //private string? requirements;
+    private string additional = "";
+    private string pdf = "";
+    private string dxf = "";
+
+    private string? chargeNo;
+    private string? LCostCenter = " Cost Center  ";
+    private string? LProjectNumber = " Project Number  ";
+    private string? Lpdf = " Check if attaching pdf document.  ";
+    public bool cbProject = false;
+    public bool cbCostCenter = false;
+    public bool cbPersist = false;
+    private bool cbPDF = false;
+    private bool cbDXF = false;
+
+
+    static string SqlTable = "RIC.DesignRequests";
+    //static string filetypeSelected;
+    static string filetypeLoaded;
+    //static bool Ftwofiles = false;
+    //static bool Ftwofiles2BUploaded = false;
+
+    //static string requestResponse;
+    //static string requestReport;
+    //static string subjectline;
+    static string ename;
+    static int uid;
+
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    DataTable dtEmployees;
+    DataTable dtParts;
+    DataTable dtProjectCharges;
+    DataTable dtCostCenters;
+
+
+    private string? selectedID;
+
+    private ValidationComponents validations = new ValidationComponents();
+
+    private void HandleValidSubmit()
+    {
+        DataEntry();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+
+    protected bool testBoolP
+    {
+        get { return cbProject; }
+        set
+        {
+            cbProject = value;
+        }
+    }
+
+    protected bool testBoolC
+    {
+        get { return cbCostCenter; }
+        set
+        {
+            cbCostCenter = value;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        EditContext = new EditContext(dataModel);
+        EditContext.OnFieldChanged += EditContext_OnFieldChanged;
+        //EditContext.OnValidationRequested += HandleValidationRequested;
+        //messageStore = new(EditContext);
+
+        //popup = new PopUp();
+
+        dtEmployees = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                  "  ROW_NUMBER() OVER " +
+                  "(Order BY sn) " +
+                  ", CN " +
+                  ", mail " +
+                  "FROM EmployeesAmetekAD " +
+                  "WHERE BU = 'ca-ric' " +
+                  "order by SN "
+                  , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtEmployees.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+
+        dtProjectCharges = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand(
+            "SELECT COALESCE(No_,'') Number " +
+            "from ZYGO$Job where [Global Dimension 2 Code] in " +
+            "('EUV','CRYSTALLINE OPTICS','GLASS OPTICS','MACHINED STRUCTURES') ORDER BY Number", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtProjectCharges.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        dtCostCenters = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand(
+            "select Code + '  ' + Name As Number from [ZYGO$Dimension Value] " +
+            "WHERE [Dimension Code] = 'COSTCENTER' AND Blocked = 0 ORDER BY Number", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtCostCenters.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+
+    public void DataEntry()
+    {
+        string submitDate = DateTime.Now.ToString();
+
+        g.requestResponse =
+            "Dear " + validations.Employee + "," +
+            "\n\r" +
+            "Here is the information which you submitted on your recent design request:" +
+            "\n\r" +
+            "Date and Time of Submission: " +
+            submitDate + "  Eastern Standard Time" +
+            "\n\r" +
+            "Name............: " + validations.Employee + "\n\r" +
+            "Contact eMail...: " + g.contactEmail + "\n\r" +
+            "Priority........: " + validations.Priority + "\r" +
+            "Quantity........: " + validations.Quantity.ToString() + "\r" +
+            "Need Date.......: " + validations.RequestedDate.ToShortDateString() + "\r" +
+            "Project.........: " + project + "\r" +
+            "Part............: " + part + "\r" +
+            "Department......: " + department + "\r" +
+            "Design Request Description: " +
+            "\r\r" +
+            validations.Requirements +
+            "\r\r" +
+            additional +
+            "\r\r" +
+            //"Link to View Request Status:" + "\r" +
+            "If you have any questions, please visit us at our Tooling Office Hours on XXXX";
+
+        // email to tool room to report request
+
+        g.subjectLine = "Design Request: " + g.contactEmail;
+
+        g.requestReport =
+                    "Design Request Description: " +
+                    "\r\r" +
+                    validations.Requirements +
+                    "\r\r" +
+                    "Quantity.......: " + validations.Quantity.ToString() + "\r\r\r" +
+                    "Name...........: " + validations.Employee + "\n\r" +
+                    "Contact eMail..: " + g.contactEmail + "\n\r" +
+                    "Priority........: " + validations.Priority + "\r" +
+                    "Need Date.......: " + validations.RequestedDate.ToShortDateString() + "\r" +
+                    "Project.........: " + project + "\r" +
+                    "Part............: " + part + "\r" +
+                    "Department......: " + department + "\r" +
+                    "Date of Submission: " + submitDate;
+
+        cnxn = new SqlConnection(g.db);
+
+        SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
+        pSubjectLine.Value = g.subjectLine;
+
+        SqlParameter pName = new SqlParameter("@name", SqlDbType.VarChar, 100);
+        pName.Value = validations.Employee;
+
+        SqlParameter Request_Text = new SqlParameter("@request_text", SqlDbType.VarChar, 4000);
+        Request_Text.Value = validations.Requirements;
+
+        SqlParameter pDepartment = new SqlParameter("@department", SqlDbType.VarChar, 50);
+        pDepartment.Value = department;
+
+        SqlParameter pProject = new SqlParameter("@Project", SqlDbType.VarChar, 20);
+        pProject.Value = project;
+
+        SqlParameter pPart = new SqlParameter("@Part", SqlDbType.VarChar, 50);
+        pPart.Value = part;
+
+        SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
+        pQuantity.Value = validations.Quantity;
+
+        SqlParameter pContactEmail = new SqlParameter("@ContactEmail", SqlDbType.VarChar, 50);
+        pContactEmail.Value = g.contactEmail;
+
+        SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
+        pPriority.Value = validations.Priority;
+
+        SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
+        report.Value = g.requestReport;
+
+        SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
+        response.Value = g.requestResponse;
+
+        SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectChargeNumber", SqlDbType.VarChar, 50);
+        pProjectChargeNumber.Value = validations.ChargeNumber;
+
+        SqlParameter pOpticDrawingPath = new SqlParameter("@OpticDrawingPath", SqlDbType.VarChar, 200);
+        pOpticDrawingPath.Value = opticDrawing;
+
+        SqlParameter pExistingTool = new SqlParameter("@ExistingTool", SqlDbType.VarChar, 50);
+        pExistingTool.Value = toolNo;
+
+        SqlParameter pToolDescription = new SqlParameter("@ToolDescription", SqlDbType.VarChar, 50);
+        pToolDescription.Value = toolDescription;
+
+        SqlParameter pFocalSurface = new SqlParameter("@FocalSurface", SqlDbType.VarChar, 50);
+        pFocalSurface.Value = surface;
+
+
+        SqlParameter pFinishing = new SqlParameter("@Finishing", SqlDbType.VarChar, 50);
+        pFinishing.Value = finishing;
+
+
+        SqlParameter pTechnicalContactName = new SqlParameter("@TechnicalContactName", SqlDbType.VarChar, 50);
+        pTechnicalContactName.Value = techContact;
+
+        SqlParameter pDeliverTo = new SqlParameter("@DeliverTo", SqlDbType.VarChar, 50);
+        pDeliverTo.Value = deliverTo;
+
+        SqlParameter pAdditionalInformation = new SqlParameter("@AdditionalInformation", SqlDbType.VarChar, 1000);
+        pAdditionalInformation.Value = additional;
+
+        SqlParameter pDesignReview1 = new SqlParameter("@DesignReview1", SqlDbType.VarChar, 100);
+        pDesignReview1.Value = reviewer1;
+
+        SqlParameter pDesignReview2 = new SqlParameter("@DesignReview2", SqlDbType.VarChar, 100);
+        pDesignReview2.Value = reviewer2;
+
+        SqlParameter pDesignReview3 = new SqlParameter("@DesignReview3", SqlDbType.VarChar, 100);
+        pDesignReview3.Value = reviewer3;
+
+        SqlParameter pDesignReview4 = new SqlParameter("@DesignReview4", SqlDbType.VarChar, 100);
+        pDesignReview4.Value = reviewer4;
+
+        /* defining the paramater as output to be able to get the id of the row from the data being input into the database  */
+
+        SqlParameter pRequestID = new SqlParameter("@ID", SqlDbType.Int);
+        pRequestID.Direction = ParameterDirection.Output;
+
+
+        cnxn.Open();
+
+        SqlCommand cmd = new SqlCommand("Insert into " + SqlTable + " (" +
+                " request_date " +
+                ",request_text " +
+                ",quantity " +
+                ",request_need_date " +
+                ",priority " +
+                ",requestor " +                        //10
+                ",requestor_email " +
+                ",subject_line " +
+                ",request_response_email_body " +
+                ",request_report_email_body " +
+                ",[Department] " +
+                ",OpticDrawing_Path " +
+                ",ExistingTool4Modification " +
+                ",ToolDescription " +
+                ",project" +
+                ",project_charge_number " +
+                ",Part" +
+                ",AdditionalInformation" +
+                ",Finish " +
+                ",TechnicalContactName " +
+                ",FocalSurface " +
+                ",DesignReview1 " +
+                ",DesignReview2 " +
+                ",DesignReview3 " +
+                ",DesignReview4 " +
+                ") values (" +
+                "'" + DateTime.Now.Date + "'" +       //1
+                "," + Request_Text +
+                "," + pQuantity +
+                ",'" + validations.RequestedDate +
+                "'," + pPriority +                                //10
+                "," + pName +
+                "," + pContactEmail +
+                "," + pSubjectLine +
+                "," + response +
+                "," + report +
+                "," + pDepartment +
+                "," + pOpticDrawingPath +
+                "," + pExistingTool +
+                "," + pToolDescription +
+                "," + pProject +
+                "," + pProjectChargeNumber +
+                "," + pPart +
+                "," + pAdditionalInformation +
+                "," + pFinishing +
+                "," + pTechnicalContactName +
+                "," + pFocalSurface +
+                "," + pDesignReview1 +
+                "," + pDesignReview2 +
+                "," + pDesignReview3 +
+                "," + pDesignReview4 +
+                ") SET @ID = SCOPE_IDENTITY() ", cnxn);
+        cmd.Parameters.Add(Request_Text);
+        cmd.Parameters.Add(pQuantity);
+        cmd.Parameters.Add(pContactEmail);
+        cmd.Parameters.Add(pPriority);
+        cmd.Parameters.Add(response);
+        cmd.Parameters.Add(pSubjectLine);
+        cmd.Parameters.Add(pName);
+        cmd.Parameters.Add(report);
+        cmd.Parameters.Add(pDepartment);
+        cmd.Parameters.Add(pOpticDrawingPath);
+        cmd.Parameters.Add(pExistingTool);
+        cmd.Parameters.Add(pToolDescription);
+        cmd.Parameters.Add(pProject);
+        cmd.Parameters.Add(pProjectChargeNumber);
+        cmd.Parameters.Add(pPart);
+        cmd.Parameters.Add(pAdditionalInformation);
+        cmd.Parameters.Add(pFinishing);
+        cmd.Parameters.Add(pTechnicalContactName);
+        cmd.Parameters.Add(pDesignReview1);
+        cmd.Parameters.Add(pDesignReview2);
+        cmd.Parameters.Add(pDesignReview3);
+        cmd.Parameters.Add(pDesignReview4);
+        cmd.Parameters.Add(pFocalSurface);
+        cmd.Parameters.Add(pRequestID);
+
+        try
+        {
+            int rowsReturned = cmd.ExecuteNonQuery();
+            g.requestID = (int)cmd.Parameters["@ID"].Value;
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cmd.Dispose();
+
+        //Email();
+
+        if (!cbPDF & !cbDXF)
+        {
+
+
+            uid = 0;
+
+            NavMgr.NavigateTo("thankyou");
+        }
+        else if (cbPDF & !cbDXF)
+        {
+            g.filetypeSelected = "pdf";
+            g.Ftwofiles = false;
+            NavMgr.NavigateTo("uploadpdffiles");
+        }
+        else if (cbPDF & cbDXF)
+        {
+            g.Ftwofiles = true;
+            g.Ftwofiles2BUploaded = true;
+            g.filetypeSelected = "pdf";
+            NavMgr.NavigateTo("uploadpdffiles");
+        }
+        else if (!cbPDF & cbDXF)
+        {
+            g.Ftwofiles = false;
+            NavMgr.NavigateTo("uploaddxffiles");
+        }
+
+
+        /*  this clears the fields  */
+
+
+        validations = new ValidationComponents();
+
+    }
+
+
+    public void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        if (e.FieldIdentifier.FieldName == "eIndex")
+        {
+            validations.Employee = dtEmployees.Rows[eIndex - 1][1].ToString();
+            g.contactEmail = dtEmployees.Rows[eIndex - 1][2].ToString();
+        }
+    }
+}
