@@ -4,13 +4,14 @@ namespace TRequest.Pages
 {
     public class ValidationComponents
     {
-        public string Description { get; set; }
+        [Required]
+        public string RequestType { get; set; }
 
         [Required]
-        public string Requirements { get; set; }
+        public string Request { get; set; }
 
         [Required]
-        public string ChargeNumber { get; set; }
+        public string CostCenter { get; set; }
 
         [Required]
         public string Employee { get; set; }
@@ -22,9 +23,20 @@ namespace TRequest.Pages
         [Required]
         public string Priority { get; set; }
 
-        //[Range(1, 100000,
-        //    ErrorMessage = "Accommodation invalid (1-100000).")]
-        //public int MaximumAccommodation { get; set; }
+        [Required]
+        [Range(1, 100000,
+            ErrorMessage = "Value invalid (1-100000).")]
+        public int TimeSavings { get; set; }
+
+        [Required]
+        [Range(1, 100000,
+            ErrorMessage = "Value invalid (1-100000).")]
+        public int CostSavings { get; set; }
+
+        [Required]
+        [Range(1, 100000,
+            ErrorMessage = "Value invalid (1-100000).")]
+        public int RevenueSavings { get; set; }
 
         //[Required]
         //[Range(typeof(bool), "true", "true",

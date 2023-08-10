@@ -9,10 +9,234 @@
 @using static PopUp
 
 @inject Global g
-@inject FormModel f
-
+@*@inject FormModel f*@
 
 @inject NavigationManager NavMgr
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+<PageTitle>Tool Room Requests</PageTitle>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <h3>Tool Room Requests</h3>
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            Items marked with an asterisk * require an entry.<br />
+        </td>
+    </tr>
+    <tr>
+        @*<td align="center">
+        <EditForm Model="data" OnValidSubmit="DataEntry">
+        <InputCheckbox @bind-Value="cbPersist"></InputCheckbox> Check this box if you want to make multiple entries and have some selections remain.
+        </EditForm>
+        </td>*@
+    </tr>
+    <tr>
+        <td align="center">
+            Click Submit button with form filled out to attach supporting document when check box checked.
+        </td>
+    </tr>
+    <tr></tr>
+</table>
+<br />
+
+<EditForm EditContext="EditContext">
+    <table width="100%" cellpadding="8">
+        <tr>
+            <td>
+
+            </td>
+                <td>
+                <InputCheckbox @bind-Value="cbPDF"></InputCheckbox> Check if attaching pdf document.
+            </td>
+            <td>
+                <InputCheckbox @bind-Value="cbDXF"></InputCheckbox> Check if attaching dxf document - must be Scale 1:1 - no Step files.
+            </td>
+            </tr>
+            
+        <tr>
+            <td>
+                <p>
+                    <label for="employees">
+                        * Name :
+                    </label>
+                    <InputSelect id="employees" style="width: 100%" @bind-Value="eIndex">
+                        <option value="">Must Select an Employee</option>
+
+                        @foreach (DataRow r in dtEmployees.Rows)
+                        {
+                                <option value="@r[0].ToString()">@r[1].ToString()</option>
+                        }
+                    </InputSelect>
+                </p>
+            </td>
+            
+        </tr>
+    </table>
+</EditForm>
+
+<EditForm Model="validations" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table width="100%" cellpadding="8">
+
+        <tr>
+            <td>
+                Contact Email :
+                <InputText id="n3" placeholder="" style="width: 100%" @bind-Value="g.contactEmail" />
+            </td>
+            <td>
+                * Priority :
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="validations.Priority">
+                    <option value="">Selection Required</option>
+                    <option value="Routine">Routine</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Production Down">Production Down</option>
+                </InputSelect>
+
+                <ValidationMessage For="()=> validations.Priority" style="display:inline" />
+            </td>
+            <td>
+                * Time Savings Estimate (work days:  whole numbers only: no decimals) :
+                <InputNumber id="n100" style="width: 100%" placeholder="" @bind-Value="validations.TimeSavings" />
+                <ValidationMessage For="()=> validations.TimeSavings" style="display:inline" />
+            </td>
+
+        </tr>
+        <tr>
+            <td align="left">
+
+                Phone Extension :
+                <InputText id="n13" placeholder="" style="width: 100%" @bind-Value="extension" />
+                
+            </td>
+            <td>
+                * Quantity :
+                <InputNumber id="n4" style="width: 100%" placeholder="" @bind-Value="validations.Quantity" />
+
+                <ValidationMessage For="()=> validations.Quantity" />
+            </td>
+            <td>
+                * Cost Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+                <InputNumber id="n10" style="width: 100%" placeholder="" @bind-Value="validations.CostSavings" />
+                <ValidationMessage For="()=> validations.CostSavings" />
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+               * Request Type :
+
+                <InputSelect class="form-control" style="width: 100%" @bind-Value="validations.RequestType">
+                    <option value="">Selection Required</option>
+                    <option value="Production">Production</option>
+                    <option value="Prototype">Prototype</option>
+                    <option value="Tooling">Tooling</option>
+                   
+                </InputSelect>
+                <ValidationMessage For="()=> validations.RequestType" />
+            </td>
+            <td>
+                * Cost Center:
+                <br />
+                        <InputSelect id="s4" class="form-control" @bind-Value="validations.CostCenter">
+
+                            <option value="">Cost Center Lookup</option>
+                        @foreach (System.Data.DataRow r in dtCostCenters.Rows)
+                        {
+                                    <option value="@r[0].ToString()">@r[0].ToString()</option>
+                        }
+                        </InputSelect>
+                
+                <ValidationMessage For="()=> validations.CostCenter" />
+
+            </td>
+            <td>
+                * Revenue Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+
+                <InputNumber id="n10" style="width: 100%" placeholder="" @bind-Value="validations.RevenueSavings" />
+                <ValidationMessage For="()=> validations.RevenueSavings" />
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                
+            </td>
+            <td>
+                
+            </td>
+            <td>
+                Project :
+                <InputText id="n8" style="width: 100%" placeholder="" @bind-Value="project" />
+            </td>
+        </tr>
+        <tr>
+        </tr>
+
+        <tr>
+            <td>
+                
+            </td>
+            <td>
+                
+            </td>
+
+            <td>
+                Rework # :
+                <InputText id="n9" style="width: 100%" placeholder="" @bind-Value="reworkNumber" />
+            </td>
+
+
+        </tr>
+
+        
+        <tr>
+            <td>
+                * Select Requested Date :
+                <InputDate id="ds1" style="width: 100%; height: 100px" @bind-Value="validations.RequestedDate" />
+                <ValidationMessage For="()=> validations.RequestedDate" />
+
+                
+
+            </td>
+            <td>
+                
+            </td>
+
+            <td>
+                * Describe Request/List Requirements :
+                <InputText id="a13" placeholder="Requiremenets" style="width: 100%; height: 100px" @bind-Value="validations.Request" />
+                <ValidationMessage For="()=> validations.Request" />
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <br />
+                <button class="btn btn-primary">Submit Request</button>
+            </td>
+            <td></td>
+            <td>
+            </td>
+        </tr>
+
+    </table>
+
+</EditForm>
+
+
+
 
 
 @code
@@ -24,46 +248,24 @@
 
     PopUp pop = new PopUp();
 
-    //private string requestor = "";
-    //public string employeeIndex = "";
+    private string requestor = "";
+    public string extension = "";
     public int eIndex;
-    private string department = "";
-    //private string ContactEmail = "";
-    //private DateTime requestedDate;
-    //private string? quantity;
-    //private string? priority;
+    private string reworkNumber = "";
     private string project = "";
-    private string techContact = "";
-    private string deliverTo = "";
-    private string materials = "";
-    private string part = "";
-    private string finishing = "";
-    private string reviewer1 = "";
-    private string reviewer2 = "";
-    private string reviewer3 = "";
-    private string reviewer4 = "";
-    private string opticPart = "";
-    private string opticDrawing = "";
-    private string surface = "";
-    private string toolNo = "";
-    private string toolDescription = "";
-    //private string? requirements;
-    private string additional = "";
+    private string requestType = "";
     private string pdf = "";
     private string dxf = "";
 
-    private string? chargeNo;
     private string? LCostCenter = " Cost Center  ";
     private string? LProjectNumber = " Project Number  ";
     private string? Lpdf = " Check if attaching pdf document.  ";
-    public bool cbProject = false;
-    public bool cbCostCenter = false;
     public bool cbPersist = false;
     private bool cbPDF = false;
     private bool cbDXF = false;
 
 
-    static string SqlTable = "RIC.DesignRequests";
+    static string SqlTable = "Tool_RequestsX";
     //static string filetypeSelected;
     static string filetypeLoaded;
     //static bool Ftwofiles = false;
@@ -83,6 +285,28 @@
     System.Data.DataTable dtProjectCharges;
     System.Data.DataTable dtCostCenters;
 
+    DataTable table;
+    DataTable table1;
+    //SqlConnection cnxn;
+    //SqlDataReader dr;
+    //static string SqlTable = "Tool_Requests";
+    static string filetypeSelected;
+    //static string filetypeLoaded;
+    static bool Ftwofiles = false;
+    static bool Ftwofiles2BUploaded = false;
+    static string uploadedFilename;
+    static string requestResponse;
+    static string requestReport;
+    static string calendarFlag;
+    static string costcenter;
+    static string Sql;
+    static string db = "server=CT-MID-SQL11; user=readWrite; password=Read+Write!;" +
+                       "database=AccessFrontEnds";
+    static string subjectline;
+    //static string ename;
+    //static int uid;
+    static string testing = "NO";
+
 
     private string? selectedID;
 
@@ -98,23 +322,9 @@
         base.OnParametersSet();
     }
 
-    protected bool testBoolP
-    {
-        get { return cbProject; }
-        set
-        {
-            cbProject = value;
-        }
-    }
 
-    protected bool testBoolC
-    {
-        get { return cbCostCenter; }
-        set
-        {
-            cbCostCenter = value;
-        }
-    }
+
+
 
     protected override void OnInitialized()
     {
@@ -135,7 +345,7 @@
                   ", CN " +
                   ", mail " +
                   "FROM EmployeesAmetekAD " +
-                  "WHERE BU = 'ca-ric' " +
+                  "WHERE BU = 'ct-mid' " +
                   "order by SN "
                   , cnxn);
 
@@ -157,31 +367,6 @@
 
         }
 
-
-        dtProjectCharges = new DataTable();
-
-        cnxn = new SqlConnection(g.dbNAV);
-
-        cmd = new SqlCommand(
-            "SELECT COALESCE(No_,'') Number " +
-            "from ZYGO$Job where [Global Dimension 2 Code] in " +
-            "('EUV','CRYSTALLINE OPTICS','GLASS OPTICS','MACHINED STRUCTURES') ORDER BY Number", cnxn);
-
-        try
-        {
-            cnxn.Open();
-            dr = cmd.ExecuteReader();
-            dtProjectCharges.Load(dr);
-        }
-        catch (SqlException ex)
-        {
-            ex.ToString();
-        }
-        finally
-        {
-            cnxn.Close();
-
-        }
 
         dtCostCenters = new System.Data.DataTable();
 
@@ -214,45 +399,44 @@
         g.requestResponse =
             "Dear " + validations.Employee + "," +
             "\n\r" +
-            "Here is the information which you submitted on your recent design request:" +
+            "Here is the information which you submitted on your recent tool request:" +
             "\n\r" +
             "Date and Time of Submission: " +
             submitDate + "  Eastern Standard Time" +
             "\n\r" +
             "Name............: " + validations.Employee + "\n\r" +
             "Contact eMail...: " + g.contactEmail + "\n\r" +
+            "Ext.............: " + extension + "\r" +
             "Priority........: " + validations.Priority + "\r" +
             "Quantity........: " + validations.Quantity.ToString() + "\r" +
             "Need Date.......: " + validations.RequestedDate.ToShortDateString() + "\r" +
             "Project.........: " + project + "\r" +
-            "Part............: " + part + "\r" +
-            "Department......: " + department + "\r" +
-            "Design Request Description: " +
+            "Rework #........: " + reworkNumber + "\r" +
+            "Cost Center.....: " + validations.CostCenter + "\n\r" +
+            "Time Savings Est: " + validations.TimeSavings.ToString() + "\n\r" +
+            "Cost Savings Est: " + validations.CostSavings.ToString() + "\n\r" +
+            "Revenue Savings Est: " + validations.RevenueSavings.ToString() + "\n\r" +
+            "Tool Request Description: " +
             "\r\r" +
-            validations.Requirements +
-            "\r\r" +
-            additional +
-            "\r\r" +
-            //"Link to View Request Status:" + "\r" +
-            "If you have any questions, please visit us at our Tooling Office Hours on XXXX";
+            validations.Request;
+
 
         // email to tool room to report request
 
-        g.subjectLine = "Design Request: " + g.contactEmail;
+        g.subjectLine = "Tool Request: " + g.contactEmail;
 
         g.requestReport =
-                    "Design Request Description: " +
+                    "Tool Request Description: " +
                     "\r\r" +
-                    validations.Requirements +
+                    validations.Request +
                     "\r\r" +
                     "Quantity.......: " + validations.Quantity.ToString() + "\r\r\r" +
                     "Name...........: " + validations.Employee + "\n\r" +
                     "Contact eMail..: " + g.contactEmail + "\n\r" +
-                    "Priority........: " + validations.Priority + "\r" +
-                    "Need Date.......: " + validations.RequestedDate.ToShortDateString() + "\r" +
+                    "Extension........: " + extension + "\r" +
                     "Project.........: " + project + "\r" +
-                    "Part............: " + part + "\r" +
-                    "Department......: " + department + "\r" +
+                    "Rework Number...: " + reworkNumber + "\r" +
+                    "Cost Center.....: " + validations.CostCenter + "\r\r" +
                     "Date of Submission: " + submitDate;
 
         cnxn = new SqlConnection(g.db);
@@ -264,16 +448,16 @@
         pName.Value = validations.Employee;
 
         SqlParameter Request_Text = new SqlParameter("@request_text", SqlDbType.VarChar, 4000);
-        Request_Text.Value = validations.Requirements;
+        Request_Text.Value = validations.Request;
 
-        SqlParameter pDepartment = new SqlParameter("@department", SqlDbType.VarChar, 50);
-        pDepartment.Value = department;
+        SqlParameter Phone = new SqlParameter("@Phone", SqlDbType.VarChar, 50);
+        Phone.Value = extension;
+
+        SqlParameter pCostCenter = new SqlParameter("@costcenter", SqlDbType.VarChar, 50);
+        pCostCenter.Value = validations.CostCenter;
 
         SqlParameter pProject = new SqlParameter("@Project", SqlDbType.VarChar, 20);
         pProject.Value = project;
-
-        SqlParameter pPart = new SqlParameter("@Part", SqlDbType.VarChar, 50);
-        pPart.Value = part;
 
         SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
         pQuantity.Value = validations.Quantity;
@@ -289,47 +473,18 @@
 
         SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
         response.Value = g.requestResponse;
+                
+        SqlParameter pReworkNumber = new SqlParameter("@reworkNumber", SqlDbType.VarChar, 50);
+        pReworkNumber.Value = reworkNumber;
 
-        SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectChargeNumber", SqlDbType.VarChar, 50);
-        pProjectChargeNumber.Value = validations.ChargeNumber;
+        SqlParameter pRequestType = new SqlParameter("@requestType", SqlDbType.VarChar, 50);
+        pRequestType.Value = validations.RequestType;
 
-        SqlParameter pOpticDrawingPath = new SqlParameter("@OpticDrawingPath", SqlDbType.VarChar, 200);
-        pOpticDrawingPath.Value = opticDrawing;
-
-        SqlParameter pExistingTool = new SqlParameter("@ExistingTool", SqlDbType.VarChar, 50);
-        pExistingTool.Value = toolNo;
-
-        SqlParameter pToolDescription = new SqlParameter("@ToolDescription", SqlDbType.VarChar, 50);
-        pToolDescription.Value = toolDescription;
-
-        SqlParameter pFocalSurface = new SqlParameter("@FocalSurface", SqlDbType.VarChar, 50);
-        pFocalSurface.Value = surface;
+        //SqlParameter pFocalSurface = new SqlParameter("@FocalSurface", SqlDbType.VarChar, 50);
+        //pFocalSurface.Value = surface;
 
 
-        SqlParameter pFinishing = new SqlParameter("@Finishing", SqlDbType.VarChar, 50);
-        pFinishing.Value = finishing;
-
-
-        SqlParameter pTechnicalContactName = new SqlParameter("@TechnicalContactName", SqlDbType.VarChar, 50);
-        pTechnicalContactName.Value = techContact;
-
-        SqlParameter pDeliverTo = new SqlParameter("@DeliverTo", SqlDbType.VarChar, 50);
-        pDeliverTo.Value = deliverTo;
-
-        SqlParameter pAdditionalInformation = new SqlParameter("@AdditionalInformation", SqlDbType.VarChar, 1000);
-        pAdditionalInformation.Value = additional;
-
-        SqlParameter pDesignReview1 = new SqlParameter("@DesignReview1", SqlDbType.VarChar, 100);
-        pDesignReview1.Value = reviewer1;
-
-        SqlParameter pDesignReview2 = new SqlParameter("@DesignReview2", SqlDbType.VarChar, 100);
-        pDesignReview2.Value = reviewer2;
-
-        SqlParameter pDesignReview3 = new SqlParameter("@DesignReview3", SqlDbType.VarChar, 100);
-        pDesignReview3.Value = reviewer3;
-
-        SqlParameter pDesignReview4 = new SqlParameter("@DesignReview4", SqlDbType.VarChar, 100);
-        pDesignReview4.Value = reviewer4;
+        
 
         /* defining the paramater as output to be able to get the id of the row from the data being input into the database  */
 
@@ -340,87 +495,62 @@
         cnxn.Open();
 
         SqlCommand cmd = new SqlCommand("Insert into " + SqlTable + " (" +
-                " request_date " +
-                ",request_text " +
-                ",quantity " +
-                ",request_need_date " +
-                ",priority " +
-                ",requestor " +                        //10
-                ",requestor_email " +
-                ",subject_line " +
-                ",request_response_email_body " +
-                ",request_report_email_body " +
-                ",[Department] " +
-                ",OpticDrawing_Path " +
-                ",ExistingTool4Modification " +
-                ",ToolDescription " +
-                ",project" +
-                ",project_charge_number " +
-                ",Part" +
-                ",AdditionalInformation" +
-                ",Finish " +
-                ",TechnicalContactName " +
-                ",FocalSurface " +
-                ",DesignReview1 " +
-                ",DesignReview2 " +
-                ",DesignReview3 " +
-                ",DesignReview4 " +
-                ") values (" +
-                "'" + DateTime.Now.Date + "'" +       //1
-                "," + Request_Text +
-                "," + pQuantity +
-                ",'" + validations.RequestedDate +
-                "'," + pPriority +                                //10
-                "," + pName +
-                "," + pContactEmail +
-                "," + pSubjectLine +
-                "," + response +
-                "," + report +
-                "," + pDepartment +
-                "," + pOpticDrawingPath +
-                "," + pExistingTool +
-                "," + pToolDescription +
-                "," + pProject +
-                "," + pProjectChargeNumber +
-                "," + pPart +
-                "," + pAdditionalInformation +
-                "," + pFinishing +
-                "," + pTechnicalContactName +
-                "," + pFocalSurface +
-                "," + pDesignReview1 +
-                "," + pDesignReview2 +
-                "," + pDesignReview3 +
-                "," + pDesignReview4 +
-                ") SET @ID = SCOPE_IDENTITY() ", cnxn);
-        cmd.Parameters.Add(Request_Text);
-        cmd.Parameters.Add(pQuantity);
-        cmd.Parameters.Add(pContactEmail);
-        cmd.Parameters.Add(pPriority);
-        cmd.Parameters.Add(response);
-        cmd.Parameters.Add(pSubjectLine);
-        cmd.Parameters.Add(pName);
-        cmd.Parameters.Add(report);
-        cmd.Parameters.Add(pDepartment);
-        cmd.Parameters.Add(pOpticDrawingPath);
-        cmd.Parameters.Add(pExistingTool);
-        cmd.Parameters.Add(pToolDescription);
-        cmd.Parameters.Add(pProject);
-        cmd.Parameters.Add(pProjectChargeNumber);
-        cmd.Parameters.Add(pPart);
-        cmd.Parameters.Add(pAdditionalInformation);
-        cmd.Parameters.Add(pFinishing);
-        cmd.Parameters.Add(pTechnicalContactName);
-        cmd.Parameters.Add(pDesignReview1);
-        cmd.Parameters.Add(pDesignReview2);
-        cmd.Parameters.Add(pDesignReview3);
-        cmd.Parameters.Add(pDesignReview4);
-        cmd.Parameters.Add(pFocalSurface);
-        cmd.Parameters.Add(pRequestID);
-
+                    " request_date " +
+                    ",request_text " +
+                    ",quantity " +
+                    ",cost_center " +
+                    ",project" +              //5
+                    ",request_need_date " +
+                    ",priority " +
+                    ",requestor " +                        //10
+                    ",requestor_phone " +
+                    ",requestor_email " +
+                    ",subject_line " +
+                    ",request_response_email_body " +
+                    ",request_report_email_body " +
+                    ",rework_order_number " +
+                    ",[type] " +
+                    ",TimeSavingsEstimate " +
+                    ",CostSavingsEstimate " +
+                    ",RevenueSavingsEstimate " +
+                    ") values (" +
+                    "'" + DateTime.Now.Date +        //1
+                    "'," + Request_Text +
+                    "," + pQuantity +
+                    "," + pCostCenter +
+                    "," + pProject +
+                    ",'" + validations.RequestedDate.ToShortDateString() +
+                    "'," + pPriority +                                
+                    "," + pName +
+                    "," + Phone +
+                    "," + pContactEmail +
+                    "," + pSubjectLine +
+                    "," + response +
+                    "," + report +
+                    "," + pReworkNumber +
+                    "," + pRequestType +
+                    "," + validations.TimeSavings.ToString() +
+                    "," + validations.CostSavings.ToString() +
+                    "," + validations.RevenueSavings.ToString() +
+                    ")", cnxn);
+            cmd.Parameters.Add(Request_Text);
+            cmd.Parameters.Add(pQuantity);
+            cmd.Parameters.Add(Phone);
+            cmd.Parameters.Add(pContactEmail);
+            cmd.Parameters.Add(pPriority);
+            cmd.Parameters.Add(response);
+            cmd.Parameters.Add(pSubjectLine);
+            cmd.Parameters.Add(pName);
+            cmd.Parameters.Add(report);
+            cmd.Parameters.Add(pCostCenter);
+            cmd.Parameters.Add(pProject);
+            cmd.Parameters.Add(pReworkNumber);
+            cmd.Parameters.Add(pRequestType);
+       
         try
         {
             int rowsReturned = cmd.ExecuteNonQuery();
-            g.requestID = (int)cmd.Parameters["@ID"].Value;
+            //g.requestID = (int)cmd.Parameters["@ID"].Value;
         }
         catch (SqlException ex)
         {
