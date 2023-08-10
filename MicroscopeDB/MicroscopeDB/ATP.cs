@@ -587,7 +587,7 @@ namespace MicroscopeDB
                 p.ShowDialog();
             }
 
-            if (g.ProductLine == "ZeGage Pro")
+            if (g.ProductLine == "ZeGage Pro" | g.ProductLine == "ZeGage Pro HR")
             {
                 PerformanceSpecsZeGage p = new PerformanceSpecsZeGage();
                 p.ShowDialog();
