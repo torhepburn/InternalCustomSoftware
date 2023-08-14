@@ -434,7 +434,63 @@ namespace SingleLabels
 
         }
 
-       
+        private void button4_Click(object sender, EventArgs e)
+        {
+            bzp = Properties.Resources.zygo_blk_R_203;
+
+            //printer = "\\\\ct-mid-ps01\\zebrasn48";
+            //if (printer == @"\\CT-MID-PS01\ZEBRASN6")
+            //{
+            //    /*
+            //     * for SN6 works fine after printing bartender label to realign/reset
+            //     */
+            //    str = "\nN\nq456.75Q253.75,20\n";
+            //    str += SendImageToPrinter(10, 15, bzp);
+            //    str += SendImageToPrinter(300, 15, bxp);
+            //    str += "A10,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            //    str += "A10,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            //    str += "A20,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
+            //    str += "A50,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
+            //    str += "A70,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
+            //    //str += "A30,225,0,2,1,1,N,\"MADE IN TAIWAN\"\n";
+            //    str += "A20,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
+            //    str += "P" + labelQuantity + "\n";
+            //    /**/
+            //    }
+            //    else if (printer == @"\\CT-MID-PS01\ZEBRASN1" | printer == @"\\CT-MID-PS01\ZEBRASN20")
+            //    {
+            str = "\nN\nq456.75Q253.75,20\n";
+            str += SendImageToPrinter(20, 15, bzp);
+            str += SendImageToPrinter(310, 15, bxp);
+            //str += "A155,10,0,3,1,1,N,\"®\"\n";
+            str += "A20,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            str += "A20,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            str += "A30,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
+            str += "A60,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
+            str += "A80,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
+            str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
+            str += "P" + labelQuantity + "\n";
+            //}
+            /*  modified for SN20    
+             printer = "\\\\midprtsrv\\ZEBRASN20";
+             
+            //printer = "zdesigner TLP 2844";
+
+            str = "\nN\nq456.75Q253.75,20\n";
+            str += SendImageToPrinter(10, 15, bzp);
+            str += SendImageToPrinter(300, 15, bxp);
+            str += "A0,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            str += "A5,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            str += "A15,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
+            str += "A45,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
+            str += "A65,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
+            //str += "A30,225,0,2,1,1,N,\"MADE IN TAIWAN\"\n";
+            str += "A15,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
+            str += "P" + labelQuantity + "\n";
+            */
+            printer = "ZDesigner ZD421-203dpi ZPL";
+            ToPrint();
+        }
     }
 }
 
