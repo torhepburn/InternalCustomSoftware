@@ -1,0 +1,78 @@
+﻿@page "/thankyou"
+
+@using TRequest.Data
+@using System.Data;
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<PageTitle>Thank You</PageTitle>
+
+<h2>Design Requests</h2>
+
+<br />
+<b>Thank You!</b>
+<br />
+<br />
+        Dear Requestor,
+<br />
+<br />
+        Thanks for your request!
+<br />
+<br />
+        Please check your email!
+<br />
+<br />
+        Zygo's building monitor has sent you a confirmation of your request to your email address.
+<br />
+<br />
+        Zygo's Tool Room will review your request and get back to your shortly!
+<br />
+<br />
+
+@code {
+        SqlConnection cnxn;
+        SqlCommand cmd;
+
+
+    protected override void OnInitialized()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        SqlCommand cmd = new SqlCommand("spTRmailTEST", cnxn);
+        cmd.CommandType = CommandType.StoredProcedure;
+        SqlParameter to = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
+        //to.Value = "tor.hepburn@ametek.com";
+        to.Value = g.contactEmail;
+        SqlParameter etext = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
+        etext.Value = g.requestResponse;
+        SqlParameter subjline = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
+        subjline.Value = g.subjectLine;
+
+        cmd.Connection = cnxn;
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+        cmd.Dispose();
+
+        /*    REQUEST REPORT to TOOL ROOM    */
+
+        cmd = new SqlCommand("spTRmailTEST", cnxn);
+        cmd.CommandType = CommandType.StoredProcedure;
+        SqlParameter to1 = cmd.Parameters.Add("@to", SqlDbType.NChar, 100);
+        //to1.Value = "tor.hepburn@ametek.com;";
+        to1.Value = "tor.hepburn@ametek.com;";
+        //to1.Value = "sabrina.ng@ametek.com; ca-ric.ToolRoom@ametek.com";
+        SqlParameter etext1 = cmd.Parameters.Add("@etext", SqlDbType.VarChar, 4000);
+        etext1.Value = g.requestReport;
+        SqlParameter subjline1 = cmd.Parameters.Add("@subjectline", SqlDbType.NChar, 60);
+        subjline1.Value = g.subjectLine;
+        cmd.Connection = cnxn;
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+        cmd.Dispose();
+
+    }
+ }
