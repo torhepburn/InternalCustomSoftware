@@ -275,12 +275,12 @@ namespace _1000_1041_05_CE
             str += "A100,135,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
             str += "A20,160,0,3,1,1,N,\"" + "S/N" + "\"\n";
             str += "A80,160,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
-            str += "A250,160,0,3,1,1,N,\"Hz\"\n";
-            str += "A280,160,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
+            str += "A270,160,0,3,1,1,N,\"Hz\"\n";
+            str += "A300,160,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
             str += "A20,185,0,3,1,1,N,\"VOLTS\"\n";
             str += "A100,185,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
-            str += "A220,185,0,3,1,1,N,\"AMPS\"\n";
-            str += "A290,185,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
+            str += "A240,185,0,3,1,1,N,\"AMPS\"\n";
+            str += "A310,185,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
             str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
             str += "P" + labelQuantity + "\n";
 
