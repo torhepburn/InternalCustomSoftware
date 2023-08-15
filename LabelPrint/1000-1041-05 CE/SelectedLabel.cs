@@ -71,7 +71,7 @@ namespace _1000_1041_05_CE
              tbModel.Text = tbModel.Text.Replace("\"", "\\\"");
 
             //g.printer = "\\\\ct-mid-ps01\\zebrasn48";
-            g.printer = "ZDesigner ZD421-203dpi ZPL";
+            //g.printer = "ZDesigner ZD421-203dpi ZPL";
 
 
             string str = "\nN\nq456.75Q253.75,20\n";
