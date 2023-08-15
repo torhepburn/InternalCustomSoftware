@@ -63,6 +63,16 @@ namespace SingleLabels.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _1000_1041_08 {
+            get {
+                object obj = ResourceManager.GetObject("_1000_1041_08", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap _1000_1041_26 {
             get {
                 object obj = ResourceManager.GetObject("_1000_1041_26", resourceCulture);

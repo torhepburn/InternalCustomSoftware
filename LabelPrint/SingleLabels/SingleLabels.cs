@@ -49,31 +49,31 @@ namespace SingleLabels
 
             try
             {
-                //SqlCommand cmd = new SqlCommand(
-                // " Select permission, permissionvalue from applicationsetup " +
-                // " where (application = '1000-1042-79' or application = 'SingleLabel') and " +
-                // " permission = 'printer' AND " +
-                // " pcid = '" + computername + "' AND username = '" + user + "' " +
-                // " order by permission desc ", cnxn);
-                //DataTable table = new DataTable();
+                SqlCommand cmd = new SqlCommand(
+                 " Select permission, permissionvalue from applicationsetup " +
+                 " where (application = '1000-1042-79' or application = 'SingleLabel') and " +
+                 " permission = 'printer' AND " +
+                 " pcid = '" + computername + "' AND username = '" + user + "' " +
+                 " order by permission desc ", cnxn);
+                DataTable table = new DataTable();
 
-                //cnxn.Open();
+                cnxn.Open();
 
-                //SqlDataReader dr;
+                SqlDataReader dr;
 
-                //dr = cmd.ExecuteReader();
-                //table.Load(dr);
+                dr = cmd.ExecuteReader();
+                table.Load(dr);
 
 
-                //if (table.Rows.Count > 0)
-                //{
-                //    printer = table.Rows[0][1].ToString().Trim();
-                //}
-                //else
-                //{
-                //    MessageBox.Show("Either this user: " + user + " or computer (" + computername + ") does not have permission to use this program: SingleLabel.");
-                //    this.Close();
-                //}
+                if (table.Rows.Count > 0)
+                {
+                    printer = table.Rows[0][1].ToString().Trim();
+                }
+                else
+                {
+                    MessageBox.Show("Either this user: " + user + " or computer (" + computername + ") does not have permission to use this program: SingleLabel.");
+                    this.Close();
+                }
 
 
             }
@@ -111,7 +111,7 @@ namespace SingleLabels
             //button1.Visible = false;
             //label1.Visible = false;
 
-            button2.BackgroundImage = Properties.Resources._1000_1041_26;
+            button2.BackgroundImage = Properties.Resources._1000_1041_08;
 
             button2.ImageAlign = ContentAlignment.MiddleCenter;
             button2.FlatStyle = FlatStyle.Flat;
@@ -149,17 +149,20 @@ namespace SingleLabels
             //    }
             //    else if (printer == @"\\CT-MID-PS01\ZEBRASN1" | printer == @"\\CT-MID-PS01\ZEBRASN20")
             //    {
-                str = "\nN\nq456.75Q253.75,20\n";
-                str += SendImageToPrinter(20, 15, bzp);
-                str += SendImageToPrinter(310, 15, bxp);
-            str += "A155,10,0,3,1,1,N,\"®\"\n";
-                str += "A20,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
-                str += "A20,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
-                str += "A30,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
-                str += "A60,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
-                str += "A80,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
-                str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
-                str += "P" + labelQuantity + "\n";
+            str = "\nN\nq456.75Q253.75,20\n";
+            str += SendImageToPrinter(20, 15, bzp);
+            str += SendImageToPrinter(310, 15, bxp);
+            str += "A20,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            str += "A20,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            str += "A30,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
+            str += "A60,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
+            str += "A80,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
+            str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
+            str += "P" + labelQuantity + "\n";
+
+
+
+
             //}
             /*  modified for SN20    
              printer = "\\\\midprtsrv\\ZEBRASN20";
@@ -178,7 +181,8 @@ namespace SingleLabels
             str += "A15,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
             str += "P" + labelQuantity + "\n";
             */
-            printer = "\\\\CT-MID-PS01\\ZEBRASN48";
+            printer = "ZDesigner ZD421-203dpi ZPL";
+            //printer = "\\\\CT-MID-PS01\\ZEBRASN48";
             ToPrint();
         }
 
@@ -438,31 +442,10 @@ namespace SingleLabels
         {
             bzp = Properties.Resources.zygo_blk_R_203;
 
-            //printer = "\\\\ct-mid-ps01\\zebrasn48";
-            //if (printer == @"\\CT-MID-PS01\ZEBRASN6")
-            //{
-            //    /*
-            //     * for SN6 works fine after printing bartender label to realign/reset
-            //     */
-            //    str = "\nN\nq456.75Q253.75,20\n";
-            //    str += SendImageToPrinter(10, 15, bzp);
-            //    str += SendImageToPrinter(300, 15, bxp);
-            //    str += "A10,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
-            //    str += "A10,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
-            //    str += "A20,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
-            //    str += "A50,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
-            //    str += "A70,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
-            //    //str += "A30,225,0,2,1,1,N,\"MADE IN TAIWAN\"\n";
-            //    str += "A20,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
-            //    str += "P" + labelQuantity + "\n";
-            //    /**/
-            //    }
-            //    else if (printer == @"\\CT-MID-PS01\ZEBRASN1" | printer == @"\\CT-MID-PS01\ZEBRASN20")
-            //    {
+            
             str = "\nN\nq456.75Q253.75,20\n";
             str += SendImageToPrinter(20, 15, bzp);
             str += SendImageToPrinter(310, 15, bxp);
-            //str += "A155,10,0,3,1,1,N,\"®\"\n";
             str += "A20,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
             str += "A20,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
             str += "A30,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
@@ -470,26 +453,31 @@ namespace SingleLabels
             str += "A80,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
             str += "A30,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
             str += "P" + labelQuantity + "\n";
-            //}
-            /*  modified for SN20    
-             printer = "\\\\midprtsrv\\ZEBRASN20";
-             
-            //printer = "zdesigner TLP 2844";
-
-            str = "\nN\nq456.75Q253.75,20\n";
-            str += SendImageToPrinter(10, 15, bzp);
-            str += SendImageToPrinter(300, 15, bxp);
-            str += "A0,85,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
-            str += "A5,110,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
-            str += "A15,135,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
-            str += "A45,170,0,2,1,1,N,\"Patents apply to this product.\"\n";
-            str += "A65,190,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
-            //str += "A30,225,0,2,1,1,N,\"MADE IN TAIWAN\"\n";
-            str += "A15,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
-            str += "P" + labelQuantity + "\n";
-            */
-            printer = "ZDesigner ZD421-203dpi ZPL";
+            
+            
+            //printer = "ZDesigner ZD421-203dpi ZPL";
             ToPrint();
+        }
+
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            str = "\nN\nq456.75Q253.75,20\n";
+            str += "A115,15,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+            str += "A90,40,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
+            str += "A140,65,0,3,1,1,N,\"MADE IN USA\"\n";
+            str += "A20,110,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            str += "A20,135,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            str += "A30,160,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
+            str += "A60,195,0,2,1,1,N,\"Patents apply to this product.\"\n";
+            str += "A80,215,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
+
+            str += "P" + labelQuantity + "\n";
+
+            //printer = "ZDesigner ZD421-203dpi ZPL";
+            //printer = "\\\\CT-MID-PS01\\ZEBRASN48";
+            ToPrint();
+
+
         }
     }
 }
