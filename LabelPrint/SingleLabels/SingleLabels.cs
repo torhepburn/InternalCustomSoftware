@@ -181,7 +181,7 @@ namespace SingleLabels
             str += "A15,225,0,2,1,1,N,\"MADE IN USA, Middlefield, CT 06455\"\n";
             str += "P" + labelQuantity + "\n";
             */
-            printer = "ZDesigner ZD421-203dpi ZPL";
+            //printer = "ZDesigner ZD421-203dpi ZPL";
             //printer = "\\\\CT-MID-PS01\\ZEBRASN48";
             ToPrint();
         }
