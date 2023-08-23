@@ -465,8 +465,8 @@ namespace SingleLabels
             str += "A115,15,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
             str += "A90,40,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
             str += "A140,65,0,3,1,1,N,\"MADE IN USA\"\n";
-            str += "A20,110,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
-            str += "A20,135,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
+            str += "A10,110,0,3,1,1,N,\"THIS PRODUCT CONFORMS WITH DHHS\"\n";
+            str += "A15,135,0,3,1,1,N,\"RADIATION PERFORMANCE STANDARD,\"\n";
             str += "A30,160,0,3,1,1,N,\"21 CFR CHAPTER I SUBCHAPTER J\"\n";
             str += "A60,195,0,2,1,1,N,\"Patents apply to this product.\"\n";
             str += "A80,215,0,2,1,1,N,\"See www.zygo.com/patents.\"\n";
