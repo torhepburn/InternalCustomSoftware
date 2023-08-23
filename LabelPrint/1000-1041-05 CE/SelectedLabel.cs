@@ -74,24 +74,23 @@ namespace _1000_1041_05_CE
             //g.printer = "ZDesigner ZD421-203dpi ZPL";
 
 
+
             string str = "\nN\nq456.75Q253.75,20\n";
-            //if (g.printer == @"\\CT-MID-PS01\ZEBRASN1" | g.printer == @"\\CT-MID-PS01\ZEBRASN20")
-            //{
-            //str += SendImageToPrinter(30, 15, bzp);
-            //str += SendImageToPrinter(320, 15, bxp);
 
-            str += SendImageToPrinter(370, 195, byp);
-            //str += "A155,10,0,3,1,1,N,\"®\"\n";
-            if (desc.Length > 30)
+            if (g.printer == @"\\CT-MID-PS01\ZEBRASN20")
             {
-                str += "A20,115,0,2,1,1,N,\"" + desc + "\"\n";
-            }
-            else
-            {
-                str += "A20,115,0,3,1,1,N,\"" + desc + "\"\n";
-            }
+                str += SendImageToPrinter(370, 195, byp);
 
-            str += "A110,30,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+                if (desc.Length > 30)
+                {
+                    str += "A20,115,0,2,1,1,N,\"" + desc + "\"\n";
+                }
+                else
+                {
+                    str += "A20,115,0,3,1,1,N,\"" + desc + "\"\n";
+                }
+
+                str += "A110,30,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
                 str += "A80,55,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
                 str += "A130,80,0,3,1,1,N,\"MADE IN USA\"\n";
 
@@ -109,21 +108,25 @@ namespace _1000_1041_05_CE
                 str += "A290,195,0,3,1,1,N,\"Hz\"\n";
                 str += "A325,195,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
-
-            /*  FOR ZD421 printers
-            
-            str += SendImageToPrinter(370, 170, byp);
-            //str += "A155,10,0,3,1,1,N,\"®\"\n";
-            if (desc.Length > 30)
-            {
-                str += "A20,90,0,2,1,1,N,\"" + desc + "\"\n";
             }
             else
             {
-                str += "A20,90,0,3,1,1,N,\"" + desc + "\"\n";
-            }
+                /*  FOR ZD421 printers   -*/
 
-            str += "A110,5,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+
+                
+                str += SendImageToPrinter(370, 170, byp);
+                //str += "A155,10,0,3,1,1,N,\"®\"\n";
+                if (desc.Length > 30)
+                {
+                    str += "A20,90,0,2,1,1,N,\"" + desc + "\"\n";
+                }
+                else
+                {
+                    str += "A20,90,0,3,1,1,N,\"" + desc + "\"\n";
+                }
+
+                str += "A110,5,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
                 str += "A80,30,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
                 str += "A130,55,0,3,1,1,N,\"MADE IN USA\"\n";
 
@@ -141,8 +144,8 @@ namespace _1000_1041_05_CE
                 str += "A290,170,0,3,1,1,N,\"Hz\"\n";
                 str += "A325,170,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
-
-            */
+            }
+            
 
             RawPrinterHelper.SendStringToPrinter(g.printer, str);
 
