@@ -43,7 +43,7 @@ namespace _1000_1041_05_CE
 
                 if (table.Rows.Count > 0)
                 {
-                    g.printer = table.Rows[0][1].ToString().Trim();
+                    g.printer = table.Rows[0][1].ToString().Trim().ToUpper();
                 }
                 else
                 {

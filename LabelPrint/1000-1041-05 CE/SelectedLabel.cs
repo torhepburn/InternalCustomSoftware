@@ -80,6 +80,38 @@ namespace _1000_1041_05_CE
             //str += SendImageToPrinter(30, 15, bzp);
             //str += SendImageToPrinter(320, 15, bxp);
 
+            str += SendImageToPrinter(370, 195, byp);
+            //str += "A155,10,0,3,1,1,N,\"®\"\n";
+            if (desc.Length > 30)
+            {
+                str += "A20,115,0,2,1,1,N,\"" + desc + "\"\n";
+            }
+            else
+            {
+                str += "A20,115,0,3,1,1,N,\"" + desc + "\"\n";
+            }
+
+            str += "A110,30,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+                str += "A80,55,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
+                str += "A130,80,0,3,1,1,N,\"MADE IN USA\"\n";
+
+                str += "A20,145,0,3,1,1,N,\"P/N\"\n";
+                str += "A70,145,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
+
+                str += "A20,170,0,3,1,1,N,\"" + "MODEL" + "\"\n";
+                str += "A100,170,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
+                str += "A20,195,0,3,1,1,N,\"S/N\"\n";
+                str += "A70,195,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
+                str += "A262,220,0,3,1,1,N,\"AMPS\"\n";
+                str += "A323,220,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
+                str += "A20,220,0,3,1,1,N,\"VOLTS\"\n";
+                str += "A100,220,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
+                str += "A290,195,0,3,1,1,N,\"Hz\"\n";
+                str += "A325,195,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
+                str += "P" + labelQuantity + "\n";
+
+            /*  FOR ZD421 printers
+            
             str += SendImageToPrinter(370, 170, byp);
             //str += "A155,10,0,3,1,1,N,\"®\"\n";
             if (desc.Length > 30)
@@ -109,6 +141,8 @@ namespace _1000_1041_05_CE
                 str += "A290,170,0,3,1,1,N,\"Hz\"\n";
                 str += "A325,170,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
+
+            */
 
             RawPrinterHelper.SendStringToPrinter(g.printer, str);
 
