@@ -79,7 +79,7 @@ namespace _1000_1041_05_CE
 
             if (g.printer == @"\\CT-MID-PS01\ZEBRASN20")
             {
-                str += SendImageToPrinter(370, 195, byp);
+                str += SendImageToPrinter(370, 35, byp);
 
                 if (desc.Length > 30)
                 {
@@ -90,9 +90,9 @@ namespace _1000_1041_05_CE
                     str += "A20,115,0,3,1,1,N,\"" + desc + "\"\n";
                 }
 
-                str += "A110,30,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
-                str += "A80,55,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
-                str += "A130,80,0,3,1,1,N,\"MADE IN USA\"\n";
+                str += "A50,30,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+                str += "A50,55,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
+                str += "A50,80,0,3,1,1,N,\"MADE IN USA\"\n";
 
                 str += "A20,145,0,3,1,1,N,\"P/N\"\n";
                 str += "A70,145,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
@@ -101,12 +101,12 @@ namespace _1000_1041_05_CE
                 str += "A100,170,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
                 str += "A20,195,0,3,1,1,N,\"S/N\"\n";
                 str += "A70,195,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
-                str += "A262,220,0,3,1,1,N,\"AMPS\"\n";
-                str += "A323,220,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
+                str += "A272,220,0,3,1,1,N,\"AMPS\"\n";
+                str += "A333,220,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
                 str += "A20,220,0,3,1,1,N,\"VOLTS\"\n";
                 str += "A100,220,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
-                str += "A290,195,0,3,1,1,N,\"Hz\"\n";
-                str += "A325,195,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
+                str += "A300,195,0,3,1,1,N,\"Hz\"\n";
+                str += "A335,195,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
             }
             else
@@ -115,8 +115,7 @@ namespace _1000_1041_05_CE
 
 
                 
-                str += SendImageToPrinter(370, 170, byp);
-                //str += "A155,10,0,3,1,1,N,\"®\"\n";
+                str += SendImageToPrinter(370, 10, byp);
                 if (desc.Length > 30)
                 {
                     str += "A20,90,0,2,1,1,N,\"" + desc + "\"\n";
@@ -125,10 +124,10 @@ namespace _1000_1041_05_CE
                 {
                     str += "A20,90,0,3,1,1,N,\"" + desc + "\"\n";
                 }
-
-                str += "A110,5,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
-                str += "A80,30,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
-                str += "A130,55,0,3,1,1,N,\"MADE IN USA\"\n";
+                                
+                str += "A50,5,0,3,1,1,N,\"ZYGO CORPORATION\"\n";
+                str += "A50,30,0,3,1,1,N,\"MIDDLEFIELD,CT 06455\"\n";
+                str += "A50,55,0,3,1,1,N,\"MADE IN USA\"\n";
 
                 str += "A20,120,0,3,1,1,N,\"P/N\"\n";
                 str += "A70,120,0,3,1,1,N,\"" + tbPartNumber.Text.Trim() + "\"\n";
@@ -137,12 +136,12 @@ namespace _1000_1041_05_CE
                 str += "A100,145,0,3,1,1,N,\"" + tbModel.Text.Trim() + "\"\n";
                 str += "A20,170,0,3,1,1,N,\"S/N\"\n";
                 str += "A70,170,0,3,1,1,N,\"" + tbSerialNumber.Text.Trim() + "\"\n";
-                str += "A262,195,0,3,1,1,N,\"AMPS\"\n";
-                str += "A323,195,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
+                str += "A272,195,0,3,1,1,N,\"AMPS\"\n";
+                str += "A333,195,0,3,1,1,N,\"" + tbAmps.Text.Trim() + "\"\n";
                 str += "A20,195,0,3,1,1,N,\"VOLTS\"\n";
                 str += "A100,195,0,3,1,1,N,\"" + tbVolts.Text.Trim() + "\"\n";
-                str += "A290,170,0,3,1,1,N,\"Hz\"\n";
-                str += "A325,170,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
+                str += "A300,170,0,3,1,1,N,\"Hz\"\n";
+                str += "A335,170,0,3,1,1,N,\"" + tbHertz.Text.Trim() + "\"\n";
                 str += "P" + labelQuantity + "\n";
             }
             
