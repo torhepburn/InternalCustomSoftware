@@ -22,6 +22,15 @@
             <Value>=Parameters!EndingDate.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
+          <QueryParameter Name="@GenProdPostGroup">
+            <Value>=Parameters!GenProdPostGroup.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@Region">
+            <Value>=Parameters!Region.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@BusinessSegment">
+            <Value>=Parameters!BusinessSegment.Value</Value>
+          </QueryParameter>
         </QueryParameters>
         <CommandText>SELECT
 
@@ -63,15 +72,15 @@ WHERE
 
 [Posting Date] between @StartDate and @EndDate
 
---AND [Gen_ Prod_ Posting Group] =  
+AND [Gen_ Prod_ Posting Group] IN ( @GenProdPostGroup) 
+
+AND dreg.[Dimension Value Code] IN (@Region)
+
+AND [Shortcut Dimension 2 Code] IN ( @BusinessSegment )
 
 AND Quantity &lt;&gt; 0
 
-AND [Job No_] &gt; '0'
-
---AND [Product Group Code] =
-
---AND [Sell-to Customer No_] =</CommandText>
+AND [Job No_] &gt; '0'</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -165,6 +174,54 @@ AND [Job No_] &gt; '0'
         </Field>
         <Field Name="WBS">
           <DataField>WBS</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="GenProdPostingGroup">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>select DISTINCT [Gen_ Prod_ Posting Group] from [ZYGO$General Posting Setup]
+
+ORDER BY [Gen_ Prod_ Posting Group]</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Gen__Prod__Posting_Group">
+          <DataField>Gen_ Prod_ Posting Group</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="BusinessSegment">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>select DISTINCT [Global Dimension 2 Code] from [ZYGO$Item]
+
+ORDER BY  [Global Dimension 2 Code] </CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Global_Dimension_2_Code">
+          <DataField>Global Dimension 2 Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="Region">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>select 
+
+DISTINCT [Dimension Value Code]
+
+from [ZYGO$Dimension Set Entry]
+
+WHERE [Dimension Code] = 'REGION'
+
+ORDER BY [Dimension Value Code]</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Dimension_Value_Code">
+          <DataField>Dimension Value Code</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -2087,18 +2144,60 @@ AND [Job No_] &gt; '0'
     </ReportParameter>
     <ReportParameter Name="GenProdPostGroup">
       <DataType>String</DataType>
-      <Nullable>true</Nullable>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>GenProdPostingGroup</DataSetName>
+          <ValueField>Gen__Prod__Posting_Group</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
       <Prompt>General Product Posting Group</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>GenProdPostingGroup</DataSetName>
+          <ValueField>Gen__Prod__Posting_Group</ValueField>
+          <LabelField>Gen__Prod__Posting_Group</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
     </ReportParameter>
     <ReportParameter Name="BusinessSegment">
       <DataType>String</DataType>
-      <Nullable>true</Nullable>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>BusinessSegment</DataSetName>
+          <ValueField>Global_Dimension_2_Code</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
       <Prompt>Business Segment</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>BusinessSegment</DataSetName>
+          <ValueField>Global_Dimension_2_Code</ValueField>
+          <LabelField>Global_Dimension_2_Code</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
     </ReportParameter>
     <ReportParameter Name="Region">
       <DataType>String</DataType>
-      <Nullable>true</Nullable>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>Region</DataSetName>
+          <ValueField>Dimension_Value_Code</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <AllowBlank>true</AllowBlank>
       <Prompt>Region</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>Region</DataSetName>
+          <ValueField>Dimension_Value_Code</ValueField>
+          <LabelField>Dimension_Value_Code</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
