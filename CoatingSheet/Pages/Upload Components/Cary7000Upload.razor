@@ -1,0 +1,396 @@
+﻿@page "/Cary7000"
+@using ChartJs.Blazor.LineChart
+
+@*Loading wheel*@
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+@*Title and buttons*@
+<h3>Cary 7000 Spectral Data</h3>
+<PageTitle>Cary 7000 Upload</PageTitle>
+<InputFile OnChange="OnFileSelected"></InputFile>
+<button @onclick=UploadPop.ShowPopup>Upload</button>
+
+
+@*Upload button Popup*@
+<div class="popup-overlay @(UploadPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Enter Run #</h3> @*Loading all available run numbers for convenience*@
+        <input type="text" placeholder="#######" list="runNumList" @bind="runNumber"/>
+        <datalist id="runNumList">
+            @foreach(string item in runList)
+            {
+                <option>@item</option>
+            }
+        </datalist>
+        @*Confirms upload*@
+        <button class="button-save" @onclick="Upload">Upload</button>
+        @*Closes popup*@
+        <button class="button-85" @onclick="UploadPop.ClosePopup">Cancel</button>
+    </div>
+</div>
+
+@*This shows when a file is selected and data is available to show*@
+@if (showTables)
+{
+    @*Chart JS plugin*@
+    <Chart @key=lineConfig Config="lineConfig"></Chart>
+
+    @*Displays tables of all tests*@
+    foreach(TestRun test in tests)
+    {
+        <h4>@test.Name</h4>
+        <Table @key=test.dt dt="test.dt" TableStyle="generic-table"></Table>
+        <br>
+        <br />
+    }
+}
+else
+{
+    <label>Select a Cary7000 csv file and a table will show with its data. If the data is correct upload to the database</label>
+    <br />
+    <br />
+}
+
+@*ERROR MESSAGE POPUP*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+
+
+
+@code{
+    private MemoryStream uploadedFileStream;
+    DataTable dtProcess;
+    DataTable dt;
+    private bool showTables = false;
+    private List<string> runList = new List<string>(); //list for upload input
+
+    PopUp pop = new PopUp();
+    PopUp UploadPop = new PopUp();
+
+    private LineConfig lineConfig; //Required for ChartJS graph
+
+    public class TestRun
+    {
+        public string? Name { get; set; }
+        public TestRun(string name) //Constructor for setting name of tests
+        {
+            Name = name;
+        }
+
+        public DataTable? dt;
+        public LineConfig? lineConfig;
+    }
+
+    private List<TestRun> tests = new List<TestRun>();
+
+    private string runNumber = ""; //This is the inputted run number to tie to the data
+
+    private bool isLoading = false; //Prompts the loading wheel
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Loads all of the run numbers for the upload confirmation
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+        SqlCommand cmd = new SqlCommand(@"
+        SELECT [RUN #] FROM CoatingSheet
+        ", cnxn);
+
+        await cnxn.OpenAsync();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            while (dr.Read())
+            {
+                runList.Add(dr.GetString(0));
+            }
+        }
+        await cnxn.CloseAsync();
+
+    }
+
+    private void ConfigureLineConfig()
+    {
+        //This will configure the line graph with all data collected from the selected file
+        //https://github.com/mariusmuntean/ChartJs.Blazor reference this for documentation
+        lineConfig = new LineConfig();
+
+        lineConfig.Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Cary7000"
+                }
+        };
+
+        //Sets up the x axis values
+        Array xAxis = GetColumnValues(tests[0].dt.Columns[0].ToString(), tests[0].dt);
+        //Array.Reverse(xAxis);
+        foreach (string num in xAxis){
+
+            lineConfig.Data.XLabels.Add(num);
+        }
+
+        int count = 0;
+        string color;
+        foreach (TestRun testRun in tests)
+        {
+            //Chooses different colors based on the amount of test runs in the csv file
+            if (count == 0)
+            {
+                color = "blue";
+            }else if(count == 1)
+            {
+                color = "green";
+            }else if (count == 2)
+            {
+                color = "red";
+            }
+            else
+            {
+                color = "yellow";
+            }
+
+            //Sets up the y axis values
+            lineConfig.Data.Datasets.Add(new LineDataset<string>(GetColumnValues(testRun.dt.Columns[1].ToString(), testRun.dt))
+            {
+
+                Fill = false,
+
+                BackgroundColor = color,
+                Label = testRun.Name, 
+                BorderColor = color
+
+            });
+            count++;
+        }
+
+
+
+    }
+
+    private string[] GetColumnValues(string columnName, DataTable data)
+    {
+        //Converts the datatable to array so ChartJS can interpret the data
+        var array = data.AsEnumerable()
+       .Select(row => row.Field<string>(columnName))
+       .ToArray();
+        Array.Reverse(array);
+        return array;
+        //The array needed to be reversed so the x values would match with y
+    }
+
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        //Need to clear tests when a new file is selected
+        tests.Clear();
+        int colCount;
+
+        //Using package GenericParser to interpret CSV files
+        //Each type of data needs to be read differently based on how the csv file is formatted
+        //Cary7000 is special because it can have multiple tests in one file
+        using (Stream stream = e.File.OpenReadStream())
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            string fileContent = await reader.ReadToEndAsync();
+            using (GenericParser parser = new GenericParser(new StringReader(fileContent)))
+            {
+                int count = 0;
+                while (parser.Read())
+                {
+                    if(count == 0) //reading first row, this will find out how many tests are in file
+                    {
+                        colCount = parser.ColumnCount; //Every 2 columns is a new test
+                        for (int i = 0; i < colCount; i += 2)
+                        {
+                            tests.Add(new TestRun(parser[i].ToString()));//gets name of test
+
+                        }
+                    }
+                    else if (count == 1) //reading second row
+                    {
+                        //sets up column names
+                        int testCount = 0;
+                        foreach(TestRun test in tests)
+                        {
+                            test.dt = new DataTable();
+                            test.dt.Columns.Add(parser[0 + testCount]);
+                            test.dt.Columns.Add(parser[1 + testCount]);
+                            testCount += 2;
+                        }
+                    }
+                    else
+                    {
+                        int testCount = 0;
+                        if (parser[0].ToString() == "")
+                        {
+                            break; //must get out of loop if an empty cell is read in file
+                        }
+                        foreach (TestRun test in tests)
+                        {
+                            //testCount is used to offset and read the correct test
+                            DataRow newRow = test.dt.NewRow();
+                            newRow[0] = parser[0 + testCount];
+                            newRow[1] = parser[1 + testCount];
+                            test.dt.Rows.Add(newRow);
+                            testCount += 2;
+                        }
+                    }
+                    count++;
+
+                }
+            }
+        }
+
+        ConfigureLineConfig(); //Set up the graph
+
+        showTables = true; //prompt displaying of data
+        StateHasChanged();
+        StateHasChanged();
+
+
+    }
+
+    private async Task Upload()
+    {
+        //Firstly check if theres any data to upload and exit if there is not any
+        if (tests.Count < 1)
+        {
+            pop.Title = "Error";
+            pop.Message = "No Data to upload";
+            pop.ShowPopup();
+            return;
+        }
+
+
+        //Activate loading wheel for user
+        isLoading = true;
+        await Task.Delay(1);
+        StateHasChanged();
+
+
+
+        //We need to find out if the run # the user inputted actually exists in CoatingSheet table
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+        SqlCommand cmd = new SqlCommand(@"
+        SELECT COUNT(*) FROM CoatingSheet WHERE [RUN #] = @Run
+        ", cnxn);
+
+        cmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+        cnxn.Open();
+        int rowCount = Convert.ToInt32(cmd.ExecuteScalar());
+        bool hasRows = rowCount > 0;
+        cnxn.Close();
+
+        if (!hasRows) //If run# does not exist give error
+        {
+            pop.Title = "Error";
+            pop.Message = "Could not find \"" + runNumber + "\"";
+            pop.ShowPopup();
+            isLoading = false;
+            await Task.Delay(1);
+            StateHasChanged();
+            return; //Exit if no run # found
+        }
+
+        //Now we need to find out if there exists any tests already
+        //Every entry has a test # that increments by 1
+        SqlCommand CaryCmd = new SqlCommand(@"
+        SELECT
+        [Test #]
+        FROM Cary7000
+        WHERE [RUN #] = @Run
+        ", cnxn);
+        CaryCmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+        List<int> testList = new List<int>();
+        cnxn.Open();
+        using (SqlDataReader dr = CaryCmd.ExecuteReader())
+        {
+            if (dr.HasRows)
+            {
+                while (dr.Read()) //Need to find out if there are any tests already
+                {
+                    testList.Add(dr.GetInt32(0));
+                }
+            }
+        }
+        cnxn.Close();
+        int currentTest;
+        if (testList.Count > 0)//if there already exists tests we want to start at a new test #
+        {
+            currentTest = testList.Max() + 1;
+        }
+        else //if no tests exist start at 1
+        {
+            currentTest = 1;
+        }
+
+
+        //Start uploading the data into Cary7000 table
+        foreach (TestRun test in tests)
+        {
+            cnxn.Open();
+            foreach (DataRow row in test.dt.Rows)
+            {
+                SqlCommand uploadCmd = new SqlCommand(@"
+                INSERT INTO Cary7000 (
+                [Run #]
+                ,[Test #]
+                ,[Test Name]
+                ,[Wavelength]
+                ,[%R/T]
+                ) values (
+                @Run
+                ,@TestNum
+                ,@TestName
+                ,@Wave
+                ,@Val)", cnxn);
+
+                uploadCmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+                uploadCmd.Parameters.Add(new SqlParameter("@TestNum", currentTest));
+                uploadCmd.Parameters.Add(new SqlParameter("@TestName", test.Name));
+                uploadCmd.Parameters.Add(new SqlParameter("@Wave", row.ItemArray[0]));
+                uploadCmd.Parameters.Add(new SqlParameter("@Val", row.ItemArray[1]));
+
+                try
+                {
+                    uploadCmd.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    pop.Title = "Error";
+                    pop.Message = "Failure to upload data";
+                    pop.ShowPopup();
+                    isLoading = false;
+                    await Task.Delay(1);
+                    StateHasChanged();
+                    return;
+                }
+            }
+            currentTest++; //This will ensure the test # entered in the table is correct
+            cnxn.Close();
+        }
+        pop.Title = "Success";
+        pop.Message = "Spectral Data has been added to the database";
+        pop.ShowPopup();
+        UploadPop.ClosePopup();
+        isLoading = false;
+        runNumber = "";
+        StateHasChanged();
+    }
+}

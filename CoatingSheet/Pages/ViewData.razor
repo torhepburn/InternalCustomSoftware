@@ -1,0 +1,772 @@
+﻿@page "/viewdata/{runsheetid}"
+@inject NavigationManager nav
+
+
+
+@*ERROR MESSAGE POPUP*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+@*Confirm RUN SHEET DELETE MESSAGE POPUP*@
+<div class="popup-overlay @(confirmPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Confirm deletion?</h3>
+        <p>This will remove the run sheet and all spectral data attached</p>
+        <button class="button-85" @onclick="DeleteRunSheet">CONFIRM DELETE</button>
+        <button class="button-85" @onclick="confirmPop.ClosePopup">Close</button>
+    </div>
+</div>
+@*Confirm CARY MESSAGE POPUP*@
+<div class="popup-overlay @(caryPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Confirm deletion?</h3>
+        <p>This will remove the Cary7000 spectral data</p>
+        <button class="button-85" @onclick="DeleteCary">CONFIRM DELETE</button>
+        <button class="button-85" @onclick="caryPop.ClosePopup">Close</button>
+    </div>
+</div>
+@*Confirm PE983 DELETE MESSAGE POPUP*@
+<div class="popup-overlay @(pePop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Confirm deletion?</h3>
+        <p>This will remove the PE983 spectral data</p>
+        <button class="button-85" @onclick="DeletePE">CONFIRM DELETE</button>
+        <button class="button-85" @onclick="pePop.ClosePopup">Close</button>
+    </div>
+</div>
+@*Confirm FTIR MESSAGE POPUP*@
+<div class="popup-overlay @(ftirPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Confirm deletion?</h3>
+        <p>This will remove the FTIR spectral data</p>
+        <button class="button-85" @onclick="DeleteFTIR">CONFIRM DELETE</button>
+        <button class="button-85" @onclick="ftirPop.ClosePopup">Close</button>
+    </div>
+</div>
+@*Deleted MESSAGE POPUP*@
+<div class="popup-overlay @(deletedPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@deletedPop.Title</h3>
+        <p>@deletedPop.Message</p>
+        <button class="button-85" @onclick="() => nav.NavigateTo(nav.Uri, forceLoad: true)">Close</button>
+    </div>
+</div>
+
+<div style="display:flex">
+    <h3>View Data: @RunSheetID</h3>
+    <button style="position:absolute;right:0%" class="button-85"
+    @onclick=confirmPop.ShowPopup>
+        Delete Run Sheet w/ Spectral Data
+    </button>
+</div>
+<br />
+
+
+<Table @key=RunSheetDT dt="RunSheetDT" TableStyle="generic-table"></Table>
+<br />
+@if (showCaryTables)
+{
+    <div style="display:flex">
+        <h4>Cary 7000 Data</h4>
+        <button style="position:absolute;right:0%" class="button-85"
+            @onclick=caryPop.ShowPopup>
+            Delete Cary 7000 Data
+        </button>
+    </div>
+    <h4></h4>
+    <Chart @key=CaryLineConfig Config="CaryLineConfig"></Chart>
+
+    <div style="display:flex">
+        @foreach (TestRun test in CaryTests)
+        {
+        <div>
+            <h4>@test.Name</h4>
+            <Table @key=test.dt dt="test.dt" TableStyle="generic-table"></Table>
+            <br>
+            <br />
+        </div>
+        }
+    </div>
+}
+<br />
+@if (showPETables)
+{
+    <div style="display:flex">
+        <h4>PE983 Data</h4>
+        <button style="position:absolute;right:0%" class="button-85"
+        @onclick=pePop.ShowPopup>
+            Delete PE983 Data
+        </button>
+    </div>
+    
+    <Chart @key=PELineConfig Config="PELineConfig"></Chart>
+
+    <div style="display:flex">
+
+            @foreach (TestRun test in PETests)
+            {
+            <div>
+                <h4>@test.Name</h4>
+                <Table @key=test.dt dt="test.dt" TableStyle="generic-table"></Table>
+                <br>
+                <br />
+            </div>
+            }
+
+    </div>
+}
+<br />
+@if (showFTIRTables)
+{
+    <div style="display:flex">
+        <h4>FTIR Data</h4>
+        <button style="position:absolute;right:0%" class="button-85"
+            @onclick=ftirPop.ShowPopup>
+            Delete FTIR Data
+        </button>
+    </div>
+    <Chart @key=FTIRLineConfig Config="FTIRLineConfig"></Chart>
+
+    <div style="display:flex">
+        @foreach (TestRun test in FTIRTests)
+        {
+            <div>
+                <h4>@test.Name</h4>
+                <Table @key=test.dt dt="test.dt" TableStyle="generic-table"></Table>
+                <br>
+                <br />
+            </div>
+        }
+    </div>
+}
+
+
+
+@code {
+    [Parameter]
+    public string? RunSheetID { get; set; }
+
+    private DataTable RunSheetDT = new DataTable();
+
+    public class TestRun
+    {
+        public string? Name { get; set; }
+        public TestRun(string name)
+        {
+            Name = name;
+        }
+
+        public DataTable? dt;
+        public LineConfig? lineConfig;
+    }
+
+    public List<TestRun> CaryTests = new List<TestRun>();
+    public LineConfig? CaryLineConfig;
+    private bool showCaryTables = false;
+
+    public List<TestRun> PETests = new List<TestRun>();
+    public LineConfig? PELineConfig;
+    private bool showPETables = false;
+
+
+    public List<TestRun> FTIRTests = new List<TestRun>();
+    public LineConfig? FTIRLineConfig;
+    private bool showFTIRTables = false;
+
+    PopUp pop = new PopUp();
+    PopUp confirmPop = new PopUp();
+    PopUp deletedPop = new PopUp();
+    PopUp caryPop = new PopUp();
+    PopUp pePop = new PopUp();
+    PopUp ftirPop = new PopUp();
+
+    private string WhichDelete = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+
+
+        //**Get RunSheet data**/
+        SqlCommand cmd = new SqlCommand(@"SELECT
+        [CHAMBER]
+      ,[OPERATOR]
+      ,[RUN #]
+      ,[DATE]
+      ,[COATING TYPE]
+      ,[SUBSTRATE]
+      ,[RUN TYPE]
+      ,[PROCESS #]
+      ,[CRYSTAL]
+      ,[E-GUN KV]
+      ,[VACUUM]
+      ,[CAPACITY]
+      ,[SUSTRATE TEMP]
+      ,[FIXTURE SPEED]
+      ,[CRYO 1 TEMP]
+      ,[CRYO 2 TEMP]
+      ,[START PUMP]
+      ,[START HEAT]
+      ,[START COAT]
+      ,[FINISH COAT]
+      ,[MATERIAL 1]
+      ,[MATERIAL 1 RATE]
+      ,[MATERIAL 2]
+      ,[MATERIAL 2 RATE]
+      ,[MATERIAL 3]
+      ,[MATERIAL 3 RATE]
+      ,[MATERIAL 4]
+      ,[MATERIAL 4 RATE]
+        FROM [ZTEST].[dbo].[CoatingSheet]
+        WHERE [Run #] = @RunNum
+
+        ", cnxn);
+
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+        try
+        {
+            cnxn.Open();
+            using (SqlDataReader dr = cmd.ExecuteReader())
+            {
+                RunSheetDT.Load(dr);
+            }
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+        if (RunSheetDT.Rows.Count == 0)
+        {
+            pop.Title = "Error";
+            pop.Message = "Run Sheet not found";
+            pop.ShowPopup();
+            return;
+        }
+
+        //**Get Cary7000 Data/
+
+        DataTable dt = new DataTable();
+        cmd = new SqlCommand(@" SELECT
+            [Wavelength]
+            ,[%R/T]
+            ,[Test #]
+            ,[Test Name]
+            FROM [Cary7000]
+            WHERE [Run #] = @RunNum AND [Test #] = @TestNum
+            ORDER BY [Wavelength] DESC"
+            , cnxn);
+        SqlParameter pTest = new SqlParameter("@TestNum", SqlDbType.Int);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+        cmd.Parameters.Add(pTest);
+        int testNum = 1;
+        pTest.Value = testNum;
+
+        do {
+            try
+            {
+                dt = new DataTable();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.HasRows)
+                    {
+                        dt.Load(dr);
+
+                        TestRun newTest = new TestRun(dt.Rows[0].ItemArray[3].ToString());
+                        dt.Columns.Remove(dt.Columns[2]);
+                        dt.Columns.Remove(dt.Columns[2]);
+                        newTest.dt = dt.Clone();
+
+                        foreach(DataRow row in dt.Rows)
+                        {
+                            newTest.dt.ImportRow(row);
+                        }
+
+
+                        CaryTests.Add(newTest);
+                        testNum++;
+                        pTest.Value = testNum;
+                    }   
+                }
+            } catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+                return;
+            }
+        }while (dt.Rows.Count != 0) ;
+
+        if(CaryTests.Count > 0)
+        {
+            CaryConfigureLineConfig();
+            showCaryTables = true;
+        }
+
+        //**Get PE983 Data/
+
+        dt = new DataTable();
+        cmd = new SqlCommand(@" SELECT
+            [Wavelength]
+            ,[%T]
+            ,[Test #]
+            ,[Test Name]
+            FROM [PE983]
+            WHERE [Run #] = @RunNum AND [Test #] = @TestNum
+            ORDER BY [Wavelength] DESC"
+            , cnxn);
+        pTest = new SqlParameter("@TestNum", SqlDbType.Int);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+        cmd.Parameters.Add(pTest);
+        testNum = 1;
+        pTest.Value = testNum;
+
+        do
+        {
+            try
+            {
+                dt = new DataTable();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.HasRows)
+                    {
+                        dt.Load(dr);
+
+                        TestRun newTest = new TestRun(dt.Rows[0].ItemArray[3].ToString());
+                        dt.Columns.Remove(dt.Columns[2]);
+                        dt.Columns.Remove(dt.Columns[2]);
+                        newTest.dt = dt.Clone();
+
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            newTest.dt.ImportRow(row);
+                        }
+
+
+                        PETests.Add(newTest);
+                        testNum++;
+                        pTest.Value = testNum;
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+                return;
+            }
+        } while (dt.Rows.Count != 0);
+
+        if (PETests.Count > 0)
+        {
+            PEConfigureLineConfig();
+            showPETables = true;
+        }
+
+        //FTIR Data
+
+        dt = new DataTable();
+        cmd = new SqlCommand(@" SELECT
+            [Wavelength]
+            ,[%T]
+            ,[Test #]
+            ,[Test Name]
+            FROM [FTIR]
+            WHERE [Run #] = @RunNum AND [Test #] = @TestNum
+            ORDER BY [Wavelength] DESC"
+            , cnxn);
+        pTest = new SqlParameter("@TestNum", SqlDbType.Int);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+        cmd.Parameters.Add(pTest);
+        testNum = 1;
+        pTest.Value = testNum;
+
+        do
+        {
+            try
+            {
+                dt = new DataTable();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.HasRows)
+                    {
+                        dt.Load(dr);
+
+                        TestRun newTest = new TestRun(dt.Rows[0].ItemArray[3].ToString());
+                        dt.Columns.Remove(dt.Columns[2]);
+                        dt.Columns.Remove(dt.Columns[2]);
+                        newTest.dt = dt.Clone();
+
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            newTest.dt.ImportRow(row);
+                        }
+
+
+                        FTIRTests.Add(newTest);
+                        testNum++;
+                        pTest.Value = testNum;
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+                return;
+            }
+        } while (dt.Rows.Count != 0);
+
+        if (FTIRTests.Count > 0)
+        {
+            FTIRConfigureLineConfig();
+            showFTIRTables = true;
+        }
+
+        cnxn.Close();
+    }
+
+    private void CaryConfigureLineConfig()
+    {
+        CaryLineConfig = new LineConfig();
+
+        CaryLineConfig.Options = new LineOptions
+            {
+                ResponsiveAnimationDuration = 0,
+
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Cary7000"
+                }
+
+            };
+
+
+        Array xAxis = GetColumnValues(CaryTests[0].dt.Columns[0].ToString(), CaryTests[0].dt);
+        //Array.Reverse(xAxis);
+
+
+        foreach (string num in xAxis)
+        {
+            CaryLineConfig.Data.XLabels.Add(num);
+
+
+        }
+
+        int count = 0;
+        string color;
+        foreach (TestRun testRun in CaryTests)
+        {
+
+            if (count == 0)
+            {
+                color = "blue";
+            }
+            else if (count == 1)
+            {
+                color = "green";
+            }
+            else if (count == 2)
+            {
+                color = "red";
+            }
+            else
+            {
+                color = "yellow";
+            }
+            CaryLineConfig.Data.Datasets.Add(new LineDataset<string>(GetColumnValues(testRun.dt.Columns[1].ToString(), testRun.dt))
+                {
+                    ShowLine = true,
+                    PointRadius = 0,
+                    PointHoverRadius = 5,
+                    PointHitRadius = 5,
+                    Fill = false,
+
+                    BackgroundColor = color,
+                    Label = testRun.Name,
+                    BorderColor = color
+
+                });
+            count++;
+        }
+    }
+    private void PEConfigureLineConfig()
+    {
+        PELineConfig = new LineConfig();
+
+        PELineConfig.Options = new LineOptions
+            {
+                ResponsiveAnimationDuration = 0,
+
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "PE983"
+                }
+
+            };
+
+
+        Array xAxis = GetColumnValues(PETests[0].dt.Columns[0].ToString(), PETests[0].dt);
+        //Array.Reverse(xAxis);
+
+
+        foreach (string num in xAxis)
+        {
+            PELineConfig.Data.XLabels.Add(num);
+
+
+        }
+
+        int count = 0;
+        string color;
+        foreach (TestRun testRun in PETests)
+        {
+
+            if (count == 0)
+            {
+                color = "blue";
+            }
+            else if (count == 1)
+            {
+                color = "green";
+            }
+            else if (count == 2)
+            {
+                color = "red";
+            }
+            else
+            {
+                color = "yellow";
+            }
+            PELineConfig.Data.Datasets.Add(new LineDataset<string>(GetColumnValues(testRun.dt.Columns[1].ToString(), testRun.dt))
+                {
+                    ShowLine = true,
+                    PointRadius = 0,
+                    PointHoverRadius = 5,
+                    PointHitRadius = 5,
+                    Fill = false,
+
+                    BackgroundColor = color,
+                    Label = testRun.Name,
+                    BorderColor = color
+
+                });
+            count++;
+        }
+    }
+    private void FTIRConfigureLineConfig()
+    {
+        FTIRLineConfig = new LineConfig();
+
+        FTIRLineConfig.Options = new LineOptions
+            {
+                ResponsiveAnimationDuration = 0,
+
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "PE983"
+                }
+
+            };
+
+
+        Array xAxis = GetColumnValues(FTIRTests[0].dt.Columns[0].ToString(), FTIRTests[0].dt);
+        //Array.Reverse(xAxis);
+
+
+        foreach (string num in xAxis)
+        {
+            FTIRLineConfig.Data.XLabels.Add(num);
+
+
+        }
+
+        int count = 0;
+        string color;
+        foreach (TestRun testRun in FTIRTests)
+        {
+
+            if (count == 0)
+            {
+                color = "blue";
+            }
+            else if (count == 1)
+            {
+                color = "green";
+            }
+            else if (count == 2)
+            {
+                color = "red";
+            }
+            else
+            {
+                color = "yellow";
+            }
+            FTIRLineConfig.Data.Datasets.Add(new LineDataset<string>(GetColumnValues(testRun.dt.Columns[1].ToString(), testRun.dt))
+                {
+                    ShowLine = true,
+                    PointRadius = 0,
+                    PointHoverRadius = 5,
+                    PointHitRadius = 15,
+                    Fill = false,
+
+                    BackgroundColor = color,
+                    Label = testRun.Name,
+                    BorderColor = color
+
+                });
+            count++;
+        }
+    }
+
+
+    private string[] GetColumnValues(string columnName, DataTable data)
+    {
+        var array = data.AsEnumerable()
+       .Select(row =>
+       {
+           object value = row[columnName];
+           if (value is int intValue)
+           {
+               return intValue.ToString();
+           }
+           return value != null ? value.ToString() : null;
+       })
+       .ToArray();
+        Array.Reverse(array);
+        return array;
+    }
+
+
+    private void DeleteRunSheet()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+
+        SqlCommand cmd = new SqlCommand(@"DELETE FROM CoatingSheet WHERE [RUN #] = @RunNum", cnxn);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+        }catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        DeleteCary();
+        DeletePE();
+        DeleteFTIR();
+
+        deletedPop.Title = "Success";
+        deletedPop.Message = "Run #" + RunSheetID + " has been deleted from the database";
+        deletedPop.ShowPopup();
+        confirmPop.ClosePopup();
+    }
+
+    private void DeleteCary()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+
+        SqlCommand cmd = new SqlCommand(@"DELETE FROM Cary7000 WHERE [Run #] = @RunNum", cnxn);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        deletedPop.Title = "Success";
+        deletedPop.Message = "Spectral data has been deleted from the database";
+        deletedPop.ShowPopup();
+        confirmPop.ClosePopup();
+
+    }
+
+    private void DeletePE()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+
+        SqlCommand cmd = new SqlCommand(@"DELETE FROM PE983 WHERE [Run #] = @RunNum", cnxn);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        deletedPop.Title = "Success";
+        deletedPop.Message = "Spectral data has been deleted from the database";
+        deletedPop.ShowPopup();
+        confirmPop.ClosePopup();
+    }
+
+    private void DeleteFTIR()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+
+        SqlCommand cmd = new SqlCommand(@"DELETE FROM FTIR WHERE [Run #] = @RunNum", cnxn);
+        cmd.Parameters.Add(new SqlParameter("@RunNum", RunSheetID));
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        deletedPop.Title = "Success";
+        deletedPop.Message = "Spectral data has been deleted from the database";
+        deletedPop.ShowPopup();
+        confirmPop.ClosePopup();
+        //nav.NavigateTo("viewdata/" + RunSheetID, forceLoad: true);
+    }
+}
+

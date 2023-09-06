@@ -1,0 +1,347 @@
+﻿@page "/FTIR"
+@using ChartJs.Blazor.LineChart
+
+@*Loading wheel*@
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+@*Title and buttons*@
+<h3>FTIR Spectral Data</h3>
+<PageTitle>FTIR</PageTitle>
+<InputFile OnChange="OnFileSelected"></InputFile>
+<button @onclick=@UploadPop.ShowPopup>Upload</button>
+
+
+@*Upload Popup*@
+<div class="popup-overlay @(UploadPop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>Enter Run #</h3> @*Loading all available run numbers for convenience*@
+        <input type="text" placeholder="#######" list="runNumList" @bind="runNumber" />
+        <datalist id="runNumList">
+            @foreach (string item in runList)
+            {
+                <option>@item</option>
+            }
+        </datalist>
+        @*We add custom names for this upload b/c the scan does not provide one*@
+        <h3>Enter a test name</h3>
+        <input type="text" placeholder="Enter a name here" @bind="testName" />
+        @*Confirms upload*@
+        <button class="button-save" @onclick="Upload">Upload</button>
+        <button class="button-85" @onclick="UploadPop.ClosePopup">Cancel</button>
+    </div>
+</div>
+
+
+
+@*This shows when a file is selected and data is available to show*@
+@if (showTables)
+{
+    @*Chart JS plugin*@
+    <Chart Config="lineConfig"></Chart>
+    <br>
+    @*Display table*@
+    <Table @key=dt dt="dt" TableStyle="generic-table"></Table>
+    <br />
+}
+else
+{
+    <label>Select a FTIR csv file and a table will show with its data. If the data is correct upload to the database</label>
+    <br />
+    <br />
+}
+
+@*ERROR MESSAGE POPUP*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+
+
+@code {
+    private MemoryStream uploadedFileStream;
+    DataTable dtProcess;
+    DataTable dt;
+    private bool showTables = false;
+    private List<string> runList = new List<string>(); //list for upload input
+
+    PopUp pop = new PopUp();
+    PopUp UploadPop = new PopUp();
+    private LineConfig lineConfig; //Required for ChartJS graph
+
+    public class TestRun
+    {
+        public string? Name;
+        public DataTable? dt;
+        public LineConfig? lineConfig;
+    }
+
+    private string runNumber = ""; //This is the inputted run number to tie to the data
+
+    private bool isLoading = false; //Prompts the loading wheel
+
+    private string testName = ""; //inputted test name
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Loads all of the run numbers for the upload confirmation
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+        SqlCommand cmd = new SqlCommand(@"
+        SELECT [RUN #] FROM CoatingSheet
+        ", cnxn);
+
+        await cnxn.OpenAsync();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            while (dr.Read())
+            {
+                runList.Add(dr.GetString(0));
+            }
+        }
+        await cnxn.CloseAsync();
+
+    }
+
+    private void ConfigureLineConfig()
+    {
+        //This will configure the line graph with all data collected from the selected file
+        //Slightly different than Cary7000 configure b/c we're only dealing with one test
+        lineConfig = new LineConfig();
+
+        lineConfig.Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "FTIR Chart"
+                }
+
+            };
+
+        //Sets up x axis
+        Array xAxis = GetColumnValues(dt.Columns[0].ToString(), dt);
+        foreach (string num in xAxis)
+        {
+            lineConfig.Data.XLabels.Add(num);
+        }
+
+        //Sets up y axis
+        lineConfig.Data.Datasets.Add(new LineDataset<string>(GetColumnValues(dt.Columns[1].ToString(), dt))
+            {
+                Label = "",
+                ShowLine = true,
+                PointRadius = 0,
+                PointHoverRadius = 5,
+                PointHitRadius = 20,
+                Fill = false,
+                BorderColor = "blue",
+                BackgroundColor = "blue",
+            });
+
+    }
+
+    private string[] GetColumnValues(string columnName, DataTable data)
+    {
+        //Converts the datatable to array so ChartJS can interpret the data
+        return data.AsEnumerable()
+            .Select(row => row.Field<string>(columnName))
+            .ToArray();
+    }
+
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        dt = new DataTable();
+        dt.Columns.Add("Wavelength (nm)");
+        dt.Columns.Add("%T");
+        using (Stream stream = e.File.OpenReadStream())
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            string fileContent = await reader.ReadToEndAsync();
+            using (GenericParser parser = new GenericParser(new StringReader(fileContent)))
+            {
+                int count = 0;
+                int ycol = 0;
+                while (parser.Read())
+                {
+                    if(count > 1)
+                    {
+                        
+                        DataRow newRow = dt.NewRow();
+                        newRow[0] = parser[0];
+                        newRow[1] = parser[1];
+                        dt.Rows.Add(newRow);
+                    }
+                    count++;
+                }
+            }
+        }
+
+        ConfigureLineConfig();
+
+        showTables = true;
+        StateHasChanged();
+        StateHasChanged();
+
+    }
+
+    private async Task Upload()
+    {
+        //Firstly check if theres any data to upload and exit if there is not any
+        if (dt is null)
+        {
+            pop.Title = "Error";
+            pop.Message = "No Data to upload";
+            pop.ShowPopup();
+            return;
+        }
+
+        isLoading = true;
+        await Task.Delay(1);
+        StateHasChanged();
+        SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+        SqlCommand cmd = new SqlCommand(@"
+        SELECT COUNT(*) FROM CoatingSheet WHERE [RUN #] = @Run
+        ", cnxn);
+
+        cmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+        cnxn.Open();
+        int rowCount = Convert.ToInt32(cmd.ExecuteScalar());
+        bool hasRows = rowCount > 0;
+        cnxn.Close();
+
+        if (!hasRows) //See if run # exists in database
+        {
+            pop.Title = "Error";
+            pop.Message = "Could not find \"" + runNumber + "\"";
+            pop.ShowPopup();
+            isLoading = false;
+            await Task.Delay(1);
+            StateHasChanged();
+            return; //Exit if no run # found
+        }
+
+        cmd = new SqlCommand(@"
+        SELECT
+        [Test #]
+        FROM FTIR
+        WHERE [RUN #] = @Run
+        ", cnxn);
+        cmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+        List<int> testList = new List<int>();
+        cnxn.Open();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            if (dr.HasRows)
+            {
+                while (dr.Read()) //Need to find out if there are any tests already
+                {
+                    testList.Add(dr.GetInt32(0));
+                }
+            }
+        }
+        cnxn.Close();
+        int currentTest;
+        if (testList.Count > 0)
+        {
+            currentTest = testList.Max() + 1;
+        }
+        else
+        {
+            currentTest = 1;
+        }
+
+        if (dt.Rows.Count == 0)
+        {
+            pop.Title = "Error";
+            pop.Message = "No Data to upload";
+            pop.ShowPopup();
+            isLoading = false;
+            await Task.Delay(1);
+            StateHasChanged();
+            return;
+        }
+
+        //**Start uploading into PE983**/
+        cnxn.Open();
+        foreach (DataRow row in dt.Rows)
+        {
+            SqlCommand uploadCmd = new SqlCommand(@"
+            INSERT INTO FTIR (
+            [Run #]
+            ,[Test #]
+            ,[Wavelength]
+            ,[Test Name]
+            ,[%T]
+            ) values (
+            @Run
+            ,@TestNum
+            ,@Wave
+            ,@TestName
+            ,@Val)", cnxn);
+
+            uploadCmd.Parameters.Add(new SqlParameter("@Run", runNumber));
+            uploadCmd.Parameters.Add(new SqlParameter("@TestNum", currentTest));
+            uploadCmd.Parameters.Add(new SqlParameter("@TestName", testName));
+            uploadCmd.Parameters.Add(new SqlParameter("@Wave", row.ItemArray[0]));
+            uploadCmd.Parameters.Add(new SqlParameter("@Val", row.ItemArray[1]));
+
+            try
+            {
+                uploadCmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = "Failure to upload data";
+                pop.ShowPopup();
+                isLoading = false;
+                await Task.Delay(1);
+                StateHasChanged();
+                return;
+            }
+        }
+
+        cnxn.Close();
+
+        pop.Title = "Success";
+        pop.Message = "Spectral Data has been added to the database";
+        pop.ShowPopup();
+        UploadPop.ClosePopup();
+        isLoading = false;
+        runNumber = "";
+        StateHasChanged();
+        testName = "";
+
+
+    }
+
+    //SqlCommand cmd = new SqlCommand(
+    //      "Insert into shortagelistcomments (" +
+    //      " ShortageID " +
+    //      ", Comment " +
+    //      ", EnteredBy " +
+    //      ", EnteredOn) " +
+    //      "values (" +
+    //      pID + "," +
+    //      pComment + "," +
+    //      pEnteredBy + "," +
+    //      "GETDATE())", cnxn);
+    //cmd.Parameters.Add(pID);
+    //cmd.Parameters.Add(pComment);
+    //cmd.Parameters.Add(pEnteredBy);
+    //cmd.Parameters.Add(pEnteredOn);
+}
+
