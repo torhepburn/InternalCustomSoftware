@@ -1,0 +1,65 @@
+﻿@page "/uploadDxfFiles"
+
+<PageTitle>Upload dxf Files</PageTitle>
+
+<h1>Select dxf file to upload.</h1>
+
+@using TRequest.Data
+@using System.Data;
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<InputFile OnChange="@SingleUpload" accept=".dxf" />
+
+@code 
+{
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    DataTable dt;
+    private string data ="";
+    private string? selectedID;
+    private string? reviewer;
+    private byte[]? bytes;
+    private bool pdf;
+
+    static string uploadedFilename;
+
+    private async Task SingleUpload(InputFileChangeEventArgs e)
+    {
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        bytes = ms.ToArray();
+
+        uploadedFilename = e.File.Name;
+
+        if (e.File.Name.Contains("dxf"))
+        {
+            pdf = false;
+            dxfUpload();
+        }
+
+        NavMgr.NavigateTo("ThankYou");
+    }
+
+    private void dxfUpload()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        SqlParameter prm1 = new SqlParameter
+                ("@file", SqlDbType.Image, Convert.ToInt32(bytes.Length));
+        prm1.Value = bytes;
+
+        SqlCommand cmd = new SqlCommand
+            ("Update Tool_RequestsX set uploaded_dxf = " + prm1 + "  " +
+             " ,uploaded_filename = '" + uploadedFilename + "' " +
+             " where id = " + g.requestID + " ", cnxn);
+        cmd.Parameters.Add(prm1);
+
+        cnxn.Open();
+        cmd.ExecuteNonQuery();
+        cnxn.Close();
+    }
+}

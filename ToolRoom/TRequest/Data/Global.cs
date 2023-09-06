@@ -9,24 +9,25 @@
         public string dbNAV { get; set; } = "server = PA-HOR-AS408; password = 2018#ameteK; " +
                                         "user = navdb_read; database = ZYGO-NAV-PROD; encrypt=false;";
 
-        public string? location { get; set; }
+        public string? requestorPhone { get; set; }
 
         public string? requestor { get; set; }
 
-        public string? requestorEmail { get; set; }
+        public string? requestType { get; set; }
 
         public int requestID { get; set; }
 
-        public int CommentID { get; set; }
+        public int eIndex { get; set; }
 
-        public string? Comment { get; set; }
+        public string priority { get; set; }
 
-        public string? binCode { get; set; }
-        public string? storekeeper { get; set; }
-
+        public string? request_text { get; set; }
+               
         public string? costcenter { get; set; }
 
-        public string? planner { get; set; }
+        public string? project { get; set; }
+
+        public bool persist { get; set; }
 
         public bool Ftwofiles { get; set; }
 

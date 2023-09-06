@@ -44,7 +44,7 @@
     <tr>
         <td align="center">
             <br />
-            Click Submit button with form filled out to attach supporting document when check box checked.
+            After clicking the Submit button a window will open for attaching the checked document type.
         </td>
     </tr>
     <tr></tr>
@@ -74,7 +74,7 @@
             <div>
                 <div>
                     <div>
-                <InputSelect id="employees" style="width: 60%" @bind-Value="eIndex">
+                <InputSelect id="employees" style="width: 60%" @bind-Value="g.eIndex">
                         <option value="">Must Select an Employee</option>
 
                         @foreach (DataRow r in dtEmployees.Rows)
@@ -183,7 +183,7 @@
 
             <div>
                 Project :
-                    <InputText id="n8" style="width: 50%" placeholder="" @bind-Value="project" />
+                    <InputText id="n8" style="width: 50%" placeholder="" @bind-Value="g.project" />
             </div>
 
             <div>
@@ -205,7 +205,7 @@
             </div>
 
             <div>
-                <InputText id="a133" placeholder="Name" style="width: 80%; height: 100px" @bind-Value="validations.Employee" />
+                <InputText id="a133" placeholder="Name" style="visibility:hidden" @bind-Value="validations.Employee" />
                     <ValidationMessage For="()=> validations.Employee" />
             </div>
     
@@ -228,9 +228,9 @@
 
     private string requestor = "";
     public string extension = "";
-    public int eIndex;
+    //public int eIndex;
     private string reworkNumber = "";
-    private string project = "";
+    //private string project = "";
     private string requestType = "";
     private string pdf = "";
     private string dxf = "";
@@ -244,10 +244,10 @@
 
 
     static string SqlTable = "Tool_RequestsX";
-    //static string filetypeSelected;
     static string filetypeLoaded;
     //static bool Ftwofiles = false;
     //static bool Ftwofiles2BUploaded = false;
+    //static string filetypeSelected;
 
     //static string requestResponse;
     //static string requestReport;
@@ -320,7 +320,7 @@
         cmd = new("select " +
                   "  ROW_NUMBER() OVER " +
                   "(Order BY sn) " +
-                  ", CN " +
+                  ", SN + '  : ' + CN " +
                   ", mail " +
                   "FROM EmployeesAmetekAD " +
                   "WHERE BU = 'ct-mid' " +
@@ -368,6 +368,27 @@
         {
             cnxn.Close();
         }
+
+        if (g.persist == true)
+        {
+            validations.CostCenter = g.costcenter;
+            g.costcenter = validations.CostCenter;
+            validations.Priority = g.priority;
+            validations.Request = g.request_text;
+            validations.Employee = g.requestor;
+            extension = g.requestorPhone;
+            validations.RequestType = g.requestType;
+            cbPersist = g.persist;
+
+        }
+        else
+        {
+            g.project = string.Empty;
+            g.requestorPhone = string.Empty;
+            g.requestor = string.Empty;
+            g.eIndex = 0;
+            g.contactEmail = string.Empty;
+        }
     }
 
     public void DataEntry()
@@ -388,7 +409,7 @@
             "Priority........: " + validations.Priority + "\r" +
             "Quantity........: " + validations.Quantity.ToString() + "\r" +
             "Need Date.......: " + validations.RequestedDate.ToShortDateString() + "\r" +
-            "Project.........: " + project + "\r" +
+            "Project.........: " + g.project + "\r" +
             "Rework #........: " + reworkNumber + "\r" +
             "Cost Center.....: " + validations.CostCenter + "\n\r" +
             "Time Savings Est: " + validations.TimeSavings.ToString() + "\n\r" +
@@ -412,12 +433,14 @@
                     "Name...........: " + validations.Employee + "\n\r" +
                     "Contact eMail..: " + g.contactEmail + "\n\r" +
                     "Extension........: " + extension + "\r" +
-                    "Project.........: " + project + "\r" +
+                    "Project.........: " + g.project + "\r" +
                     "Rework Number...: " + reworkNumber + "\r" +
                     "Cost Center.....: " + validations.CostCenter + "\r\r" +
                     "Date of Submission: " + submitDate;
 
         cnxn = new SqlConnection(g.db);
+
+        g.persist = cbPersist;
 
         SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
         pSubjectLine.Value = g.subjectLine;
@@ -435,7 +458,7 @@
         pCostCenter.Value = validations.CostCenter;
 
         SqlParameter pProject = new SqlParameter("@Project", SqlDbType.VarChar, 20);
-        pProject.Value = project;
+        pProject.Value = g.project;
 
         SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
         pQuantity.Value = validations.Quantity;
@@ -451,7 +474,7 @@
 
         SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
         response.Value = g.requestResponse;
-                
+
         SqlParameter pReworkNumber = new SqlParameter("@reworkNumber", SqlDbType.VarChar, 50);
         pReworkNumber.Value = reworkNumber;
 
@@ -462,7 +485,7 @@
         //pFocalSurface.Value = surface;
 
 
-        
+
 
         /* defining the paramater as output to be able to get the id of the row from the data being input into the database  */
 
@@ -511,20 +534,20 @@
                     "," + validations.CostSavings.ToString() +
                     "," + validations.RevenueSavings.ToString() +
                     ") SET @ID = SCOPE_IDENTITY() ", cnxn);
-            cmd.Parameters.Add(Request_Text);
-            cmd.Parameters.Add(pQuantity);
-            cmd.Parameters.Add(Phone);
-            cmd.Parameters.Add(pContactEmail);
-            cmd.Parameters.Add(pPriority);
-            cmd.Parameters.Add(response);
-            cmd.Parameters.Add(pSubjectLine);
-            cmd.Parameters.Add(pName);
-            cmd.Parameters.Add(report);
-            cmd.Parameters.Add(pCostCenter);
-            cmd.Parameters.Add(pProject);
-            cmd.Parameters.Add(pReworkNumber);
-            cmd.Parameters.Add(pRequestType);
-            cmd.Parameters.Add(pRequestID);
+        cmd.Parameters.Add(Request_Text);
+        cmd.Parameters.Add(pQuantity);
+        cmd.Parameters.Add(Phone);
+        cmd.Parameters.Add(pContactEmail);
+        cmd.Parameters.Add(pPriority);
+        cmd.Parameters.Add(response);
+        cmd.Parameters.Add(pSubjectLine);
+        cmd.Parameters.Add(pName);
+        cmd.Parameters.Add(report);
+        cmd.Parameters.Add(pCostCenter);
+        cmd.Parameters.Add(pProject);
+        cmd.Parameters.Add(pReworkNumber);
+        cmd.Parameters.Add(pRequestType);
+        cmd.Parameters.Add(pRequestID);
         try
         {
             int rowsReturned = cmd.ExecuteNonQuery();
@@ -544,7 +567,16 @@
 
         cmd.Dispose();
 
-        //Email();
+        if (cbPersist)
+        {
+            g.costcenter = validations.CostCenter;
+            g.priority = validations.Priority;
+            g.request_text = validations.Request;
+            g.requestor = validations.Employee;
+            g.requestorPhone = extension;
+            g.requestType = validations.RequestType;
+            g.persist = cbPersist;
+        }
 
         if (!cbPDF & !cbDXF)
         {
@@ -574,7 +606,6 @@
 
         /*  this clears the fields  */
 
-
         validations = new ValidationComponents();
 
     }
@@ -584,8 +615,8 @@
     {
         if (e.FieldIdentifier.FieldName == "eIndex")
         {
-            validations.Employee = dtEmployees.Rows[eIndex - 1][1].ToString();
-            g.contactEmail = dtEmployees.Rows[eIndex - 1][2].ToString();
+            validations.Employee = dtEmployees.Rows[g.eIndex - 1][1].ToString();
+            g.contactEmail = dtEmployees.Rows[g.eIndex - 1][2].ToString();
         }
     }
 }
