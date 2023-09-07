@@ -10,13 +10,15 @@
 <div style="display:flex;justify-content:center">
   
     
-    <EditForm Model="simple">
+    <EditForm Model=@f OnValidSubmit="@DataEntry">
+        <DataAnnotationsValidator />
 
         <div>
             <div>
                 Scan Location :
                 <div>
-                    <InputText @bind-Value="location"/>
+                    <InputText @bind-Value="f.location"/>
+                    <ValidationMessage For="() => f.location" style="display:inline" />
                 </div>
             </div>
             <br/>
@@ -24,25 +26,26 @@
             <div>
                 Scan Part :
                 <div>
-                    <InputText style="width: 70%" @bind-Value="part" />
+                    <InputText style="width: 70%" @bind-Value="f.part" />
+                    <ValidationMessage For="() => f.part" style="display:inline" />
                 </div>
             </div>
             <br />
         </div>
-        
+        <button type="submit">Submit</button>
     </EditForm>
 
     <br />
    
 </div>
 
-<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+@*<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>*@
 
 @code
 {
 
-    private FormModel dataModel = new FormModel();
-    public EditContext? EditContext;
+    private FormModel f = new FormModel();
+    //public EditContext? EditContext;
     private string? location;
     private string? part;
     private string simple = "";
@@ -50,10 +53,10 @@
     SqlCommand cmd;
     SqlConnection cnxn;
 
-    protected override void OnInitialized()
-    {
-        EditContext = new EditContext(dataModel);
-    }
+    //protected override void OnInitialized()
+    //{
+    //    EditContext = new EditContext(dataModel);
+    //}
 
     public class DateSample
     {
@@ -72,11 +75,13 @@
                     ",Part " +
                     ",Location " +
                     //",Employee " +
+                    ",InOut " +
                     ") values (" +
                     "'" + DateTime.Now + "'" +
                     ",'" + part + "'" +
                     ",'" + location + "'" +
                     //",'" + costcenter + "'" +
+                    ",'In'" +
                     ")", cnxn);
 
 
@@ -94,6 +99,7 @@
             cnxn.Close();
         }
 
+        f.part = string.Empty;
         //equipment = "";
         //modelpartnumber = "";
         //serialnumber = "";
