@@ -1,9 +1,110 @@
 ﻿@page "/"
 
+@using OpticsTracker.Data
+@using Microsoft.Data.SqlClient
+
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Scan Location then Scan Part</h1>
 
-Welcome to your new app.
+<div style="display:flex;justify-content:center">
+  
+    
+    <EditForm Model="simple">
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+        <div>
+            <div>
+                Scan Location :
+                <div>
+                    <InputText @bind-Value="location"/>
+                </div>
+            </div>
+            <br/>
+
+            <div>
+                Scan Part :
+                <div>
+                    <InputText style="width: 70%" @bind-Value="part" />
+                </div>
+            </div>
+            <br />
+        </div>
+        
+    </EditForm>
+
+    <br />
+   
+</div>
+
+<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+
+@code
+{
+
+    private FormModel dataModel = new FormModel();
+    public EditContext? EditContext;
+    private string? location;
+    private string? part;
+    private string simple = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+
+    protected override void OnInitialized()
+    {
+        EditContext = new EditContext(dataModel);
+    }
+
+    public class DateSample
+    {
+        public DateTime ddate { get; set; }
+    }
+    private DateSample _dateSample = new DateSample();
+
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
+                                        "user = readWrite; database = Optics; encrypt=false;");
+
+        cmd = new("INSERT INTO LocatedInventory (" +
+                    " Date " +
+                    ",Part " +
+                    ",Location " +
+                    //",Employee " +
+                    ") values (" +
+                    "'" + DateTime.Now + "'" +
+                    ",'" + part + "'" +
+                    ",'" + location + "'" +
+                    //",'" + costcenter + "'" +
+                    ")", cnxn);
+
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        //equipment = "";
+        //modelpartnumber = "";
+        //serialnumber = "";
+        //contactoperator = "";
+        //location = "";
+        //costcenter = "";
+        //computer = "";
+        //failuredescription = "";
+
+        //NavMgr.NavigateTo("viewshortages");
+    }
+
+
+}
