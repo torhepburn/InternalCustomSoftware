@@ -18,17 +18,18 @@
             <div>
                 Scan Location :
                 <div>
-                    <InputText @ref=inputTextForFocus @bind-Value="f.location"/>
+                    @*<InputText @ref=inputTextForFocus @bind-Value="f.location"/>*@
+                    <InputText @bind-Value="f.location" />
                     <ValidationMessage For="() => f.location" style="display:inline" />
                 </div>
             </div>
             <br/>
 
             <div>
-                Scan Part :
+                Scan Work Order :
                 <div>
-                    <InputText style="width: 70%" @bind-Value="f.part" />
-                    <ValidationMessage For="() => f.part" style="display:inline" />
+                    <InputText style="width: 70%" @bind-Value="f.workOrder" />
+                    <ValidationMessage For="() => f.workOrder" style="display:inline" />
                 </div>
             </div>
             <br />
@@ -58,31 +59,52 @@
     }
     private DateSample _dateSample = new DateSample();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (inputTextForFocus?.Element != null)
-        {
-            await inputTextForFocus.Element.Value.FocusAsync();
-        }
-    }
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (inputTextForFocus?.Element != null)
+    //    {
+    //        await inputTextForFocus.Element.Value.FocusAsync();
+    //    }
+    //}
 
 
     public void DataEntry()
     {
-        cnxn = new SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
-                                        "user = readWrite; database = Optics; encrypt=false;");
+        cnxn = new SqlConnection(f.dbNAV);
+
+        cmd = new("SELECT [Source No_] FROM [ZYGO$Production Order] " +
+                    "WHERE No_ = '" + f.workOrder.ToUpper() + "' ",cnxn);
+
+        try
+        {
+            cnxn.Open();
+            object o = cmd.ExecuteScalar();
+            f.part = o.ToString().Trim();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        
+        cnxn = new SqlConnection(f.db);
 
         cmd = new("INSERT INTO OpticsTracker (" +
                     " Date " +
                     ",Part " +
                     ",Location " +
-                    //",Employee " +
+                    ",WO " +
                     ",InOut " +
+
                     ") values (" +
                     "'" + DateTime.Now + "'" +
                     ",'" + f.part + "'" +
                     ",'" + f.location + "'" +
-                    //",'" + costcenter + "'" +
+                    ",'" + f.workOrder + "'" +
                     ",'In'" +
                     ")", cnxn);
 
@@ -102,7 +124,7 @@
         }
 
         f.part = string.Empty;
-        //equipment = "";
+        f.workOrder = string.Empty;
         //modelpartnumber = "";
         //serialnumber = "";
         //contactoperator = "";

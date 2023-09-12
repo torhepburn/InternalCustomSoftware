@@ -1,0 +1,109 @@
+﻿@page "/viewdata"
+
+@using OpticsTracker.Data
+@using Microsoft.Data.SqlClient
+@using System.Data;
+
+<PageTitle>View Inventory Locations</PageTitle>
+
+@using OpticsTracker.Data
+
+
+@*<h1>Weather forecast</h1>*@
+
+<table>
+    <thead>
+        <tr>
+            @*<th>ID</th>*@
+            <th>Date</th>
+            <th>Part Number</th>
+            <th>Work Order</th>
+            <th>Location</th>
+            <th>In/Out</th>
+            
+            @*<th>Contact / Operator</th>
+            
+            <th>Cost Center</th>
+            <th>Controller/Computer Name</th>
+            <th>Failure Description</th>
+            <th>Assigned To</th>
+            <th>Resolution</th>*@
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+            <tr >
+                @*<td style="width:80px">@r[0].ToString()</td>*@
+                <td style="width:200px">@r[1].ToString()</td>
+                <td style="width:150px">@r[2].ToString()</td>
+                <td style="width:150px">@r[5].ToString()</td>
+                <td style="width:150px">@r[3].ToString()</td>
+                <td style="width:150px">@r[4].ToString()</td>
+                
+                @*<td style="width:150px">@r[6].ToString()</td>
+                <td style="width:150px">@r[7].ToString()</td>
+                <td style="width:150px">@r[9].ToString()</td>
+                <td style="width:500px">@r[8].ToString()</td>
+                <td>@r[10].ToString()</td>
+            <td>@r[11].ToString()</td>*@
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+
+
+@code {
+
+    FormModel f = new FormModel();
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(f.db);
+
+        cmd = new SqlCommand("SELECT " +
+                "  UID ID " +                                                //0
+                ", [Date] " +     //1
+                ", COALESCE(Part, '') " +                        //2
+                ", COALESCE(Location, '') " +                      //3
+                ", COALESCE(InOut, '') " +                         //4
+                ", COALESCE(WO, '') " +                      //5
+                //", COALESCE(Location, '') " +                             //6
+                //", COALESCE(CostCenter, '') " +                           //7
+                //", COALESCE(FailureDescription, '') " +                   //8
+                //", COALESCE(computer, '') " +                             //9
+                //", COALESCE(AssignedTo, '') " +                           //10
+                //", COALESCE(Resolution,'') " +                            //11
+                " from OpticsTracker " +
+                //" WHERE Archive = 0 " +
+                "ORDER BY [Date] DESC", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+}
