@@ -184,7 +184,7 @@ namespace Certs
                 {   
                     if (g.form == "281-02")
                     {
-                        F0281_02B f = new F0281_02B();
+                        F0281_02C f = new F0281_02C();
                         f.ShowDialog();
                         bSaveToFolder.Visible = true;
                     }

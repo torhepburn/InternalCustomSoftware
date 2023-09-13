@@ -103,9 +103,29 @@ namespace Certs.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Logo_as_bmp {
+            get {
+                object obj = ResourceManager.GetObject("Logo_as_bmp", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Precision_Measurements_Seal {
             get {
                 object obj = ResourceManager.GetObject("Precision_Measurements_Seal", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Unified_Zygo_logo_trans_300dpi {
+            get {
+                object obj = ResourceManager.GetObject("Unified_Zygo_logo_trans_300dpi", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
