@@ -137,12 +137,8 @@ namespace Certs
             {
                 try
                 {
-                    //Image i = Properties.Resources.zygo_logo_trans_300dpi;
-                    //ev.Graphics.DrawImage(i, 65, 50, i.Width - 480, i.Height - 120);
-                    Image ii = Properties.Resources.Unified_Zygo_logo_trans_300dpi;
-                    //Image ii = Properties.Resources.Logo_as_bmp;
-                    //ev.Graphics.DrawImage(ii, 598, 60, ii.Width - 350, ii.Height - 70);
-                    ev.Graphics.DrawImage(ii, 500, 60, ii.Width-150, ii.Height-70);
+                    Image i = Properties.Resources.Unified_Zygo_logo_trans_300dpi;
+                    ev.Graphics.DrawImage(i, 550, 50, i.Width-175, i.Height-86);
 
                     ev.Graphics.DrawString("Certificate of Calibration", title, Brushes.Black, 50, 60);
                     ev.Graphics.DrawString("Certification #:", topheading, Brushes.Black, 150, 110);

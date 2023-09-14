@@ -204,13 +204,13 @@ namespace Certs
                 {
                     if (g.form == "325pdf")
                     {
-                        FORM_325B2 b = new FORM_325B2();
+                        FORM_325C2 b = new FORM_325C2();
                         b.ShowDialog();
                         bSaveToFolder.Visible = true;
                     }
                     else
                     {
-                        FORM_325B1 f = new FORM_325B1();
+                        FORM_325C1 f = new FORM_325C1();
                         f.ShowDialog();
                     }
                 }
@@ -328,14 +328,14 @@ namespace Certs
             
             if (g.form == "281-03")
             {
-                F0281_03C s = new F0281_03C();
+                F0281_03E s = new F0281_03E();
                 s.ShowDialog();
                 bSaveToFolder.Visible = true;
             }
 
             if (g.form == "281-04")
             {
-                F0281_04A s = new F0281_04A();
+                F0281_04B s = new F0281_04B();
                 s.ShowDialog();
                 bSaveToFolder.Visible = true;
             }

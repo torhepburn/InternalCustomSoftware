@@ -135,7 +135,7 @@
             this.bPrintForm0281.Name = "bPrintForm0281";
             this.bPrintForm0281.Size = new System.Drawing.Size(466, 50);
             this.bPrintForm0281.TabIndex = 7;
-            this.bPrintForm0281.Text = "Print FORM-0281-03 ISO-17025 Cert of Cal Step Height Revision C";
+            this.bPrintForm0281.Text = "Print FORM-0281-03 ISO-17025 Cert of Cal Step Height Revision E";
             this.bPrintForm0281.UseVisualStyleBackColor = false;
             this.bPrintForm0281.Click += new System.EventHandler(this.bPrintForm0281_Click);
             // 
@@ -160,9 +160,8 @@
             this.bPrintForm028104.Name = "bPrintForm028104";
             this.bPrintForm028104.Size = new System.Drawing.Size(466, 50);
             this.bPrintForm028104.TabIndex = 9;
-            this.bPrintForm028104.Text = "Print FORM-0281-04 ISO-17025 Cert of Cal Optical Accessory Revision A";
+            this.bPrintForm028104.Text = "Print FORM-0281-04 ISO-17025 Cert of Cal Optical Accessory Revision B";
             this.bPrintForm028104.UseVisualStyleBackColor = false;
-            this.bPrintForm028104.Visible = false;
             this.bPrintForm028104.Click += new System.EventHandler(this.bPrintForm028104_Click);
             // 
             // label1
