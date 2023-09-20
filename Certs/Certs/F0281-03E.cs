@@ -461,7 +461,7 @@ namespace Certs
                         ev.Graphics.DrawString("- Expanded uncertainty (k=2, approximately 95% confidence interval) calculated as the Root Sum Squared of 0.003 μm measurement floor and", smallarial, Brushes.Black, 55, 715);
                         ev.Graphics.DrawString("  0.3% of the reading. i.e. U = √[(0.3% h)² + (0.003 μm)²], where h is the measured value of the step height in μm.", smallarial, Brushes.Black, 55, 730);
                         ev.Graphics.DrawString("- Interferometric instrument calibration based on wavelength, traceable by direct realization of the meter via the 0.546074 μm 198Hg emission, ", smallarial, Brushes.Black, 55, 745);
-                        ev.Graphics.DrawString("  according toin compliance with ASME B89.7.5-2006.", smallarial, Brushes.Black, 55, 760);
+                        ev.Graphics.DrawString("  according to ASME B89.7.5-2006.", smallarial, Brushes.Black, 55, 760);
                         ev.Graphics.DrawString("- Instrument calibration verified to <0.1% using a 14.5 μm step height standard, calibrated by National Physical Laboratory, UK", smallarial, Brushes.Black, 55, 775);
                         ev.Graphics.DrawString("  to 2nm (k=2).", smallarial, Brushes.Black, 55, 790);
                         ev.Graphics.DrawString("- Step heights calculated according to ASME B46.1.2009 and JCGM 100:2008.", smallarial, Brushes.Black, 55, 805);
