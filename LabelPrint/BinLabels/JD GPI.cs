@@ -25,7 +25,7 @@ namespace BinLabels
         private void JD_GPI_Load(object sender, EventArgs e)
         {
             SqlConnection cnxn = new SqlConnection(
-                "server = ct-mid-sql11; password = views; user = views; database = accessfrontends;");
+                "server = ct-mid-sql11; password = Read+Write!; user = readWrite; database = Optics;");
 
             //SqlCommand cmd = new SqlCommand(
             //"SELECT TOP 100 " +
@@ -38,15 +38,24 @@ namespace BinLabels
             //"WHERE [Component] > '8070-1355-01' " +
             //"ORDER BY [Component],  ", cnxn);
 
+            //SqlCommand cmd = new SqlCommand(
+            //"SELECT" +
+            //" [Component] " +
+            //",[Description] " +
+            //",COALESCE([BinNumber],'0.0') " +
+            //",COALESCE(TRIM(STR(FullQuantity,25,0)),' ')  " +
+            //",'26' " +
+            //"  FROM[AccessFrontEnds].[dbo].[JD_BinLabels] " +
+            //"ORDER BY [Component], BinNumber  ", cnxn);
+
             SqlCommand cmd = new SqlCommand(
-            "SELECT " +
-            " [Component] " +
-            ",[Description] " +
-            ",COALESCE([BinNumber],'0.0') " +
-            ",COALESCE(TRIM(STR(FullQuantity,25,0)),' ')  " +
-            ",'26' " +
-            "  FROM[AccessFrontEnds].[dbo].[JD_BinLabels] " +
-            "ORDER BY [Component], BinNumber  ", cnxn);
+           "SELECT top 1" +
+           " [Location] " +
+           
+           
+           "  FROM[Optics].[dbo].[OpticTrackLocations] " +
+           "ORDER BY [Location]  ", cnxn);
+
 
 
             cnxn.Open();
@@ -64,67 +73,67 @@ namespace BinLabels
             while (dr.Read())
             {
                 //EPL
-                string str = "\nN\nq812Q609,203\n";
-                //str += "A30,20,0,4,1,1,N,\"SFO#\"\n";
-                //str += "B100,20,0,1,2,4,32,B,\"" + dr.GetString(2) + "\"\n";
-                //str += "A30,10,0,4,1,1,N,\"PN#\"\n";
-                str += "B100,10,0,1,2,4,32,B,\"" + dr.GetString(0) + "\"\n";
+                //string str = "\nN\nq812Q609,203\n";
+                ////str += "A30,20,0,4,1,1,N,\"SFO#\"\n";
+                ////str += "B100,20,0,1,2,4,32,B,\"" + dr.GetString(2) + "\"\n";
+                ////str += "A30,10,0,4,1,1,N,\"PN#\"\n";
+                //str += "B100,10,0,1,2,4,32,B,\"" + dr.GetString(0) + "\"\n";
 
-                //str += "A300,80,0,3,1,1,N,\"DESC:\"\n";
-                str += "A100,80,0,4,1,1,N,\"" + dr.GetString(1) + "\"\n";
-                str += "A100,110,0,4,1,1,N,\"Bin # :\"\n";
-                str += "A200,110,0,4,1,1,N,\"" + dr.GetDouble(2).ToString() + "\"\n";
-                str += "A300,110,0,4,1,1,N,\"FULL BIN: \"\n";
-                str += "A450,110,0,4,1,1,N,\"" + dr.GetString(3) + "\"\n";
-                str += "A100,150,0,4,1,1,N,\"WAREHOUSE: \"\n";
-                str += "A270,150,0,4,1,1,N,\"" + dr.GetString(4) + "\"\n";
-                //str += "A350,500,0,4,1,1,N,\"Pulled on:\"\n";
-                //str += "LO30,550,800,2\n";
-                //str += "LO30,700,800,2\n";
-                str += "P1\n";
-                RawPrinterHelper.SendStringToPrinter(printer, str);
+                ////str += "A300,80,0,3,1,1,N,\"DESC:\"\n";
+                //str += "A100,80,0,5,1,1,N,\"" + dr.GetString(0) + "\"\n";
+                ////str += "A100,110,0,4,1,1,N,\"Bin # :\"\n";
+                ////str += "A200,110,0,4,1,1,N,\"" + dr.GetDouble(2).ToString() + "\"\n";
+                ////str += "A300,110,0,4,1,1,N,\"FULL BIN: \"\n";
+                ////str += "A450,110,0,4,1,1,N,\"" + dr.GetString(3) + "\"\n";
+                ////str += "A100,150,0,4,1,1,N,\"WAREHOUSE: \"\n";
+                ////str += "A270,150,0,4,1,1,N,\"" + dr.GetString(4) + "\"\n";
+                ////str += "A350,500,0,4,1,1,N,\"Pulled on:\"\n";
+                ////str += "LO30,550,800,2\n";
+                ////str += "LO30,700,800,2\n";
+                //str += "P1\n";
+                //RawPrinterHelper.SendStringToPrinter(printer, str);
 
                 ////ZPL
-                //StringBuilder ZplBuilder = new StringBuilder();
+                StringBuilder ZplBuilder = new StringBuilder();
 
-                //ZplBuilder.Append("^XA");   //Start ZPL
+                ZplBuilder.Append("^XA");   //Start ZPL
 
-                ////barcode
-                //ZplBuilder.Append("^FO50,40");
-                //ZplBuilder.Append("^BXN,8,200");
-                //ZplBuilder.Append("^FD%B%").Append("6550-1074-01");
-
-
-                //ZplBuilder.Append("^FS");
-                //ZplBuilder.Append("^FS^FO300,140^A0N,40,40^FDBin Code^FS");
-                //// the box
-                ////ZplBuilder.Append("^FO0,30^GB450,150,10^FS");
+                //barcode
+                ZplBuilder.Append("^FO50,40");
+                ZplBuilder.Append("^BXN,8,200");
+                ZplBuilder.Append("^FD%B%").Append("6550-1074-01");
 
 
-                ////ZplBuilder.Append("^FS^FO" + r + ",75^A0N,40,40^FD").Append(label).Append("^FS");
+                ZplBuilder.Append("^FS");
+                ZplBuilder.Append("^FS^FO300,140^A0N,40,40^FDBin Code^FS");
+                // the box
+                //ZplBuilder.Append("^FO0,30^GB450,150,10^FS");
 
-                //ZplBuilder.Append("^XZ");
-                //// End ZPL
 
-                //string ZplString = ZplBuilder.ToString();
+                //ZplBuilder.Append("^FS^FO" + r + ",75^A0N,40,40^FD").Append(label).Append("^FS");
 
-                //MemoryStream lmemStream = new MemoryStream();
+                ZplBuilder.Append("^XZ");
+                // End ZPL
 
-                //StreamWriter lstreamWriter = new StreamWriter(lmemStream);
-                //lstreamWriter.Write(ZplString);
-                //lstreamWriter.Flush();
-                //lmemStream.Position = 0;
+                string ZplString = ZplBuilder.ToString();
 
-                //byte[] byteArray = lmemStream.ToArray();
+                MemoryStream lmemStream = new MemoryStream();
 
-                //IntPtr cpUnmanagedBytes = new IntPtr(0);
-                //int cnLength = byteArray.Length;
-                //cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
-                //Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+                StreamWriter lstreamWriter = new StreamWriter(lmemStream);
+                lstreamWriter.Write(ZplString);
+                lstreamWriter.Flush();
+                lmemStream.Position = 0;
 
-                //RawPrinterHelper.SendBytesToPrinter("ZDesigner ZD421-203dpi ZPL", cpUnmanagedBytes, cnLength);
-                ////RawPrinterHelper.SendBytesToPrinter(g.printer, cpUnmanagedBytes, cnLength);
-                //Marshal.FreeCoTaskMem(cpUnmanagedBytes);
+                byte[] byteArray = lmemStream.ToArray();
+
+                IntPtr cpUnmanagedBytes = new IntPtr(0);
+                int cnLength = byteArray.Length;
+                cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
+                Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
+
+                RawPrinterHelper.SendBytesToPrinter("ZDesigner ZD421-203dpi ZPL", cpUnmanagedBytes, cnLength);
+                //RawPrinterHelper.SendBytesToPrinter(g.printer, cpUnmanagedBytes, cnLength);
+                Marshal.FreeCoTaskMem(cpUnmanagedBytes);
             }
 
         }
