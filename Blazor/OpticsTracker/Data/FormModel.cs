@@ -5,7 +5,7 @@ namespace OpticsTracker.Data
 {
     public class FormModel
     {
-        //[Required]
+        [Required]
         public string location { get; set; }
 
         [Required]
