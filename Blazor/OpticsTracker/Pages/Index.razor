@@ -22,17 +22,18 @@
                                 <label>Select Location:</label>
                                 <InputSelect id="prodLine" tabindex=0 list="prodLines" @bind-Value="f.location">
                                     <option value="">-- Select an option --</option>
+                                    <option value="MAIN INSPECTION #1">#1 MAIN INSPECTION</option>
+                                    <option value="F.S. INSPECTION #2">#2 F.S. INSPECTION</option>
+                                    <option value="LARGE INSPECTION #3">#3 LARGE INSPECTION</option>
+                                    <option value="INSTRUMENT INSPECTION #4">#4 INSTRUMENT INSPECTION</option>
                                     <option value="128 TRIZAC">128 TRIZAC</option>
                                     <option value="ASSEMBLY ROOM">ASSEMBLY ROOM</option>
                                     <option value="CHEMICAL ETCH">CHEMICAL ETCH</option>
-                                    <option value="CLEAN ROOM #1">CLEAN ROOM #1</option>
-                                    <option value="CLEAN ROOM #2">CLEAN ROOM #2</option>
-                                    <option value="CLEAN ROOM #3">CLEAN ROOM #3</option>
-                                    <option value="CLEAN ROOM #4">CLEAN ROOM #4</option>
                                     <option value="CMM">CMM</option>
                                     <option value="CNC">CNC</option>
                                     <option value="COATING">COATING</option>
-                                    <option value="GENERATING">LFO GENERATING</option>
+                                    <option value="FUSED SILICA">FUSED SILICA</option>
+                                    <option value="GENERATING">GENERATING</option>
                                     <option value="GRINDING">GRINDING</option>
                                     <option value="LASER EDGE">LASER EDGE</option>
                                     <option value="LASER SERIALIZING">LASER SERIALIZING</option>
@@ -54,22 +55,15 @@
                                 <ValidationMessage For="() => f.location " style="display:inline" />
                             </div>
             
-            @*<div>
-                Scan Location :
-                <div>
-                    @*<InputText @ref=inputTextForFocus @bind-Value="f.location"/>
-                    <InputText @bind-Value="f.location" />
-                    <ValidationMessage For="() => f.location" style="display:inline" />
-                </div>
-            </div>
-            *@
+            
             <br/>
 
             <div>
                 Scan Work Order :
                 <div>
-                    <InputText style="width: 70%" @bind-Value="f.workOrder" />
+                    <InputText style="width: 70%" @bind-Value="f.workOrder" @onfocus="InputOnFocus" />
                     <ValidationMessage For="() => f.workOrder" style="display:inline" />
+                    <h1><label style="color:red">@successLabel</label></h1>
                 </div>
             </div>
             <br />
@@ -79,6 +73,7 @@
     </EditForm>
 
     <br />
+    
    
 </div>
 
@@ -86,25 +81,16 @@
 {
 
     private FormModel f = new FormModel();
-    private InputText inputTextForFocus;
-
 
     SqlCommand cmd;
     SqlConnection cnxn;
+    private string? successLabel;
 
     public class DateSample
     {
         public DateTime ddate { get; set; }
     }
     private DateSample _dateSample = new DateSample();
-
-    //protected override async Task OnAfterRenderAsync(bool firstRender)
-    //{
-    //    if (inputTextForFocus?.Element != null)
-    //    {
-    //        await inputTextForFocus.Element.Value.FocusAsync();
-    //    }
-    //}
 
 
     public void DataEntry()
@@ -114,7 +100,7 @@
             f.workOrder = f.workOrder.Substring(3, 8);
         }
 
-        
+
         cnxn = new SqlConnection(f.dbNAV);
 
         cmd = new("SELECT [Source No_] FROM [ZYGO$Production Order] " +
@@ -135,7 +121,7 @@
             cnxn.Close();
         }
 
-        
+
         cnxn = new SqlConnection(f.db);
 
         cmd = new("INSERT INTO OpticsTracker (" +
@@ -164,6 +150,7 @@
         finally
         {
             cnxn.Close();
+            successLabel = f.workOrder.ToUpper().Substring(0, 8) + " ENTERED.";
         }
 
         f.part = string.Empty;
@@ -177,6 +164,11 @@
         //failuredescription = "";
 
         //NavMgr.NavigateTo("viewshortages");
+    }
+
+    public void InputOnFocus()
+    {
+        successLabel = string.Empty;
     }
 
 
