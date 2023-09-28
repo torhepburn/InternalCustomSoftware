@@ -13,6 +13,16 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>AFE</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@ORDER_NO">
+            <Value>=Parameters!ORDER_NO.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@CUSTOMER">
+            <Value>=Parameters!CUSTOMER.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+        </QueryParameters>
         <CommandText>/****** Script for SelectTopNRows command from SSMS  ******/
 SELECT [ORDER_NO]
       ,[POSITION]
@@ -51,7 +61,15 @@ SELECT [ORDER_NO]
 
   LEFT JOIN MMX_DELIVERY_ADDRESSES d ON h.DELIVERY_ADDRESS = d.DELIVERY_ADDRESS AND h.CUSTOMER = d.CUSTOMER
 
-LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))</CommandText>
+LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))
+
+WHERE 1=1
+
+AND ((ORDER_NO = @ORDER_NO) OR @ORDER_NO is null)
+
+AND ( (c.NAME = @CUSTOMER) OR @CUSTOMER is null)
+
+ORDER BY ORDER_NO, POSITION</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -177,6 +195,24 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
         </Field>
       </Fields>
     </DataSet>
+    <DataSet Name="Customers">
+      <Query>
+        <DataSourceName>AFE</DataSourceName>
+        <CommandText>SELECT
+
+Name
+
+FROM MMX_CUSTOMERS
+
+ORDER BY NAME</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Name">
+          <DataField>Name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
   </DataSets>
   <ReportSections>
     <ReportSection>
@@ -220,10 +256,10 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.38542in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>2.33333in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.30208in</Width>
@@ -2026,7 +2062,6 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                        <rd:Selected>true</rd:Selected>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
@@ -2705,7 +2740,7 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>34.61458in</Width>
+            <Width>36.33333in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2713,7 +2748,7 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>34.61458in</Width>
+      <Width>36.33333in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -2723,10 +2758,41 @@ LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))<
       </Page>
     </ReportSection>
   </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="ORDER_NO">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Order Number</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="CUSTOMER">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Customer Name</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>Customers</DataSetName>
+          <ValueField>Name</ValueField>
+          <LabelField>Name</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+  </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
       <NumberOfColumns>4</NumberOfColumns>
       <NumberOfRows>2</NumberOfRows>
+      <CellDefinitions>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>ORDER_NO</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>CUSTOMER</ParameterName>
+        </CellDefinition>
+      </CellDefinitions>
     </GridLayoutDefinition>
   </ReportParametersLayout>
   <Language>en-US</Language>
