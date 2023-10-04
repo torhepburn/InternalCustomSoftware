@@ -399,26 +399,106 @@ UNION
 
 	GROUP BY ItemNo
 )
-,s11 AS
+,s112 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+
+AND [Entry Type] = 1 --Sale
+
+GROUP BY [Item No_]
+),
+s212 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+
+AND ([Entry Type] = 5 --Consumption
+
+AND [Order Type] = 1  --Production
+
+AND LEN([Order No_]) &gt; 0)
+
+AND p.Rework = 0  --not rework
+
+GROUP BY [Item No_]
+),
+s312 AS
 (
 	SELECT
 
-	[Item No_]
-	,SUM(Quantity)*-1 P12
+[Item No_]
+,SUM(Quantity)*-1 p
 
-	FROM [ZYGO$Item Ledger Entry]
+FROM [ZYGO$Item Ledger Entry]
 
-	WHERE
+WHERE
 
-	[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
 
-	/*	nav uses months	*/
+AND [Entry Type] = 3  --Negative Adjustment
 
-	AND ([Entry Type] = 1 OR [Entry Type] = 5) --Sale = 1, Consumption = 5
+AND
 
-	GROUP BY [Item No_]
+(LEN([Global Dimension 1 Code]) &gt; 0 OR [Document No_] like 'PRIR%')
+
+GROUP BY [Item No_]
+
+), s412 AS
+(
+SELECT
+
+*
+
+FROM s112
+
+UNION ALL
+
+SELECT 
+
+*
+
+FROM s212
+
+UNION ALL
+
+SELECT
+
+*
+
+FROM s312
 )
+,s11 AS
+(
+SELECT
 
+[Item No_]
+,SUM(p) P12
+
+FROM s412
+
+GROUP BY [Item No_]
+)
 
 SELECT
 
