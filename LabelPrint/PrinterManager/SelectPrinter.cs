@@ -26,7 +26,7 @@ namespace PrinterManager
         private void SelectPrinter_Load(object sender, EventArgs e)
         {
             SQL = g.queryBase +
-                "WHERE Permission = 'PRINTER' " +
+                " " +
                 "AND Application != 'PM' " +
                 "ORDER BY Application, PCID ";
 
@@ -68,8 +68,7 @@ namespace PrinterManager
         private void bSearch_Click(object sender, EventArgs e)
         {
             SQL = g.queryBase +
-                "WHERE Permission = 'PRINTER' " +
-                "AND Application != 'PM' " +
+                " AND Application != 'PM' " +
                 "AND PCID LIKE '%" + tbSearch.Text + "%' " +
                 "OR UserName LIKE '%" + tbSearch.Text + "%' " +
                 "OR Application LIKE '%" + tbSearch.Text + "%' " +
