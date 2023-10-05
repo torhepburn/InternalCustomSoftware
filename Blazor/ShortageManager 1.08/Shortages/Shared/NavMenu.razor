@@ -1,0 +1,394 @@
+﻿@inject NavigationManager Nav
+@inject ViewShortageService Views
+@inject IJSRuntime JSRuntime
+@using Pages
+
+
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+<div class="popup-overlay @(showAddShortage ? "visible" : "")">
+    <div class="popup-content">
+        <Shortages.Pages.AddShortage></Shortages.Pages.AddShortage>
+        <button class="button-85" @onclick="closeAddShortage">Close</button>
+    </div>
+</div>
+
+
+
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+    <nav style="display:flex;">
+    <h3 style="padding-top:10px">shortage</h3><h3 style="color:red; margin-right:50px;padding-top:10px">manager</h3>
+        <div class="nav-item">
+            <button class="nav-item" @onclick="HomeNav">
+                <div class="oi oi-home" aria-hidden="true"></div> Home
+            </button>
+        </div>
+        <div class="nav-item">
+                <button @onclick="addShortageNav" class="nav-item">
+                    <div class="oi oi-plus" aria-hidden="true"></div> Add Shortage
+                </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(inst)" class="nav-item">
+                <div class="oi oi-bullhorn" aria-hidden="true"></div> INST
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(pps)" class="nav-item">
+                <div class="oi oi-fire" aria-hidden="true"></div> PPS
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(opt)" class="nav-item">
+                <div class="oi oi-eye" aria-hidden="true"></div> OPTICS
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(irv)" class="nav-item">
+                <div class="oi oi-briefcase" aria-hidden="true"></div> IRVINE
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(war)" class="nav-item">
+                <div class="oi oi-flag" aria-hidden="true"></div> WAR ROOM
+            </button>
+        </div>
+        <div class="nav-item">
+            <button @onclick="(e) => goToMeeting(epo)" class="nav-item">
+                <div class="oi oi-lightbulb" aria-hidden="true"></div> EPO
+            </button>
+        </div>
+        <div class="nav-item" style="cursor:pointer">
+            <div class="dropdown">
+                <button class="nav-item" style="cursor:auto">
+                    <div class="oi oi-print" aria-hidden="true"></div> Print Reports
+                </button>
+                    <div class="dropdown-content">
+                    <div class="print-inst"><button @onclick="() => PrintReport(inst)" style="border-color:yellow;width:150px" class="button-85">INST</button><br /><br /></div>
+                <div class="print-pps"><button @onclick="() => PrintReport(pps)" style=" border-color:palegreen;width:150px" class="button-85">PPS</button><br /><br /></div>
+                <div class="print-optics"><button @onclick="() => PrintReport(opt)" style=" border-color:cyan;width:150px" class="button-85">OPTICS</button><br /><br /></div>
+                <div class="print-irvine"><button @onclick="() => PrintReport(irv)" style=" border-color:rgb(255, 30, 30);width:150px" class="button-85">IRVINE</button><br /><br /></div>
+                <div class="print-war"><button @onclick="() => PrintReport(war)" style="border-color:red;width:150px" class="button-85">WAR</button><br /><br /></div>
+                <div class="print-epo"><button @onclick="() => PrintReport(epo)" style="border-color:purple;width:150px" class="button-85">EPO</button><br /><br /></div>
+                </div>
+            </div>
+        </div>
+
+        <img style="background-color:transparent;" src="Images/zygoLogo.png">
+        <label style="font-size:10px;position:fixed;bottom:1%;right:1%">Version 1.08 08-15-23</label>
+    </nav>
+
+@code {
+    public PopUp pop = new PopUp();
+
+    private bool isLoading = false;
+    private bool showAddShortage = false;
+
+    public string inst = "INST";
+    public string opt = "OPT";
+    public string war = "WAR";
+    public string pps = "PPS";
+    public string irv = "IRV";
+    public string epo = "EPO";
+
+    private async void HomeNav()
+    {
+        Nav.NavigateTo("");
+    }
+
+    private void addShortageNav()
+    {
+        showAddShortage = true;
+        StateHasChanged();
+    }
+
+    private void closeAddShortage()
+    {
+        showAddShortage = false;
+        StateHasChanged();
+    }
+
+    private async void goToMeeting(string prodLine)
+    {
+        isLoading = true;
+        StateHasChanged();
+        Views.currentProdLine = prodLine;
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        await cnxn.OpenAsync();
+
+        DataTable ProdLineDT = GetDataTable(new SqlCommand("SELECT ID, ProductLine " +
+                                    "FROM shortage_list " +
+                                    "WHERE DateArchived IS NULL " +
+                                    "AND ProductLine = '" + Views.currentProdLine + "'" +
+                                    "ORDER BY ID", cnxn));
+        cnxn.Close();
+
+        if(ProdLineDT.Rows.Count != 0)
+        {
+            if (Nav.Uri.Contains("viewshortage"))
+            {
+                Nav.NavigateTo("");
+                Nav.NavigateTo("viewshortage");
+            }
+            else
+            {
+                Nav.NavigateTo("viewshortage");
+                
+            }
+        }
+
+        await Task.Delay(1000);
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+
+
+    }
+
+    public DataTable GetDataTable(SqlCommand cmd)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                dt.Load(dr);
+                return (dt);
+            }
+            else
+            {
+                pop.Title = "Error";
+                pop.Message = "No shortages here"; 
+                pop.ShowPopup();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        return (new DataTable());
+
+    }
+
+    public async Task PrintReport(string prodLine)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dtReport = new DataTable();
+
+        /*  part A for the non IQC data    */
+        SqlCommand cmd = new SqlCommand("spShortageReportV05a");
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd.Connection = cnxn;
+
+        /*  part B for the IQC data    */
+        SqlCommand cmd1 = new SqlCommand("spShortageReportV05b");
+        cmd1.CommandType = CommandType.StoredProcedure;
+        cmd1.Parameters.Add("@PRODUCTLINE", SqlDbType.NVarChar).Value = prodLine;
+        cmd1.Parameters.Add("@Action", SqlDbType.NVarChar).Value = DBNull.Value;
+        cmd1.Connection = cnxn;
+
+        cnxn.Open();
+
+        try
+        {
+            /*  table A non-IQC data    */
+            SqlDataReader sr = cmd.ExecuteReader();
+            DataTable dta = new DataTable();
+            dta.Load(sr);
+
+            /*  table B IQC data    */
+            sr = cmd1.ExecuteReader();
+            DataTable dtb = new DataTable();
+            dtb.Load(sr);
+
+            /*  merge the two tables a before b  */
+            dta.Merge(dtb);
+            dtReport = dta;
+        }
+        catch (Exception ex)
+        {
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        cnxn.Close();
+
+        int x = dtReport.Columns.IndexOf("Orig_ Requested Receipt Date");
+        dtReport.Columns[x].SetOrdinal(x + 1);
+
+        var rows = new StringBuilder();
+        bool firstLoop = true;
+        bool firstNonHOT = true;
+        string currentStatus = "";
+
+        foreach (DataRow items in dtReport.Rows)
+        {
+            if (items[1].ToString() == "HOT" && firstLoop)
+            {
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px red;\">STATUS: HOT</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+                firstLoop = false;
+            }
+            else
+            {
+                if (items[1].ToString() != "HOT" && firstNonHOT)
+                {
+                    rows.AppendLine("<tr>");
+                    for (int i = 0; i < dtReport.Columns.Count - 3; i++)
+                    {
+                        rows.AppendLine("<th style=\"border-top:solid 2px red;\"></th>");
+                    }
+                    rows.AppendLine("</tr>");
+                    firstNonHOT = false;
+                }
+            }
+
+            if (items[dtReport.Columns.Count - 1].ToString() != currentStatus)
+            {
+                currentStatus = items[dtReport.Columns.Count - 1].ToString();
+
+                rows.AppendLine("<tr><th style=\"border-top:solid 2px green;\">Item Status: " +
+                currentStatus + "</th>");
+                for (int i = 1; i < dtReport.Columns.Count - 3; i++)
+                {
+                    rows.AppendLine("<th style=\"border-top:solid 2px green;\"></th>");
+                }
+                rows.AppendLine("</tr>");
+            }
+
+
+            rows.AppendLine("<tr>");
+
+            rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" + items[0].ToString() + "</td> ");
+
+
+
+            for (int i = 2; i < dtReport.Columns.Count; i++)
+            {
+                if (dtReport.Columns[i].ColumnName.ToString() == "GROUP")
+                {
+                    if (items[i].ToString() == "SERS" || items[i].ToString() == "SER's")
+                    {
+                        rows.AppendLine("<td style=\"color:red;border-top:solid 1px blue\">" + items[i + 2].ToString() + "<br/>" +
+                        items[i].ToString() + " " + items[i + 1].ToString() + "</td> ");
+                    }
+                    else
+                    {
+                        rows.AppendLine("<td style=\"border-top:solid 1px blue\">" + items[i + 2].ToString() + "<br/>" + items[i].ToString() + "</td> ");
+                    }
+                    break;
+                }
+                else
+                {
+                    rows.AppendLine("<td style=\"border-top:solid 1px blue;\">" +
+                    items[i].ToString().Replace("12:00:00 AM", "").Replace("1/1/1900", "").Replace("1/1/1753", "").Replace("1/1/1990", "") +
+                    "</td> ");
+                }
+
+            }
+            rows.AppendLine("</tr>");
+
+        }
+
+
+        string html = @"
+        <head>
+          <style>
+            @media print{
+              @page {
+                size: landscape;
+              }
+            }
+
+            body {
+              margin: 20px;
+              /* Adjust the value to set the desired margin size */
+            }
+
+            colName {
+              margin: 20px;
+              font-size: 10px;
+            }
+
+            tr {
+              font-size: 12px;
+            }
+            td {
+              font-size: 10px;
+              text-align:center;
+            }
+                .status td{
+                    border-top:solid red;
+                }
+            th {
+              font-size: 10px;
+              text-align:center;
+            }
+
+          </style>
+        </head>
+
+        <body>
+
+            <h2>ZYGO " + prodLine + " ACTIVE SHORTAGE LIST REPORT</h2>" + @"
+
+          <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID              </th>
+                        <th>Insp Code       </th>
+                        <th>ItemCode        </th>
+                        <th>Description     </th>
+                        <th>Comments        </th>
+                        <th>Rqd Qty         </th>
+                        <th>Require         </th>
+                        <th>Request         </th>
+                        <th>Promise         </th>
+                        <th>IQCmplt         </th>
+                        <th>Buyer           </th>
+                        <th>Qty             </th>
+                        <th>PO/WO           </th>
+                        <th>Supplier        </th>
+                        <th>Date Added      </th>
+                        <th>Group           </th>
+                    </tr>
+                </thead>
+                <tbody> " +
+                rows.ToString() + @"
+                </tbody >
+            </table>
+        </body>
+        ";
+        await JSRuntime.InvokeVoidAsync("printContent", html);
+        Task.Delay(3000);
+        Nav.NavigateTo("", forceLoad: true);
+    }
+}

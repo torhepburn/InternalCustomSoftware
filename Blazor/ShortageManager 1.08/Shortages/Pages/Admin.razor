@@ -1,0 +1,122 @@
+﻿@inject AuthenticationStateProvider auth
+@inject NavigationManager Nav
+@page "/admin"
+
+<h3>Admin</h3>
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+    </div>
+</div>
+<div style="display:flex">
+    <Table dt="@dtUsers" TableStyle="table-admin"></Table>
+    
+    <div>
+        <select @bind="perm" style="margin-left:10px" id="user-role" name="user-role">
+            <option value="ACCESS">ACCESS</option>
+            <option value="ADMIN">ADMIN</option>
+        </select>
+        <input placeholder="Enter username" style="max-height:30px" type="text" @bind-value="user" />
+        <button class="button-85" @onclick="Add">Add user</button>
+        <button class="button-85" @onclick="Remove">Delete user</button>
+        <br />
+    </div>
+    
+</div>
+
+@code {
+    PopUp pop = new PopUp();
+    public DataTable dtUsers = new DataTable();
+
+    public string user = "";
+    public string perm = "ACCESS";
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dt = new DataTable();
+        SqlCommand cmd = new SqlCommand(" Select UserName from applicationsetup " +
+         "WHERE Application = 'ShortageManager' AND Permission = 'ADMIN' AND PermissionValue = 'TRUE'", cnxn);
+        cnxn.Open();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            dt.Load(dr);
+        }
+
+        string user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+
+        foreach (DataRow row in dt.Rows)
+        {
+            if (row[0].ToString().ToUpper().Trim().Equals(user.ToUpper()))
+            {
+                SqlCommand cmdUsers = new SqlCommand(" Select UserName, Permission from applicationsetup " +
+                 "WHERE Application = 'ShortageManager' AND PermissionValue = 'TRUE'", cnxn);
+                using (SqlDataReader dr = cmdUsers.ExecuteReader())
+                {
+                    dtUsers.Load(dr);
+                }
+
+
+                cnxn.Close();
+                return;
+            }
+        }
+        pop.Message = "Error";
+        pop.Message = "You do not have access to this page";
+        pop.ShowPopup();
+        Databases.db = "";
+        Databases.dbNAV = "";
+    }
+
+    private void Add()
+    {
+        if(user != "")
+        {
+            SqlConnection cnxn = new SqlConnection(Databases.db);
+            SqlParameter pUser = new SqlParameter("@user", user);
+            SqlParameter pPerm = new SqlParameter("@perm", perm);
+            SqlCommand cmd = new SqlCommand("INSERT INTO applicationsetup (UserName, Application, Permission, PermissionValue) " +
+            "VALUES(@user, 'ShortageManager', @perm, 'TRUE')", cnxn);
+            cmd.Parameters.Add(pUser);
+            cmd.Parameters.Add(pPerm);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+            user = "";
+            Nav.NavigateTo("admin", forceLoad: true);
+        }
+    }
+
+    private void Remove()
+    {
+        if(user != "")
+        {
+            if (user.ToLower() != "zflorian" && user.ToLower() != "klacombe")
+            {
+                SqlConnection cnxn = new SqlConnection(Databases.db);
+                SqlParameter pUser = new SqlParameter("@user", user);
+                SqlParameter pPerm = new SqlParameter("@perm", perm);
+                SqlCommand cmd = new SqlCommand("DELETE FROM applicationsetup " +
+                "WHERE [UserName] = @user AND [Application] = 'ShortageManager' AND [Permission] = @perm AND [PermissionValue] = 'TRUE'", cnxn);
+                cmd.Parameters.Add(pUser);
+                cmd.Parameters.Add(pPerm);
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+                cnxn.Close();
+                user = "";
+                Nav.NavigateTo("admin", forceLoad: true);
+            }
+        }
+    }
+}

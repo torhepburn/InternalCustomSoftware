@@ -1,0 +1,364 @@
+﻿@page "/"
+@using Microsoft.Data.SqlClient
+@using System.Data
+@using Simplify.Web.MessageBox
+@using static PopUp
+@using static Databases
+@inject ViewShortageService Views
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider auth
+@inject NavigationManager uriHelper;
+@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Components.Web
+
+
+
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+
+<div style="overflow-y:hidden;position:relative;margin:-24px;padding:0;display:flex;justify-content:center; background-color:black; height:250px;">
+    <img style="background-color:transparent;" src="Images/homepage-banner-1920x350.jpg">
+    <div class="floatingstrip-wrapper">
+        <label style="color:whitesmoke;font-size:30px;font-weight:600;display:flex;justify-content:center;">Welcome, @user</label>
+    </div>
+</div>
+<br />
+<br />
+<div style="display:flex;justify-content:center">
+
+    <div style="display:relative;top:100px;">
+        <div style="display:flex">
+            
+            
+
+        </div>
+        <div>
+            <PageTitle>Shortage Manager</PageTitle>
+
+
+            <div style="display:flex;justify-content:center">
+                <div>
+                    <input placeholder="Enter item code" type="text" id="code" @bind="item.code" />
+                    <button type="button" @onclick="HandleSubmit" class="button-58">Search</button>
+
+                    <input placeholder="Enter shortageID" type="text" id="shortageID" style="margin-left:50px" @bind="item.ID" />
+                    <button type="button" @onclick="getID" class="button-58">Get ID</button>
+                </div>
+            </div>
+
+            <br />
+            @if (dt != null && dt.Rows.Count > 0)
+            {
+            <div class="table-container">
+                <table class="table" style="">
+                    <thead>
+                        <tr>
+                            <th>
+                                <button @onclick="() => SortTable(0)" style="font-family:Arial,Verdana;font-weight:bold;width:90%;border:none;background:none;margin-left:2px">
+                                    Item Code
+                                    @if (isVisible[0])
+                                    {
+                                    <div class="sort-arrow-down @(isSortedDescending[0] ? "rotate" : "")"></div>
+                                    }
+                                </button>
+                            </th>
+
+                            <th>
+                                <button @onclick="() => SortTable(1)" style="font-family:Arial,Verdana;font-weight:bold;width:100%;position:center;margin-left:1px;border:none;background:none">
+                                    Line
+                                    @if (isVisible[1])
+                                    {
+                                    <div class="sort-arrow-down @(isSortedDescending[1] ? "rotate" : "")"></div>
+                                    }
+                                </button>
+                            </th>
+                            <th>
+                                <button @onclick="() => SortTable(2)" style="font-family:Arial,Verdana;font-weight:bold;width:70%;margin-left:30px;border:none;background:none">
+                                    Planner Date Required
+                                    @if (isVisible[2])
+                                    {
+                                    <div class="sort-arrow-down @(isSortedDescending[2] ? "rotate" : "")"></div>
+                                    }
+                                </button>
+                            </th>
+                            <th>
+                                <button @onclick="() => SortTable(3)" style="font-family:Arial,Verdana;font-weight:bold;width:70%;margin-left:8px;border:none;background:none">
+                                    ID
+                                    @if (isVisible[3])
+                                    {
+                                    <div class="sort-arrow-down @(isSortedDescending[3] ? "rotate" : "")"></div>
+                                    }
+
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (dt != null)
+                        {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                        <tr>
+                            <td><button @onclick="(() => OpenIndividual(items[3].ToString()))" class="clickable-cell" style="color:red">@items[0]</button></td>
+                            <td>@items[1].ToString()</td>
+                            <td>@items[2].ToString().Replace("12:00:00 AM", "")</td>
+                            <td>@items[3].ToString()</td>
+                        </tr>
+                        }
+
+                        }
+
+                    </tbody>
+                </table>
+                    
+            </div>
+            <br />
+
+            }
+        </div>
+
+
+
+        @if (admin)
+        {
+            <h4><a style="position:fixed;bottom:3%;right:1%;color:red;font-size:14px" href="admin">Admin Controls</a></h4>
+        }
+        
+    </div>
+</div>
+
+
+
+
+@if (isLoading)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="ring" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+
+
+
+@code{
+    public string inst = "INST";
+    public string opt = "OPT";
+    public string war = "WAR";
+    public string pps = "PPS";
+    public string irv = "IRV";
+    public string epo = "EPO";
+
+
+    private Shortage item = new();
+    public int currentColNum = 0;
+    public DataTable? dt;
+    SqlDataReader dr;
+    PopUp pop = new PopUp();
+    private bool newBrowse = true;
+    private string viewShortageUrl = "viewshortage";
+    private string viewShortageIndUrl = "viewshortageindividual";
+    public bool isLoading = false;
+    private bool admin = false;
+    private string? user;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dt = new DataTable();
+        SqlCommand cmd = new SqlCommand(" Select UserName from applicationsetup " +
+         "WHERE Application = 'ShortageManager' AND Permission = 'ADMIN' AND PermissionValue = 'TRUE'", cnxn);
+        try
+        {
+            cnxn.Open();
+            using (SqlDataReader dr = cmd.ExecuteReader())
+            {
+                dt.Load(dr);
+            }
+            cnxn.Close();
+            user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+            if (user.StartsWith("Z"))
+            {
+                user = user.Replace("ZYGOMIS\\", "");
+            }
+            else
+            {
+                user = user.Replace("AMETEK-AD\\", "");
+            }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row[0].ToString().ToUpper().Trim().Equals(user.ToUpper()))
+                {
+                    admin = true;
+                }
+            }
+
+
+            if (Databases.db != "")
+            {
+                HandleSubmit();
+            }
+        }
+        catch(SqlException ex)
+        {
+            
+        }
+        
+
+    }
+
+    public void getID()
+    {   
+        if (item.ID == null)
+        {
+            item.ID = "";
+        }
+        OpenIndividual(item.ID);
+    }
+
+    public async Task OpenIndividual(string shortageID)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pID = new SqlParameter("@ID", shortageID);
+        SqlCommand cmd = new SqlCommand(" Select ID " +
+                 " FROM shortage_list " +
+                 " WHERE ID = @ID",  cnxn);
+        cmd.Parameters.Add(pID);
+        try
+        {
+            cnxn.Open();
+            using(SqlDataReader reader = cmd.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    isLoading = true;
+                    StateHasChanged();
+                    Views.currentShortageID = shortageID;
+                    Nav.NavigateTo("viewshortageindividual");
+                }
+                else
+                {
+                    pop.Title = "Error";
+                    pop.Message = "Shortage not found";
+                    pop.ShowPopup();
+                }
+            }
+        }catch(SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+    }
+
+
+    private void HandleSubmit()
+    {
+        SortTable(0, true);
+    }
+
+    // Define a Dictionary to store the sorting order for each column
+    private List<bool> isSortedDescending = new List<bool> {false, true, true, true};
+    private List<bool> isVisible = new List<bool> { true, false, false, false };
+
+    public void SortTable(int columnNum, bool forceAsc=false)
+    {
+        currentColNum = columnNum;
+        string ascendingString = "ASC";
+        for(int i = 0; i < 4; i++)
+        {
+            if (columnNum == i)
+            {
+                isVisible[i] = true;
+
+                if (isSortedDescending[i] | forceAsc)
+                {
+                    isSortedDescending[i] = false;
+                    ascendingString = "ASC";
+                }
+                else
+                {
+                    isSortedDescending[i] = true;
+                    ascendingString = "DESC";
+                }
+            }
+            else
+            {
+                isSortedDescending[i] = true;
+                isVisible[i] = false;
+            }
+        }
+
+
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlCommand cmd = new SqlCommand(" Select ItemCode [Item Code], ProductLine Line, PlannerRequiredDate,  ID " +
+                 " FROM shortage_list " +
+                 " WHERE DateArchived IS NULL AND ItemCode like '%" + item.code + "%' " +
+                 " ORDER BY " + (columnNum + 1).ToString() + " " + ascendingString, cnxn);
+
+        try
+        {
+            cnxn.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                dt = new();
+                dt.Load(dr);
+            }
+            else
+            {
+                pop.Message = "No data from query";
+                pop.Title = "Error";
+                pop.ShowPopup();
+            }
+        }
+        catch (SqlException ex)
+        {
+
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+            this.StateHasChanged();
+        }
+
+    }
+
+    public DataTable GetDataTable(SqlCommand cmd)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        return (dt);
+    }
+
+    
+
+
+}

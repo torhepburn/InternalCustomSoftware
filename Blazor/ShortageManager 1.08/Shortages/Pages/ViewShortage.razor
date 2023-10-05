@@ -1,0 +1,1571 @@
+﻿@page "/viewshortage"
+@inject NavigationManager Nav
+@inject ViewShortageService Views
+@inject AuthenticationStateProvider auth;
+@inject IJSRuntime JSRuntime
+<style>
+    body{
+        background-color: @BackgroundColor;
+    }
+</style>
+
+<body>
+    @*SHORTAGE TOP TABLE*@
+<Table dt="@ShortageDTList[shortNum]" TableStyle="table-shortage" prodLine="@itemsList[shortNum].prodLine" ></Table>
+
+@*<button @onclick="UpdateShortage">update</button>*@
+    <div style="display:flex">
+        @*All editing fields go in this model*@
+        <div style="width:100%">
+            <div style="display:flex">
+                <div>
+                    @*NEXT/PREV*@
+                    <button class="button-85" disabled="@(isLoading ? true : null)" @onclick="@Previous">PREV</button>
+                    <button class="button-85" disabled="@(isLoading ? true : null)" @onclick="@Next">NEXT</button>
+                    <br />
+                    <label style="font-weight:700;color:grey;padding-left:45px">@((shortNum + 1).ToString()) OF @ProdLineNumShortages</label>
+                    <br />
+                    @*ARCHIVE*@
+                    @if (isArchived[shortNum])
+                    {
+                        <button class="button-save" disabled="@(isLoading ? true : null)" type="submit" @onclick="Unarchive">Unarchive</button>
+                    }
+                    else
+                    {
+                        <button class="button-save" disabled="@(isLoading ? true : null)" type="submit" @onclick="Archive">Archive</button>
+                    }
+                   
+                </div>
+                @*STATUS*@
+                <div style="display:flex;flex-direction:column;margin-left:10px">
+                    <label style="background-color:yellow;border:solid 1px">Status: @itemsList[shortNum].lateFlagStatus</label>
+
+                    <select id="status" @bind="@itemsList[shortNum].status">
+                        <option value="">No Status</option>
+                        <option value="Needs PO">Needs PO</option>
+                        <option value="On Order">On Order</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Receiving Dock">Receiving Dock</option>
+                        <option value="IQC">IQC</option>
+                        <option value="FAI">FAI</option>
+                        <option value="FAST">FAST</option>
+                        <option value="MOVED">MOVED</option>
+                    </select>
+                    @*HOT*@
+                    <div class="checkbox-wrapper-59" style="display:flex">
+                        <label>Hot: </label>
+                        <input class="checkbox" type="checkbox" id="hot" @bind="@itemsList[shortNum].hot" />
+                    </div>
+                    @*ACTION RQD/FLAG FIELD*@
+                    <div style="display:flex">
+                        <label>Action Rqd:</label>
+                        <input class="checkbox" type="checkbox" id="actRqrd" @bind="@itemsList[shortNum].flagField"/>
+                    </div>
+                </div>
+                @*REASON*@
+                <div style="display:flex;flex-direction:column;margin-left:10px;margin-right:10px">
+                    <label style="background-color:yellow;border:solid 1px">Reason: @itemsList[shortNum].reason</label>
+                    <select @bind="@itemsList[shortNum].reason">
+                        <option value="">--Select Reason--</option>
+                        <option value="Inside Lead Time">Inside Lead Time</option>
+                        <option value="Pull In">Pull In</option>
+                        <option value="Late PO">Late PO</option>
+                        <option value="Confirm Delivery">Confirm Delivery</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="FAST-Supplier">FAST-Supplier</option>
+                        <option value="FAST-ZYGO">FAST-ZYGO</option>
+                        <option value="Inventory Discrepancy">Inventory Discrepancy</option>
+                        <option value="Item Master Discrepancy">Item Master Discrepancy</option>
+                        <option value="BOM Discrepancy">BOM Discrepancy</option>
+                        <option value="KB Scan Missed">KB Scan Missed</option>
+                        <option value="Logistic Delay">Logistic Delay</option>
+                        <option value="Unpaid Invoices">Unpaid Invoices</option>
+                    </select>
+                    @*FEDEX/UPS*@
+                    <div style="display:flex;padding-top:5px">
+                        <button @onclick="FedEx" class="button-85" style="border-color:palegreen">FedEx</button>
+                        <button @onclick="UPS" class="button-85" style="border-color:brown">UPS</button>
+                    </div>
+                    @*TRACKING NUMBER*@
+                    <div style="padding-top:5px">
+                        <input type="text" placeholder="Enter Tracking Number" style="font-size:12px; width:150px; height:20px;" @bind="@itemsList[shortNum].trackingNo"/>
+                    </div>
+                </div>
+                @*PROMISED/IQC/REQUIRED DATES*@
+                <div style="display:flex;flex-direction:column;margin-left:10px;margin-right:10px;font-size:12px">
+                    <label>Promised Receipt Date</label>
+                    <input type="date" id="plannedreceiptdate" @bind="itemsList[shortNum].promisedReceiptDate" />
+                    <label>IQC Complete Date</label>
+                    <input type="date" id="iqccompletedate" @bind="@itemsList[shortNum].iqcCompleteDate"/>
+                    <label>Planner Required Date</label>
+                    <input type="date" id="plannercompletedate" @bind="@itemsList[shortNum].reqDate"/>
+                </div>
+                @*ADD COMMENT*@
+                <div style="width:75%;display:flex">
+                    <div style="width:99%;display:flex; flex-direction:column">
+                        <label style="font-size:12px;">Add Comment:</label>
+                        <textarea style="width: 100%; height: 100px;max-height:200px" @bind="@newComment"></textarea>
+                    </div>
+                </div>
+            </div>
+            @*PROD/SALES ORDERS AND DATES/CHANGE BUYER*@
+            <div style="display:flex;font-size:13px; padding-top:5px">
+                <label>Production Order:</label>
+                <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].productionOrder"/>
+                <label>Sales Order:</label>
+                <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].salesOrder"/>
+                <label>Sales Order Line:</label>
+                <input type="number" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].SOLineNum"/>
+                <label>Ship Date:</label>
+                <input type="date" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].shipDate"/>
+                <label>Sales Order Date:</label>
+                <input type="date" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].salesOrderDate"/>
+                <label>Change Buyer:</label>
+                <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@itemsList[shortNum].buyer" />
+            </div>
+        </div>
+        @*COMMENT TABLE*@
+        <Table dt="@CommentsDTList[shortNum]" TableStyle="table-comments" prodLine="@itemsList[shortNum].prodLine"></Table>
+    </div>
+    @*ITEM MASTER TABLE*@
+    <div style="width:100%">
+        <label style="font-size:12px">Item Master Data</label>
+        <ItemMasterData
+        dt="@itemMasterDTList[shortNum]"
+        itemCode="@itemsList[shortNum].code" 
+        Allocations="@Allocations[shortNum]"
+        nonnetStock="@nonnetStock[shortNum]"
+        onOrder="@onOrder[shortNum]"
+        blockedStock="@blockedStock[shortNum]"
+        nettableStock="@nettableStock[shortNum]"
+        prodLine="@itemsList[shortNum].prodLine">
+        </ItemMasterData>
+    </div>
+    
+    <div style="display:flex">
+        @*PLANNED STOCK TABLE*@
+        <div style="width:70%;flex-direction:column;">
+            <label style="font-size:12px">Planned Stock Transactions</label>
+            <Table dt="@PlannedStockDTList[shortNum]" TableStyle="table-planned-stock" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+        @*CHANGE HISTORY TABLE*@
+        <div style="width:30%;flex-direction:column;">
+            <label style="font-size:12px">Promised Receipt Date Change History</label>
+            <Table dt="@HistoryDTList[shortNum]" TableStyle="table-history" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+    </div>
+
+    @*PURCHASE ORDER TABLE*@
+    <label style="font-size:12px">Purchase Orders (Open)</label>
+    <Table dt="@PurchOrdDTList[shortNum]" TableStyle="table-purchase" prodLine="@itemsList[shortNum].prodLine"></Table>
+
+    <div style="width:100%;display:flex">
+        @*RECEIPTS TABLE*@
+        <div style="width:50%;flex-direction:column">
+            <label style="font-size:12px">Receipts (Awaiting QC)</label>
+            <Table dt="@ReceiptsDTList[shortNum]" TableStyle="table-receipts" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+        @*OPEN PROD TABLE*@
+        <div style="width:50%;flex-direction:column">
+            <label style="font-size:12px">Production Orders (Open)</label>
+            <Table dt="@OpenProdDTList[shortNum]" TableStyle="table-production" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+    </div>
+
+    <div style="display:flex">
+        @*TRACKING WAREHOUSE TABLE*@
+        <div style="width:45%;flex-direction:column">
+            <label style="font-size:12px">Tracker Info (Moved out to warehouse in last 7 days)</label>
+            <Table dt="@TrackWarehouseDTList[shortNum]" TableStyle="table-warehouse" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+        @*TRACKING QC TABLE*@
+        <div style="width:45%;flex-direction:column">
+            <label style="font-size:12px">Tracker Info (Moved out by QC operator in last 7 days)</label>
+            <Table dt="@TrackQCDTList[shortNum]" TableStyle="table-qc" prodLine="@itemsList[shortNum].prodLine"></Table>
+        </div>
+        <button class="button-85" style="height:100%;margin-top:24px;margin-left:25px" @onclick="TrackReport">Tracking Details</button>
+    </div>
+</body>
+
+@*LOADING SPINNER*@
+@if (spinner)
+{
+    <section class="overlay-container">
+        <div class="loading-spinner">
+            <div class="spinner" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%)"></div>
+        </div>
+    </section>
+}
+
+@*POPUPS*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+@code {
+    public PopUp pop = new PopUp();
+
+    //IMPORTANT KEEP TRACK OF CURRENT SHORTAGE
+    List<Shortage> itemsList = new List<Shortage>();
+    public int shortNum = 0; //CURRENT VIEWED SHORTAGE
+    List<DateTime?> OrigCurrDueDates = new List<DateTime?>();
+
+    //ALL DATATABLES SAVED IN LISTS
+    List<DataTable> ShortageDTList = new List<DataTable>();
+    public DataTable? ReceiptsDT;
+    List<DataTable> ReceiptsDTList = new List<DataTable>();
+    public DataTable? PlannedStockDT;
+    List<DataTable> PlannedStockDTList = new List<DataTable>();
+    public DataTable? OpenProdDT;
+    List<DataTable> OpenProdDTList = new List<DataTable>();
+    public DataTable? CommentsDT;
+    List<DataTable> CommentsDTList = new List<DataTable>();
+    public DataTable? HistoryDT;
+    List<DataTable> HistoryDTList = new List<DataTable>();
+    public DataTable? TrackWarehouseDT;
+    List<DataTable> TrackWarehouseDTList = new List<DataTable>();
+    public DataTable? PurchOrdDT;
+    List<DataTable> PurchOrdDTList = new List<DataTable>();
+    public DataTable? TrackQCDT;
+    List<DataTable> TrackQCDTList = new List<DataTable>();
+
+    //ITEM MASTER STORED DIFFERENTLY DUE TO EXTRA COMPUTING
+    List<DataTable> itemMasterDTList = new List<DataTable>();
+    List<string?> Allocations = new List<string?>();
+    List<string?> nonnetStock = new List<string?>();
+    List<string?> onOrder = new List<string?>();
+    List<string?> blockedStock = new List<string?>();
+    List<string?> nettableStock = new List<string?>();
+
+    //KEEP TRACK OF ARCHIVED AND UNARCHIVED SHORTAGES
+    List<bool> isArchived = new List<bool>();
+
+
+    private bool isLoading = true; //CONTROLS DISABLED PROPERTY OF PREV/NEXT
+    private bool spinner = false;
+    public DataTable? ProdLineDT;
+    public string BackgroundColor = "white";
+
+    public int ProdLineNumShortages;
+    public string newComment = "";
+
+
+    //PREV/NEXT buttons-------------------------------------------------------
+    private void UpdatePromised()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+
+        if(OrigCurrDueDates[shortNum] != itemsList[shortNum].promisedReceiptDate)
+        {
+            cnxn.Open();
+            //First handle saving edits and reloading comments
+            SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
+            "CurrDueDate = @Promised " +
+            "WHERE ID = @ID", cnxn);
+            cmd.Parameters.Add(new SqlParameter("@Promised", (itemsList[shortNum].promisedReceiptDate == null)
+            ? new DateTime(1900, 01, 01) : itemsList[shortNum].promisedReceiptDate));
+            cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
+
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+                SqlCommand cmd1 = new SqlCommand("UPDATE Shortage_List " +
+                           "SET PreviousCurrDueDate = '" + itemsList[shortNum].promisedReceiptDate + "' " +
+                           "WHERE ID = @ID", cnxn);
+                cmd1.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
+
+                try
+                {
+                    cmd1.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+
+                }
+
+                cnxn.Close();
+            }
+        }
+
+    }
+
+    public async void UpdateShortage()
+    {
+
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+
+
+        //First handle saving edits and reloading comments
+        SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
+        "HOT = @HOT, " +
+        "ItemStatus = @ItemStatus, " +
+        "Reason = @Reason, " +
+        "FlagField = @FlagField," +
+        "ShipmentTrackingNumber = @ShipmentTrackingNumber, " +
+        "IQCCompleteDate = @IQCCompleteDate, " +
+        "PlannerRequiredDate = @PlannerRequiredDate, " +
+        "ProdOrder = @ProdOrder, " +
+        "SalesOrder = @SalesOrder, " +
+        "ShipDate = @ShipDate, " +
+        "SODate = @SODate, " +
+        "SOLineNo = @SOLineNo, " +
+        "Buyer = @Buyer " +
+        "WHERE ID = @ID", cnxn);
+
+        cmd.Parameters.Add(new SqlParameter("@HOT", itemsList[shortNum].hot ? -1 : 0));
+        cmd.Parameters.Add(new SqlParameter("@ItemStatus", (itemsList[shortNum].status == null) 
+        ? DBNull.Value : itemsList[shortNum].status));
+        cmd.Parameters.Add(new SqlParameter("@Reason", (itemsList[shortNum].reason == null) 
+        ? DBNull.Value : itemsList[shortNum].reason));
+        cmd.Parameters.Add(new SqlParameter("@FlagField", (itemsList[shortNum].flagField) ? -1 : 0));
+        cmd.Parameters.Add(new SqlParameter("@ShipmentTrackingNumber", (itemsList[shortNum].trackingNo == null)
+        ? DBNull.Value : itemsList[shortNum].trackingNo));
+        cmd.Parameters.Add(new SqlParameter("@IQCCompleteDate", (itemsList[shortNum].iqcCompleteDate == null)
+        ? new DateTime(1990, 01, 01) : itemsList[shortNum].iqcCompleteDate));
+        cmd.Parameters.Add(new SqlParameter("@PlannerRequiredDate", (itemsList[shortNum].reqDate == null) 
+        ? new DateTime(1990, 01, 01) : itemsList[shortNum].reqDate));
+        cmd.Parameters.Add(new SqlParameter("@ProdOrder", (itemsList[shortNum].productionOrder == null)
+        ? DBNull.Value : itemsList[shortNum].productionOrder));
+        cmd.Parameters.Add(new SqlParameter("@SalesOrder", (itemsList[shortNum].salesOrder == null)
+        ? DBNull.Value : itemsList[shortNum].salesOrder));
+        cmd.Parameters.Add(new SqlParameter("@ShipDate", (itemsList[shortNum].shipDate == null)
+        ? DBNull.Value : itemsList[shortNum].shipDate));
+        cmd.Parameters.Add(new SqlParameter("@SODate", (itemsList[shortNum].salesOrderDate == null)
+        ? new DateTime(1990, 01, 01) : itemsList[shortNum].salesOrderDate));
+        cmd.Parameters.Add(new SqlParameter("@SOLineNo", (itemsList[shortNum].SOLineNum == null)
+        ? DBNull.Value : itemsList[shortNum].SOLineNum));
+        cmd.Parameters.Add(new SqlParameter("@Buyer", itemsList[shortNum].buyer));
+        cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
+
+        cnxn.Open();
+        try
+        {
+            cmd.ExecuteNonQuery();
+        }
+        catch(SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+        UpdatePromised();
+        ReloadBuyer();
+
+    }
+
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //Enables PREV/NEXT buttons after the page is rendered
+        if (firstRender)
+        {
+            await Task.Delay(2000);
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public async void Previous() //Cycle backwards in meeting
+    {
+        UpdateShortage();
+        if (newComment != "")
+        {
+            addComment(newComment);
+        }
+
+        newComment = "";
+        await ReloadComments();
+
+
+        //Need to prevent user from cycling before all the data is loaded
+        if ((nettableStock.Count < ProdLineNumShortages) && (shortNum == 0))
+        {
+            isLoading = true;
+            StateHasChanged();
+            await Task.Delay(1000);
+            isLoading = false;
+            StateHasChanged();
+        }
+        else
+        {
+            if (shortNum == 0)
+            {
+                shortNum = ProdLineNumShortages - 1;
+            }
+            else
+            {
+                shortNum -= 1;
+            }
+            if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS" ))
+            {
+                BackgroundColor = "lightcyan";
+            }
+            else
+            {
+                BackgroundColor = "white";
+            }
+            StateHasChanged();
+        }
+
+
+    }
+
+    public async void Next() //Cycle forwards in meeting
+    {
+        UpdateShortage();
+        //First handle saving edits and reloading comments
+        if (newComment != "")
+        {
+            addComment(newComment);
+        }
+
+        newComment = "";
+
+
+
+
+        //Need to prevent user from cycling before all the data is loaded
+        if (((itemMasterDTList.Count < shortNum + 3) ||
+            (nettableStock.Count < shortNum + 3) ||
+            (OpenProdDTList.Count < shortNum + 3) ||
+            (ShortageDTList.Count < shortNum + 3) ||
+            (CommentsDTList.Count < shortNum + 3)) 
+
+            &&
+            ((shortNum + 2 != ProdLineNumShortages) && (shortNum + 1 != ProdLineNumShortages)))
+
+        {
+            isLoading = true;
+            StateHasChanged();
+            await Task.Delay(1000);
+            isLoading = false;
+            StateHasChanged();
+        }
+        else
+        {
+            if (shortNum == ProdLineNumShortages - 1)
+            {
+                shortNum = 0;
+            }
+            else
+            {
+                shortNum += 1;
+            }
+            if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS"))
+            {
+                BackgroundColor = "lightcyan";
+            }
+            else
+            {
+                BackgroundColor = "white";
+            }
+            StateHasChanged();
+        }
+    }
+    //END PREV/NEXT BUTTONS-----------------------------------------
+
+    //COMMENTS------------------------------------------------------
+    public async void addComment(string comment)
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pID = new SqlParameter("@ShortageID", SqlDbType.Int);
+        pID.Value = itemsList[shortNum].ID;
+        SqlParameter pComment = new SqlParameter("@Comment", SqlDbType.VarChar);
+        pComment.Value = comment;
+
+        SqlParameter pEnteredBy = new SqlParameter("@EnteredBy", SqlDbType.VarChar);
+        string user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+        pEnteredBy.Value = user;
+        SqlParameter pEnteredOn = new SqlParameter("@EnteredOn", SqlDbType.Date);
+        pEnteredOn.Value = DateTime.Now;
+
+        SqlCommand cmd = new SqlCommand(
+            "Insert into shortagelistcomments (" +
+            " ShortageID " +
+            ", Comment " +
+            ", EnteredBy " +
+            ", EnteredOn) " +
+            "values (" +
+            pID + "," +
+            pComment + "," +
+            pEnteredBy + "," +
+            "GETDATE())", cnxn);
+        cmd.Parameters.Add(pID);
+        cmd.Parameters.Add(pComment);
+        cmd.Parameters.Add(pEnteredBy);
+        cmd.Parameters.Add(pEnteredOn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+        }
+        catch(SqlException ex)
+        {
+            pop.Title ="Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        await ReloadComments();
+
+    }
+
+    //Call this after a new comment is added to ensure updated table
+    public async Task ReloadComments()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlCommand cmd = new SqlCommand(" SELECT " +
+                    "  RTRIM(Comment) Comment " +
+                    " ,RTRIM(EnteredBy) as [by] " +
+                    " ,EnteredOn AS [Date of Change] " +
+                    " FROM ShortageListComments " +
+                    " WHERE ShortageID = " + itemsList[shortNum].ID +
+                    " ORDER BY CommentID  DESC", cnxn);
+        await cnxn.OpenAsync();
+        CommentsDTList[shortNum] = GetDataTable(cmd);
+        cnxn.Close();
+    }
+
+    public async Task ReloadBuyer()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pShortageID = new SqlParameter("@ID", itemsList[shortNum].ID);
+        SqlCommand cmd = new SqlCommand("select " +
+                                                "[ID]," +
+                                                "[GROUP]," +
+                                                "[STKOUT]," +
+                                                "[QtyNeeded]," +
+                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
+                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
+                                                "[Custom Item]," +
+                                                "[PO]," +
+                                                "[QTY], " +
+                                                "[WarBoardDate]," +
+                                                "[whoAdded]," +
+                                                "[Project]," +
+                                                "[PROJECTDESC]," +
+                                                "[Supplier]," +
+                                                "[Buyer]," +
+                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                        "FROM Shortage_List " +
+                                        "WHERE [ID] = " + pShortageID, cnxn);
+        cmd.Parameters.Add(pShortageID);
+        await cnxn.OpenAsync();
+        ShortageDTList[shortNum] = GetDataTable(cmd);
+        cmd.Parameters.Clear();
+        cnxn.Close();
+    }
+    //END COMMENTS-----------------------------------------
+
+    //ARCHIVE/UNARCHIVE-----------------------------------
+    public void Archive()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pID = new SqlParameter("@ID", SqlDbType.Int);
+        pID.Value = itemsList[shortNum].ID;
+        SqlParameter pWhoArchived = new SqlParameter("@WhoArchived", SqlDbType.VarChar);
+        string user = WindowsIdentity.GetCurrent().Name;
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+        pWhoArchived.Value = user;
+        SqlParameter pDateArchived = new SqlParameter("@DateArchived", SqlDbType.Date);
+        pDateArchived.Value = DateTime.Now;
+
+        SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
+        "WhoArchived = " + pWhoArchived + "," +
+        "DateArchived = " + pDateArchived +
+        " WHERE ID = " + pID, cnxn);
+
+        cmd.Parameters.Add(pWhoArchived);
+        cmd.Parameters.Add(pDateArchived);
+        cmd.Parameters.Add(pID);
+
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+        }catch(SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        pop.Title = "Success";
+        pop.Message = itemsList[shortNum].ID + " has been archived.";
+        pop.ShowPopup();
+        isArchived[shortNum] = true;
+        StateHasChanged();
+    }
+
+    public void Unarchive()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        SqlParameter pID = new SqlParameter("@ID", SqlDbType.Int);
+        pID.Value = itemsList[shortNum].ID;
+
+        SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
+        "WhoArchived = NULL," +
+        "DateArchived = NULL" +
+        " WHERE ID = " + pID, cnxn);
+
+        cmd.Parameters.Add(pID);
+
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+            cnxn.Close();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        pop.Title = "Success";
+        pop.Message = itemsList[shortNum].ID + " has been unarchived.";
+        pop.ShowPopup();
+        isArchived[shortNum] = false;
+        StateHasChanged();
+    }
+
+    //TRACKING FEDEX/UPS BUTTONS------------------------------------------
+    public void FedEx()
+    {
+        string track = "https://www.fedex.com/apps/fedextrack/?tracknumbers=" +
+        itemsList[shortNum].trackingNo.Trim() + "&commit=Track%21";
+        JSRuntime.InvokeVoidAsync("openNewTab", track);
+    }
+
+    public void UPS()
+    {
+        string track = "https://www.ups.com/track?loc=en_US&requester=ST/";
+        JSRuntime.InvokeVoidAsync("openNewTab", track);
+    }
+
+
+    //LOADING TABLES--------------------------------------------------------
+    //*******************************************************************/
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProdLineDataAsync();
+    }
+
+    private async Task LoadProdLineDataAsync()
+    {
+        //Start connection to Access Front Ends---------------------------------------
+        //Get item code from shortageID
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        Views.currentProdLine = Views.currentProdLine.Trim();
+        await cnxn.OpenAsync();
+
+        string SQL = "SELECT " +
+                         "l.ID " +
+                         "FROM Shortage_List l " +
+                         "INNER JOIN ShortageList_ActiveFlags f " +
+                         "ON l.id = f.id " +
+                         "WHERE ";
+
+        string order = "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
+        "buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+
+        string SQL1 = string.Empty;
+
+
+        if (Views.currentProdLine == "INST")
+        {
+            SQL1 = SQL +
+                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " +
+                "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
+                "buyer, instrumentoptic desc, hot, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+        }
+        else if (Views.currentProdLine == "OPT" || Views.currentProdLine == "WAR")
+        {
+            SQL1 = SQL +
+                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
+        }
+        else
+        {
+            SQL1 = SQL +
+                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
+        }
+
+
+
+        ProdLineDT = GetDataTable(new SqlCommand(SQL1, cnxn));
+        cnxn.Close();
+        ProdLineNumShortages = ProdLineDT.Rows.Count;
+
+        for (int i = 0; i < ProdLineNumShortages; i++)
+        {
+            DataRow row = ProdLineDT.Rows[i];
+            string shortageID = row["ID"].ToString();
+            isArchived.Add(false);
+
+
+            if (i < 2)
+            {
+                await getTables(shortageID, i);
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(1);
+            }
+            else
+            {
+                await Task.Run(() => getTables(shortageID, i));
+            }
+
+        }
+        StateHasChanged();
+    }
+
+
+    public async Task getTables(string shortageID, int i = 0)
+    {
+        //Start connection to Access Front Ends---------------------------------------
+        //GET SHORTAGE FIELDS FIRST FROM SHORTAGE_LIST
+        itemsList.Add(new Shortage());
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        await cnxn.OpenAsync();
+
+        SqlParameter pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
+        pShortageID.Value = shortageID;
+        SqlCommand cmd = new SqlCommand("select " +
+                                                "[PRODUCTLINE]," +
+                                                "[GROUP]," +
+                                                "[STKOUT]," +
+                                                "[QtyNeeded]," +
+                                                "[ItemCode]," +
+                                                "[Custom Item]," +
+                                                "[Description]," +
+                                                "[PROJECT]," +
+                                                "[PROJECTDESC]," +
+                                                "[PO]," +
+                                                "[ProdOrder]," +
+                                                "[SalesOrder]," +
+                                                "[SOLineNo]," +
+                                                "[SODate]," +
+                                                "[ShipDate]," +
+                                                "[PlannerRequiredDate]," +
+                                                "[Comments]," +
+                                                "[Buyer]," +
+                                                "[HOT]," +
+                                                "[Reason]," +
+                                                "[ItemStatus]," +
+                                                "[CurrDueDate]," +
+                                                "[IQCCompleteDate]," +
+                                                "[ShipmentTrackingNumber]," +
+                                                "[FlagField]," +
+                                                "[LateFlag]" +
+
+
+                                        "FROM Shortage_List l " +
+                                        "INNER JOIN Shortage_ActiveFlags f " +
+                                        "ON l.id = f.id " +
+                                        "WHERE l.ID = " + pShortageID, cnxn);
+        cmd.Parameters.Add(pShortageID);
+        using (SqlDataReader reader = cmd.ExecuteReader())
+        {
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    itemsList[i].ID = shortageID;
+                    itemsList[i].prodLine = reader.GetString(0);
+                    itemsList[i].group = reader.IsDBNull(1) ? null : reader.GetString(1);
+                    itemsList[i].code = reader.GetString(4);
+                    itemsList[i].productionOrder = reader.IsDBNull(10) ? null : reader.GetString(10);
+                    itemsList[i].salesOrder = reader.IsDBNull(11) ? null : reader.GetString(11);
+                    itemsList[i].SOLineNum = reader.IsDBNull(12) ? null : int.Parse(reader.GetString(12));
+                    itemsList[i].salesOrderDate = reader.IsDBNull(13) ? null : reader.GetDateTime(13);
+                    itemsList[i].shipDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14);
+                    itemsList[i].reqDate = reader.GetDateTime(15);
+                    itemsList[i].buyer = reader.GetString(17);
+                    itemsList[i].hot = (reader.GetInt32(18) == -1);
+                    itemsList[i].reason = reader.IsDBNull(19) ? null : reader.GetString(19).Trim();
+                    itemsList[i].status = reader.IsDBNull(20) ? null : reader.GetString(20);
+                    itemsList[i].promisedReceiptDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    OrigCurrDueDates.Add(itemsList[i].promisedReceiptDate);
+                    itemsList[i].iqcCompleteDate = reader.IsDBNull(22) ? null : reader.GetDateTime(22);
+                    itemsList[i].trackingNo = reader.IsDBNull(23) ? null : reader.GetString(23);
+                    itemsList[i].flagField = (reader.GetInt32(24) == -1);
+                    itemsList[i].lateFlagStatus = reader.IsDBNull(25) ? "" : reader.GetString(25);
+                }
+            }
+            else
+            {
+
+            }
+            cmd.Parameters.Clear();
+        }
+
+        SqlParameter pID = new SqlParameter("@ID", SqlDbType.VarChar);
+        pID.Value = shortageID;
+        SqlCommand cmd1 = new SqlCommand("UPDATE Shortage_List " +
+                           "SET previousCurrDueDate = CurrDueDate " +
+                           "WHERE ID = " + pID, cnxn);
+
+        cmd1.Parameters.Add(pID);
+        
+
+        try
+        {
+            cmd1.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+        //SHORTAGE TABLE
+        ShortageDTList.Add(new DataTable());
+        pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
+        pShortageID.Value = shortageID;
+        cmd = new SqlCommand("select " +
+                                                "[ID]," +
+                                                "[GROUP]," +
+                                                "[STKOUT]," +
+                                                "[QtyNeeded]," +
+                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
+                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
+                                                "[Custom Item]," +
+                                                "[PO]," +
+                                                "[QTY], " +
+                                                "[WarBoardDate]," +
+                                                "[whoAdded]," +
+                                                "[Project]," +
+                                                "[PROJECTDESC]," +
+                                                "[Supplier]," +
+                                                "[Buyer]," +
+                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                        "FROM Shortage_List " +
+                                        "WHERE [ID] = " + pShortageID, cnxn);
+        cmd.Parameters.Add(pShortageID);
+        ShortageDTList[i] = GetDataTable(cmd);
+        cmd.Parameters.Clear();
+
+
+
+        //COMMENTS
+        CommentsDTList.Add(new DataTable());
+        cmd = new SqlCommand(" SELECT " +
+                    "  RTRIM(Comment) Comment " +
+                    " ,RTRIM(EnteredBy) as [by] " +
+                    " ,EnteredOn AS [Date of Change] " +
+                    " FROM ShortageListComments " +
+                    " WHERE ShortageID = " + pShortageID +
+                    " ORDER BY CommentID  DESC", cnxn);
+        cmd.Parameters.Add(pShortageID);
+        CommentsDTList[i] = GetDataTable(cmd);
+        cmd.Parameters.Clear();
+
+        //CHANGE HISTORY
+        HistoryDTList.Add(new DataTable());
+        cmd = new SqlCommand("select " +
+                    "LogDate AS [Date of Change], " +
+                    "ConfDueDateValue AS Value " +
+                    "FROM Shortage_ConfDueDate_Change_Log " +
+                    "WHERE ShortageID = " + pShortageID +
+                    " ORDER BY LogDate DESC", cnxn);
+        cmd.Parameters.Add(pShortageID);
+        HistoryDTList[i] = GetDataTable(cmd);
+        cmd.Parameters.Clear();
+
+        //TRACKER QC
+        TrackQCDTList.Add(new DataTable());
+        TrackQCDTList[i] = GetDataTable(new SqlCommand("select DISTINCT" +
+                        "  MovedOutDate AS [DATE MOVED OUT]" +
+                        " ,OperatorName as [MOVED BY]" +
+                        " ,MovedOutQty AS [QTY MVD]" +
+                        " ,MkReceiptTransactionID AS [TRKR ID]" +
+                        " ,Location AS LOCATION" +
+                        " ,SignatureName AS SIGNATURE " +
+                        " FROM Shortages_Tracking_MoveOut_STK where partNumber = '" +
+                        itemsList[i].code + "'  and LEN(operatorname) > 0 "
+                        , cnxn));
+
+
+        //TRACKER WAREHOUSE
+        TrackWarehouseDTList.Add(new DataTable());
+        TrackWarehouseDTList[i] = GetDataTable(new SqlCommand("select DISTINCT " +
+                                "  MovedOutDate AS [DATE MOVED OUT]" +
+                                " ,SignatureName AS INSPECTOR" +
+                                " ,MovedOutQty AS [QTY MVD]" +
+                                " ,MkReceiptTransactionID AS [TRKR ID] " +
+                                " ,ReceiptNumber AS RCPT" +
+                                " ,Location AS LOCATION " +
+                                " FROM Shortages_Tracking_MoveOut_QC where partNumber = '" +
+                                itemsList[i].code + "'  and LEN(operatorname) > 0 "
+                                    , cnxn));
+
+        //RECEIPTS
+        ReceiptsDTList.Add(new DataTable());
+        ReceiptsDTList[i] = GetDataTable(new SqlCommand("SELECT " +
+                        " Order_No PO " +
+                        ",Position_Number POS " +
+                        ", CONVERT (Varchar(8),[ReceivedDate], 1)[DT RCVD] " +
+                        ", ReceivedQty[DEL QTY] " +
+                        ", FORMAT(Quantity, 'N0')[Qty @QC] " +
+                        ", MkReceiptTransactionID[TRKR ID] " +
+                        ", ReceiptNumber RCPT " +
+                        ", QualityInspectorAssigned INSPR " +
+                        ", FORMAT(QualityPriority, 'N0') PRI " +
+                        " FROM [Local_Dash_NAV_Receipts] r " +
+                        " left join[Shortage NAV Warehouse Entry] S1 on " +
+                        " s1.[Item No_] = r.PartNumber " +
+                        " and s1.[Source No_] = r.Order_no " +
+                        " and(s1.[Source Line No_] / 1000) = r.Position_Number " +
+                        "WHERE " +
+                        "(MKReceiptTransactionID in " +
+                        "(select distinct MKReceiptTransactionID from Local_Dash_View_Tracking " +
+                        "where MovedToDate > (GETDATE() - 365) " +
+                        "AND MovedOutDate is null)) " +
+                        "AND Quantity > 0 and [Bin Code] like '%IQC%' " +
+                        "AND [PartNumber] = '" + itemsList[i].code + "' ORDER BY 1", cnxn));
+
+
+
+
+        cnxn.Close();
+        //CLOSE connection to Access Front Ends ------------------------------------------
+
+        //Start connection to NAV-------------------------------------------------------
+        SqlConnection NAVcnxn = new SqlConnection(Databases.dbNAV);
+        NAVcnxn.Open();
+
+
+        //PURCHASE ORDERS
+        PurchOrdDTList.Add(new DataTable());
+        PurchOrdDTList[i] = GetDataTable(new SqlCommand(
+            "WITH s1 as " +
+                    "( SELECT " +
+                    "  [Document No_] ORDER_NO " +
+                    " ,[PO Line No_] POSITION " +
+                    " , CASE " +
+                    "     WHEN [Orig_ Promised Receipt Date] = '1753-01-01 00:00:00.000' " +
+                    "          THEN DATEDIFF(d, GETDATE(), [Promised Receipt Date]) " +
+                    "     WHEN[Orig_ Promised Receipt Date] > '1753' " +
+                    "          THEN DATEDIFF(d, GETDATE(), [Orig_ Promised Receipt Date]) " +
+                    "   END AS POLineDaysTillDue " +
+                    " FROM [" + Databases.NAVprefix + "Purchase Line] WHERE [Document Type] = 1 )" +
+                    ", S2 as ( SELECT ORDER_NO, POSITION, POLineDaysTillDue " +
+                    ", CASE WHEN POLineDaysTillDue <= 0 THEN null " +
+                    "  WHEN POLineDaysTillDue > 0 THEN POLineDaysTillDue " +
+                    "  END as POLineDaysEarly " +
+                    " ,CASE WHEN POLineDaysTillDue <= 0 THEN(-1 * POLineDaysTillDue) " +
+                    "  WHEN POLineDaysTillDue > 0 THEN null " +
+                    "  END as POLineDaysLate FROM s1 ) " +
+                    " select DISTINCT p.[Document No_][PO #] " +
+                    ", p.[PO Line No_] LN " +
+                    ", CONVERT (Varchar(8), p.[Requested Receipt Date], 1) [RQST RCPT DT] " +
+                    ", CONVERT (Varchar(8),p.[Promised Receipt Date], 1) [PROM RCPT DT] " +
+                    ", CONVERT (Varchar(8),p.[Expected Receipt Date], 1) [EXPECT DT]" +
+                    ", FORMAT(p.Quantity, '##0') [ORD QTY] " +
+                    ", FORMAT(p.[Quantity Received], '##0') [DEL QTY] " +
+                    ", FORMAT(p.[Outstanding Quantity], '##0') [BO QTY]" +
+                    " , CONVERT (Varchar(8),p.[Order Date], 1) [ORD DT] " +
+                    ", p.[Job No_] PROJ " +
+                    ", j.[Description] [PROJ DESC] " +
+                    ", p.[Prod_ Order No_] [PROD ORD], " +
+                    "p.[Buy-from Vendor No_] SUPPLIER, " +
+                    "s.[Name] as [Supplier Name]" +
+                    ", CASE WHEN POLineDaysLate > 0 THEN 'LATE' WHEN POLineDaysLate <= 0 THEN '' END as [STA TUS] " +
+                    ", CASE WHEN p.[Inspection Code] = 'I' THEN 'Y' WHEN p.[Inspection Code] <> 'I' THEN 'N' " +
+                    " END [INS RQD] " +
+                    ", p.[Inspection Code][Insp Code] " +
+                    ", s.Contact SALES_REFERENCE " +
+                    ", s.[Phone No_] TELEPHONE " +
+                    ", s.[E-Mail] EMAIL " +
+                    ", p.[Promised Receipt Date] " +
+                    " FROM[" + Databases.NAVprefix + "Purchase Line] p " +
+                    " LEFT JOIN S2 on S2.ORDER_NO = p.[Document No_] and  S2.POSITION = p.[PO Line No_]" +
+                    " LEFT JOIN[" + Databases.NAVprefix + "Vendor] s ON p.[Buy-from Vendor No_] = s.No_ " +
+                    " LEFT JOIN[" + Databases.NAVprefix + "Job] j ON p.[Job No_] = j.No_ " +
+                    " WHERE [Document Type] = 1 AND [Quantity Received] <> Quantity AND p.[No_] = '" + itemsList[i].code + "'" +
+                    " ORDER BY 1", NAVcnxn));
+
+        //PLANNED STOCK TRANSACTIONS
+        PlannedStockDTList.Add(new DataTable());
+        PlannedStockDTList[i] = GetDataTable(new SqlCommand("with S1 as " +
+            "( select " +
+            " c.[Item No_] " +
+            ", l.[Starting Date] [TRANS DT] " +
+            ",c.[Remaining Quantity] [PLN QTY] " +
+            ", 'DEMAND' as [TRANS TYPE] " +
+            ", 'Production Order' as [Ord Type] " +
+            ",l.[Prod_ Order No_] [ORDER #] " +
+            ",c.[Line No_] POS " +
+            ",l.[Item No_] AS [NxL Item Code] " +
+            ",l.[Job No_] " +
+            " FROM " +
+            " [" + Databases.NAVprefix + "Prod_ Order Line] l " +
+            " INNER JOIN [" + Databases.NAVprefix + "Prod_ Order Component] c ON l.[Prod_ Order No_] = c.[Prod_ Order No_] " +
+            " WHERE " +
+            " c.[Item No_] = '" + itemsList[i].code + "' " +
+            " AND c.[Remaining Quantity] > 0 " +
+            " AND c.Status in (2,3) " +
+            " UNION " +
+            " SELECT " +
+            " No_ [Item No_] " +
+            " , [Expected Receipt Date] " +
+            " , [Outstanding Quantity] " +
+            " , 'SUPPLY' " +
+            " , 'Purchase Order' " +
+            " , [Document No_]  " +
+            " , [PO Line No_]  " +
+            " , '' " +
+            " ,[Job No_] " +
+            " FROM [" + Databases.NAVprefix + "Purchase Line] WHERE No_ = '" + itemsList[i].code + "' " +
+            " AND [Outstanding Quantity] > 0" +
+            "UNION " +
+            " SELECT " +
+            "    No_ " +
+            "    ,[Due Date] [TRANS DT] " +
+            "	,[Quantity] " +
+            "	,'DEMAND' as [TRANS TYPE] " +
+            "	,'Job Inventory Request' as [Ord Type] " +
+            "	,[Document No_] " +
+            "	,[Line No_] " +
+            "	,'' AS[NxL Item Code] " +
+            "	,[Job No_] " +
+            " FROM[ZYGO$Job Journal Line] " +
+            " WHERE " +
+            "    [Journal Template Name] = 'INVREQ' " +
+            "    AND[No_] = '" + itemsList[i].code + "' " +
+            "), " +
+            " S2 as " +
+            " ( " +
+            " SELECT COALESCE(FORMAT(SUM([Quantity]),'N0', 'en-us'), '0') OH " +
+            ",e.[Item No_] " +
+            " FROM [" + Databases.NAVprefix + "Item Ledger Entry] e " +
+            " WHERE [Item No_] IN (SELECT [NxL Item Code] FROM S1) " +
+            " GROUP BY e.[Item No_] " +
+            ") " +
+            " SELECT " +
+            " CONVERT (Varchar(8), [TRANS DT], 1) [TRANS DT] " +
+            " , FORMAT([PLN QTY], 'N0') [PLN QTY] " +
+            "  ,[TRANS TYPE] " +
+            " ,[Job No_] [JOB NO] " +
+            " ,CASE " +
+            "	    WHEN [TRANS TYPE] = 'DEMAND' THEN FORMAT(([PLN QTY] * -1), 'n0') " +
+            " 	    ELSE FORMAT([PLN QTY], 'n0') " +
+            "  END AS [INV CHG] " +
+            ",[Ord Type] [ORD TYPE] " +
+            ",[ORDER #] " +
+            ",POS " +
+            ",[NxL Item Code] [NxL ITEM CODE] " +
+            ", COALESCE(OH,  '0') OH " +
+            " FROM S1 LEFT JOIN S2 on S1.[NxL Item Code] = S2.[Item No_] " +
+            " ORDER BY S1.[TRANS DT] ", NAVcnxn));
+
+        //Open Production Orders
+        OpenProdDTList.Add(new DataTable());
+        OpenProdDTList[i] = GetDataTable(new SqlCommand(
+        "select DISTINCT " +
+            "  p.[Prod_ Order No_] AS [PROD ORD]" +
+            ",CONVERT(varchar,[Starting Date],1) AS [START DT] " +
+            ",FORMAT([Remaining Quantity], '##0') [ORD QTY]" +
+            ",FORMAT([Finished Quantity],'##0') [POSTED QTY]" +
+            " ,CONVERT(varchar,[Due Date],1) AS [DUE DT] " +
+            ", CASE " +
+            "     WHEN[Due Date] <= GETDATE() THEN 'OVDUE' " +
+            "     WHEN[Due Date] <= (GETDATE() - 14) THEN 'LATE' " +
+            "END [STATUS] " +
+            ", p.[Job No_] AS [JOB NO] " +
+            ", l.[Purch_ Order No_] AS PO " +
+            ", l.[Expected Receipt Date] AS [PO DEL Dt] " +
+            " FROM [" + Databases.NAVprefix + "Prod_ Order Line] p " +
+            " LEFT JOIN[" + Databases.NAVprefix + "Purchase Line] l ON p.[Prod_ Order No_] = l.[Prod_ Order No_] " +
+            " WHERE p.[Item No_] = '" + itemsList[i].code + "' AND Status = 3 ", NAVcnxn));
+
+
+        //ITEM MASTER DATA
+        getItemMasterData(i, NAVcnxn);
+
+
+        //CLOSE NAV connection-------------------------------------------------------
+        NAVcnxn.Close();
+    }
+
+    public void getItemMasterData(int i, SqlConnection cnxn)
+    {
+
+        SqlCommand cmd = new SqlCommand("select " +
+                "[Description]," +
+                "FORMAT([Safety Stock Quantity], 'N0')," +
+                "FORMAT([Reorder Point], 'N0')," +
+                "CASE  WHEN LEN([Lead Time Calculation]) = 0 THEN '0' " +
+                    "WHEN CHARINDEX(CHAR(3),[Lead Time Calculation]) > 0 " +
+                        "THEN REPLACE([Lead Time Calculation], CHAR(3), '') " +
+                    "WHEN CHARINDEX(CHAR(4),[Lead Time Calculation]) > 0 THEN " +
+                        "REPLACE([Lead Time Calculation], CHAR(4), '') * 5	" +
+                    "WHEN CHARINDEX(CHAR(5),[Lead Time Calculation]) > 0 THEN " +
+                        "REPLACE([Lead Time Calculation], CHAR(5), '') * 20	" +
+                    "WHEN CHARINDEX(CHAR(2),[Lead Time Calculation]) > 0 THEN " +
+                        "REPLACE([Lead Time Calculation], CHAR(2), '')  " +
+                "END [LT], " +
+                "[Supplier Replenishment] [RPL TM], " +
+                "FORMAT([Reorder Quantity], 'N0') AS [BIN SZ], " +
+                "FORMAT([Standard Cost], 'C') AS [STD COST]," +
+                "CASE " +
+                    "WHEN [MPS Item] = 0 THEN 'MRP' " +
+                    "WHEN [MPS Item] = 1 THEN 'MPS' " +
+                " END AS [O SYS], " +
+                "[Signal Code], " +
+                "[P6], " +
+                "[F6], " +
+                "[EAU] " +
+                "FROM [ZYGO$Item] " +
+                "WHERE [No_] = '" + itemsList[i].code + "'", cnxn);
+        itemMasterDTList.Add(new DataTable());
+        itemMasterDTList[i] = GetDataTable(cmd);
+            /*
+        *
+        *  Allocated
+        *
+        * */
+
+        /*  Production Order Components
+
+    Firm Planned and Released
+    Quantity goes back to required quantity on BOM
+    Remaining Quantity reflects what is needed for this order
+            */
+
+        SqlCommand loopCmd = new SqlCommand
+           ("SELECT " +
+            "COALESCE(SUM([Remaining Quantity]), 0) " +
+            "FROM [" + Databases.NAVprefix + "Prod_ Order Component] " +
+            "WHERE 1=1 " +
+            "AND Status in (2, 3) " +
+            "and [Item No_] = '" + itemsList[i].code + "' "
+           , cnxn);
+
+        object AS1 = 0;
+
+        try
+        {
+            AS1 = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+        /*  Sales Orders */
+
+        loopCmd = new SqlCommand
+           ("SELECT " +
+           "COALESCE(SUM([Quantity]), 0) " +
+           "FROM [" + Databases.NAVprefix + "Sales Line] " +
+           "WHERE 1=1 " + //[Posting Date] >= (GETDATE() + 183) " +
+           "AND Type = 2 AND [Completely Shipped] = 0 " +
+           "and [No_] = '" + itemsList[i].code + "' "
+           , cnxn);
+
+        object AS2 = 0;
+
+        try
+        {
+            AS2 = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+
+        /*  Service Orders */
+
+        loopCmd = new SqlCommand
+           ("SELECT " +
+           "COALESCE(SUM([Quantity]), 0) " +
+           "FROM [" + Databases.NAVprefix + "Service Line] " +
+           "WHERE 1=1 " + //[Posting Date] >= (GETDATE() + 183) " +
+                          //"AND ([Entry Type] = 1 OR [Entry Type] = 5) " +
+           "and [No_] = '" + itemsList[i].code + "' "
+           , cnxn);
+
+        object AS3 = 0;
+
+        try
+        {
+            AS3 = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+        /*  Job - Inventory Requests */
+
+        loopCmd = new SqlCommand
+           ("SELECT " +
+           "COALESCE(SUM([Quantity]), 0) " +
+           "FROM [" + Databases.NAVprefix + "Job Journal Line] " +
+           "WHERE 1=1 " + //[Posting Date] >= (GETDATE() + 183) " +
+           "AND [Journal Template Name] = 'INVREQ' " +
+           "and [No_] = '" + itemsList[i].code + "' "
+           , cnxn);
+
+        object AS4 = 0;
+
+        try
+        {
+            AS4 = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+        Allocations.Add("");
+        Allocations[i] = string.Format("{0:0}", (Convert.ToDouble(AS1) + Convert.ToDouble(AS2) + Convert.ToDouble(AS3) + Convert.ToDouble(AS4)));
+
+
+
+        /*  blocked stock   */
+
+
+        loopCmd = new SqlCommand
+            ("SELECT " +
+            "COALESCE(FORMAT(SUM([Quantity]),'N0'), '0') " +
+            "FROM [" + Databases.NAVprefix + "Warehouse Entry] " +
+            "WHERE [Bin Code] like '%IQC%' " +
+            "and [Item No_] = '" + itemsList[i].code + "' "
+            , cnxn);
+
+        object b = "";
+
+        try
+        {
+            b = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+        if (b == null)
+        {
+            //MessageBox.Show("This item does not exist.");
+        }
+        else
+        {
+            blockedStock.Add("");
+            blockedStock[i] = b.ToString();
+        }
+
+
+        /*  stock on order  */
+
+        loopCmd = new SqlCommand
+        ("SELECT " +
+            "COALESCE(FORMAT(SUM(L.[Outstanding Quantity]),'N0'), '0') " +
+            "FROM [" + Databases.NAVprefix + "Purchase Line] L " +
+            "INNER JOIN [" + Databases.NAVprefix + "Item] I ON L.No_ = I.No_ " +
+            "WHERE " + //([Replenishment System] = 0 and "
+            "[Outstanding Quantity] > 0 AND L.No_ = '" + itemsList[i].code + "' "
+            , cnxn);
+
+
+        object p = "";
+
+        try
+        {
+            p = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+        if (p == null)
+        {
+            pop.Title = "Error";
+            pop.Message = "This item does not exist";
+            pop.ShowPopup();
+        }
+        else
+        {
+            onOrder.Add("");
+            onOrder[i] = p.ToString();
+        }
+
+        /*  Non-Nettable stock  */
+
+        loopCmd = new SqlCommand
+            ("SELECT " +
+            "COALESCE(FORMAT(SUM([Quantity]),'N0'), '0') " +
+            "FROM [" + Databases.NAVprefix + "Item Ledger Entry] " +
+            "WHERE [Non-Nettable] = 1 " +
+            "and [Item No_] = '" + itemsList[i].code + "' "
+            , cnxn);
+
+        object nn = "";
+        try
+        {
+            nn = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+        if (nn == null)
+        {
+            pop.Title = "Error";
+            pop.Message = "This item does not exist";
+            pop.ShowPopup();
+        }
+        else
+        {
+            nonnetStock.Add("");
+            nonnetStock[i] = nn.ToString();
+        }
+
+        /*  Nettable stock  */
+
+        loopCmd = new SqlCommand
+        ("SELECT " +
+        "COALESCE(FORMAT(SUM([Quantity]),'N0'), '0') " +
+        "FROM [" + Databases.NAVprefix + "Item Ledger Entry] " +
+        "WHERE [Non-Nettable] = 0 " +
+        "and [Item No_] = '" + itemsList[i].code + "' "
+        , cnxn);
+
+        nn = "";
+
+        try
+        {
+            nn = loopCmd.ExecuteScalar();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+        if (nn == null)
+        {
+            pop.Title = "Error";
+            pop.Message = "This item does not exist";
+            pop.ShowPopup();
+        }
+        else
+        {
+            nettableStock.Add("");
+            nettableStock[i] = nn.ToString();
+        }
+    }
+
+    public DataTable GetDataTable(SqlCommand cmd)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        return (dt);
+    }
+
+    //TRACKING REPORT BUTTON---------------------------------------------
+    public async Task TrackReport()
+    {
+        SqlConnection cnxn = new SqlConnection(Databases.db);
+        DataTable dt = new DataTable();
+
+        SqlCommand cmd = new SqlCommand
+            ("SELECT " +
+            "  MKReceiptTransactionID AS [Trkr ID:]" +
+            " ,PartNumber AS [Item Code]" +
+        " ,OperatorName AS [Operator]" +
+        " ,Location AS [Location]" +
+        " ,MovedToDate AS [Moved To Date]" +
+        " ,MovedToQty AS [To Qty]" +
+        " ,MovedOutDate AS [Moved Out Date]" +
+        " ,MovedOutQty AS [Out Qty]" +
+        " ,OriginalQty AS [Orig Qty]" +
+        " ,ReceiptNumber AS [MK Rcpt]" +
+        " ,TimeInMin AS [El Time]" +
+        " ,LocationTrackingID AS [Loc Trk#]" +
+        " ,KanbanTransactionID AS [OKB Trn ID]" +
+        " ,RMAItemsNumber AS [RMA Itm#]" +
+        " ,ServiceID AS [Sve ID]" +
+            " FROM local_dash_view_tracking t " +
+            " WHERE partNumber = '" + itemsList[shortNum].code + "' " +
+            " order by MKReceiptTransactionID desc, movedtodate asc ", cnxn);
+
+
+        try
+        {
+            cnxn.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (Exception ex)
+        {
+            pop.Message = ex.ToString();
+            pop.Title = "Error";
+            pop.ShowPopup();
+        }
+        cnxn.Close();
+
+        var rows = new StringBuilder();
+        string currentTrckID = "";
+        foreach (DataRow items in dt.Rows)
+        {
+            if (items[0].ToString() != currentTrckID)
+            {
+                rows.AppendLine("<tr><th>" + dt.Columns[0] + ": " + items[0].ToString() + "</th></tr>");
+                currentTrckID = items[0].ToString();
+            }
+            rows.AppendLine("<tr>");
+            for (int i = 1; i < dt.Columns.Count; i++)
+            {
+                rows.AppendLine("<td>" + items[i].ToString() + "</td> ");
+            }
+            rows.AppendLine("</tr>");
+
+        }
+
+
+        string html = @"
+        <head>
+          <style>
+            @media print{
+              @page {
+                size: landscape;
+              }
+            }
+
+            body {
+              margin: 20px;
+              /* Adjust the value to set the desired margin size */
+            }
+
+            colName {
+              margin: 20px;
+              font-size: 12px;
+            }
+
+            tr {
+              font-size: 12px;
+            }
+            td {
+              font-size: 12px;
+              text-align:center;
+            }
+            th {
+              font-size: 12px;
+              text-align:center;
+            }
+
+          </style>
+        </head>
+
+        <body>
+
+            <h2>Tracking History - by Item Code, Tracking ID and Moved Out Date (Last 90 Days)</h2>
+
+          <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Code       </th>
+                        <th>Operator        </th>
+                        <th>Location        </th>
+                        <th>Moved To Date   </th>
+                        <th>To Qty          </th>
+                        <th>Moved Out Date  </th>
+                        <th>Out Qty         </th>
+                        <th>Orig Qty        </th>
+                        <th>MK Rcpt         </th>
+                        <th>El Time         </th>
+                        <th>Loc Trk#        </th>
+                        <th>OKB Trn ID      </th>
+                        <th>RMA Itm#        </th>
+                        <th>Sve ID          </th>
+                    </tr>
+                </thead>
+                <tbody> " +
+                rows.ToString() + @"
+                </tbody >
+            </table>
+        </body>
+        ";
+        await JSRuntime.InvokeVoidAsync("printContent", html);
+    }
+}
+
