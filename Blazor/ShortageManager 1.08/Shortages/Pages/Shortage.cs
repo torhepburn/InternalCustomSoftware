@@ -18,19 +18,25 @@ namespace Shortages.Pages
         public string? description { get; set; }
         public string? project { get; set; }
         public string? projectDesc { get; set; }
+        
         public PurchaseOrder PurchaseOrder = new PurchaseOrder();
         public bool addLinesPO { get; set; }
+
+
         public string? productionOrder { get; set; }
         public string? salesOrder { get; set; }
         public int? SOLineNum { get; set; }
-        public DateTime? salesOrderDate { get; set; }
         public DateTime? shipDate { get; set; }
+        public DateTime? salesOrderDate { get; set; }
+        public string? buyer { get; set; }
+        public string? vendor { get; set; }
+
         public DateTime? reqDate { get; set;}
         public DateTime? iqcCompleteDate { get; set; }
         public DateTime? promisedReceiptDate { get; set; }
 
         public string? comments { get; set; }
-        public string? buyer { get; set; }
+        
         public bool hot { get; set; }
         public string? reason { get;set; }
         public string? status { get; set; }

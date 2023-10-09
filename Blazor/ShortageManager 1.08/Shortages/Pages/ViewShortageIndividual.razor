@@ -107,7 +107,7 @@
                     </div>
                 </div>
             </div>
-            @*PROD/SALES ORDERS AND DATES*@
+            @*Input boxes to be able to modify values in certain fields in shortage list entry *@
             <div style="display:flex;font-size:13px; padding-top:5px">
                 <label>Production Order:</label>
                 <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.productionOrder" />
@@ -121,6 +121,8 @@
                 <input type="date" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.salesOrderDate" />
                 <label>Change Buyer:</label>
                 <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.buyer" />
+                <label>Change Vendor:</label>
+                <input type="text" style="width: 150px; height: 20px;margin-right:10px;" @bind="@item.vendor" />
             </div>
         </div>
         @*COMMENT TABLE*@
@@ -395,19 +397,20 @@
 
         //First handle saving edits and reloading comments
         SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
-        "HOT = @HOT, " +
-        "ItemStatus = @ItemStatus, " +
-        "Reason = @Reason, " +
-        "FlagField = @FlagField," +
-        "ShipmentTrackingNumber = @ShipmentTrackingNumber, " +
-        "IQCCompleteDate = @IQCCompleteDate, " +
-        "PlannerRequiredDate = @PlannerRequiredDate, " +
-        "ProdOrder = @ProdOrder, " +
-        "SalesOrder = @SalesOrder, " +
-        "ShipDate = @ShipDate, " +
-        "SODate = @SODate, " +
-        "SOLineNo = @SOLineNo, " +
-        "Buyer = @Buyer " +
+        "HOT = @HOT " +
+        ",ItemStatus = @ItemStatus " +
+        ",Reason = @Reason " +
+        ",FlagField = @FlagField " +
+        ",ShipmentTrackingNumber = @ShipmentTrackingNumber " +
+        ",IQCCompleteDate = @IQCCompleteDate " +
+        ",PlannerRequiredDate = @PlannerRequiredDate " +
+        ",ProdOrder = @ProdOrder " +
+        ",SalesOrder = @SalesOrder " +
+        ",ShipDate = @ShipDate " +
+        ",SODate = @SODate " +
+        ",SOLineNo = @SOLineNo " +
+        ",Buyer = @Buyer " +
+        ",Supplier = @Vendor " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@HOT", item.hot ? -1 : 0));
@@ -434,7 +437,7 @@
         ? DBNull.Value : item.SOLineNum));
         cmd.Parameters.Add(new SqlParameter("@Buyer", item.buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", item.ID));
-
+        cmd.Parameters.Add(new SqlParameter("@Vendor", item.vendor));
 
         cnxn.Open();
         try
@@ -620,33 +623,35 @@
 
         SqlParameter pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
         pShortageID.Value = shortageID;
-        SqlCommand cmd = new SqlCommand("select " +
-                                                "[PRODUCTLINE]," +
-                                                "[GROUP]," +
-                                                "[STKOUT]," +
-                                                "[QtyNeeded]," +
-                                                "[ItemCode]," +
-                                                "[Custom Item]," +
-                                                "[Description]," +
-                                                "[PROJECT]," +
-                                                "[PROJECTDESC]," +
-                                                "[PO]," +
-                                                "[ProdOrder]," +
-                                                "[SalesOrder]," +
-                                                "[SOLineNo]," +
-                                                "[SODate]," +
-                                                "[ShipDate]," +
-                                                "[PlannerRequiredDate]," +
-                                                "[Comments]," +
-                                                "[Buyer]," +
-                                                "[HOT]," +
-                                                "[Reason]," +
-                                                "[ItemStatus]," +
-                                                "[CurrDueDate]," +
-                                                "[IQCCompleteDate]," +
-                                                "[ShipmentTrackingNumber]," +
-                                                "[FlagField]" +
-                                                fromSQL + pShortageID, cnxn);
+        SqlCommand cmd = new SqlCommand(
+            "select " +
+            "[PRODUCTLINE]" +
+            ",[GROUP]" +
+            ",[STKOUT]" +
+            ",[QtyNeeded]" +
+            ",[ItemCode]" +
+            ",[Custom Item]" +
+            ",[Description]" +
+            ",[PROJECT]" +
+            ",[PROJECTDESC]" +
+            ",[PO]" +
+            ",[ProdOrder]" +
+            ",[SalesOrder]" +
+            ",[SOLineNo]" +
+            ",[SODate]" +
+            ",[ShipDate]" +
+            ",[PlannerRequiredDate]" +
+            ",[Comments]" +
+            ",[Buyer]" +
+            ",[HOT]" +
+            ",[Reason]" +
+            ",[ItemStatus]" +
+            ",[CurrDueDate]" +
+            ",[IQCCompleteDate]" +
+            ",[ShipmentTrackingNumber]" +
+            ",[FlagField]" +
+            ",[Supplier]" +
+            fromSQL + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
         using (SqlDataReader reader = cmd.ExecuteReader())
         {
@@ -675,14 +680,14 @@
                     item.flagField = (reader.GetInt32(24) == -1);
                     if (!isArchived)
                     {
-                        item.lateFlagStatus = reader.IsDBNull(25) ? "" : reader.GetString(25);
+                        item.lateFlagStatus = reader.IsDBNull(26) ? "" : reader.GetString(25);
                     }
                     else
                     {
-                        item.lateFlagStatus = "Archived by " + reader.GetString(25) + " on " + reader.GetDateTime(26).ToString().Replace("12:00:00 AM", "");
+                        item.lateFlagStatus = "Archived by " + reader.GetString(26) + " on " + reader.GetDateTime(26).ToString().Replace("12:00:00 AM", "");
                         BackgroundColor = "lightgrey";
                     }
-
+                    item.vendor = reader.IsDBNull(25) ? null : reader.GetString(25).Trim();
 
 
                 }
@@ -712,25 +717,26 @@
         ShortageDT = new DataTable();
         pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
         pShortageID.Value = shortageID;
-        cmd = new SqlCommand("select " +
-                                                "[ID]," +
-                                                "[GROUP]," +
-                                                "[STKOUT]," +
-                                                "[QtyNeeded]," +
-                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
-                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
-                                                "[Custom Item]," +
-                                                "[PO]," +
-                                                "[QTY], " +
-                                                "[WarBoardDate]," +
-                                                "[whoAdded]," +
-                                                "[Project]," +
-                                                "[PROJECTDESC]," +
-                                                "[Supplier]," +
-                                                "[Buyer]," +
-                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
-                                        "FROM Shortage_List " +
-                                        "WHERE [ID] = " + pShortageID, cnxn);
+        cmd = new SqlCommand(
+            "select " +
+            "[ID]" +
+            ",[Group]" +
+            ",[StkOut] " +
+            ",[QtyNeeded]" +
+            ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+            ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List] " +
+            ",[Custom Item] " +
+            ",[PO] " +
+            ",[QTY] " +
+            ",[WarBoardDate] " +
+            ",[whoAdded] [Who Added] " +
+            ",[Project] " +
+            ",[ProjectDesc] " +
+            ",[Supplier] Vendor " +
+            ",[Buyer] " +
+            ",CONVERT(varchar,[Orig_ Requested Receipt Date], 1) [Orig_ Requested Receipt Date] " +
+            "FROM Shortage_List " +
+            "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
         ShortageDT = GetDataTable(cmd);
         cmd.Parameters.Clear();
