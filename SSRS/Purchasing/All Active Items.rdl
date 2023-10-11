@@ -17,6 +17,10 @@
 	For Luz Signal Code determines item active 
 
 */
+/*	
+	For Luz Signal Code determines item active 
+
+*/
 WITH s1 as
 (	--On Hand Nettable
 	SELECT 
@@ -214,25 +218,107 @@ UNION
 
 	GROUP BY ItemNo
 )
-,s11 AS
+,s112 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+
+AND [Entry Type] = 1 --Sale
+
+GROUP BY [Item No_]
+),
+s212 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+
+AND ([Entry Type] = 5 --Consumption
+
+AND [Order Type] = 1  --Production
+
+AND LEN([Order No_]) &gt; 0)
+
+AND p.Rework = 0  --not rework
+
+GROUP BY [Item No_]
+),
+s312 AS
 (
 	SELECT
 
-	[Item No_]
-	,SUM(Quantity)*-1 P12
+[Item No_]
+,SUM(Quantity)*-1 p
 
-	FROM [ZYGO$Item Ledger Entry]
+FROM [ZYGO$Item Ledger Entry]
 
-	WHERE
+WHERE
 
-	[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
+[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
 
-	/*	nav uses months	*/
+AND [Entry Type] = 3  --Negative Adjustment
 
-	AND ([Entry Type] = 1 OR [Entry Type] = 5) --Sale = 1, Consumption = 5
+AND
 
-	GROUP BY [Item No_]
+(LEN([Global Dimension 1 Code]) &gt; 0 OR [Document No_] like 'PRIR%')
+
+GROUP BY [Item No_]
+
+), s412 AS
+(
+SELECT
+
+*
+
+FROM s112
+
+UNION ALL
+
+SELECT 
+
+*
+
+FROM s212
+
+UNION ALL
+
+SELECT
+
+*
+
+FROM s312
 )
+,s11 AS
+(
+SELECT
+
+[Item No_]
+,SUM(p) P12
+
+FROM s412
+
+GROUP BY [Item No_]
+)
+
 ,s12 AS  --F3
 (
 	SELECT
@@ -301,25 +387,108 @@ UNION
 
 	GROUP BY ItemNo
 )
-,s14 AS	--P3
+,s103 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
+
+AND [Entry Type] = 1 --Sale
+
+GROUP BY [Item No_]
+),
+s203 AS
+(
+SELECT
+
+[Item No_]
+,SUM(l.Quantity)*-1 p
+
+FROM [ZYGO$Item Ledger Entry] l
+
+LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
+
+WHERE
+
+[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
+
+AND ([Entry Type] = 5 --Consumption
+
+AND [Order Type] = 1  --Production
+
+AND LEN([Order No_]) &gt; 0)
+
+AND p.Rework = 0  --not rework
+
+GROUP BY [Item No_]
+),
+s303 AS
 (
 	SELECT
 
-	[Item No_]
-	,SUM(Quantity)*-1 P3
+[Item No_]
+,SUM(Quantity)*-1 p
 
-	FROM [ZYGO$Item Ledger Entry]
+FROM [ZYGO$Item Ledger Entry]
 
-	WHERE
+WHERE
 
-	[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
+[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
 
-	/*	nav uses months	*/
+AND [Entry Type] = 3  --Negative Adjustment
 
-	AND ([Entry Type] = 1 OR [Entry Type] = 5) --Sale = 1, Consumption = 5
+AND
 
-	GROUP BY [Item No_]
+(LEN([Global Dimension 1 Code]) &gt; 0 OR [Document No_] like 'PRIR%')
+
+GROUP BY [Item No_]
+
+), s403 AS
+(
+SELECT
+
+*
+
+FROM s103
+
+UNION ALL
+
+SELECT 
+
+*
+
+FROM s203
+
+UNION ALL
+
+SELECT
+
+*
+
+FROM s303
 )
+,s14 AS  --P3
+(
+SELECT
+
+[Item No_]
+,SUM(p) P3
+
+FROM s403
+
+GROUP BY [Item No_]
+)
+
+
 
 
 SELECT
@@ -456,7 +625,6 @@ END [Block Consumption]
 ,ig.Description [Item Group Description]
 ,COALESCE(i.[Rolled-up Subcontracted Cost],0) [Rolled-up Subcontracted Cost]
 
-
 FROM [ZYGO$Item] i
 
 LEFT JOIN [ZYGO$Commodity] c ON i.[Commodity] = c.Code
@@ -478,11 +646,14 @@ LEFT JOIN s11 ON s11.[Item No_] = i.No_
 LEFT JOIN s13 ON s13.ItemNo = i.No_
 LEFT JOIN s14 ON s14.[Item No_] = i.No_
 
+
 WHERE 1=1
 
 and [Signal Code] != 'OBS'
 
---and i.No_ = '6191-0591-01'</CommandText>
+--and i.No_ = '6191-0591-01'
+
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
