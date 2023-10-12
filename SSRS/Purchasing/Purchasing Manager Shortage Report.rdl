@@ -1,20 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" MustUnderstand="df">
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
-    <DataSource Name="DataSource2">
+    <DataSource Name="AccessFrontEnds">
       <DataSourceReference>AccessFrontEnds</DataSourceReference>
       <rd:SecurityType>None</rd:SecurityType>
-      <rd:DataSourceID>55f452ae-77dc-4ac1-93ef-8f441ba66f2d</rd:DataSourceID>
+      <rd:DataSourceID>cbdaf33d-256e-46ec-b468-040c1b6cf205</rd:DataSourceID>
     </DataSource>
   </DataSources>
   <DataSets>
     <DataSet Name="DataSet1">
       <Query>
-        <DataSourceName>DataSource2</DataSourceName>
-        <CommandText>
-with s1 as
+        <DataSourceName>AccessFrontEnds</DataSourceName>
+        <CommandText>with s1 as
 (
 select  shortageid, mAX(commentid) CID from shortagelistcomments  group by shortageid 
 ),
@@ -43,19 +42,19 @@ from s3 left join s4 on s3.ShortageID = s4.ShortageID
 )
 
 select  
-l.id 
+l.ID 
 ,CASE LateFlag 
 	WHEN 'HOT' THEN 'HOT'
 	ELSE ''
 END LateFlag
-,[Inspection Code] 
+,COALESCE([Inspection Code],'') [Inspection Code]
 ,[ItemCode] 
 ,[Description] 
 ,s5.[Comments] 
 ,[QtyNeeded] [Need Qty] 
-,[POQty] [PO Qty] 
-,SUBSTRING(PO, 0,10) PO 
-,SUBSTRING(Supplier, 0, 12) Supplier 
+,COALESCE([Qty],'') [PO Qty] 
+,COALESCE(SUBSTRING(PO, 0,10),'') PO 
+,COALESCE(SUBSTRING(Supplier, 0, 12),'') Supplier 
 ,[DateAddedtoList] [List Date] 
 ,[Orig_ Requested Receipt Date] [Orig Rqst Rcpt Date]
 ,[PlannerRequiredDate] 
@@ -67,9 +66,10 @@ END LateFlag
 ,ItemStatus
 ,ProductLine
 ,CASE 
-  WHEN COALESCE(StkOut,'') = 'Y' THEN 'Yes'
-   ELSE ''
-END  StockOut
+	WHEN COALESCE(StkOut,'') = 'Y' THEN 'Yes'
+	ELSE COALESCE(StkOut,'')
+END StockOut
+
 
 from [Shortage_List] l 
 inner join ShortageList_ActiveFlags f
@@ -79,8 +79,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
-        <Field Name="id">
-          <DataField>id</DataField>
+        <Field Name="ID">
+          <DataField>ID</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="LateFlag">
@@ -189,8 +189,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
               </Paragraph>
             </Paragraphs>
             <rd:DefaultName>textbox1</rd:DefaultName>
-            <Height>0.42in</Height>
-            <Width>20in</Width>
+            <Height>0.43in</Height>
             <Style>
               <PaddingLeft>2pt</PaddingLeft>
               <PaddingRight>2pt</PaddingRight>
@@ -202,13 +201,13 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
             <TablixBody>
               <TablixColumns>
                 <TablixColumn>
-                  <Width>0.70833in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.66667in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.75in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -220,16 +219,16 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>2.4in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.475in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.475in</Width>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -283,11 +282,13 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                               </TextRuns>
                               <Style>
                                 <FontFamily />
-                                <TextAlign>Center</TextAlign>
+                                <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -313,7 +314,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Flags</Value>
+                                  <Value>Late Flag</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -322,12 +323,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -346,45 +347,6 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox22">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Status</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox22</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="textbox4">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -392,7 +354,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Insp Code</Value>
+                                  <Value>Item Status</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -401,12 +363,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -432,7 +394,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Item Code</Value>
+                                  <Value>Inspection Code</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -445,6 +407,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -470,7 +434,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Description</Value>
+                                  <Value>Item Code</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -483,6 +447,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox6</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -508,7 +474,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Comments</Value>
+                                  <Value>Description</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -521,6 +487,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox7</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -539,14 +507,14 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox16">
+                        <Textbox Name="textbox8">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Stock Out</Value>
+                                  <Value>Comments</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -558,46 +526,9 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox16</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox8">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Need Qty</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
                           <rd:DefaultName>textbox8</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -623,7 +554,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>PO Qty</Value>
+                                  <Value>Stock Out</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -636,6 +567,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox9</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -661,7 +594,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>PO</Value>
+                                  <Value>Need Qty</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -674,6 +607,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox10</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -699,7 +634,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Supplier</Value>
+                                  <Value>PO Qty</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -712,6 +647,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox11</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -737,7 +674,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>List Date</Value>
+                                  <Value>PO</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -750,6 +687,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox12</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -775,7 +714,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Orig Rqst Rcpt Date</Value>
+                                  <Value>Supplier</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -784,12 +723,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox13</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -815,7 +754,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Planner Required Date</Value>
+                                  <Value>List Date</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -824,12 +763,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox14</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -855,7 +794,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Curr Due Date</Value>
+                                  <Value>Orig Rqst Rcpt Date</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -864,12 +803,52 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox15</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox16">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Planner Required Date</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox16</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -895,6 +874,46 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
+                                  <Value>Curr Due Date</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox17</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox18">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
                                   <Value>Buyer</Value>
                                   <Style>
                                     <FontFamily />
@@ -904,12 +923,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox17</rd:DefaultName>
+                          <rd:DefaultName>textbox18</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -948,6 +967,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox19</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -966,7 +987,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox21">
+                        <Textbox Name="textbox20">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -985,7 +1006,9 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox21</rd:DefaultName>
+                          <rd:DefaultName>textbox20</rd:DefaultName>
+                          <Height>0.22in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1009,26 +1032,26 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="id">
+                        <Textbox Name="ID">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!id.Value</Value>
+                                  <Value>=Fields!ID.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>id</rd:DefaultName>
+                          <rd:DefaultName>ID</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1061,12 +1084,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>LateFlag</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1099,12 +1122,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>ItemStatus</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1112,6 +1135,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
+                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1136,12 +1160,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Inspection_Code</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1178,6 +1202,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>ItemCode</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1214,6 +1240,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Description</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1250,6 +1278,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Comments</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1282,12 +1312,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>StockOut</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1295,13 +1325,13 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
+                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                        <rd:Selected>true</rd:Selected>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
@@ -1320,12 +1350,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Need_Qty</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1358,12 +1388,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>PO_Qty</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1400,6 +1430,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>PO</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1436,6 +1468,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Supplier</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1464,17 +1498,16 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   <Value>=Fields!List_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>List_Date</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1503,17 +1536,16 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   <Value>=Fields!Orig_Rqst_Rcpt_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Orig_Rqst_Rcpt_Date</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1542,17 +1574,16 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   <Value>=Fields!PlannerRequiredDate.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>PlannerRequiredDate</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1581,17 +1612,16 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   <Value>=Fields!Curr_Due_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Curr_Due_Date</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1624,12 +1654,12 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
+                              <Style />
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Buyer</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1666,6 +1696,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Project</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1702,6 +1734,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>ProductLine</rd:DefaultName>
+                          <Height>0.21in</Height>
+                          <Width>1in</Width>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1766,17 +1800,14 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
               </TablixMembers>
             </TablixRowHierarchy>
             <DataSetName>DataSet1</DataSetName>
-            <Top>0.42in</Top>
-            <Height>0.43in</Height>
-            <Width>18.475in</Width>
-            <ZIndex>1</ZIndex>
+            <Top>0.43in</Top>
             <Style />
           </Tablix>
         </ReportItems>
-        <Height>0.85in</Height>
+        <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>21in</Width>
+      <Width>19in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -1794,6 +1825,6 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
   </ReportParametersLayout>
   <Language>en-US</Language>
   <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
-  <rd:ReportUnitType>Inch</rd:ReportUnitType>
-  <rd:ReportID>a64cc045-eccf-4572-b79f-98655e06c2c2</rd:ReportID>
+  <rd:ReportUnitType>Invalid</rd:ReportUnitType>
+  <rd:ReportID>e75dce80-ecff-4c08-b23b-12519232795a</rd:ReportID>
 </Report>
