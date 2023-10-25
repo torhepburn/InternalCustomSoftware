@@ -43,6 +43,8 @@ namespace Shortages.Pages
         public string? lateFlagStatus { get; set; }
         public string? trackingNo { get; set; }
         public bool flagField { get; set; }
+        public bool impactsRevenue { get; set; }
+
     }
 
 }

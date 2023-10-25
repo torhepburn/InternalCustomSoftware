@@ -32,7 +32,10 @@
                     {
                         <button class="button-save" type="submit" @onclick="Archive">Archive</button>
                     }
-                    
+                    <div class="checkbox-wrapper-59" style="display:flex">
+                        <label>Current Month Revenue Impact: </label>
+                        <input class="checkbox" type="checkbox" id="revenue" @bind="@item.impactsRevenue" />
+                    </div>
 
                 </div>
                 @*STATUS*@
@@ -411,6 +414,7 @@
         ",SOLineNo = @SOLineNo " +
         ",Buyer = @Buyer " +
         ",Supplier = @Vendor " +
+        ",ImpactsRevenue = @ImpactsRevenue " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@HOT", item.hot ? -1 : 0));
@@ -435,9 +439,12 @@
         ? new DateTime(1990, 01, 01) : item.salesOrderDate));
         cmd.Parameters.Add(new SqlParameter("@SOLineNo", (item.SOLineNum == null)
         ? DBNull.Value : item.SOLineNum));
-        cmd.Parameters.Add(new SqlParameter("@Buyer", item.buyer));
+        cmd.Parameters.Add(new SqlParameter("@Buyer", (item.buyer == null)
+        ? DBNull.Value : item.buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", item.ID));
-        cmd.Parameters.Add(new SqlParameter("@Vendor", item.vendor));
+        cmd.Parameters.Add(new SqlParameter("@Vendor", (item.vendor == null)
+        ? DBNull.Value : item.vendor));
+        cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", item.impactsRevenue));
 
         cnxn.Open();
         try
@@ -651,6 +658,7 @@
             ",[ShipmentTrackingNumber]" +
             ",[FlagField]" +
             ",[Supplier]" +
+            ",ImpactsRevenue " +
             fromSQL + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
 
@@ -683,9 +691,10 @@
                     item.iqcCompleteDate = reader.IsDBNull(22) ? null : reader.GetDateTime(22);
                     item.trackingNo = reader.IsDBNull(23) ? null : reader.GetString(23);
                     item.flagField = (reader.GetInt32(24) == -1);
+                    /*  due to the conditional FromSql lateflagstatus is always the last field*/
                     if (!isArchived)
                     {
-                        item.lateFlagStatus = reader.IsDBNull(26) ? "" : reader.GetString(26);
+                        item.lateFlagStatus = reader.IsDBNull(27) ? "" : reader.GetString(27);
                     }
                     else
                     {
@@ -693,7 +702,7 @@
                         BackgroundColor = "lightgrey";
                     }
                     item.vendor = reader.IsDBNull(25) ? null : reader.GetString(25).Trim();
-
+                    item.impactsRevenue = reader.GetBoolean(26);
 
                 }
             }

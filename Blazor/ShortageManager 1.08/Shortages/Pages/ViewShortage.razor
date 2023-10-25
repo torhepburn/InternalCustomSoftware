@@ -34,7 +34,10 @@
                     {
                         <button class="button-save" disabled="@(isLoading ? true : null)" type="submit" @onclick="Archive">Archive</button>
                     }
-                   
+                    <div class="checkbox-wrapper-59" style="display:flex">
+                        <label>Current Month Revenue Impact: </label>
+                        <input class="checkbox" type="checkbox" id="revenue" @bind="@itemsList[shortNum].impactsRevenue" />
+                    </div>
                 </div>
                 @*STATUS*@
                 <div style="display:flex;flex-direction:column;margin-left:10px">
@@ -311,19 +314,20 @@
 
         //First handle saving edits and reloading comments
         SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
-        "HOT = @HOT, " +
-        "ItemStatus = @ItemStatus, " +
-        "Reason = @Reason, " +
-        "FlagField = @FlagField," +
-        "ShipmentTrackingNumber = @ShipmentTrackingNumber, " +
-        "IQCCompleteDate = @IQCCompleteDate, " +
-        "PlannerRequiredDate = @PlannerRequiredDate, " +
-        "ProdOrder = @ProdOrder, " +
-        "SalesOrder = @SalesOrder, " +
-        "ShipDate = @ShipDate, " +
-        "SODate = @SODate, " +
-        "SOLineNo = @SOLineNo, " +
-        "Buyer = @Buyer " +
+        "HOT = @HOT " +
+        ",ItemStatus = @ItemStatus " +
+        ",Reason = @Reason " +
+        ",FlagField = @FlagField" +
+        ",ShipmentTrackingNumber = @ShipmentTrackingNumber " +
+        ",IQCCompleteDate = @IQCCompleteDate " +
+        ",PlannerRequiredDate = @PlannerRequiredDate " +
+        ",ProdOrder = @ProdOrder " +
+        ",SalesOrder = @SalesOrder " +
+        ",ShipDate = @ShipDate " +
+        ",SODate = @SODate " +
+        ",SOLineNo = @SOLineNo " +
+        ",Buyer = @Buyer " +
+        ",ImpactsRevenue = @ImpactsRevenue " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@HOT", itemsList[shortNum].hot ? -1 : 0));
@@ -348,6 +352,7 @@
         ? new DateTime(1990, 01, 01) : itemsList[shortNum].salesOrderDate));
         cmd.Parameters.Add(new SqlParameter("@SOLineNo", (itemsList[shortNum].SOLineNum == null)
         ? DBNull.Value : itemsList[shortNum].SOLineNum));
+        cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", itemsList[shortNum].impactsRevenue));
         cmd.Parameters.Add(new SqlParameter("@Buyer", itemsList[shortNum].buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
 
@@ -771,7 +776,7 @@
         SqlParameter pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
         pShortageID.Value = shortageID;
         SqlCommand cmd = new SqlCommand("SELECT " +
-                                                
+
             "[PRODUCTLINE]" +
             ",[GROUP]" +
             ",[STKOUT]" +
@@ -799,6 +804,7 @@
             ",[FlagField]" +
             ",LateFlag " +
             ",[Supplier]" +
+            ",ImpactsRevenue " +
 
             "FROM Shortage_List l " +
             "INNER JOIN Shortage_ActiveFlags f " +
@@ -837,6 +843,7 @@
                     itemsList[i].flagField = (reader.GetInt32(24) == -1);
                     itemsList[i].lateFlagStatus = reader.IsDBNull(25) ? "" : reader.GetString(25);
                     itemsList[i].vendor =  reader.IsDBNull(26) ? "" :reader.GetString(26);
+                    itemsList[i].impactsRevenue = reader.IsDBNull(27) ? false : reader.GetBoolean(27);
                 }
             }
             else
