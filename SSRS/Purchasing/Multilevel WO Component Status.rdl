@@ -106,6 +106,15 @@
 	[Outstanding Quantity] &gt; 0
 
 )
+,s9 as
+(	--qty in MRB
+	SELECT 
+	[Item No_]
+	,SUM(Quantity) InMRB
+	FROM [ZYGO$Warehouse Entry]
+	WHERE [Location Code] like '%MRB%'
+	GROUP BY [Item No_]
+)
 
 
 
@@ -115,7 +124,8 @@ SELECT
 m.[Item No_]
 ,m.Description
 ,m.[Remaining Qty_ (Base)]
-,COALESCE(Nettable,0) [OH Nettable]
+,COALESCE(Nettable - InMRB,0) [OH Nettable]
+,COALESCE(InMRB,0) [MRB]
 ,COALESCE([Qty on PO ],0) [Qty on PO]
 ,COALESCE([Qty on SO ],0) [Qty on SO]
 ,COALESCE([Qty on Service Order],0) [Qty on Service Order]
@@ -134,12 +144,15 @@ LEFT JOIN s4 ON m.[Item No_] = s4.[No_]
 LEFT JOIN s5 ON m.[Item No_] = s5.[No_]
 LEFT JOIN s6 ON m.[Item No_] = s6.[Item No_]
 LEFT JOIN s8 ON m.[Item No_] = s8.[No_]
+LEFT JOIN s9 ON m.[Item No_] = s9.[Item No_]
 
 where m.[Prod_ Order No_] = @wo
 
 AND LEFT(Description, 1) &lt;&gt; '#'
 
-ORDER BY m.[Item No_]</CommandText>
+
+--AND Nettable -[Remaining Qty_ (Base)] &lt; 0
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -157,6 +170,10 @@ ORDER BY m.[Item No_]</CommandText>
         </Field>
         <Field Name="OH_Nettable">
           <DataField>OH Nettable</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="MRB">
+          <DataField>MRB</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Qty_on_PO">
@@ -229,6 +246,9 @@ ORDER BY m.[Item No_]</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -420,6 +440,45 @@ ORDER BY m.[Item No_]</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox14">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>MRB</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox14</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -903,6 +962,44 @@ ORDER BY m.[Item No_]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="MRB">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!MRB.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>0;(0)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>MRB</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Qty_on_PO">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1216,6 +1313,7 @@ ORDER BY m.[Item No_]</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1241,7 +1339,7 @@ ORDER BY m.[Item No_]</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>12in</Width>
+            <Width>13in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1249,7 +1347,7 @@ ORDER BY m.[Item No_]</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>12in</Width>
+      <Width>13in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
