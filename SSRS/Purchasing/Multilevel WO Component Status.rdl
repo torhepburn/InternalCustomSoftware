@@ -134,6 +134,7 @@ m.[Item No_]
 ,COALESCE(s8.[Document No_],'') PO
 ,COALESCE(s8.[Outstanding Quantity],0) [PO Qty]
 ,COALESCE(s8.[Promised Receipt Date],'') [Promised Receipt Date]
+,m.[Prod_ Order No_]
 
 FROM [ZYGO$Prod_ Order Component] m
 
@@ -146,13 +147,14 @@ LEFT JOIN s6 ON m.[Item No_] = s6.[Item No_]
 LEFT JOIN s8 ON m.[Item No_] = s8.[No_]
 LEFT JOIN s9 ON m.[Item No_] = s9.[Item No_]
 
-where m.[Prod_ Order No_] = @wo
+where m.[Prod_ Order No_] IN ( @wo )
 
 AND LEFT(Description, 1) &lt;&gt; '#'
 
+ORDER BY m.[Item No_]
 
---AND Nettable -[Remaining Qty_ (Base)] &lt; 0
-</CommandText>
+
+--AND Nettable -[Remaining Qty_ (Base)] &lt; 0</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -208,6 +210,34 @@ AND LEFT(Description, 1) &lt;&gt; '#'
           <DataField>Promised Receipt Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
+        <Field Name="Prod__Order_No_">
+          <DataField>Prod_ Order No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="WO">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>select 
+
+No_
+
+from [ZYGO$Production Order]
+
+WHERE No_ LIKE 'PD7%'  
+
+AND Status IN (2,3)
+
+AND ([Assigned User ID] like '%NT%'
+
+OR [Assigned User ID] like '%JDR%')</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="No_">
+          <DataField>No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
       </Fields>
     </DataSet>
   </DataSets>
@@ -246,6 +276,9 @@ AND LEFT(Description, 1) &lt;&gt; '#'
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -809,6 +842,43 @@ AND LEFT(Description, 1) &lt;&gt; '#'
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox15">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Prod Order No </Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -1295,12 +1365,50 @@ AND LEFT(Description, 1) &lt;&gt; '#'
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Prod__Order_No_">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Prod__Order_No_.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Prod__Order_No_</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1339,7 +1447,7 @@ AND LEFT(Description, 1) &lt;&gt; '#'
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>13in</Width>
+            <Width>14in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1347,7 +1455,7 @@ AND LEFT(Description, 1) &lt;&gt; '#'
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>13in</Width>
+      <Width>14in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -1361,6 +1469,14 @@ AND LEFT(Description, 1) &lt;&gt; '#'
     <ReportParameter Name="WO">
       <DataType>String</DataType>
       <Prompt>Production Order Number</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>WO</DataSetName>
+          <ValueField>No_</ValueField>
+          <LabelField>No_</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
