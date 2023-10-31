@@ -1,0 +1,116 @@
+﻿@page "/ViewWorkOrder"
+
+<PageTitle>Work Order</PageTitle>
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Selected Work Order</h1>
+
+
+<table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Work Order #</th>
+                <th>WO Line #</th>
+                <th>Job Description</th>
+                <th>Job Reference</th>
+                 <th>Part #</th>
+                <th>Part Description</th>
+                <th>Expected Quantity</th>
+                <th>Location</th>
+                <th>Cost Center</th>
+                <th>Planner</th>
+                <th>Due Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+                    <tr @onclick="() => Select(r[0].ToString())">
+                        <td>@r[0].ToString()</td>
+                        <td>@r[1].ToString()</td>
+                        <td>@r[2].ToString()</td>
+                        <td>@r[3].ToString()</td>
+                        <td>@r[4].ToString()</td>
+                        <td>@r[5].ToString()</td>
+                        <td>@r[6].ToString()</td>
+                        <td>@r[7].ToString()</td>
+                        <td>@r[8].ToString()</td>
+                        @*<td>@r[9].ToString()</td>
+                        <td>@r[10].ToString()</td>
+                        <td>@r[11].ToString()</td>*@
+                    </tr>
+        }
+        </tbody>
+    </table>
+
+
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new("SELECT " +
+                    "''" +
+                    ",c.[Prod_ Order No_] " +
+                    ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +
+                    //",c.[Position] " +
+                    ",'' " +
+                    ",'' " +
+                    ",c.[Item No_] " +
+                    ",c.[Description] " +
+                    
+                    ",cast(c.[Expected Quantity] as int) " +
+                    ",c.[Bin Code] " +
+                    
+                    //",c.[Routing Link Code] " +
+                    
+                    "FROM " +
+                    "[ZYGO$Prod_ Order Component] c " +
+                    "INNER JOIN [ZYGO$Item] i " +
+                    "ON c.[Item No_] = i.No_ " +
+                    "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
+                    "AND [Prod_ Order No_] = 'PD311724' ", cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string id)
+    {
+        //g.ID = id;
+        NavMgr.NavigateTo("AddShortage");
+    }
+}

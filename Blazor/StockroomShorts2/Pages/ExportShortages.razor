@@ -1,0 +1,103 @@
+﻿@page "/exportshortages"
+
+<PageTitle>Export Stockroom Shortages</PageTitle>
+
+@using StockroomShorts.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using static PopUp
+
+
+@inject Global g
+@inject NavigationManager NavMgr
+@inject IJSRuntime JSRuntime
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+<h1>Export Stockroom Shortages</h1>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    PopUp pop = new PopUp();
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new(g.SQLs1+
+                    
+                    " WHERE Archived = " + g.archive + 
+                    " ORDER BY s.[EnteredOn], [WO], [WOline], ComponentLine", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+        try
+        {
+            string filepathServer = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\StockroomShortages" + g.exportFile + ".csv";
+            var lines = new List<string>();
+
+            string[] columnNames = dt.Columns
+                .Cast<DataColumn>()
+                .Select(column => column.ColumnName)
+                .ToArray();
+
+            var header = string.Join(",", columnNames.Select(name => $"\"{name}\""));
+            lines.Add(header);
+
+
+            System.Collections.Generic.IEnumerable<string> valueLines;
+            valueLines = dt.AsEnumerable()
+                .Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val}\"")));
+
+            lines.AddRange(valueLines);
+
+
+            File.WriteAllLines(filepathServer, lines);
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+        NavMgr.NavigateTo("viewshortages");
+    }
+}
+

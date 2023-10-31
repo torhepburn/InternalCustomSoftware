@@ -1,0 +1,251 @@
+﻿@page "/EnterShortage"
+
+<PageTitle>Select Shortage</PageTitle>
+
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Enter Production Order Number</h1>
+
+<EditFields></EditFields>
+<br />
+<div class="border-0">
+    <EditForm Model="searchFilter" OnValidSubmit="getRecords">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <InputText id="num" placeholder="PDNNNNNN" @bind-Value="searchFilter" />
+
+
+        <input type="submit" class="btn btn-primary btn-sm" OnValidSubmit="getRecords" @onfocus="getRecords" title="Filter" value="Filter" />
+                
+        @if (emptyText == true)
+        {
+            <br />
+
+            <br />
+            <h4><b>You must enter a Work Order Numbeer!</b></h4>
+        }
+        @if (dt != null && dt.Rows.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Work Order #</th>
+                        <th>WO Line #</th>
+                        <th>Part #</th>
+                        <th>Part Description</th>
+                        <th>Remaining Quantity</th>
+                        <th>Location</th>
+                        <th>Bin Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (dt != null)
+                    {
+                        @foreach (DataRow items in dt.Rows)
+                        {
+                            string bgclass = "";
+                            if (items[0].ToString() != string.Empty)
+                            { bgclass = "bg-info"; }
+                            <tr class=@bgclass @onclick="() => Select(items[11].ToString())">
+                                    <td>@items[0].ToString()</td>
+                                <td>@items[1].ToString()</td>
+                                <td>@items[2].ToString()</td>
+                                <td>@items[3].ToString()</td>
+                                <td>@items[4].ToString()</td>
+                                <td>@items[6].ToString()</td>
+                                <td>@items[5].ToString()</td>
+                            </tr>
+                            
+                        }
+                    }
+                </tbody>
+            </table>
+            <br />
+            <button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
+        }
+        else if (dt != null && dt.Rows.Count == 0 && emptyText == false)
+        {
+            <br />
+            <br />
+            <h4><b>Nothing was found!</b></h4>
+        }
+    </EditForm>
+</div>
+
+
+
+
+
+
+
+
+@code {
+
+
+    public DataTable dt;
+    public string searchFilter = "";
+    public bool emptyText = false;
+
+    SqlCommand cmd;
+    SqlConnection cnxn;  
+
+    protected override void OnInitialized()
+    {
+
+    }
+
+    public void getRecords() 
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+        SqlDataReader dr;
+
+        if (searchFilter == "")
+        {
+            emptyText = true;
+        }
+        else
+        {
+            searchFilter = searchFilter.ToUpper();
+        }
+
+        cmd = new(  "SELECT " +
+                    "c.[Prod_ Order No_] " +                                                        //0
+                    ",CAST(COALESCE(c.[Prod_ Order Line No_],0) as varchar(6)) " +                  //1
+                    ",c.[Item No_] " +                                                              //2
+                    ",REPLACE(c.Description,'''', '') [Part Description] " +                                        //3
+                    ",cast(c.[Remaining Quantity] as int) " +                                       //4
+                    ",c.[Bin Code] " +                                                              //5
+                    ",c.[Location Code] " +                                                         //6
+                    ",o.[Buyer Planner Code] " +                                                    //7
+                    ",o.Description [Job Description] " +                                           //8
+                    ",o.[Reference] [Job Reference] " +                                             //9
+                    ",[Line No_] " +                                                                //10
+                    ",ROW_NUMBER() OVER(ORDER BY c.[Prod_ Order Line No_], [Line No_]) AS RowNo " +
+
+                    "FROM " +
+                    "[ZYGO$Prod_ Order Component] c " +
+                    "INNER JOIN [ZYGO$Item] i " +
+                    "ON c.[Item No_] = i.No_ " +
+                    "LEFT JOIN [ZYGO$Production Order] o ON c.[Prod_ Order No_] = o.[No_] " +
+
+                    "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
+                    "AND [Remaining Quantity] > 0 " +
+                    "AND [Prod_ Order No_] = '" + searchFilter + "'"  +
+                    "ORDER BY [Prod_ Order Line No_], [Line No_]" ,cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+    }
+
+    private void Select(string id)
+    {
+        int rN = Convert.ToInt32(id);
+        rN = rN - 1;
+
+        /* edit rows to fields filled in */
+        if (g.storekeeper is null)
+        {
+            g.storekeeper = " ";
+        }
+
+        if (g.costcenter is null)
+        {
+            g.costcenter = " ";
+        }
+
+        if (g.duedate is null)
+        {
+            g.duedate = " ";
+        }
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("Insert into StockroomShortages (" +
+                    "[WO] " +
+                    ",[WOLine] " +
+                    ",[PartNo] " +
+                    ",[PartDescription] " +
+                    ",[Quantity] " +
+                    ",[StockLocation] " +
+                    ",[Planner] " +
+                    ",[JobDescription] " +
+                    ",[JobReference] " +
+                    ",[ComponentLine] " +
+                    ",[EnteredOn] " +
+                    ",[Archived] " +
+                    ",[StockRoomAssociate] " +
+                    ",[CostCenter] " +
+                    ",[DueDate] " +
+                    ") VALUES (" +
+                    "'" + dt.Rows[rN][0].ToString() + "'" +
+                    ",'" + dt.Rows[rN][1].ToString() + "'" +
+                    ",'" + dt.Rows[rN][2].ToString() + "'" +
+                    ",@description " +
+                    ",'" + dt.Rows[rN][4].ToString() + "'" +
+                    ",'" + dt.Rows[rN][5].ToString() + "'" +
+                    ",'" + dt.Rows[rN][7].ToString() + "'" +
+                    ",'" + dt.Rows[rN][8].ToString() + "'" +
+                    ", @jobReference " +
+                    ",'" + dt.Rows[rN][10].ToString() + "'" +
+                    ",'" + DateTime.Now + "'" +
+                    ",0 " +
+                    ",'" + g.storekeeper + "'" +
+                    ",'" + g.costcenter + "'" +
+                    ",'" + g.duedate + "'" +
+                    ")", cnxn);
+
+        cmd.Parameters.Add("@description", SqlDbType.VarChar, 60).Value = dt.Rows[rN][3].ToString();
+        cmd.Parameters.Add("@jobReference", SqlDbType.VarChar, 60).Value = dt.Rows[rN][9].ToString();
+        
+
+        try
+        {
+            cnxn.Open();
+            if (dt.Rows[rN][0].ToString() != "")
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        /* row goes white after it is entered as shortage */
+        dt.Rows[rN][0] = "";
+    }
+
+    private void DataEntry()
+    {
+        g.storekeeper = string.Empty;
+        g.costcenter = string.Empty;
+        g.duedate = string.Empty;
+        
+        NavMgr.NavigateTo("ViewShortages");
+    }
+}
+
+

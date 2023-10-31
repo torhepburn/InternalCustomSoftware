@@ -1,0 +1,482 @@
+﻿@page "/updateData"
+
+<PageTitle>Update Data</PageTitle>
+
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using Shared
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>Data Updating</h1>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlConnection cnxnNAV;
+    SqlDataReader dr;
+    DataTable dt;
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+    public string select = "";
+    public string tableName = "";
+    public int UpQuantity;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        cnxn = new SqlConnection(g.db);
+        cnxn.Open();
+        cnxnNAV = new SqlConnection(g.dbNAV);
+
+        cmd = new("TRUNCATE TABLE Item_WO_Released_MID_OFS ", cnxn);
+
+
+        cmd.ExecuteNonQuery();
+
+
+        cmd = new("TRUNCATE TABLE [Item_OH_MID_OFS] ", cnxn);
+
+
+        cmd.ExecuteNonQuery();
+
+
+        cmd = new("TRUNCATE TABLE [StS_WO_Components_Issued] ", cnxn);
+
+        cmd.ExecuteNonQuery();
+
+        cnxn.Close();
+        dt = new DataTable();
+
+
+        select = "WITH OFS AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) OFS_Q " +
+                "   FROM [ZYGO$Prod_ Order Line] " +
+                "	WHERE [Location Code] IN ('MID') " +
+                "	AND [Bin Code] LIKE '%OFS%' " +
+                "	GROUP BY [Item No_]  " +
+                "), " +
+                "IQC AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) IQC_Q " +
+                "	FROM [ZYGO$Prod_ Order Line] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "	AND [Bin Code] LIKE '%IQC%' " +
+                "	GROUP BY [Item No_]  " +
+                "), " +
+                "OH AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM([Remaining Quantity]) OO_Q " +
+                "	FROM [ZYGO$Prod_ Order Line] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "	AND ([Bin Code] NOT LIKE '%IQC%' AND [Bin Code] NOT LIKE '%OFS%') " +
+                "	GROUP BY [Item No_]  " +
+                ") " +
+                "SELECT " +
+                "OH.[Item No_] " +
+                ",OO_Q OO " +
+                ",COALESCE(OFS_Q,0) OFS " +
+                ",COALESCE(IQC_Q,0) IQC " +
+                "FROM OH LEFT JOIN OFS ON OH.[Item No_] = OFS.[Item No_] " +
+                "LEFT JOIN IQC ON OH.[Item No_] = IQC.[Item No_] ";
+
+
+        tableName = "Item_WO_Released_MID_OFS";
+        await CopyTable(select, tableName);
+
+
+        //MakeTables();
+
+
+        select = " WITH OFS AS " +
+                 "( " +
+                 "  SELECT " +
+                 "  [Item No_] " +
+                 ", SUM(Quantity) OFS_Q " +
+                 "FROM [ZYGO$Warehouse Entry] " +
+                 "WHERE [Location Code] IN('MID') " +
+                 "AND[Bin Code] LIKE '%OFS%' " +
+                 "GROUP BY[Item No_] " +
+                 "), " +
+                "IQC AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM(Quantity) IQC_Q " +
+                "FROM [ZYGO$Warehouse Entry] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "AND [Bin Code] LIKE '%IQC%' " +
+                "GROUP BY[Item No_] " +
+                "), " +
+                "OH AS " +
+                "( " +
+                "SELECT " +
+                "[Item No_] " +
+                ", SUM(Quantity) OH_Q " +
+                "FROM [ZYGO$Warehouse Entry] " +
+                "WHERE [Location Code] IN ('MID') " +
+                "AND ([Bin Code] NOT LIKE '%IQC%' AND [Bin Code] NOT LIKE '%OFS%') " +
+                "GROUP BY[Item No_] " +
+                " ) " +
+                "SELECT " +
+                "OH.[Item No_] " +
+                ",OH_Q OH " +
+                ", COALESCE(OFS_Q, 0) OFS " +
+                ",COALESCE(IQC_Q, 0) IQC " +
+                "FROM OH LEFT JOIN OFS ON OH.[Item No_] = OFS.[Item No_] " +
+                "LEFT JOIN IQC ON OH.[Item No_] = IQC.[Item No_] ";
+
+
+        tableName = "[Item_OH_MID_OFS]";
+        await CopyTable(select, tableName);
+
+
+        select = " select " +
+                 "[Prod_ Order No_] [WO] " +
+                 ",[Prod_ Order Line No_] [WOLine] " +
+                 ",[Line No_] [ComponentLine] " +
+                 ",[Item No_] [PartNo] " +
+                 "from [ZYGO$Prod_ Order Component] " +
+                 "WHERE Status IN (3,4) " +
+                 "AND [Remaining Quantity] = 0 ";
+
+
+
+        tableName = "[StS_WO_Components_Issued]";
+        await CopyTable(select, tableName);
+
+
+        //archived issued components
+        cnxn = new SqlConnection(g.db);
+        cnxn.Open();
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET Archived = 1 " +
+                      " from Stockroomshortages ss " +
+                      " inner join [StS_WO_Components_Issued] s1 " +
+                      " on s1.[WO] = ss.WO " +
+                      " AND s1.WOLine = ss.WOLine " +
+                      " AND s1.ComponentLine = ss.ComponentLine " +
+                      " where archived = 0 ", cnxn);
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+        }
+
+
+
+        //green first - On Hand in warehouse
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = '' WHERE color IN  ('green','orange','purple') AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'green' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH > 0 " +
+                      " AND color NOT IN ('blue','cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        //orange  OFS
+
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'orange' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH = 0 " +
+                      " AND OFS > 0" +
+                      " AND color NOT IN ('blue','cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        //purple IQC
+
+        //orange  OFS
+
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'purple' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH = 0 " +
+                      " AND IQC > 0" +
+                      " AND color NOT IN ('blue', 'cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+
+        //yellow second
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = '' WHERE color = 'yellow' AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'yellow' " +
+                      " from Stockroomshortages ss " +
+                      " inner join [Item_WO_Released_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OO > 0 " +
+                      " AND archived = 0 " +
+                      " AND ss.color NOT IN ('green','blue','cyan')", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        //red third
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortages set color = 'red' WHERE LEN(COALESCE(color,'')) = 0 AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+
+        ////groups fourth
+        //try
+        //{
+        //    cmd = new("UPDATE StockroomShortages set color = 'grey' WHERE LEN(COALESCE(color,'')) =  AND archived = 1 ", cnxn);
+
+
+        //    cmd.ExecuteNonQuery();
+
+
+        //    //dt.Load(dr);
+        //}
+        //catch (SqlException ex)
+        //{
+        //    ex.ToString();
+        //}
+        //finally
+        //{
+
+
+        //}
+
+        cnxn.Close();
+        cnxnNAV.Close();
+        UpdateQuantity();
+        g.isLoading = false;
+
+
+
+        NavMgr.NavigateTo("viewShortages", forceLoad: true);
+
+    }
+
+    private void MakeTables()
+    {
+        cnxnNAV = new SqlConnection(g.dbNAV);
+
+        SqlCommand cmd = new SqlCommand(select, cnxnNAV);
+        SqlDataAdapter da = new SqlDataAdapter(select, cnxnNAV);
+        DataTable table = new DataTable();
+        da.Fill(table);
+
+
+
+
+        SqlBulkCopy copy = new SqlBulkCopy(cnxn);
+
+        copy.DestinationTableName = tableName;
+
+        try
+        {
+            copy.WriteToServer(table);
+        }
+        catch (Exception ex)
+        {
+            //MessageBox.Show(ex.ToString());
+        }
+        finally
+        {
+
+        }
+    }
+
+    public async Task CopyTable(string sourcecommand, string destinationTableName)
+    {
+        using (SqlConnection sourceConnection = new SqlConnection(g.dbNAV))
+        using (SqlConnection destinationConnection = new SqlConnection(g.db))
+        {
+            await sourceConnection.OpenAsync();
+            await destinationConnection.OpenAsync();
+
+            using (SqlCommand selectCommand = new SqlCommand(sourcecommand, sourceConnection))
+            using (SqlDataReader reader = await selectCommand.ExecuteReaderAsync())
+            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
+            {
+                bulkCopy.BatchSize = 15000;
+                bulkCopy.DestinationTableName = destinationTableName;
+
+                // Adjust the bulk copy settings as needed (e.g., BatchSize, NotifyAfter)
+
+                await bulkCopy.WriteToServerAsync(reader);
+            }
+
+            sourceConnection.Close();
+            destinationConnection.Close();
+        }
+    }
+
+    private async void UpdateQuantity()
+    {
+        SqlConnection NAVcnxn = new SqlConnection(g.dbNAV);
+        SqlConnection cnxn = new SqlConnection(g.db);
+        SqlCommand cmd = new SqlCommand();
+        SqlDataReader dr;
+        DataTable test = new DataTable();
+
+        await Task.Delay(10);
+        foreach (DataRow items in dt.Rows)
+        {
+
+            cmd = new SqlCommand("SELECT " +
+                    "cast(c.[Remaining Quantity] as int) " +                                       
+
+                    "FROM " +
+                    "[ZYGO$Prod_ Order Component] c " +
+                    "INNER JOIN [ZYGO$Item] i " +
+                    "ON c.[Item No_] = i.No_ " +
+                    "LEFT JOIN [ZYGO$Production Order] o ON c.[Prod_ Order No_] = o.[No_] " +
+
+                    "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
+                    "AND [Remaining Quantity] > 0 " +
+                    "AND [Prod_ Order No_] = '" + items[2].ToString() + "' " +
+                    "AND c.[Item No_] = '" + items[3].ToString() + "' " +
+                    "ORDER BY [Prod_ Order Line No_], [Line No_]"
+                    , NAVcnxn);
+
+            NAVcnxn.Open();
+            dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    UpQuantity = dr.GetInt32(0);
+                }
+
+
+                cmd = new SqlCommand("UPDATE StockroomShortages " +
+               "SET [Quantity] = '" + UpQuantity.ToString() + "' " +
+               "WHERE [ID] = '" + items[0].ToString() + "'", cnxn);
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+                cnxn.Close();
+            }
+            NAVcnxn.Close();
+        }
+    }
+
+    private void Select(string id)
+    {
+        //g.ID = id;
+        //NavMgr.NavigateTo("AddShortage");
+    }
+}

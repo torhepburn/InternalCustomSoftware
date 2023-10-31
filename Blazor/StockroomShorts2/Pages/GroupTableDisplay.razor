@@ -1,0 +1,288 @@
+﻿@using System.Data
+@using Microsoft.Data.SqlClient
+@using static PopUp
+
+@inject Global g
+@inject NavigationManager nav
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <input type="text" @bind="changedName" />
+        <button @onclick="ChangeGroupName">Change Name</button>
+        <button @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+<div style="display:flex">
+    <br />
+    <label style="font-weight:bold">@groupName</label>
+    <input disabled="true"  type="text" style="cursor:auto; outline:none;width:100%;border:none;font-size:1.5em;">
+    <div style="display:flex;justify-content:flex-end">
+        <button @onclick="() => ShowChangeGroupName(groupID)" style="color:red;cursor:pointer;width:200px">Change Group Name</button>
+        <button @onclick="() => DeleteGroup(groupID)" style="color:red;cursor:pointer;width:200px">Delete Group</button>
+    </div>
+</div>
+
+    <div class="table-shortages" style="min-height:60px;border:solid 1px black;">
+    <table>
+        <thead>
+            <tr>  @* top row are buttons with headings to allow sorting *@
+                @for (int i = 1; i < n - 1; i++)
+                {
+                    int index = i; // Create a local variable and assign it to i
+                    <th>
+                        <button @onclick="() => SortTable(index)">
+                            @dtgi.Columns[i]
+                            @if (isVisible[i])
+                            {
+                                <section class="sort-arrow-down @(isSortedDescending[i] ? "rotate" : "")"></section>
+                            }
+                        </button>
+                    </th>
+                }
+
+
+
+            </tr>
+        </thead>
+        <tbody>
+            @if (dtgi != null)
+            {
+                @foreach (DataRow items in dtgi.Rows)
+                {
+                    string green = "rgb(175,255,140)";
+                    string yellow = "rgb(255, 255, 140)";
+                    string red = "rgb(255,109,106)";
+                    string blue = "rgb(135,206,250)";
+                    string orange = "rgb(255,187,51)";
+                    string purple = "rgb(213,128,255)";
+                    string cyan = "rgb(0,255,255)";
+                    string color = "white";
+
+                    if (items[16].ToString() == "green")
+                    {
+                        color = green;
+                    }
+                    else if (items[16].ToString() == "yellow")
+                    {
+                        color = yellow;
+                    }
+                    else if (items[16].ToString() == "red")
+                    {
+                        color = red;
+                    }
+                    else if (items[16].ToString() == "blue")
+                    {
+                        color = blue;
+                    }
+                    else if (items[16].ToString() == "orange")
+                    {
+                        color = orange;
+                    }
+                    else if (items[16].ToString() == "purple")
+                    {
+                        color = purple;
+                    }
+                    else if (items[16].ToString() == "cyan")
+                    {
+                        color = cyan;
+                    }
+
+                    <tr style="background-color:@color">
+                        @for (int i = 1; i < n - 1; i++)
+                        {
+                            <td @onclick="() => Select(items[0].ToString())">@items[i].ToString()</td>
+                        }
+                    </tr>
+
+                }
+
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dtgi;     //data table group items
+    DataTable dti;
+
+    [Parameter]
+    public string? groupID { get; set; }
+
+    public string? groupName;
+    public string? changedName;
+
+    PopUp pop = new PopUp();
+
+    public int currentColNum = 0;
+
+    private bool newBrowse = true;
+    int n;
+    private List<bool>? isSortedDescending;
+
+    private List<bool>? isVisible;
+
+
+    protected override void OnInitialized()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new(" SELECT " +
+                    " GroupName " +
+                    ",GroupContents " +
+                    " FROM StockroomGroups " +
+                    " WHERE StockroomGroupID = " + groupID , cnxn);
+
+        dti = new DataTable();
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dti.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        groupName = dti.Rows[0][0].ToString();
+
+        cmd = new(g.SQLs1 +
+                  " WHERE ID IN (" + dti.Rows[0][1].ToString() + ")", cnxn);
+
+        dtgi = new DataTable();
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtgi.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        n = dtgi.Columns.Count;
+        if (n > 0)
+        {
+            isSortedDescending = Enumerable.Repeat(true, n - 1).ToList();
+            isSortedDescending.Insert(0, false);
+
+            isVisible = Enumerable.Repeat(false, n - 1).ToList();
+            isVisible.Insert(0, true);
+        }
+    }
+
+    public void SortTable(int columnNum, bool forceAsc = false)
+    {
+        currentColNum = columnNum;
+        string ascendingString = "ASC";
+        for (int i = 0; i < n; i++)
+        {
+            if (columnNum == i)
+            {
+                isVisible[i] = true;
+
+                if (isSortedDescending[i] | forceAsc)
+                {
+                    isSortedDescending[i] = false;
+                    ascendingString = "ASC";
+                }
+                else
+                {
+                    isSortedDescending[i] = true;
+                    ascendingString = "DESC";
+                }
+            }
+            else
+            {
+                isSortedDescending[i] = true;
+                isVisible[i] = false;
+            }
+        }
+
+        dtgi.DefaultView.Sort = dtgi.Columns[columnNum] + " " + ascendingString;
+        dtgi = dtgi.DefaultView.ToTable();
+        StateHasChanged();
+
+    }
+
+    private void Select(string ID)
+    {
+        g.ShortageID = ID;
+        nav.NavigateTo("EditShortage");
+    }
+
+    private void DeleteGroup(string groupID)
+    {
+        cmd = new SqlCommand("UPDATE StockroomGroups SET GroupStatus = 'Archive' where StockroomGroupID = " + groupID + " ", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        nav.NavigateTo("viewshortages", true);
+    }
+
+    private async Task ShowChangeGroupName(string groupID)
+    {
+        pop.ShowPopup();
+
+        StateHasChanged();
+    }
+
+    private void ChangeGroupName()
+    {
+        cmd = new SqlCommand("UPDATE StockroomGroups SET GroupName = '" + changedName + "' where StockroomGroupID = " + groupID + " ", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        nav.NavigateTo("viewshortages", true);
+        changedName = "";
+    }
+}
