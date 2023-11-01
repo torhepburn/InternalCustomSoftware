@@ -18,15 +18,26 @@
             <Value>=Parameters!Customer.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
+          <QueryParameter Name="@periodStart">
+            <Value>=Parameters!periodStart.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@periodEnd">
+            <Value>=Parameters!periodEnd.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
         </QueryParameters>
-        <CommandText>SELECT
+        <CommandText>with S1 as
+(
+SELECT
 
 l.PERIOD_NUMBER
 ,l.JOURNAL_NUMBER
 ,l.BATCH_NUMBER
 ,l.INVOICE_NUMBER
-,h.INVOICE_DATE
-,l.AMOUNT
+,h.INVOICE_DATE DOCUMENT_DATE
+,l.AMOUNT DEBIT_AMOUNT
+,0 CREDIT_AMOUNT
 ,h.CUSTOMER_NUMBER
 ,c.NAME CUSTOMER_NAME
 
@@ -36,9 +47,38 @@ LEFT JOIN MMX_SALES_POSTED_INVOICE_HEADER h ON l.INVOICE_NUMBER = h.INVOICE_NUMB
 
 LEFT JOIN MMX_CUSTOMERS c ON h.CUSTOMER_NUMBER = c.CUSTOMER
 
-WHERE h.customer_number = @customer
+UNION ALL
 
-ORDER BY l.PERIOD_NUMBER</CommandText>
+SELECT
+
+l.PERIOD_NUMBER
+,l.JOURNAL_NUMBER
+,l.BATCH
+,l.INVOICE
+,h.DOCUMENT_DATE
+,0 DEBIT_AMOUNT
+,l.amount_received_in_home_curr CREDIT_AMOUNT
+,l.CUSTOMER_NUMBER
+,c.NAME CUSTOMER_NAME
+
+FROM MMX_SALES_POSTED_RECEIPT_LINES l
+
+LEFT JOIN MMX_SALES_POSTED_RECEIPT_HEADER h ON l.PERIOD_NUMBER = h.PERIOD_NUMBER 
+
+AND l.CUSTOMER_NUMBER = h.CUSTOMER_NUMBER AND l.JOURNAL_NUMBER = h.JOURNAL_NUMBER AND l.BATCH= h.BATCH
+
+LEFT JOIN MMX_CUSTOMERS c ON l.CUSTOMER_NUMBER = c.CUSTOMER
+)
+
+SELECT * FROM S1
+
+WHERE customer_number = @customer
+
+AND PERIOD_NUMBER  &gt;= @periodStart
+
+AND PERIOD_NUMBER &lt;= @periodEnd
+
+ORDER BY PERIOD_NUMBER, JOURNAL_NUMBER, BATCH_NUMBER</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -58,13 +98,17 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
           <DataField>INVOICE_NUMBER</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="INVOICE_DATE">
-          <DataField>INVOICE_DATE</DataField>
+        <Field Name="DOCUMENT_DATE">
+          <DataField>DOCUMENT_DATE</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
-        <Field Name="AMOUNT">
-          <DataField>AMOUNT</DataField>
+        <Field Name="DEBIT_AMOUNT">
+          <DataField>DEBIT_AMOUNT</DataField>
           <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="CREDIT_AMOUNT">
+          <DataField>CREDIT_AMOUNT</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="CUSTOMER_NUMBER">
           <DataField>CUSTOMER_NUMBER</DataField>
@@ -84,6 +128,17 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
         <Field Name="CUSTOMER">
           <DataField>CUSTOMER</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="PeriodNumbers">
+      <SharedDataSet>
+        <SharedDataSetReference>PeriodNumbers</SharedDataSetReference>
+      </SharedDataSet>
+      <Fields>
+        <Field Name="PERIOD_NUMBER">
+          <DataField>PERIOD_NUMBER</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -124,6 +179,9 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -296,7 +354,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                               </TextRuns>
                               <Style>
                                 <FontFamily />
-                                <TextAlign>Right</TextAlign>
+                                <TextAlign>Center</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
@@ -326,7 +384,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>INVOICE DATE</Value>
+                                  <Value>DOCUMENT DATE</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -335,7 +393,9 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox6</rd:DefaultName>
@@ -357,14 +417,14 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox7">
+                        <Textbox Name="Textbox10">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>AMOUNT</Value>
+                                  <Value>DEBIT AMOUNT</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -374,12 +434,11 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox7</rd:DefaultName>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -387,7 +446,45 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>CREDIT AMOUNT</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -629,14 +726,14 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="INVOICE_DATE">
+                        <Textbox Name="DOCUMENT_DATE">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!INVOICE_DATE.Value</Value>
+                                  <Value>=Fields!DOCUMENT_DATE.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>MM/dd/yyyy</Format>
@@ -649,7 +746,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>INVOICE_DATE</rd:DefaultName>
+                          <rd:DefaultName>DOCUMENT_DATE</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -668,17 +765,17 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="AMOUNT">
+                        <Textbox Name="DEBIT_AMOUNT">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!AMOUNT.Value</Value>
+                                  <Value>=Fields!DEBIT_AMOUNT.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
+                                    <Format>0.00;(0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -688,7 +785,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>AMOUNT</rd:DefaultName>
+                          <rd:DefaultName>DEBIT_AMOUNT</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -696,12 +793,47 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="CREDIT_AMOUNT">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!CREDIT_AMOUNT.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>CREDIT_AMOUNT</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
                       </CellContents>
@@ -794,6 +926,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -819,7 +952,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>10.02083in</Width>
+            <Width>11.02083in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -827,7 +960,7 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>10.02083in</Width>
+      <Width>12.02083in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -849,6 +982,28 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
         </DataSetReference>
       </ValidValues>
     </ReportParameter>
+    <ReportParameter Name="periodStart">
+      <DataType>String</DataType>
+      <Prompt>Starting Period</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>PeriodNumbers</DataSetName>
+          <ValueField>PERIOD_NUMBER</ValueField>
+          <LabelField>PERIOD_NUMBER</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="periodEnd">
+      <DataType>String</DataType>
+      <Prompt>Ending Period</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>PeriodNumbers</DataSetName>
+          <ValueField>PERIOD_NUMBER</ValueField>
+          <LabelField>PERIOD_NUMBER</LabelField>
+        </DataSetReference>
+      </ValidValues>
+    </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
@@ -859,6 +1014,16 @@ ORDER BY l.PERIOD_NUMBER</CommandText>
           <ColumnIndex>0</ColumnIndex>
           <RowIndex>0</RowIndex>
           <ParameterName>Customer</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>periodStart</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>periodEnd</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>
