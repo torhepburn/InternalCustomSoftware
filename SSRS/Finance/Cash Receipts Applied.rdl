@@ -13,6 +13,18 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAV</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@startDate">
+            <Value>=Parameters!dateStart.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@customer">
+            <Value>=Parameters!customer.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@endDate">
+            <Value>=Parameters!dateEnd.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
         <CommandText>SELECT 
 
 
@@ -24,6 +36,7 @@ c.[Entry No_]
 
 ,CASE c.[Document Type]
 	WHEN 2 THEN 'Sales Invoice'
+                   WHEN 3 THEN 'Sales Credit Memo'
 	ELSE 'Look Up'
 END [Document Type]
 ,g.[Document No_] [Payment Number]
@@ -43,9 +56,9 @@ INNER JOIN [ZYGO$Customer ] u on c.[Customer No_] = u.No_
 INNER JOIN [ZYGO$G_L Entry] g ON c.[Closed by Entry No_] = g.[Entry No_]
 
 
-WHERE c.[Closed at Date] BETWEEN '07-01-2023' and '09-30-2023'
+WHERE c.[Closed at Date] BETWEEN @startDate and @endDate
 
-AND [Customer No_] = 'AM1147'
+AND ([Customer No_] = @customer OR @customer is null)
 
 
 ORDER BY [Due Date]</CommandText>
@@ -926,6 +939,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Payment_Posting_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -962,6 +976,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Invoice_Due_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -998,6 +1013,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Pmt__Discount_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1034,6 +1050,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Payment_Amount.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>0.00;(0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1070,6 +1087,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Pmt__Disc__Given__LCY_.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>0.00;(0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1106,6 +1124,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Closed_by_Amount.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>0.00;(0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1142,6 +1161,7 @@ ORDER BY [Due Date]</CommandText>
                                   <Value>=Fields!Closed_at_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1228,10 +1248,42 @@ ORDER BY [Due Date]</CommandText>
       </Page>
     </ReportSection>
   </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="customer">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Customer Number</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="dateStart">
+      <DataType>DateTime</DataType>
+      <Prompt>Starting Posting Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="dateEnd">
+      <DataType>DateTime</DataType>
+      <Prompt>Ending Posting Date</Prompt>
+    </ReportParameter>
+  </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
       <NumberOfColumns>4</NumberOfColumns>
       <NumberOfRows>2</NumberOfRows>
+      <CellDefinitions>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>customer</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>dateStart</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>dateEnd</ParameterName>
+        </CellDefinition>
+      </CellDefinitions>
     </GridLayoutDefinition>
   </ReportParametersLayout>
   <Language>en-US</Language>
