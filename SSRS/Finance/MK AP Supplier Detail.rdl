@@ -18,62 +18,121 @@
             <Value>=Parameters!supplier.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
+          <QueryParameter Name="@periodEnd">
+            <Value>=Parameters!periodEnd.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@supplierName">
+            <Value>=Parameters!supplierName.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@periodStart">
+            <Value>=Parameters!periodStart.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
         </QueryParameters>
         <CommandText>WITH s1 AS
 (
-select
+SELECT 
 
 p.Period_Number
 ,p.Journal_Number
 ,p.Batch
 ,p.Invoice
-,p.Payment_Document
-,p.Posting_Date
+--,p.Payment_Document
+,p.Payment_Date
 ,p.AMT [Debit Amount]
 ,0 [Credit Amount]
-,s.SUPPLIER
-,s.NAME
+,p.SUPPLIER
+,s.Name
+,'p' s
 
-from  MMX_AP_Purchase_Invoices i
+from  MMX_Payments_On_Purch_Invoices p
 
-LEFT JOIN MMX_Payments_On_Purch_Invoices p
+INNER JOIN MMX_Suppliers s ON p.Supplier = s.supplier
 
-ON i.supplier = p.supplier and i.invoice = p.invoice
+WHERE 1=1
 
-LEFT JOIN MMX_SUPPLIERS s ON i.Supplier = s.SUPPLIER
+AND ((p.supplier = @supplier) or @supplier is null)
 
-WHERE p.Supplier = @supplier
+AND ((s.Name like '%' + @supplierName + '%') or @supplierName is null)
 
---AND p.Payment_Document = 1
+AND  p.Period_Number between @periodStart and @periodEnd
 
-UNION ALL
+UNION
 
-select
+SELECT
 
 p.Period_Number
 ,p.Journal_Number
-,p.Batch_number
-,p.Invoice_Number
-,p.Document_Type
-,p.Document_Date
+,p.Batch
+,p.Invoice
+--,p.REference
+,p.Invoice_Date
 ,0 [Debit Amount]
-,p.[Amount] [Credit Amount]
-,s.SUPPLIER
-,s.NAME
+,p.Invoice_Amount [Credit Amount]
+,p.supplier
+,s.Name
+,'i' s
 
-from  MMX_Posted_Ledger_transactions p
+from  MMX_AP_Purchase_Invoices p
 
-LEFT JOIN MMX_SUPPLIERS s ON p.Customer_Supplier_Number = s.SUPPLIER
+INNER JOIN MMX_Suppliers s ON p.Supplier = s.supplier
 
-WHERE p.Customer_Supplier_Number = @supplier
+WHERE 1=1
+
+AND ((p.supplier = @supplier) or @supplier is null)
+
+AND ((s.Name like '%' + @supplierName + '%') or @supplierName is null)
+
+AND p.Period_Number between @periodStart and @periodEnd
+
+union
+
+select 
+
+t.Period_Number
+,t.Journal_Number
+,t.Batch_Number
+,t.Document_Number
+--,t.Invoice_Number
+,t.Document_Date
+,0 [Debit Amount]
+,t.Amount [Credit Amount]
+,t.Customer_Supplier_Number
+,s.Name
+,'t'
+ from MMX_Posted_Ledger_Transactions t
+
+INNER JOIN MMX_Suppliers s ON t.Customer_Supplier_Number = s.supplier
+
+WHERE ((Customer_Supplier_Number = @supplier) or @supplier is null)
+
+AND ((s.Name like '%' + @supplierName + '%') or @supplierName is null)
+
+AND t.Period_Number between @periodStart and @periodEnd
+
+AND Ledger_Account = 2020500
 
 AND Debit_Credit_Indicator = 2
+
 )
 
-select distinct * from s1
+SELECT distinct
 
+Period_Number
+,Journal_Number
+,batch
+,Invoice
+,Payment_date Document_Date
+,[Debit Amount]
+,[Credit Amount]
+,Supplier
+,Name
 
-ORDER BY PERIOD_Number</CommandText>
+FROM s1
+
+ORDER BY Period_Number</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -85,20 +144,16 @@ ORDER BY PERIOD_Number</CommandText>
           <DataField>Journal_Number</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="Batch">
-          <DataField>Batch</DataField>
+        <Field Name="batch">
+          <DataField>batch</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="Invoice">
           <DataField>Invoice</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="Payment_Document">
-          <DataField>Payment_Document</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="Posting_Date">
-          <DataField>Posting_Date</DataField>
+        <Field Name="Document_Date">
+          <DataField>Document_Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="Debit_Amount">
@@ -109,42 +164,13 @@ ORDER BY PERIOD_Number</CommandText>
           <DataField>Credit Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="SUPPLIER">
-          <DataField>SUPPLIER</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="NAME">
-          <DataField>NAME</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-      </Fields>
-    </DataSet>
-    <DataSet Name="Suppliers">
-      <Query>
-        <DataSourceName>AFE</DataSourceName>
-        <CommandText>select 
-
-DISTINCT Supplier 
-
-from MMX_Purchase_order_Lines
-
-order by supplier</CommandText>
-      </Query>
-      <Fields>
         <Field Name="Supplier">
           <DataField>Supplier</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-      </Fields>
-    </DataSet>
-    <DataSet Name="Period_Numbers">
-      <SharedDataSet>
-        <SharedDataSetReference>PeriodNumbers</SharedDataSetReference>
-      </SharedDataSet>
-      <Fields>
-        <Field Name="PERIOD_NUMBER">
-          <DataField>PERIOD_NUMBER</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
+        <Field Name="Name">
+          <DataField>Name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -184,9 +210,6 @@ order by supplier</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -385,14 +408,14 @@ order by supplier</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox6">
+                        <Textbox Name="Textbox14">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Payment Document</Value>
+                                  <Value>Document Date</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -402,12 +425,11 @@ order by supplier</CommandText>
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox6</rd:DefaultName>
+                          <rd:DefaultName>Textbox14</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -415,45 +437,6 @@ order by supplier</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox7">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Posting Date</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox7</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -699,14 +682,14 @@ order by supplier</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Batch">
+                        <Textbox Name="batch">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Batch.Value</Value>
+                                  <Value>=Fields!batch.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -716,7 +699,7 @@ order by supplier</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Batch</rd:DefaultName>
+                          <rd:DefaultName>batch</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -767,20 +750,22 @@ order by supplier</CommandText>
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
+                        <rd:Selected>true</rd:Selected>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Payment_Document">
+                        <Textbox Name="Document_Date1">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Payment_Document.Value</Value>
+                                  <Value>=Fields!Document_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>MM/dd/yy</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -788,7 +773,7 @@ order by supplier</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Payment_Document</rd:DefaultName>
+                          <rd:DefaultName>Document_Date1</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -796,46 +781,6 @@ order by supplier</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Posting_Date">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Posting_Date.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>MM/dd/yyyy</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Posting_Date</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -918,14 +863,14 @@ order by supplier</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="SUPPLIER">
+                        <Textbox Name="Supplier">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!SUPPLIER.Value</Value>
+                                  <Value>=Fields!Supplier.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -937,7 +882,7 @@ order by supplier</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>SUPPLIER</rd:DefaultName>
+                          <rd:DefaultName>Supplier</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -956,14 +901,14 @@ order by supplier</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="NAME">
+                        <Textbox Name="Name">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!NAME.Value</Value>
+                                  <Value>=Fields!Name.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -973,7 +918,7 @@ order by supplier</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>NAME</rd:DefaultName>
+                          <rd:DefaultName>Name</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -996,7 +941,6 @@ order by supplier</CommandText>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
-                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1031,7 +975,7 @@ order by supplier</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>10in</Width>
+            <Width>9in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1039,7 +983,7 @@ order by supplier</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>10in</Width>
+      <Width>12in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -1052,14 +996,21 @@ order by supplier</CommandText>
   <ReportParameters>
     <ReportParameter Name="supplier">
       <DataType>String</DataType>
+      <Nullable>true</Nullable>
       <Prompt>Supplier Number</Prompt>
-      <ValidValues>
-        <DataSetReference>
-          <DataSetName>Suppliers</DataSetName>
-          <ValueField>Supplier</ValueField>
-          <LabelField>Supplier</LabelField>
-        </DataSetReference>
-      </ValidValues>
+    </ReportParameter>
+    <ReportParameter Name="supplierName">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Supplier Name like...</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="periodStart">
+      <DataType>String</DataType>
+      <Prompt>Starting Period Number</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="periodEnd">
+      <DataType>String</DataType>
+      <Prompt>Ending Period Number</Prompt>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
@@ -1071,6 +1022,21 @@ order by supplier</CommandText>
           <ColumnIndex>0</ColumnIndex>
           <RowIndex>0</RowIndex>
           <ParameterName>supplier</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>2</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>periodStart</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>supplierName</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>2</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>periodEnd</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>
