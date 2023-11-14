@@ -37,6 +37,7 @@
             this.bItem = new System.Windows.Forms.Button();
             this.DGV = new System.Windows.Forms.DataGridView();
             this.tbSearchPartNumber = new System.Windows.Forms.TextBox();
+            this.Lprinter = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
@@ -138,12 +139,23 @@
             this.tbSearchPartNumber.TabIndex = 16;
             this.tbSearchPartNumber.Visible = false;
             // 
+            // Lprinter
+            // 
+            this.Lprinter.AutoSize = true;
+            this.Lprinter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Lprinter.Location = new System.Drawing.Point(87, 582);
+            this.Lprinter.Name = "Lprinter";
+            this.Lprinter.Size = new System.Drawing.Size(92, 20);
+            this.Lprinter.TabIndex = 24;
+            this.Lprinter.Text = "Printing on :";
+            // 
             // SelectPart
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(200)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(611, 645);
+            this.Controls.Add(this.Lprinter);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.bFreeText);
@@ -169,5 +181,6 @@
         private System.Windows.Forms.Button bItem;
         private System.Windows.Forms.DataGridView DGV;
         private System.Windows.Forms.TextBox tbSearchPartNumber;
+        private System.Windows.Forms.Label Lprinter;
     }
 }

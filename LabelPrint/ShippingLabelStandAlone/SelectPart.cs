@@ -20,6 +20,8 @@ namespace ShippingLabelUSA
 
         private void SelectPart_Load(object sender, EventArgs e)
         {
+            this.Text = "Shipping Label Stand Alone v" + Application.ProductVersion;
+
             DataTable dt = new DataTable();
             
             string[] lines = File.ReadAllLines(@"C:\A\LabelData.txt");
@@ -51,7 +53,9 @@ namespace ShippingLabelUSA
             DGV.Columns[1].HeaderCell.Value = "DESCRIPTION";
             DGV.Columns[2].Width = 50;
             DGV.Columns[2].HeaderCell.Value = "REV";
-            
+
+            Lprinter.Text = "Printing on: " + g.printer;
+
         }
 
         private void bSearch_Click(object sender, EventArgs e)
