@@ -435,7 +435,7 @@ namespace ShippingLabelUSA
              *  the image name.
              */
 
-            g.printer = @"ZDesigner ZD421-203dpi ZPL";
+            //g.printer = @"ZDesigner ZD421-203dpi ZPL";
             //Bitmap bzp = new Bitmap(@"c:\a\zygo_blk_noR_132.bmp");
             //Bitmap bxp = new Bitmap(@"c:\a\AMETEK_blk_noR_132.bmp");
             //line1 = "4\\\" Colimeter";

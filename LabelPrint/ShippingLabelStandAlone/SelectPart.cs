@@ -22,8 +22,9 @@ namespace ShippingLabelUSA
         {
             DataTable dt = new DataTable();
             
-            //StreamReader sr = new StreamReader(@"C:\A\LabelData.txt");
             string[] lines = File.ReadAllLines(@"C:\A\LabelData.txt");
+
+            g.printer = lines[0].Substring(lines[0].LastIndexOf(",") + 1, (lines[0].Length -1) - (lines[0].LastIndexOf(",")));
 
             for (int col = 0; col < 3; col++)
                 dt.Columns.Add(new DataColumn("Column" + (col + 1).ToString()));
@@ -50,7 +51,7 @@ namespace ShippingLabelUSA
             DGV.Columns[1].HeaderCell.Value = "DESCRIPTION";
             DGV.Columns[2].Width = 50;
             DGV.Columns[2].HeaderCell.Value = "REV";
-
+            
         }
 
         private void bSearch_Click(object sender, EventArgs e)
@@ -60,7 +61,8 @@ namespace ShippingLabelUSA
 
         private void bFreeText_Click(object sender, EventArgs e)
         {
-
+            FreeText s = new FreeText();
+            s.Show();
         }
 
         private void bItem_Click(object sender, EventArgs e)
