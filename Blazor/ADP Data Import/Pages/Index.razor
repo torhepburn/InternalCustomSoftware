@@ -1,0 +1,254 @@
+﻿@page "/"
+
+@inject NavigationManager nav
+
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+@* inut file contains a button for choose file  *@
+<InputFile style="width:100%" OnChange="OnFileSelected"></InputFile>
+@*the brs put two rows between the button from input file and the upload button*@
+<br />
+<br />
+
+
+@code
+{
+    private string[] data;
+    private int year;
+    private int month;
+    Microsoft.Data.SqlClient.SqlCommand cmd;
+    Microsoft.Data.SqlClient.SqlConnection cnxn;
+
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        cnxn = new Microsoft.Data.SqlClient.SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
+                            "user = readwrite; database = AccessFrontEnds; encrypt=false");
+
+        try
+        {
+            string[] lines = File.ReadAllLines(@"c:\a\" + e.File.Name.ToString());
+
+            data = lines[0].Split(',');
+            string[] n = data[1].Split('/');
+            month = Convert.ToInt32(n[0]);
+            year = Convert.ToInt32(n[2]);
+
+
+
+            for (int i = 1; 1< lines.Length; i++)
+            {
+                if (lines[i].Substring(0,3) == "ALV")
+                {
+                    data = lines[i].Split(',');
+
+                    cmd = new Microsoft.Data.SqlClient.SqlCommand(
+                        "INSERT into ADP (" +
+                        " [Pay Group] " +
+                        ",[Payroll Department] " +
+                        ",[Empl ID] " +
+                        ",[Direct_Indirect] " +
+                        ",[Reg Hrs] " +
+                        ",[OT Hours] " +
+                        ",[Doubletime Hours] " +
+                        ",[Holiday Hours] " +
+                        ",[Personal Hours] " +
+                        ",[Vacation Hours] " +
+                        ",[Total Hours Worked] " +
+                        ",[Year] " +
+                        ",[Month] " +
+                        ") VALUES ( " +
+                        "'" + data[0] + "'" +
+                        ",'" + data[1].Substring(2,4) + "'" +
+                        ",'" + data[2] + "'" +
+                        ",'" + data[3] + "'" +
+                        "," + data[4] +
+                        "," + data[5] +
+                        "," + data[6] +
+                        "," + data[7] +
+                        "," + data[8] +
+                        "," + data[9] +
+                        "," + data[10] +
+                        "," + year +
+                        "," + month + ")",cnxn
+                    );
+
+                    cnxn.Open();
+
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (Microsoft.Data.SqlClient.SqlException ex)
+                    {
+                        ex.ToString();
+                    }
+                    finally
+                    {
+                        cnxn.Close();
+                    }
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            ex.ToString();
+        }
+
+        cmd = new Microsoft.Data.SqlClient.SqlCommand(
+            "UPDATE ADP " +
+            "SET [MonthName] = " +
+            "CASE [Month] " +
+            "   WHEN 1 THEN 'JAN' " +
+            "   WHEN 2 THEN 'FEB' " +
+            "   WHEN 3 THEN 'MAR' " +
+            "   WHEN 4 THEN 'APR' " +
+            "   WHEN 5 THEN 'MAY' " +
+            "   WHEN 6 THEN 'JUN' " +
+            "   WHEN 7 THEN 'JUL' " +
+            "   WHEN 8 THEN 'AUG' " +
+            "   WHEN 9 THEN 'SEP' " +
+            "   WHEN 10 THEN 'OCT' " +
+            "   WHEN 11 THEN 'NOV' " +
+            "   WHEN 12 THEN 'DEC' " +
+            "END ", cnxn);
+
+        cnxn.Open();
+
+        try
+        {
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cmd = new Microsoft.Data.SqlClient.SqlCommand(
+            "UPDATE ADP " +
+            "SET BusinessSegment =  " +
+            "CASE " +
+            "   WHEN [Payroll Department] in ( " +
+            "   '5200', " +
+            "   '5210', " +
+            "   '5215', " +
+            "   '5225', " +
+            "   '5230') " +
+            "           THEN 'LFO'" +
+            "   WHEN [Payroll Department] in ( " +
+            "   '5062', " +
+            "	'5065', " +
+            "	'7006', " +
+            " 	'8035', " +
+            "	'8150') " +
+            "           THEN 'PPS'" +
+                        "   WHEN [Payroll Department] in ( " +
+            "   '5110', " +
+            "	'5125', " +
+            "	'5135', " +
+            "	'5145', " +
+            "	'5150', " +
+            "	'5160', " +
+            "	'5177', " +
+            "	'5185', " +
+            "	'5310', " +
+            "	'6050', " +
+            "	'8074', " +
+            "	'8077', " +
+            "	'8177', " +
+            "	'8190') " +
+            "           THEN 'PO'" +
+                        "   WHEN [Payroll Department] in ( " +
+            "   '1140', " +
+            "	'5017', " +
+            "	'5024', " +
+            "	'7222', " +
+            "	'8200', " +
+            "	'8210', " +
+            "	'8211', " +
+            "	'8215', " +
+            "	'8220') " +
+            "	        THEN 'EO' " +
+                        "   WHEN [Payroll Department] in ( " +
+            "   '1151', " +
+            "	'5620', " +
+            "	'5640', " +
+            "	'5641', " +
+            "	'5642', " +
+            "	'5643', " +
+            "	'5644', " +
+            "	'5645', " +
+            "   '5646', " + 
+            "	'5647', " +
+            "	'5648', " + 
+            "	'5649', " +
+            "	'5680', " +
+            "	'5685', " +
+            "	'5690', " +
+            "	'6011', " +
+            "	'7007', " +
+            "	'8191') " +
+            "	        THEN 'EPO' " +
+                        "   WHEN [Payroll Department] in ( " +
+            "   '5010', " +
+            "   '5012', " +
+            "   '5013', " +
+            "   '5050', " +
+            "   '5070', " +
+            "   '5072', " +
+            "   '5074', " +
+            "   '7010', " +
+            "   '7011', " +
+            "   '7012', " +
+            "   '7017', " +
+            "   '7028', " +
+            "   '7050', " +
+            "   '8015', " +
+            "   '8017', " +
+            "   '8049', " +
+            "   '8050', " +
+            "   '8070', " +
+            "   '8080', " +
+            "   '8090', " +
+            "   '8110', " +
+            "   '8117', " +
+            "   '8118', " +
+            "   '8119', " +
+            "   '8120', " +
+            "   '8180') " +
+            "            THEN 'Instruments' " +
+            "ELSE 'Other' " +
+            "END ", cnxn);
+
+        cnxn.Open();
+
+        try
+        {
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        nav.NavigateTo("counter");
+    }
+
+   
+    
+}                       
