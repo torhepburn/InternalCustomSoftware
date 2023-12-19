@@ -38,8 +38,7 @@
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>
-SELECT
+        <CommandText>SELECT
 
 gle.[Posting Date]
 ,CASE gle.[Document Type]
@@ -53,21 +52,44 @@ gle.[Posting Date]
 	ELSE ''
 END [Document Type]
 ,gle.[Document No_]
-,COALESCE(pih.No_,'')  [from PO]
-,COALESCE(pih.[Order No_],'') [PO Number]
-,gle.[Invoice Order No_]
-,COALESCE(pih.[Pay-to Vendor No_],'') [Vendor Number]
-,COALESCE(pih.[Pay-to Name],'') [Vendor Name]
+,CASE
+	WHEN COALESCE(prh.No_,'') = '' AND COALESCE(pih.[No_],'') = '' THEN 'gle'
+	WHEN COALESCE(prh.No_,'') = '' THEN 'PInv ' + COALESCE(pih.[No_],'')
+	WHEN COALESCE(pih.No_,'') = ''  THEN 'PRcpt ' + COALESCE(prh.[No_],'')
+	END [Source]
+,CASE 
+	WHEN COALESCE(prh.[Order No_],'') = '' THEN COALESCE(pih.[Order No_],'')
+	WHEN COALESCE(pih.[Order No_],'') = '' THEN COALESCE(prh.[Order No_],'')
+END [PO Number]
+,CASE
+	WHEN COALESCE(prh.[Pay-to Vendor No_],'')= '' THEN COALESCE(pih.[Pay-to Vendor No_],'')
+	WHEN COALESCE(pih.[Pay-to Vendor No_],'')= '' THEN COALESCE(prh.[Pay-to Vendor No_],'')
+END [Vendor Number]
+,CASE
+	WHEN COALESCE(prh.[Pay-to Name],'') = '' THEN COALESCE(pih.[Pay-to Name],'')
+	WHEN COALESCE(pih.[Pay-to Name],'') = '' THEN COALESCE(prh.[Pay-to Name],'')
+END [Vendor Name]
 ,[G_L Account No_]
 ,gle.Amount
 ,gle.[Global Dimension 2 Code] [Segment]
-,gle.[External Document No_]
-,COALESCE(pih.[Vendor Posting Group],'') [Vendor Posting Group]
-
+,CASE
+	WHEN COALESCE(gle.[External Document No_],'') != ''  THEN COALESCE(pih.[Vendor Invoice No_],'')
+	WHEN COALESCE(gle.[External Document No_],'') != '' THEN gle.[External Document No_]
+	ELSE ''
+END [External Document No_]
+,CASE
+	WHEN COALESCE(prh.[Vendor Posting Group],'') = '' THEN COALESCE(pih.[Vendor Posting Group],'') 
+	WHEN COALESCE(pih.[Vendor Posting Group],'') = '' THEN COALESCE(prh.[Vendor Posting Group],'') 
+END [Vendor Posting Group]
+,gle.[User ID]
 
 FROM [ZYGO$G_L Entry] gle
 
-LEFT JOIN [ZYGO$Purch_ Rcpt_ Header] pih on gle.[Document No_] = pih.[No_]
+LEFT JOIN [ZYGO$Purch_ Rcpt_ Header] prh on gle.[Document No_] = prh.[No_]
+
+AND prh.[Posting Date] = gle.[Posting Date]
+
+LEFT JOIN [ZYGO$Purch_ Inv_ Header] pih on gle.[Document No_] = pih.[No_]
 
 AND pih.[Posting Date] = gle.[Posting Date]
 
@@ -95,16 +117,12 @@ ORDER BY gle.[Posting Date]</CommandText>
           <DataField>Document No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="from_PO">
-          <DataField>from PO</DataField>
+        <Field Name="Source">
+          <DataField>Source</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="PO_Number">
           <DataField>PO Number</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Invoice_Order_No_">
-          <DataField>Invoice Order No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Vendor_Number">
@@ -129,6 +147,10 @@ ORDER BY gle.[Posting Date]</CommandText>
         </Field>
         <Field Name="External_Document_No_">
           <DataField>External Document No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="User_ID">
+          <DataField>User ID</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Vendor_Posting_Group">
@@ -196,10 +218,7 @@ from [ZYGO$G_L Entry]</CommandText>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.71875in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -221,6 +240,9 @@ from [ZYGO$G_L Entry]</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.51042in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -349,14 +371,14 @@ from [ZYGO$G_L Entry]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox5">
+                        <Textbox Name="Textbox41">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>from PO</Value>
+                                  <Value>Source</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -368,7 +390,7 @@ from [ZYGO$G_L Entry]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <rd:DefaultName>Textbox41</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -376,7 +398,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -407,44 +428,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox6</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox7">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Invoice Order No </Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox7</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -730,6 +713,43 @@ from [ZYGO$G_L Entry]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox45">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>User ID</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox45</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -846,14 +866,14 @@ from [ZYGO$G_L Entry]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="from_PO">
+                        <Textbox Name="Source">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!from_PO.Value</Value>
+                                  <Value>=Fields!Source.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -863,7 +883,7 @@ from [ZYGO$G_L Entry]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>from_PO</rd:DefaultName>
+                          <rd:DefaultName>Source</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -871,7 +891,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -900,42 +919,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>PO_Number</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Invoice_Order_No_">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Invoice_Order_No_.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Invoice_Order_No_</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1206,6 +1189,41 @@ from [ZYGO$G_L Entry]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="User_ID">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!User_ID.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>User_ID</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -1283,14 +1301,14 @@ from [ZYGO$G_L Entry]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox30">
+                        <Textbox Name="Segment1">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value />
+                                  <Value>=Fields!Segment.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1300,7 +1318,7 @@ from [ZYGO$G_L Entry]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox30</rd:DefaultName>
+                          <rd:DefaultName>Segment1</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1318,7 +1336,7 @@ from [ZYGO$G_L Entry]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox31">
+                        <Textbox Name="Textbox43">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -1335,7 +1353,7 @@ from [ZYGO$G_L Entry]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox31</rd:DefaultName>
+                          <rd:DefaultName>Textbox43</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1371,41 +1389,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox32</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox33">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox33</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1668,6 +1651,41 @@ from [ZYGO$G_L Entry]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox47">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox47</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -1780,7 +1798,7 @@ from [ZYGO$G_L Entry]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox18">
+                        <Textbox Name="Textbox44">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -1797,7 +1815,7 @@ from [ZYGO$G_L Entry]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox18</rd:DefaultName>
+                          <rd:DefaultName>Textbox44</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1833,41 +1851,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox19</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox20">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value />
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox20</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1951,7 +1934,6 @@ from [ZYGO$G_L Entry]</CommandText>
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                        <rd:Selected>true</rd:Selected>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
@@ -2131,6 +2113,41 @@ from [ZYGO$G_L Entry]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox48">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox48</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
@@ -2181,7 +2198,7 @@ from [ZYGO$G_L Entry]</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.93in</Height>
-            <Width>15.86459in</Width>
+            <Width>16.58334in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2189,7 +2206,7 @@ from [ZYGO$G_L Entry]</CommandText>
         <Height>1.36in</Height>
         <Style />
       </Body>
-      <Width>15.86459in</Width>
+      <Width>16.86459in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
