@@ -219,7 +219,7 @@ namespace PackingListPrint
                 ",COALESCE(boxes,'0') " +
                 "from labels_packinglists " +
                 "where documentnumber = '" + document + "' " +
-                "and revision = '" + revision + "'", cnxn);
+                "and revision = '" + revision + "' ORDER BY UID ", cnxn);
 
 
             try
