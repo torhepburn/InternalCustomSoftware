@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,8 @@ namespace NAV_MRP
         private void F1_ReportSelection_Load(object sender, EventArgs e)
         {
             this.Text = "MRP Reports v" + Application.ProductVersion;
+
+            
         }
 
         private void BMainReport_Click(object sender, EventArgs e)
@@ -95,6 +98,9 @@ namespace NAV_MRP
         public static bool messageCancel;
         public static string messageChoice;
         public static string ReportSelection;
+        public static string sReplenishment;
+        public static string LTAbucket;
+
         public static string Main = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Vetted] <> '1' " +
@@ -131,6 +137,10 @@ namespace NAV_MRP
                             "AND [Reference Component] <> 1 " +
                             "AND r.[Starting Date] <= (GETDATE() + 28) " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
+
+        public static string LTA = "AND i.[Selection Code] = 'LTA' " +
+                           "AND [Reference Component] <> 1 " +
+                           "AND i.[Item Group Code] <> 'VMI'  ";
 
         public static string Richmond = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Selection Code] not like 'K%' " +
@@ -177,6 +187,43 @@ namespace NAV_MRP
                         "AND [Worksheet Template Name] = 'PLANNING' " +
                         "AND [Journal Batch Name] = 'DEFAULT' " +
                         "AND  l.[No_] = '";
-
+        
+        public static string sMRPLTA = "SELECT " +
+                        "CONVERT(varchar(10),[Starting Date], 1) " +
+                        ",CONVERT(varchar(10),l.[Due Date], 1) " +
+                        ",FORMAT([Remaining Quantity],'N0', 'en-us') " +
+                        ",FORMAT([Cost Amount]," +
+                        " 'C', 'en-us') " +
+                        ",l.[Location Code] " +
+                        ",l.[Bin Code] " +
+                         ",CASE[Action Message] " +
+                        "     WHEN 1 THEN 'New' " +
+                        "     WHEN 2 THEN CASE " +
+                                "WHEN l.Quantity<l.[Original Quantity] THEN '-Qty' " +
+                                 "WHEN l.Quantity > l.[Original Quantity] THEN '+Qty' " +
+                             "END " +
+                        "     WHEN 3 THEN 'Resched' " +
+                        "     WHEN 4 THEN CASE " +
+                                 "WHEN l.Quantity<l.[Original Quantity] THEN '-Qty:Date' " +
+                                 "WHEN l.Quantity > l.[Original Quantity] THEN '+Qty:Date' " +
+                             "END " +
+                             "WHEN 5 THEN 'Cancel' " +
+                        " END " +
+                        ",CONVERT(varchar(10),l.[Original Due Date], 1) " +
+                        ",CASE COALESCE(pl.[Best Delivery],0) " +
+                        "   WHEN 0 THEN '' " +
+                        "   WHEN 1 THEN 'YES' " +
+                        "END " +
+                        "from [ZYGO$Requisition Line] l " +
+                        "LEFT JOIN [ZYGO$Purchase Line] pl  " +
+                        "ON l.[Ref_ Order No_] = pl.[Document No_] " +
+                        "AND l.[Ref_ Line No_] = pl.[Line No_] " +
+                        "WHERE " +
+                        "[Ref_ Order Type] = 1 " +
+                        "AND l.Type = 2 " +                                   // type 2 = item
+                        "AND [Worksheet Template Name] = 'PLANNING' " +
+                        "AND [Journal Batch Name] = 'DEFAULT' " +
+                        "AND [Action Message] = 1 " +
+                        "AND  l.[No_] = '";
     }
 }

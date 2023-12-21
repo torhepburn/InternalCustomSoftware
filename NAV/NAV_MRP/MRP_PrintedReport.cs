@@ -76,6 +76,8 @@ namespace NAV_MRP
         private string[] aNonDomesticVendor = new string[20000];
         private string[] aDampenerPeriod = new string[20000];
         private string[] aDampenerQuantity = new string[20000];
+        private string[] aLTAReleaseBucket = new string[20000];
+        private string[] aSupplierReplenishment = new string[20000];
 
         private string[,] acOrderDate = new string[10000, 100];
         private string[,] acDeliveryDate = new string[10000, 100];
@@ -199,15 +201,16 @@ namespace NAV_MRP
              */
 
             SqlConnection cnxnDash = new SqlConnection("server=MIDDB01.zygo.com; password=views; " +
-              
-                "user=views; database=Dashboard;");
+                              "user=views; database=Dashboard;");
 
             /*
              *Connection used to get the old MK data
              */
 
             SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11; password=views; " +
-                          "user=views; database=AccessFrontEnds;");
+                                          "user=views; database=AccessFrontEnds;");
+
+            
 
             /*
              *  Get the list of MRP purchased parts for which reports are needed 
@@ -267,7 +270,7 @@ namespace NAV_MRP
               "AND i.No_ <> '9999' " +
               "AND i.No_ != 'SERVICE ITEM' " +
               /*    for testing   */ 
-              //"AND r.No_ = '8070-0549-01' " +
+              //"AND r.No_ = '1420-255-052' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
                //"AND r.No_ LIKE'X700620%' " +
                
@@ -309,7 +312,7 @@ namespace NAV_MRP
 
                     /*  TEST PART NUMBER    */
                     //ItemNo = "1436-000-005";
-                    //ItemNo = "1120-300-150";
+                    //ItemNo = "1420-255-052";
                     //ItemNo = "1115-801-782";
 
                     /*
@@ -495,6 +498,11 @@ namespace NAV_MRP
                         "   WHEN LEN([Dampener Period]) = 0 THEN '0' " +
                         " END [Dampener Period]" +
                         ",FORMAT([Dampener Quantity],'N', 'en-us') " +    /*FORMAT([Order Multiple],'N', 'en-us') */
+                        ",CASE " +
+                        "   WHEN CHARINDEX(CHAR(4),[LTA Release Bucket (Weeks)]) > 0 THEN " +
+                        "       REPLACE([LTA Release Bucket (Weeks)], CHAR(4), '') * 5 " +  //convert to days
+                        "END [LTA Release Bucket] " +
+                        ",[Supplier Replenishment] " +
                         "FROM [" + NAVprefix + "Item] i " +
                         "LEFT JOIN [" + NAVprefix + "Commodity] c ON i.[Commodity] = c.Code " +
                         "LEFT JOIN [" + NAVprefix + "Product Types] p ON i.[Product Types] = p.Code " +
@@ -1236,7 +1244,15 @@ namespace NAV_MRP
                                 dtVendor.Rows[0][4].ToString() + ", ";
                                 aVendorContact[i] = dtVendor.Rows[0][5].ToString();
                                 aVendorPhone[i] = dtVendor.Rows[0][6].ToString();
-                                aVendorEmail[i] = dtVendor.Rows[0][7].ToString();
+                                //if (dtVendor.Rows[0][7].ToString().Length < 35)
+                                //{
+                                    aVendorEmail[i] = dtVendor.Rows[0][7].ToString();
+                                //}
+                                /*else 
+                                {
+                                    aVendorEmail[i] = dtVendor.Rows[0][7].ToString().Substring(0, 35);
+                                }
+                                */
                                 aVendorFax[i] = dtVendor.Rows[0][8].ToString();
                                 aVendorTitle[i] = dtVendor.Rows[0][9].ToString();
                                 aVendorCommodityCode[i] = dtVendor.Rows[0][10].ToString();
@@ -1336,6 +1352,9 @@ namespace NAV_MRP
 
                                 aDampenerQuantity[i] = dtItem.Rows[0][34].ToString();
 
+                                aLTAReleaseBucket[i] = dtItem.Rows[0][35].ToString();
+                                aSupplierReplenishment[i] = dtItem.Rows[0][36].ToString();
+
                             }
                             catch //(SqlException ex)
                             {
@@ -1376,6 +1395,8 @@ namespace NAV_MRP
                             aAllocations[i] = " ";
                             aHTS[i] = " ";
                             aNetWeight[i] = " ";
+                            aLTAReleaseBucket[i] = " ";
+                            aSupplierReplenishment[i] = " ";
                         }
 
                         if (dtDocCtrl.Rows.Count > 0)
@@ -1720,7 +1741,8 @@ namespace NAV_MRP
 
             ev.Graphics.DrawString(g.rptName + " Data as of: " + date, A9R, Brushes.Black, 25, 25);
             ev.Graphics.DrawString(abuyerPlanner[lineNo], heading, Brushes.Black, 350, 25);
-            ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
+            ev.Graphics.DrawString("MRP Report: " + g.ReportSelection, A9R, Brushes.Black, 600, 25);
+            //ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
             ev.Graphics.DrawString("Page  " + pageNo + " of " + NumPages, A9R, Brushes.Black, 600, 50);
 
             if (aVettedStatus[lineNo] == "1")
@@ -1837,8 +1859,10 @@ namespace NAV_MRP
                 ev.Graphics.DrawString(aVendorAddress[lineNo], A9R, Brushes.Black, 400, 80);
                 ev.Graphics.DrawString("Contact: " + aVendorContact[lineNo], A9R, Brushes.Black, 25, 100);
                 ev.Graphics.DrawString("Phone: " + aVendorPhone[lineNo], A9R, Brushes.Black, 25, 120);
-                ev.Graphics.DrawString("Email: " + aVendorEmail[lineNo], A9R, Brushes.Black, 25, 140);
-                ev.Graphics.DrawString("Fax: " + aVendorFax[lineNo], A9R, Brushes.Black, 300, 140);
+                ev.Graphics.DrawString("Fax: " + aVendorFax[lineNo], A9R, Brushes.Black, 25, 140);
+                
+                ev.Graphics.DrawString("Email: " + aVendorEmail[lineNo], A9R, Brushes.Black, 300, 140);
+                //ev.Graphics.DrawString("Fax: " + aVendorFax[lineNo], A9R, Brushes.Black, 300, 140);
 
                 ev.Graphics.DrawString("Vendor Title: " + aVendorTitle[lineNo], A9R, Brushes.Black, 300, 100);
                 ev.Graphics.DrawString("Supplier Line of Business: " + aVendorCommodityCode[lineNo], A9R, Brushes.Black, 300, 120);
@@ -1961,6 +1985,12 @@ namespace NAV_MRP
                 ev.Graphics.DrawString("Lot Accumulation Period: ", heading, Brushes.Black, 25, 335);
                 ev.Graphics.DrawString(aLotAccumulationPeriod[lineNo], A9R, Brushes.Black, 185, 335);
 
+                ev.Graphics.DrawString("LTA Release Bucket: ", heading, Brushes.Black, 25, 350);
+                ev.Graphics.DrawString(aLTAReleaseBucket[lineNo] + " days", A9R, Brushes.Black, 185, 350);
+
+                ev.Graphics.DrawString("Supplier Replenishment: ", heading, Brushes.Black, 260, 350);
+                ev.Graphics.DrawString(aSupplierReplenishment[lineNo] + " days", A9R, Brushes.Black, 420, 350);
+
                 if (aNonDomesticVendor[lineNo] == "TRUE" & aNetWeight[lineNo] == "0.000000")
                 {
                     ev.Graphics.DrawString("Net Wt (kg): ", heading, Brushes.Red, 260, 335);
@@ -1971,38 +2001,38 @@ namespace NAV_MRP
                     ev.Graphics.DrawString(aNetWeight[lineNo], A9R, Brushes.Black, 340, 335);
                 }
 
-                ev.Graphics.DrawString("Dampener Period: ", heading, Brushes.Black, 25, 350);
-                ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 185, 350);
+                ev.Graphics.DrawString("Dampener Period: ", heading, Brushes.Black, 25, 365);
+                ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 185, 365);
 
-                ev.Graphics.DrawString("Dampener Quantity: ", heading, Brushes.Black, 260, 350);
-                ev.Graphics.DrawString(aDampenerQuantity[lineNo], A9R, Brushes.Black, 400, 350);
+                ev.Graphics.DrawString("Dampener Quantity: ", heading, Brushes.Black, 260, 365);
+                ev.Graphics.DrawString(aDampenerQuantity[lineNo], A9R, Brushes.Black, 400, 365);
 
 
-                ev.Graphics.DrawString("Dampener Days Late: ", heading, Brushes.Black, 25, 365);
-                ev.Graphics.DrawString(aDampnerDaysLate[lineNo], A9R, Brushes.Black, 185, 365);
+                ev.Graphics.DrawString("Dampener Days Late: ", heading, Brushes.Black, 25, 380);
+                ev.Graphics.DrawString(aDampnerDaysLate[lineNo], A9R, Brushes.Black, 185, 380);
 
 
                 /* using rectangles to get data to line up correctly    */
 
-                ev.Graphics.DrawString("P6: ", heading, Brushes.Black, 25, 380);
-                var box = new Rectangle(40, 380, 35, 20);
+                ev.Graphics.DrawString("P6: ", heading, Brushes.Black, 25, 395);
+                var box = new Rectangle(40, 395, 35, 20);
                 ev.Graphics.DrawString(aP6[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("F6: ", heading, Brushes.Black, 100, 380);
-                box = new Rectangle(115, 380, 35, 20);
+                ev.Graphics.DrawString("F6: ", heading, Brushes.Black, 100, 395);
+                box = new Rectangle(115, 395, 35, 20);
                 ev.Graphics.DrawString(aF6[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("EAU: ", heading, Brushes.Black, 175, 380);
-                box = new Rectangle(200, 380, 35, 20);
+                ev.Graphics.DrawString("EAU: ", heading, Brushes.Black, 175, 395);
+                box = new Rectangle(200, 395, 35, 20);
                 ev.Graphics.DrawString(aEAU[lineNo], A9R, Brushes.Black, box, alignR);
 
-                ev.Graphics.DrawString("Order Method: ", heading, Brushes.Black, 260, 380);
-                ev.Graphics.DrawString(aOrderMethod[lineNo], A9R, Brushes.Black, 350, 380);
+                ev.Graphics.DrawString("Order Method: ", heading, Brushes.Black, 260, 395);
+                ev.Graphics.DrawString(aOrderMethod[lineNo], A9R, Brushes.Black, 350, 395);
 
                 //box = new Rectangle(400, 350, 100, 20);
-                ev.Graphics.DrawString("SDS Doc No: ", heading, Brushes.Black, 260, 365);
+                ev.Graphics.DrawString("SDS Doc No: ", heading, Brushes.Black, 260, 380);
                 //box = new Rectangle(500, 350, 55, 20);
-                ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, 365);
+                ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, 380);
 
 
             }
@@ -2109,24 +2139,24 @@ namespace NAV_MRP
                 //MessageBox.Show(ex.ToString() + "  Stock Data");
             }
 
-            ev.Graphics.DrawLine(pen, 25, 395, 800, 395);
+            ev.Graphics.DrawLine(pen, 25, 410, 800, 410);
 
             try
             {
 
                 /*  Manufacturer Data   */
 
-                ev.Graphics.DrawString("Manuf Name", U9, Brushes.Black, 25, 405);
-                ev.Graphics.DrawString("Manuf Part Number", U9, Brushes.Black, 275, 405);
+                ev.Graphics.DrawString("Manuf Name", U9, Brushes.Black, 25, 415);
+                ev.Graphics.DrawString("Manuf Part Number", U9, Brushes.Black, 275, 415);
                 //ev.Graphics.DrawString("Qualification", U9, Brushes.Black, 425, 385);
-                ev.Graphics.DrawString("Preferred?", U9, Brushes.Black, 525, 405);
-                ev.Graphics.DrawString("Description", U9, Brushes.Black, 625, 405);
+                ev.Graphics.DrawString("Preferred?", U9, Brushes.Black, 525, 415);
+                ev.Graphics.DrawString("Description", U9, Brushes.Black, 625, 415);
 
-                ev.Graphics.DrawString(aMfrName[lineNo], A9R, Brushes.Black, 25, 420);
-                ev.Graphics.DrawString(aMfrPartNumber[lineNo], A9R, Brushes.Black, 275, 420);
+                ev.Graphics.DrawString(aMfrName[lineNo], A9R, Brushes.Black, 25, 425);
+                ev.Graphics.DrawString(aMfrPartNumber[lineNo], A9R, Brushes.Black, 275, 425);
                 //ev.Graphics.DrawString(aQualification[lineNo], A9R, Brushes.Black, 425, 399);
                 ev.Graphics.DrawString(aPreferred[lineNo], A9R, Brushes.Black, 540, 426);
-                ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, 420);
+                ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, 425);
             }
             catch //(SqlException ex)
             {
@@ -2191,7 +2221,7 @@ namespace NAV_MRP
                 * */
 
                 ev.Graphics.DrawString("OPEN PURCHASE ORDERS", U9, Brushes.Black, 500, 445);
-                ev.Graphics.DrawString("P.O", U9, Brushes.Black, 500, 460);
+                ev.Graphics.DrawString("P.O", U9, Brushes.Black, 500, 465);
                 ev.Graphics.DrawString("Line", U9, Brushes.Black, 580, 465);
                 ev.Graphics.DrawString("Qty", U9, Brushes.Black, 630, 465);
                 ev.Graphics.DrawString("Requested", U9, Brushes.Black, 680, 465);

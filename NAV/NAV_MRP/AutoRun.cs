@@ -71,8 +71,14 @@ namespace NAV_MRP
                 g.SQLselection = g.KBP;
                 MRP_PrintedReport k = new MRP_PrintedReport();
                 k.ShowDialog();
-               
-                //run = true;
+
+                /*  LTA    */
+                g.ReportSelection = "LTA ";
+                g.SQLselection = g.LTA;
+                LTA l = new LTA();
+                l.ShowDialog();
+
+                run = true;
 
                 this.Close();
             }
