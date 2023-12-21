@@ -173,7 +173,7 @@ namespace PackingListPrint
                         "boxes " +
                         "from labels_packinglists " +
                         "where documentnumber = '" + document + "' " +
-                        "and revision = '" + revision + "'", cnxn);
+                        "and revision = '" + revision + "' ORDER BY UID ", cnxn);
 
                     System.Data.DataTable table2 = new System.Data.DataTable();
 
@@ -425,7 +425,7 @@ namespace PackingListPrint
             //line1 = "4\\\" Colimeter";
             /*  FOR TESTING */
             //printer = @"\\midprtsrv\Zebrasn7";
-            printer = @"\\ct-mid-ps01\zebrasn17";
+            //printer = @"\\ct-mid-ps01\zebrasn17";
 
             string str = "\nN\nq609Q203,20\n";
             str += SendImageToPrinter(10, 5, bzp);
