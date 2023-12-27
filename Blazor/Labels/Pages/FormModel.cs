@@ -11,6 +11,7 @@ namespace Labels.Pages
 
         public string description { get; set; }
 
+        public string serialNumber { get; set; }
 
         public string db = "server = CT-MID-SQL11; password = Read+Write!; " +
                            "user = readWrite; database = Optics; encrypt=false;";
