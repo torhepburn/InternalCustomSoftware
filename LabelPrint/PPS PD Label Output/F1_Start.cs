@@ -49,11 +49,20 @@ namespace PPS_PD_Label_Output
                 tbQuantity.Focus();
                 return;
             }
-            
-            
-            if (tbPDNumber.Text.Length > 0 & tbPDNumber.Text.IndexOf('/') > 0)
+
+            if (tbPDNumber.Text.Substring(0, 3) == "%P%")
+            {
+                productionOrder = tbPDNumber.Text.Substring(3, 8).ToUpper();
+            }
+            else if ((tbPDNumber.Text.Length > 0 & tbPDNumber.Text.IndexOf('/') > 0))
             {
                 productionOrder = tbPDNumber.Text.Substring(0, tbPDNumber.Text.IndexOf('/')).ToUpper();
+            }
+
+            
+            if (productionOrder.Length > 0)
+            {
+                
 
                 cnxn = new("server=PA-HOR-AS408; user=navdb_read; password=2018#ameteK;" +
                            "database=ZYGO-NAV-PROD; encrypt=false;");
