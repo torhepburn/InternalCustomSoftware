@@ -1,0 +1,428 @@
+﻿@page "/"
+<h4>Upload Run Sheet</h4>
+
+@if (showTables)
+{
+    <Table @key=dt dt="dt" TableStyle="generic-table"></Table>
+    <br>
+    <br />
+    if(dtProcess.Rows.Count > 0)
+    {
+        <Table @key=dtProcess dt="dtProcess" TableStyle="generic-table"></Table>
+    }
+
+}
+else
+{
+    <label>Select a run sheet file and a table will show with its data. If the data is correct upload to the database</label>
+    <br />
+    <br />
+}
+
+@*ERROR MESSAGE POPUP*@
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+<div class="popup-overlay @(popInput.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@popInput.Title</h3>
+        <p>@popInput.Message</p>
+        <input type="text" @bind="WO" />
+        <button @onclick="GetPartData">Enter Data</button>
+        <button @onclick="popInput.ClosePopup">Cancel</button>
+    </div>
+</div>
+
+<div class="popup-overlay @(popCustomer.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@popCustomer.Title</h3>
+        <p>@popCustomer.Message</p>
+        <input type="text" @bind="Customer" />
+        <button @onclick="EnterCustomer">Enter Data</button>
+        <button @onclick="popCustomer.ClosePopup">Cancel</button>
+    </div>
+</div>
+
+
+<PageTitle>RunSheetUpload</PageTitle>
+@* inut file contains a button for choose file  *@
+<InputFile style="width:100%" OnChange="OnFileSelected"></InputFile>
+@*the brs put two rows between the button from input file and the upload button*@
+<br/><br/>
+<button @onclick=Upload>Upload</button>
+
+@code{
+    private MemoryStream uploadedFileStream;
+    DataTable? dt;
+    DataTable dtProcess;
+
+    private bool showTables = false;
+
+    private string? WO;
+    private string? Part;
+    private string? Customer;
+
+    PopUp pop = new PopUp();
+
+    PopUp popInput = new PopUp();
+
+    PopUp popCustomer = new PopUp();
+
+
+    //Run sheets use xlsx files so the process for reading them is different
+    //than the spectral csv files. Using a different library than GenericParser
+    //This is using NPOI
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        showTables = false;
+        StateHasChanged();
+        dt = new DataTable();
+        dtProcess = new DataTable();
+        try
+        {
+            var fileStream = e.File.OpenReadStream();
+            var ms = new MemoryStream();
+            await fileStream.CopyToAsync(ms);
+            fileStream.Close();
+            ms.Position = 0;
+
+            ISheet sheet;
+            var xsswb = new XSSFWorkbook(ms);
+
+            sheet = xsswb.GetSheetAt(0);
+
+            var rl = new List<string>();
+
+            IRow rr = sheet.GetRow(2);
+
+            ICell runType = rr.GetCell(34);
+
+            if (runType.ToString().Trim().ToUpper() == "PRODUCTION")
+            {
+                popInput.Title = "Production";
+                popInput.Message = "Enter Work Order Number";
+                popInput.ShowPopup();
+                //return;
+
+            }
+
+
+            for (var i = 2; i <= 20; i += 3)
+            {
+                IRow hr = sheet.GetRow(i);
+                int cc = hr.LastCellNum;
+                for (var j = 0; j < cc; j += 4)
+                {
+
+                    ICell cell = hr.GetCell(j);
+                    dt.Columns.Add(cell.ToString());
+                }
+            }
+            DataRow newRow = dt.NewRow();
+            int colNum = 0;
+            for (var i = 2; i <= 20; i += 3)
+            {
+
+                IRow r = sheet.GetRow(i);
+                int cc = r.LastCellNum;
+
+                for (var j = 2; j < cc; j += 4)
+                {
+                    ICell cell = r.GetCell(j);
+                    if (cell.CellType == CellType.Numeric && DateUtil.IsCellDateFormatted(cell))
+                    {
+                        if (colNum == 4)
+                        {
+                            newRow[colNum] = cell.DateCellValue.Date.ToShortDateString();
+                        }
+                        else
+                        {
+                            newRow[colNum] = cell.DateCellValue.TimeOfDay.ToString();
+                        }
+                    }
+                    else
+                    {
+                        newRow[colNum] = cell.ToString();
+                    }
+
+                    colNum++;
+                }
+            }
+            dt.Rows.Add(newRow);
+        }
+        catch(Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = "Something went wrong";
+            pop.ShowPopup();
+            return;
+        }
+
+
+
+        showTables = true;
+        StateHasChanged();
+        StateHasChanged();
+
+    }
+
+    private void Upload()
+    {
+
+
+        if(dt != null && dtProcess != null)
+        {
+            int id = 0;
+            string sqlstring = @"INSERT INTO CoatingSheet (
+            [CHAMBER]
+            ,[OPERATOR]
+            ,[RUN #]
+            ,[DATE]
+            ,[COATING TYPE]
+            ,[SUBSTRATE]
+            ,[RUN TYPE]
+            ,[PROCESS #]
+            ,[CRYSTAL]
+            ,[E-GUN KV]
+            ,[VACUUM]
+            ,[CAPACITY]
+            ,[SUSTRATE TEMP]
+            ,[FIXTURE SPEED]
+            ,[CRYO 1 TEMP]
+            ,[CRYO 2 TEMP]
+            ,[START PUMP]
+            ,[START HEAT]
+            ,[START COAT]
+            ,[FINISH COAT]
+            ,[MATERIAL 1]
+            ,[MATERIAL 1 RATE]
+            ,[MATERIAL 2]
+            ,[MATERIAL 2 RATE]
+            ,[MATERIAL 3]
+            ,[MATERIAL 3 RATE]
+            ,[MATERIAL 4]
+            ,[MATERIAL 4 RATE]
+            ) values (
+            @Chamber
+            ,@Operator
+            ,@RunNum
+            ,@Date
+            ,@Coating
+            ,@Substrate
+            ,@RunType
+            ,@ProcessNum
+            ,@Crystal
+            ,@EGun
+            ,@Vacuum
+            ,@Capacity
+            ,@SubstrateTemp
+            ,@FixtureSpeed
+            ,@Cryo1
+            ,@Cryo2
+            ,@StartPump
+            ,@StartHeat
+            ,@StartCoat
+            ,@FinishCoat
+            ,@Material1
+            ,@Material1Rate
+            ,@Material2
+            ,@Material2Rate
+            ,@Material3
+            ,@Material3Rate
+            ,@Material4
+            ,@Material4Rate
+            )";
+            SqlConnection cnxn = new SqlConnection(Databases.ZTEST);
+            SqlCommand cmd = new SqlCommand(sqlstring, cnxn);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                try
+                {
+                    cmd.Parameters.Add(new SqlParameter("@Chamber", row[1].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Operator", row[2].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@RunNum", row[3].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Date", row[4].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Coating", row[4].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Substrate", row[5].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@RunType", row[6].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@ProcessNum", row[7].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Crystal", row[8].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@EGun", row[9].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Vacuum", row[10].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Capacity", row[11].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@SubstrateTemp", row[12].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@FixtureSpeed", row[13].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Cryo1", row[14].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Cryo2", row[15].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@StartPump", row[16].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@StartHeat", row[17].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@StartCoat", row[18].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@FinishCoat", row[19].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material1", row[20].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material1Rate", row[21].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material2", row[22].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material2Rate", row[23].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material3", row[24].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material3Rate", row[25].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material4", row[26].ToString()));
+                    cmd.Parameters.Add(new SqlParameter("@Material4Rate", row[27].ToString()));
+                    SqlParameter pID = new SqlParameter("@ID", SqlDbType.Int);
+                    pID.Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(pID);
+                }
+                catch
+                {
+                    pop.Title = "Error";
+                    pop.Message = "Something went wrong";
+                    pop.ShowPopup();
+                    return;
+                }
+
+
+                try
+                {
+                    cnxn.Open();
+                    cmd.ExecuteNonQuery();
+
+                    //SqlCommand GetIDcmd = new SqlCommand(@"SELECT TOP (1) [ID] FROM CoatingSheet ORDER By [ID] DESC", cnxn);
+                    //using (SqlDataReader dr = GetIDcmd.ExecuteReader())
+                    //{
+                    //    if(dr.Read())
+                    //    {
+                    //        id = dr.GetInt32(0);
+                    //    }
+                    //}
+                    cnxn.Close();
+                    pop.Title = "Success";
+                    pop.Message = "Run # " + row[2].ToString() + " was added to SQL database";
+                    pop.ShowPopup();
+
+
+
+                }catch (Exception ex)
+                {
+                    if (ex.ToString().Contains("Violation of PRIMARY KEY"))
+                    {
+                        pop.Title = "Error";
+                        pop.Message = "Run # " + row[2].ToString() + " is already in database";
+                    }
+                    else
+                    {
+                        pop.Title = "Error";
+                        pop.Message = ex.ToString();
+                    }
+                    pop.ShowPopup();
+
+                }
+
+            }
+
+
+
+
+            // cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
+        }
+
+    }
+
+    private void GetPartData()
+    {
+        try
+        {
+            WO = WO.ToUpper();
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+            return;
+        }
+
+        SqlConnection cnxn = new SqlConnection(db.NAV);
+
+        SqlCommand cmd = new SqlCommand(
+            "SELECT TOP 1 " +
+            " [Source No_] " +
+            ",Reference  " +
+            ",[Bill-to Name] " +
+            " from [ZYGO$Production Order] o " +
+            " LEFT JOIN [ZYGO$Sales Header] s ON o.Reference = s.No_ " +
+            " WHERE o.No_ = '" + WO + "'", cnxn);
+
+        try
+        {
+            cnxn.Open();
+
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                Part = dr.GetString(0).Trim();
+                if (dr.IsDBNull(2))
+                {
+                    popCustomer.Title = "Customer Missing";
+                    popCustomer.Message = "No items found";
+                    popCustomer.ShowPopup();
+                }
+                else
+                {
+                    Customer = dr.GetString(2).Trim();
+                }
+            }
+
+            //using (
+            //{
+            //    dt.Load(dr);
+            //}
+
+
+
+            //if (dt.Rows.Count == 0)
+            //{
+            //    popInput.Title = "Error";
+            //    popInput.Message = "No items found";
+            //    popInput.ShowPopup();
+            //}
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+    }
+
+    private void EnterCustomer()
+    {
+        popCustomer.ClosePopup();
+        return;
+    }
+
+    //SqlCommand cmd = new SqlCommand(
+    //      "Insert into shortagelistcomments (" +
+    //      " ShortageID " +
+    //      ", Comment " +
+    //      ", EnteredBy " +
+    //      ", EnteredOn) " +
+    //      "values (" +
+    //      pID + "," +
+    //      pComment + "," +
+    //      pEnteredBy + "," +
+    //      "GETDATE())", cnxn);
+    //cmd.Parameters.Add(pID);
+    //cmd.Parameters.Add(pComment);
+    //cmd.Parameters.Add(pEnteredBy);
+    //cmd.Parameters.Add(pEnteredOn);
+}
