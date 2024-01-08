@@ -11,7 +11,7 @@
 @inject Global g
 @inject NavigationManager NavMgr
 
-<InputFile OnChange="@SingleUpload" accept=".dxf" />
+<InputFile OnChange="@SingleUpload" accept=".DXF" />
 
 @code 
 {
@@ -24,18 +24,27 @@
     private string? reviewer;
     private byte[]? bytes;
     private bool pdf;
+    private int flen;
 
-    static string uploadedFilename;
+    private string uploadedFilename=string.Empty;
 
     private async Task SingleUpload(InputFileChangeEventArgs e)
     {
         MemoryStream ms = new MemoryStream();
-        await e.File.OpenReadStream().CopyToAsync(ms);
+        try
+        {
+            await e.File.OpenReadStream(maxAllowedSize:2000000).CopyToAsync(ms);
+        }
+        catch (Exception ex)
+        {
+            ex.ToString();
+        }
         bytes = ms.ToArray();
 
         uploadedFilename = e.File.Name;
+        //flen = Convert.ToInt32(e.File.Size);
 
-        if (e.File.Name.Contains("dxf"))
+        if (e.File.Name.ToUpper().Contains("DXF"))
         {
             pdf = false;
             dxfUpload();
@@ -49,7 +58,8 @@
         cnxn = new SqlConnection(g.db);
 
         SqlParameter prm1 = new SqlParameter
-                ("@file", SqlDbType.Image, Convert.ToInt32(bytes.Length));
+                ("@file", SqlDbType.VarBinary, Convert.ToInt32(bytes.Length));
+                //("@file", SqlDbType.VarBinary, flen);
         prm1.Value = bytes;
 
         SqlCommand cmd = new SqlCommand
