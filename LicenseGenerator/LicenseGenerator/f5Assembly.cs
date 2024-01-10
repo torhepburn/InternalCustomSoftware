@@ -15,8 +15,8 @@ namespace LicenseGenerator
     public partial class f5Assembly : Form
     {
         private string ZygoLicense;
-        private string owner;
-        private string SalesOrder;
+        //private string owner;
+        //private string SalesOrder;
         private string appSort1;
         private string appSort2;
         private DateTime endDate;
@@ -151,28 +151,28 @@ namespace LicenseGenerator
                 endDate = dtpStart.Value.Date.AddYears(21);
             }
 
-            int number;
-            bool result = Int32.TryParse(tbSalesOrder.Text.Trim(), out number);
-            if (result == true)
-            {
-                SalesOrder = tbSalesOrder.Text.Trim();
-            }
-            else
-            {
-                bool result2 = Int32.TryParse(tbSalesOrder.Text.Substring(2), out number);
-                if (result2 == true | tbSalesOrder.Text.ToUpper().Substring(0, 1) == "Z" | tbSalesOrder.Text.ToUpper().Substring(0, 2) == "SO")
-                {
-                    SalesOrder = tbSalesOrder.Text.Trim().ToUpper();
-                    /*   NAV tables require upper case    */
-                }
-                else
-                {
-                    SalesOrder = "0";
-                    owner = tbSalesOrder.Text.Trim();
-                }
-            }
+            //int number;
+            //bool result = Int32.TryParse(tbSerialNumber.Text.Trim(), out number);
+            //if (result == true)
+            //{
+            //    SalesOrder = tbSerialNumber.Text.Trim();
+            //}
+            //else
+            //{
+            //    bool result2 = Int32.TryParse(tbSerialNumber.Text.Substring(2), out number);
+            //    if (result2 == true | tbSerialNumber.Text.ToUpper().Substring(0, 1) == "Z" | tbSerialNumber.Text.ToUpper().Substring(0, 2) == "SO")
+            //    {
+            //        SalesOrder = tbSerialNumber.Text.Trim().ToUpper();
+            //        /*   NAV tables require upper case    */
+            //    }
+            //    else
+            //    {
+            //        SalesOrder = "0";
+            //        owner = tbSerialNumber.Text.Trim();
+            //    }
+            //}
 
-            if (cbDuration.Text.Length > 0 && tbSalesOrder.Text.Length > 0)
+            if (cbDuration.Text.Length > 0 && tbSerialNumber.Text.Length > 0)
             {   
                     ZygoLicense = MX.GenerateMetroproLicenseKey(
                     tbDongle.Text.Trim(),
@@ -181,12 +181,12 @@ namespace LicenseGenerator
                     endDate.ToString());
                 
 
-                SqlParameter pOwner = new SqlParameter("@owner", SqlDbType.NChar);
-                pOwner.Value = owner;
-                if (pOwner.Value is null)
-                {
-                    pOwner.Value = "";
-                }
+                //SqlParameter pOwner = new SqlParameter("@owner", SqlDbType.NChar);
+                //pOwner.Value = owner;
+                //if (pOwner.Value is null)
+                //{
+                //    pOwner.Value = "";
+                //}
 
 
                 cmd = new SqlCommand(
@@ -197,9 +197,8 @@ namespace LicenseGenerator
                     "application, " +
                     "startdate, " +
                     "expirationdate, " +
-                    "salesorder, " +
-                    "activedemo, " +
-                    "owner) " +
+                    "SerialNo, " +
+                    "activedemo) " +
                     "values ('" +
                     g.productLine + "','" +
                     ZygoLicense + "','" +
@@ -207,15 +206,13 @@ namespace LicenseGenerator
                     cbApplication.SelectedValue.ToString().Trim() + "','" +
                     dtpStart.Value + "','" +
                     endDate + "','" +
-                    SalesOrder + "','" +
-                    g.activeDemo + "'," +
-                    pOwner + ")", cnxn);
+                    tbSerialNumber.Text.Trim() + "','" +
+                    g.activeDemo + "')", cnxn);
 
                 cnxn.Open();
 
                 try
                 {
-                    cmd.Parameters.Add(pOwner);
                     int returnd = cmd.ExecuteNonQuery();
                 }
                 catch (SqlException ex)
@@ -224,92 +221,91 @@ namespace LicenseGenerator
                 }
                 finally
                 {
-                    cmd.Parameters.Clear();
                     cnxn.Close();
                 }
             }
             else
             {
-                MessageBox.Show("Duration and Sales Order boxes require entries.");
+                MessageBox.Show("Duration and Serial Number boxes require entries.");
                 cbDuration.Focus();
             }
             label6.Text = ZygoLicense;
             g.license = ZygoLicense;
 
-            if (SalesOrder != "0")
-            {
-                cnxn = new SqlConnection(g.dbNAV);
+            //if (SalesOrder != "0")
+            //{
+            //    cnxn = new SqlConnection(g.dbNAV);
 
-                string sql = string.Empty;
+            //    string sql = string.Empty;
 
-                if (SalesOrder.Substring(0, 2) == "SO")
-                {
-                    sql = "SELECT [Bill-to Customer No_] " +
-                   ",CASE " +
-                   "   WHEN LEN([End User Customer Name]) < 1 THEN [Bill-to Name] " +
-                   "   ELSE [End User Customer Name] " +
-                   "END " +
-                   ",[Order Date] " +
-                   "FROM [ZYGO$Service Header] WHERE No_ = '" + SalesOrder + "'";
-                }
-                else
-                {
-                    sql = "SELECT [Sell-to Customer No_] " +
-                    ",CASE " +
-                    "   WHEN LEN([End User Customer Name]) < 1 THEN [Sell-to Customer Name] " +
-                    "   ELSE [End User Customer Name] " +
-                    "END " +
-                    ",[Order Date] " +
-                    "FROM [ZYGO$Sales Header] WHERE No_ = '" + SalesOrder + "'";
-                }
-                SqlCommand cmd1 = new SqlCommand(sql, cnxn);
+            //    if (SalesOrder.Substring(0, 2) == "SO")
+            //    {
+            //        sql = "SELECT [Bill-to Customer No_] " +
+            //       ",CASE " +
+            //       "   WHEN LEN([End User Customer Name]) < 1 THEN [Bill-to Name] " +
+            //       "   ELSE [End User Customer Name] " +
+            //       "END " +
+            //       ",[Order Date] " +
+            //       "FROM [ZYGO$Service Header] WHERE No_ = '" + SalesOrder + "'";
+            //    }
+            //    else
+            //    {
+            //        sql = "SELECT [Sell-to Customer No_] " +
+            //        ",CASE " +
+            //        "   WHEN LEN([End User Customer Name]) < 1 THEN [Sell-to Customer Name] " +
+            //        "   ELSE [End User Customer Name] " +
+            //        "END " +
+            //        ",[Order Date] " +
+            //        "FROM [ZYGO$Sales Header] WHERE No_ = '" + SalesOrder + "'";
+            //    }
+            //    SqlCommand cmd1 = new SqlCommand(sql, cnxn);
 
-                DataTable dt = new DataTable();
+            //    DataTable dt = new DataTable();
 
-                try
-                {
-                    cnxn.Open();
-                    dr = cmd1.ExecuteReader();
-                    dt.Load(dr);
-                }
-                catch (SqlException ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-                finally
-                {
-                    cnxn.Close();
-                }
+            //    try
+            //    {
+            //        cnxn.Open();
+            //        dr = cmd1.ExecuteReader();
+            //        dt.Load(dr);
+            //    }
+            //    catch (SqlException ex)
+            //    {
+            //        MessageBox.Show(ex.ToString());
+            //    }
+            //    finally
+            //    {
+            //        cnxn.Close();
+            //    }
 
-                if (dt.Rows.Count > 0)
-                {
-                    SqlParameter pCustomerName = new SqlParameter("@customerName", SqlDbType.NChar);
-                    pCustomerName.Value = dt.Rows[0][1];
-                    cnxn = new SqlConnection(g.db);
-                    cmd = new SqlCommand("UPDATE LicenseData " +
-                        "SET customernumber = '" + dt.Rows[0][0] + "', " +
-                        "CustomerName = " + pCustomerName + ", " +
-                        "OrderDate = '" + dt.Rows[0][2] + "' " +
-                        "WHERE SalesOrder = '" + SalesOrder + "'", cnxn);
+            //    if (dt.Rows.Count > 0)
+            //    {
+            //        SqlParameter pCustomerName = new SqlParameter("@customerName", SqlDbType.NChar);
+            //        pCustomerName.Value = dt.Rows[0][1];
+            //        cnxn = new SqlConnection(g.db);
+            //        cmd = new SqlCommand("UPDATE LicenseData " +
+            //            "SET customernumber = '" + dt.Rows[0][0] + "', " +
+            //            "CustomerName = " + pCustomerName + ", " +
+            //            "OrderDate = '" + dt.Rows[0][2] + "' " +
+            //            "WHERE SalesOrder = '" + SalesOrder + "'", cnxn);
 
-                    try
-                    {
-                        cnxn.Open();
-                        cmd.Parameters.Add(pCustomerName);
-                        cmd.ExecuteNonQuery();
-                    }
-                    catch (SqlException ex)
-                    {
-                        MessageBox.Show(ex.ToString());
-                    }
-                    finally
-                    {
-                        cmd.Parameters.Clear();
-                        cnxn.Close();
-                    }
+            //        try
+            //        {
+            //            cnxn.Open();
+            //            cmd.Parameters.Add(pCustomerName);
+            //            cmd.ExecuteNonQuery();
+            //        }
+            //        catch (SqlException ex)
+            //        {
+            //            MessageBox.Show(ex.ToString());
+            //        }
+            //        finally
+            //        {
+            //            cmd.Parameters.Clear();
+            //            cnxn.Close();
+            //        }
 
-                }
-            }
+               // }
+            //}
         }
 
         private void bAnother_Click(object sender, EventArgs e)
@@ -323,8 +319,8 @@ namespace LicenseGenerator
         {
             g.DongleID = tbDongle.Text.Trim();
 
-            f61PrintPDF f61 = new f61PrintPDF();
-            f61.Show();
+            f63_PrintPDFsnOnly f63 = new f63_PrintPDFsnOnly();
+            f63.Show();
         }
     }
 }

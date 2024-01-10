@@ -32,6 +32,8 @@ namespace LicenseGenerator
             this.bMPX = new System.Windows.Forms.Button();
             this.bZeMaps = new System.Windows.Forms.Button();
             this.bAssembly = new System.Windows.Forms.Button();
+            this.Bblock = new System.Windows.Forms.Button();
+            this.Bunblock = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // bMetroPro
@@ -82,12 +84,40 @@ namespace LicenseGenerator
             this.bAssembly.UseVisualStyleBackColor = false;
             this.bAssembly.Click += new System.EventHandler(this.bAssembly_Click);
             // 
+            // Bblock
+            // 
+            this.Bblock.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(100)))), ((int)(((byte)(200)))));
+            this.Bblock.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Bblock.Location = new System.Drawing.Point(52, 133);
+            this.Bblock.Name = "Bblock";
+            this.Bblock.Size = new System.Drawing.Size(148, 57);
+            this.Bblock.TabIndex = 4;
+            this.Bblock.Text = "Block Customer";
+            this.Bblock.UseVisualStyleBackColor = false;
+            this.Bblock.Visible = false;
+            this.Bblock.Click += new System.EventHandler(this.Bblock_Click);
+            // 
+            // Bunblock
+            // 
+            this.Bunblock.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(100)))), ((int)(((byte)(205)))));
+            this.Bunblock.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Bunblock.Location = new System.Drawing.Point(440, 133);
+            this.Bunblock.Name = "Bunblock";
+            this.Bunblock.Size = new System.Drawing.Size(148, 57);
+            this.Bunblock.TabIndex = 5;
+            this.Bunblock.Text = "Unblock Customer";
+            this.Bunblock.UseVisualStyleBackColor = false;
+            this.Bunblock.Visible = false;
+            this.Bunblock.Click += new System.EventHandler(this.Bunblock_Click);
+            // 
             // f1SelectProduct
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Goldenrod;
-            this.ClientSize = new System.Drawing.Size(644, 202);
+            this.ClientSize = new System.Drawing.Size(644, 242);
+            this.Controls.Add(this.Bunblock);
+            this.Controls.Add(this.Bblock);
             this.Controls.Add(this.bAssembly);
             this.Controls.Add(this.bZeMaps);
             this.Controls.Add(this.bMPX);
@@ -106,6 +136,8 @@ namespace LicenseGenerator
         private System.Windows.Forms.Button bMPX;
         private System.Windows.Forms.Button bZeMaps;
         private System.Windows.Forms.Button bAssembly;
+        private System.Windows.Forms.Button Bblock;
+        private System.Windows.Forms.Button Bunblock;
     }
 }
 
