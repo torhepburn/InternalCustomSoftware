@@ -13,6 +13,8 @@ namespace LicenseGenerator
     public partial class f71DetailReport : Form
     {
         SqlConnection cnxn;
+        SqlCommand cmd;
+        SqlDataReader dr;
         SqlDataAdapter da;
         DataTable table;
 
@@ -36,9 +38,11 @@ namespace LicenseGenerator
                 cmd.Parameters.Add("@ProductLine", SqlDbType.NVarChar).Value = g.productLine;
 
                 table = new DataTable();
-                da = new SqlDataAdapter();
-                da.SelectCommand = cmd;
-                da.Fill(table);
+                dr = cmd.ExecuteReader();
+
+                table.Load(dr);
+                //da.SelectCommand = cmd;
+                //da.Fill(table);
 
 
                 cmd = new SqlCommand("LicenseDetailx2", cnxn);
@@ -133,7 +137,6 @@ namespace LicenseGenerator
                 DGV.DataSource = dt;
             }
                 DGV.Show();
-           
         }
 
         private void bPrint_Click(object sender, EventArgs e)

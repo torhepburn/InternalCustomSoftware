@@ -273,7 +273,9 @@ namespace LicenseGenerator
             {
                 SqlCommand cmd = new SqlCommand("Delete from LicenseData " +
                     "where id = '" + g.uid + "' ", cnxn);
+                
                 cnxn.Open();
+                
                 int rowsReturned = cmd.ExecuteNonQuery();
                                 
                 LDelete.Text = "";
@@ -298,9 +300,7 @@ namespace LicenseGenerator
                     "order by [Dongle ID], ExpirationDate", cnxn);
 
                 DataTable dt = new DataTable();
-
-                cnxn.Open();
-
+                                
                 dr = cmd.ExecuteReader();
                 
                 dt.Load(dr);
