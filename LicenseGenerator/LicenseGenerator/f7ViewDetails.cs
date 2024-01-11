@@ -13,7 +13,8 @@ namespace LicenseGenerator
     public partial class f7ViewDetails : Form
     {
         SqlConnection cnxn;
-        SqlDataAdapter da;
+        SqlDataReader dr;
+        SqlCommand cmd;
         
         public f7ViewDetails()
         {
@@ -34,7 +35,8 @@ namespace LicenseGenerator
                 bGoTo.Visible = false;
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "F7 All Licenses";
-                da = new SqlDataAdapter(
+                
+                cmd = new SqlCommand(
                 "select " +
                 "id " +
                 ",[Dongle ID] " +
@@ -58,7 +60,8 @@ namespace LicenseGenerator
                 bGoTo.Visible = false;
                 this.WindowState = FormWindowState.Maximized;
                 this.Text = "F7 EXPIRATION LESS THAN FIVE YEARS";
-                da = new SqlDataAdapter(
+                
+                cmd= new SqlCommand(
                 "select " +
                 "id, " +
                 "[Dongle ID], " +
@@ -82,7 +85,7 @@ namespace LicenseGenerator
                 g.task == "Delete" || 
                 g.task == "Sales Order Details")
             {
-                da = new SqlDataAdapter(
+                cmd = new SqlCommand(   
                "select " +
                "id, " +
                "[Dongle ID], " +
@@ -135,7 +138,10 @@ namespace LicenseGenerator
             }
 
             DataTable dt = new DataTable();
-            da.Fill(dt);
+
+            dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
             cnxn.Close();
             DGV.DataSource = dt;
             DGV.Columns[0].Visible = false;
@@ -207,12 +213,12 @@ namespace LicenseGenerator
 
         private void bSearch_Click(object sender, EventArgs e)
         {
-            //if (g.task == "Sales Order Details" || g.task == "Change SO")
-            //{
-                da = new SqlDataAdapter(
+            cmd = new SqlCommand(
+                
                     "select " +
                     "id, " +
                     "[Dongle ID], " +
+                    "[Serial Number] " +
                     "[Sales Order], " +
                     "Owner, " +
                     "[Start Date], " +
@@ -225,32 +231,16 @@ namespace LicenseGenerator
                     "activedemo = '" + g.activeDemo + "' and " +
                     "([Sales Order] like '%" + tbSearch.Text.Trim() + "%' or " +
                     "Owner like '%" + tbSearch.Text.Trim() + "%'  or" +
-                    "[Dongle ID] like '%" + tbSearch.Text.Trim() + "%') " +
+                    "[Dongle ID] like '%" + tbSearch.Text.Trim() + "%'" +
+                    " or " +
+                    "[Serial Number] like '%" + tbSearch.Text.Trim() + "%') " +
                     "order by [Dongle ID], ExpirationDate", cnxn);
-            //}
-
-            //if (g.task == "Dongle Details" || g.task == "Delete")
-            //{
-            //    da = new SqlDataAdapter(
-            //        "select " +
-            //        "id, " +
-            //        "[Dongle ID], " +
-            //        "[Sales Order], " +
-            //        "Owner, " +
-            //        "[Start Date], " +
-            //        "[Expiration Date], " +
-            //        "Application, " +
-            //        "License, " +
-            //        "[Customer Number] " +
-            //        "from DongleFullDetails where " +
-            //        "productline = '" + g.productLine + "' and " +
-            //        "activedemo = '" + g.activeDemo + "' and " +
-            //        "[Dongle ID] like '%" + tbSearch.Text.Trim() + "%' " + 
-            //        "order by [Dongle ID], ExpirationDate", cnxn);
-            //}
+            
 
             DataTable dt = new DataTable();
-            da.Fill(dt);
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
             cnxn.Close();
             DGV.DataSource = dt;
             DGV.Columns[0].Visible = false;
@@ -285,28 +275,10 @@ namespace LicenseGenerator
                     "where id = '" + g.uid + "' ", cnxn);
                 cnxn.Open();
                 int rowsReturned = cmd.ExecuteNonQuery();
-
-                da = new SqlDataAdapter(
-                    "select " +
-                    "id, " +
-                    "[Dongle ID], " +
-                    "[Sales Order], " +
-                    "Owner, " +
-                    "[Start Date], " +
-                    "[Expiration Date], " +
-                    "Application, " +
-                    "License, " +
-                    "[Customer Number] " +
-                    "from DongleFullDetails where " +
-                    "productline = '" + g.productLine + "' and " +
-                    "activedemo = '" + g.activeDemo + "' " +
-                    "order by [Dongle ID], ExpirationDate", cnxn);
-
+                                
                 LDelete.Text = "";
-                //bDelete.Visible = false;
-                //tbSearch.Text = "";
-
-                da = new SqlDataAdapter(
+                
+                cmd = new SqlCommand(
                     "select " +
                     "id, " +
                     "[Dongle ID], " +
@@ -326,7 +298,12 @@ namespace LicenseGenerator
                     "order by [Dongle ID], ExpirationDate", cnxn);
 
                 DataTable dt = new DataTable();
-                da.Fill(dt);
+
+                cnxn.Open();
+
+                dr = cmd.ExecuteReader();
+                
+                dt.Load(dr);
                 
                 cnxn.Close();
                 DGV.DataSource = dt;

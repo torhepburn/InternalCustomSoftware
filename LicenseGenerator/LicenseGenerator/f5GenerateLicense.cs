@@ -439,7 +439,7 @@ namespace LicenseGenerator
 
                     try
                     {
-                        cnxn.Open();
+                        cnxn2.Open();
                         cmd.Parameters.Add(pCustomerName);
                         cmd.ExecuteNonQuery();
                     }

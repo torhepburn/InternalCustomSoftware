@@ -44,8 +44,8 @@ namespace LicenseGenerator
             ", License " +
             ",[Serial Number] " +
             "from " +
-            "DongleFullDetailsAssemby " +
-            "WHERE [Dongle ID] = @DongleID " +
+            "DongleFullDetails " +
+            "WHERE TRIM([Dongle ID]) = @DongleID " +
             "AND ProductLine = @ProductLine ";
 
 
