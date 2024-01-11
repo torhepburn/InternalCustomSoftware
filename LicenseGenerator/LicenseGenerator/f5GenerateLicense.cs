@@ -46,7 +46,7 @@ namespace LicenseGenerator
             }
 
             cnxn = new SqlConnection(g.db);
-            
+
             SqlCommand cmd = new SqlCommand(
                 "select application from applications where productline = '" + g.productLine + "' " +
                 "and activedemo = '" + g.activeDemo + "' " + appSort1 +
@@ -67,7 +67,7 @@ namespace LicenseGenerator
             {
                 cnxn.Close();
             }
-            
+
             cmd = new SqlCommand(
                  "select application from applications where productline = '" + g.productLine + "' " +
                 "and activedemo = '" + g.activeDemo + "' " + appSort2 +
@@ -101,23 +101,39 @@ namespace LicenseGenerator
         {
             cnxn = new SqlConnection(g.db);
 
-            SqlCommand cmd = new SqlCommand("SELECT Blocked " +
-                " FROM LicenseData WHERE DongleID = '" + tbDongle.Text.Trim() + "'",cnxn);
-            
+            SqlCommand cmd = new SqlCommand("SELECT DISTINCT TRIM(DongleID) FROM LicenseData  " +
+                "WHERE TRIM(DongleID) = '" + tbDongle.Text.Trim() + "'", cnxn);
+
             try
             {
                 cnxn.Open();
                 object o = cmd.ExecuteScalar();
+                cnxn.Close();
 
-                if (o.ToString() == "No") 
+                if (o != null)
                 {
-                    cmd = new SqlCommand("Select mtplimitapplies FROM Applications " +
-                "WHERE Application = '" + cbApplication.Text.Trim() + "'", cnxn);
+                    cmd = new SqlCommand("SELECT Blocked " +
+                              " FROM LicenseData WHERE TRIM(DongleID) = '" +
+                                tbDongle.Text.Trim() + "'", cnxn);
+
+                    DataTable dtbl = new DataTable();
 
                     try
                     {
                         cnxn.Open();
-                        MtpLimit = (bool)cmd.ExecuteScalar();
+                        dr = cmd.ExecuteReader();
+                        dtbl.Load(dr);
+                        cnxn.Close();
+
+                        if (dtbl.Rows[0][0].ToString().Trim().ToUpper() != "YES")
+                        {
+                            makeLicense();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Customer is blocked - contact Sharon.");
+                            this.Close();
+                        }
                     }
                     catch (SqlException ex)
                     {
@@ -127,272 +143,10 @@ namespace LicenseGenerator
                     {
                         cnxn.Close();
                     }
-
-                    if (cbDuration.Text == "14 Days")
-                    {
-                        endDate = dtpStart.Value.Date.AddDays(14);
-                    }
-                    if (cbDuration.Text == "30 Days")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(1);
-                    }
-                    if (cbDuration.Text == "60 Days")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(2);
-                    }
-                    if (cbDuration.Text == "90 Days")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(3);
-                    }
-                    if (cbDuration.Text == "120 Days")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(4);
-                    }
-                    if (cbDuration.Text == "6 Months")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(6);
-                    }
-                    if (cbDuration.Text == "9 Months")
-                    {
-                        endDate = dtpStart.Value.Date.AddMonths(9);
-                    }
-                    if (cbDuration.Text == "1 Year")
-                    {
-                        endDate = dtpStart.Value.Date.AddYears(1);
-                    }
-                    if (cbDuration.Text == "3 Years")
-                    {
-                        endDate = dtpStart.Value.Date.AddYears(3);
-                    }
-                    if (cbDuration.Text == "5 Years")
-                    {
-                        endDate = dtpStart.Value.Date.AddYears(5);
-                    }
-                    if (cbDuration.Text == "10 Years")
-                    {
-                        endDate = dtpStart.Value.Date.AddYears(10);
-                    }
-                    if (cbDuration.Text == "15 Years")
-                    {
-                        if (MtpLimit)
-                        {
-                            if (dtpStart.Value.Date.AddYears(15) > Convert.ToDateTime("01-18-2038"))
-                            {
-                                dtpStart.Value = Convert.ToDateTime("01-18-2023");
-                            }
-                        }
-
-                        endDate = dtpStart.Value.Date.AddYears(15);
-                    }
-                    if (cbDuration.Text == "20 Years")
-                    {
-                        if (MtpLimit)
-                        {
-                            if (dtpStart.Value.Date.AddYears(20) > Convert.ToDateTime("01-18-2038"))
-                            {
-                                dtpStart.Value = Convert.ToDateTime("01-18-2018");
-                            }
-                        }
-
-                        endDate = dtpStart.Value.Date.AddYears(20);
-                    }
-                    if (cbDuration.Text == "21 Years")
-                    {
-                        if (MtpLimit)
-                        {
-                            if (dtpStart.Value.Date.AddYears(21) > Convert.ToDateTime("01-18-2038"))
-                            {
-                                dtpStart.Value = Convert.ToDateTime("01-18-2017");
-                            }
-                        }
-
-                        endDate = dtpStart.Value.Date.AddYears(21);
-                    }
-
-                    int number;
-                    bool result = Int32.TryParse(tbSalesOrder.Text.Trim(), out number);
-                    if (result == true)
-                    {
-                        SalesOrder = tbSalesOrder.Text.Trim();
-                    }
-                    else
-                    {
-                        bool result2 = Int32.TryParse(tbSalesOrder.Text.Substring(2), out number);
-                        if (result2 == true | tbSalesOrder.Text.ToUpper().Substring(0, 1) == "Z" | tbSalesOrder.Text.ToUpper().Substring(0, 2) == "SO")
-                        {
-                            SalesOrder = tbSalesOrder.Text.Trim().ToUpper();
-                            /*   NAV tables require upper case    */
-                        }
-                        else
-                        {
-                            SalesOrder = "0";
-                            owner = tbSalesOrder.Text.Trim();
-                        }
-                    }
-
-                    if (cbDuration.Text.Length > 0 && tbSalesOrder.Text.Length > 0)
-                    {
-                        if (g.productLine == "MTP")
-                        {
-                            ZygoLicense = MTP.GenerateMetroproLicenseKey(
-                            tbDongle.Text.Trim(),
-                            cbApplication.Text.Trim(),
-                            dtpStart.Value.Date.ToString("MMM-dd-yyyy"),
-                            endDate.ToString("MMM-dd-yyyy"));
-                        }
-
-                        if (g.productLine == "MX")
-                        {
-                            ZygoLicense = MX.GenerateMetroproLicenseKey(
-                            tbDongle.Text.Trim(),
-                            cbApplication.Text.Trim(),
-                            dtpStart.Value.ToString(),
-                            endDate.ToString());
-                        }
-
-                        if (g.productLine == "ZMP")
-                        {
-                            ZygoLicense = ZMP.GenerateZeMapsLicenseKey(
-                            tbDongle.Text.Trim(),
-                            cbApplication.Text.Trim(),
-                            dtpStart.Value.ToString(),
-                            endDate.ToString());
-                        }
-
-                        SqlParameter pOwner = new SqlParameter("@owner", SqlDbType.NChar);
-                        pOwner.Value = owner;
-                        if (pOwner.Value is null)
-                        {
-                            pOwner.Value = "";
-                        }
-
-
-                        cmd = new SqlCommand(
-                            "Insert into licensedata (" +
-                            "productline, " +
-                            "licensenumber, " +
-                            "dongleid, " +
-                            "application, " +
-                            "startdate, " +
-                            "expirationdate, " +
-                            "salesorder, " +
-                            "activedemo, " +
-                            "owner) " +
-                            "values ('" +
-                            g.productLine + "','" +
-                            ZygoLicense + "','" +
-                            tbDongle.Text.Trim() + "','" +
-                            cbApplication.Text.Trim() + "','" +
-                            dtpStart.Value + "','" +
-                            endDate + "','" +
-                            SalesOrder + "','" +
-                            g.activeDemo + "'," +
-                            pOwner + ")", cnxn);
-
-                        cnxn.Open();
-
-                        try
-                        {
-                            cmd.Parameters.Add(pOwner);
-                            int returnd = cmd.ExecuteNonQuery();
-                        }
-                        catch (SqlException ex)
-                        {
-                            MessageBox.Show(ex.ToString());
-                        }
-                        finally
-                        {
-                            cmd.Parameters.Clear();
-                            cnxn.Close();
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Duration and Sales Order boxes require entries.");
-                        cbDuration.Focus();
-                    }
-                    label6.Text = ZygoLicense;
-                    g.license = ZygoLicense;
-
-                    if (SalesOrder != "0")
-                    {
-                        cnxn = new SqlConnection(g.dbNAV);
-
-                        string sql = string.Empty;
-
-                        if (SalesOrder.Substring(0, 2) == "SO")
-                        {
-                            sql = "SELECT [Bill-to Customer No_] " +
-                           ",CASE " +
-                           "   WHEN LEN([End User Customer Name]) < 1 THEN [Bill-to Name] " +
-                           "   ELSE [End User Customer Name] " +
-                           "END " +
-                           ",[Order Date] " +
-                           "FROM [ZYGO$Service Header] WHERE No_ = '" + SalesOrder + "'";
-                        }
-                        else
-                        {
-                            sql = "SELECT [Sell-to Customer No_] " +
-                            ",CASE " +
-                            "   WHEN LEN([End User Customer Name]) < 1 THEN [Sell-to Customer Name] " +
-                            "   ELSE [End User Customer Name] " +
-                            "END " +
-                            ",[Order Date] " +
-                            "FROM [ZYGO$Sales Header] WHERE No_ = '" + SalesOrder + "'";
-                        }
-                        SqlCommand cmd1 = new SqlCommand(sql, cnxn);
-
-                        DataTable dt = new DataTable();
-
-                        try
-                        {
-                            cnxn.Open();
-                            dr = cmd1.ExecuteReader();
-                            dt.Load(dr);
-                        }
-                        catch (SqlException ex)
-                        {
-                            MessageBox.Show(ex.ToString());
-                        }
-                        finally
-                        {
-                            cnxn.Close();
-                        }
-
-                        if (dt.Rows.Count > 0)
-                        {
-                            SqlParameter pCustomerName = new SqlParameter("@customerName", SqlDbType.NChar);
-                            pCustomerName.Value = dt.Rows[0][1];
-                            cnxn = new SqlConnection(g.db);
-                            cmd = new SqlCommand("UPDATE LicenseData " +
-                                "SET customernumber = '" + dt.Rows[0][0] + "', " +
-                                "CustomerName = " + pCustomerName + ", " +
-                                "OrderDate = '" + dt.Rows[0][2] + "' " +
-                                "WHERE SalesOrder = '" + SalesOrder + "'", cnxn);
-
-                            try
-                            {
-                                cnxn.Open();
-                                cmd.Parameters.Add(pCustomerName);
-                                cmd.ExecuteNonQuery();
-                            }
-                            catch (SqlException ex)
-                            {
-                                MessageBox.Show(ex.ToString());
-                            }
-                            finally
-                            {
-                                cmd.Parameters.Clear();
-                                cnxn.Close();
-                            }
-
-                        }
-                    }
                 }
                 else
                 {
-                    MessageBox.Show("Customer is blocked - contact Sharon.");
-                    this.Close();
+                    makeLicense();
                 }
             }
             catch (SqlException ex)
@@ -418,6 +172,290 @@ namespace LicenseGenerator
             cbDuration.Text = "";
             endDate = DateTime.Today;
             label6.Text = "";
+        }
+
+        private void makeLicense()
+        {
+            SqlConnection cnxn2 = new SqlConnection(g.db);
+
+            SqlCommand cmd = new SqlCommand("Select mtplimitapplies FROM Applications " +
+                    "WHERE Application = '" + cbApplication.Text.Trim() + "'", cnxn2);
+
+            try
+            {
+                cnxn2.Open();
+                MtpLimit = (bool)cmd.ExecuteScalar();
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                cnxn2.Close();
+            }
+
+            if (cbDuration.Text == "14 Days")
+            {
+                endDate = dtpStart.Value.Date.AddDays(14);
+            }
+            if (cbDuration.Text == "30 Days")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(1);
+            }
+            if (cbDuration.Text == "60 Days")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(2);
+            }
+            if (cbDuration.Text == "90 Days")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(3);
+            }
+            if (cbDuration.Text == "120 Days")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(4);
+            }
+            if (cbDuration.Text == "6 Months")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(6);
+            }
+            if (cbDuration.Text == "9 Months")
+            {
+                endDate = dtpStart.Value.Date.AddMonths(9);
+            }
+            if (cbDuration.Text == "1 Year")
+            {
+                endDate = dtpStart.Value.Date.AddYears(1);
+            }
+            if (cbDuration.Text == "3 Years")
+            {
+                endDate = dtpStart.Value.Date.AddYears(3);
+            }
+            if (cbDuration.Text == "5 Years")
+            {
+                endDate = dtpStart.Value.Date.AddYears(5);
+            }
+            if (cbDuration.Text == "10 Years")
+            {
+                endDate = dtpStart.Value.Date.AddYears(10);
+            }
+            if (cbDuration.Text == "15 Years")
+            {
+                if (MtpLimit)
+                {
+                    if (dtpStart.Value.Date.AddYears(15) > Convert.ToDateTime("01-18-2038"))
+                    {
+                        dtpStart.Value = Convert.ToDateTime("01-18-2023");
+                    }
+                }
+
+                endDate = dtpStart.Value.Date.AddYears(15);
+            }
+            if (cbDuration.Text == "20 Years")
+            {
+                if (MtpLimit)
+                {
+                    if (dtpStart.Value.Date.AddYears(20) > Convert.ToDateTime("01-18-2038"))
+                    {
+                        dtpStart.Value = Convert.ToDateTime("01-18-2018");
+                    }
+                }
+
+                endDate = dtpStart.Value.Date.AddYears(20);
+            }
+            if (cbDuration.Text == "21 Years")
+            {
+                if (MtpLimit)
+                {
+                    if (dtpStart.Value.Date.AddYears(21) > Convert.ToDateTime("01-18-2038"))
+                    {
+                        dtpStart.Value = Convert.ToDateTime("01-18-2017");
+                    }
+                }
+
+                endDate = dtpStart.Value.Date.AddYears(21);
+            }
+
+            int number;
+            bool result = Int32.TryParse(tbSalesOrder.Text.Trim(), out number);
+            if (result == true)
+            {
+                SalesOrder = tbSalesOrder.Text.Trim();
+            }
+            else
+            {
+                bool result2 = Int32.TryParse(tbSalesOrder.Text.Substring(2), out number);
+                if (result2 == true | tbSalesOrder.Text.ToUpper().Substring(0, 1) == "Z" | tbSalesOrder.Text.ToUpper().Substring(0, 2) == "SO")
+                {
+                    SalesOrder = tbSalesOrder.Text.Trim().ToUpper();
+                    /*   NAV tables require upper case    */
+                }
+                else
+                {
+                    SalesOrder = "0";
+                    owner = tbSalesOrder.Text.Trim();
+                }
+            }
+
+            if (cbDuration.Text.Length > 0 && tbSalesOrder.Text.Length > 0)
+            {
+                if (g.productLine == "MTP")
+                {
+                    ZygoLicense = MTP.GenerateMetroproLicenseKey(
+                    tbDongle.Text.Trim(),
+                    cbApplication.Text.Trim(),
+                    dtpStart.Value.Date.ToString("MMM-dd-yyyy"),
+                    endDate.ToString("MMM-dd-yyyy"));
+                }
+
+                if (g.productLine == "MX")
+                {
+                    ZygoLicense = MX.GenerateMetroproLicenseKey(
+                    tbDongle.Text.Trim(),
+                    cbApplication.Text.Trim(),
+                    dtpStart.Value.ToString(),
+                    endDate.ToString());
+                }
+
+                if (g.productLine == "ZMP")
+                {
+                    ZygoLicense = ZMP.GenerateZeMapsLicenseKey(
+                    tbDongle.Text.Trim(),
+                    cbApplication.Text.Trim(),
+                    dtpStart.Value.ToString(),
+                    endDate.ToString());
+                }
+
+                SqlParameter pOwner = new SqlParameter("@owner", SqlDbType.NChar);
+                pOwner.Value = owner;
+                if (pOwner.Value is null)
+                {
+                    pOwner.Value = "";
+                }
+
+
+                cmd = new SqlCommand(
+                    "Insert into licensedata (" +
+                    "productline, " +
+                    "licensenumber, " +
+                    "dongleid, " +
+                    "application, " +
+                    "startdate, " +
+                    "expirationdate, " +
+                    "salesorder, " +
+                    "activedemo, " +
+                    "owner) " +
+                    "values ('" +
+                    g.productLine + "','" +
+                    ZygoLicense + "','" +
+                    tbDongle.Text.Trim() + "','" +
+                    cbApplication.Text.Trim() + "','" +
+                    dtpStart.Value + "','" +
+                    endDate + "','" +
+                    SalesOrder + "','" +
+                    g.activeDemo + "'," +
+                    pOwner + ")", cnxn2);
+
+                cnxn2.Open();
+
+                try
+                {
+                    cmd.Parameters.Add(pOwner);
+                    int returnd = cmd.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+                finally
+                {
+                    cmd.Parameters.Clear();
+                    cnxn2.Close();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Duration and Sales Order boxes require entries.");
+                cbDuration.Focus();
+            }
+            label6.Text = ZygoLicense;
+            g.license = ZygoLicense;
+
+            if (SalesOrder != "0")
+            {
+                cnxn2 = new SqlConnection(g.dbNAV);
+
+                string sql = string.Empty;
+
+                if (SalesOrder.Substring(0, 2) == "SO")
+                {
+                    sql = "SELECT [Bill-to Customer No_] " +
+                   ",CASE " +
+                   "   WHEN LEN([End User Customer Name]) < 1 THEN [Bill-to Name] " +
+                   "   ELSE [End User Customer Name] " +
+                   "END " +
+                   ",[Order Date] " +
+                   "FROM [ZYGO$Service Header] WHERE No_ = '" + SalesOrder + "'";
+                }
+                else
+                {
+                    sql = "SELECT [Sell-to Customer No_] " +
+                    ",CASE " +
+                    "   WHEN LEN([End User Customer Name]) < 1 THEN [Sell-to Customer Name] " +
+                    "   ELSE [End User Customer Name] " +
+                    "END " +
+                    ",[Order Date] " +
+                    "FROM [ZYGO$Sales Header] WHERE No_ = '" + SalesOrder + "'";
+                }
+                SqlCommand cmd1 = new SqlCommand(sql, cnxn2);
+
+                DataTable dt = new DataTable();
+
+                try
+                {
+                    cnxn2.Open();
+                    dr = cmd1.ExecuteReader();
+                    dt.Load(dr);
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+                finally
+                {
+                    cnxn.Close();
+                }
+
+                if (dt.Rows.Count > 0)
+                {
+                    SqlParameter pCustomerName = new SqlParameter("@customerName", SqlDbType.NChar);
+                    pCustomerName.Value = dt.Rows[0][1];
+                    cnxn2 = new SqlConnection(g.db);
+                    cmd = new SqlCommand("UPDATE LicenseData " +
+                        "SET customernumber = '" + dt.Rows[0][0] + "', " +
+                        "CustomerName = " + pCustomerName + ", " +
+                        "OrderDate = '" + dt.Rows[0][2] + "' " +
+                        "WHERE SalesOrder = '" + SalesOrder + "'", cnxn2);
+
+                    try
+                    {
+                        cnxn.Open();
+                        cmd.Parameters.Add(pCustomerName);
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (SqlException ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+                    finally
+                    {
+                        cmd.Parameters.Clear();
+                        cnxn2.Close();
+                    }
+
+                }
+            }
+
         }
     }
 
