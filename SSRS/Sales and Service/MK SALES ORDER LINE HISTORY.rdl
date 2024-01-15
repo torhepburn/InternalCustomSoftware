@@ -22,19 +22,24 @@
             <Value>=Parameters!CUSTOMER.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
-          <QueryParameter Name="@customerNumber">
-            <Value>=Parameters!customerNumber.Value</Value>
+          <QueryParameter Name="@CustomerPO">
+            <Value>=Parameters!CustomerPO.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@CUSTOMER_PO">
+            <Value>=Parameters!CustomerPO.Value</Value>
             <rd:UserDefined>true</rd:UserDefined>
           </QueryParameter>
         </QueryParameters>
         <CommandText>/****** Script for SelectTopNRows command from SSMS  ******/
-SELECT [ORDER_NO]
+SELECT
+        h. [ORDER_NO]
       ,[POSITION]
       ,h.[CUSTOMER]
-	  ,c.[NAME] CUSTOMER_NAME 
+      ,c.[NAME] CUSTOMER_NAME 
+      ,s.CUSTOMER_PO    
       ,[ITEM_CODE]
       ,[STANDARD_DESCRIPTION]
-      ,[ORDER_DATE]
+      ,h.[ORDER_DATE]
       ,[PLANNED_DELIVERY_DATE]
       ,[ACTUAL_DELIVERY_DATE]
       ,[QUANTITY]
@@ -44,7 +49,7 @@ SELECT [ORDER_NO]
       ,[PROJECT]
       ,[INVOICE_DATE]
       ,[INVOICE]
-      ,[TEXT]
+      ,t.[TEXT]
       ,[ITEM_DESCRIPTION]
       ,h.[DELIVERY_ADDRESS]
      ,d.[NAME]
@@ -63,19 +68,22 @@ SELECT [ORDER_NO]
 
   LEFT JOIN MMX_CUSTOMERs c ON h.CUSTOMER = c.CUSTOMER
 
-  LEFT JOIN MMX_DELIVERY_ADDRESSES d ON h.DELIVERY_ADDRESS = d.DELIVERY_ADDRESS AND h.CUSTOMER = d.CUSTOMER
+  LEFT JOIN MMX_DELIVERY_ADDRESSES d ON h.DELIVERY_ADDRESS = d.DELIVERY_ADDRESS 
+AND h.CUSTOMER = d.CUSTOMER
 
 LEFT JOIN MMX_ITEM_TEXT t ON t.TEXTKEY = CAST(h.ORDER_LINE_TEXT as varchar(40))
 
+LEFT JOIN MMX_SALES_ORDERS s ON s.ORDER_NO = h.ORDER_NO
+
 WHERE 1=1
 
-AND ((ORDER_NO = @ORDER_NO) OR @ORDER_NO is null)
+AND ((h.ORDER_NO = @ORDER_NO) OR @ORDER_NO is null)
 
 AND ( (c.NAME = @CUSTOMER) OR @CUSTOMER is null)
 
-AND ( (c.CUSTOMER = @customerNumber) OR @customerNumber is null)
+AND ( (s.CUSTOMER_PO = @CustomerPO) OR @CUSTOMER_PO is null)
 
-ORDER BY ORDER_NO, POSITION</CommandText>
+ORDER BY h.ORDER_NO, POSITION</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -93,6 +101,10 @@ ORDER BY ORDER_NO, POSITION</CommandText>
         </Field>
         <Field Name="CUSTOMER_NAME">
           <DataField>CUSTOMER_NAME</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="CUSTOMER_PO">
+          <DataField>CUSTOMER_PO</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="ITEM_CODE">
@@ -219,26 +231,6 @@ ORDER BY NAME</CommandText>
         </Field>
       </Fields>
     </DataSet>
-    <DataSet Name="CustomerNumber">
-      <Query>
-        <DataSourceName>AFE</DataSourceName>
-        <CommandText>select 
-
-DISTINCT CUSTOMER
-
-FROM MMX_SALES_ORDERS
-
-WHERE ORDER_DATE &gt; '2016-01-01'
-
-ORDER BY CUSTOMER</CommandText>
-      </Query>
-      <Fields>
-        <Field Name="CUSTOMER">
-          <DataField>CUSTOMER</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-      </Fields>
-    </DataSet>
   </DataSets>
   <ReportSections>
     <ReportSection>
@@ -286,6 +278,9 @@ ORDER BY CUSTOMER</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.33333in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.30208in</Width>
@@ -523,6 +518,43 @@ ORDER BY CUSTOMER</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox33">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>CUSTOMER PO</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox33</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1722,6 +1754,41 @@ ORDER BY CUSTOMER</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="CUSTOMER_PO">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!CUSTOMER_PO.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>CUSTOMER_PO</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="ITEM_CODE">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -2741,6 +2808,7 @@ ORDER BY CUSTOMER</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -2766,7 +2834,7 @@ ORDER BY CUSTOMER</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>36.33333in</Width>
+            <Width>37.33333in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2774,7 +2842,7 @@ ORDER BY CUSTOMER</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>36.33333in</Width>
+      <Width>37.33333in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -2802,16 +2870,10 @@ ORDER BY CUSTOMER</CommandText>
         </DataSetReference>
       </ValidValues>
     </ReportParameter>
-    <ReportParameter Name="customerNumber">
+    <ReportParameter Name="CustomerPO">
       <DataType>String</DataType>
-      <Prompt>Customer Number</Prompt>
-      <ValidValues>
-        <DataSetReference>
-          <DataSetName>CustomerNumber</DataSetName>
-          <ValueField>CUSTOMER</ValueField>
-          <LabelField>CUSTOMER</LabelField>
-        </DataSetReference>
-      </ValidValues>
+      <Nullable>true</Nullable>
+      <Prompt>Customer PO Number</Prompt>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
@@ -2832,7 +2894,7 @@ ORDER BY CUSTOMER</CommandText>
         <CellDefinition>
           <ColumnIndex>2</ColumnIndex>
           <RowIndex>0</RowIndex>
-          <ParameterName>customerNumber</ParameterName>
+          <ParameterName>CustomerPO</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>
