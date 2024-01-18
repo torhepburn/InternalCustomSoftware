@@ -1,0 +1,96 @@
+﻿@inherits LayoutComponentBase
+@inject AuthenticationStateProvider auth
+@using Pages
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+<PageTitle>GetUserName1</PageTitle>
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+    </div>
+</div>
+
+
+<div class="page">
+    @*<div class="sidebar">
+        <NavMenu />
+    </div>*@
+    <main style="width: 100%">
+        <div style="display:flex">
+            <div class="top-row" style="width:100%">
+                <label style="font-size:12px;position:fixed;top:1%;right:1%">Version 1.12 10-25-23</label>
+               @* <NavMenu />*@
+            </div>
+        </div>
+        <article class="content px-4" style="flex-direction:column">
+            @if (hasAccess)
+            {
+                @Body
+            }
+
+        </article>
+    </main>
+
+
+    @* <main>
+
+
+        <div class="top-row px-4 auth">
+            <LoginDisplay />
+            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>*@
+</div>
+
+
+@code {
+
+
+    PopUp pop = new PopUp();
+    public bool hasAccess = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
+                            "user = readwrite; database = AccessFrontEnds; encrypt=false");
+        DataTable dt = new DataTable();
+        SqlCommand cmd = new SqlCommand(" Select UserName from applicationsetup " +
+         "WHERE Application = 'ShortageManager' AND Permission = 'ACCESS' AND PermissionValue = 'TRUE'", cnxn);
+        cnxn.Open();
+        using (SqlDataReader dr = cmd.ExecuteReader())
+        {
+            dt.Load(dr);
+        }
+        cnxn.Close();
+        string user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+        if (user.StartsWith("Z"))
+        {
+            user = user.Replace("ZYGOMIS\\", "");
+        }
+        else
+        {
+            user = user.Replace("AMETEK-AD\\", "");
+        }
+
+        foreach (DataRow row in dt.Rows)
+        {
+            if (row[0].ToString().ToUpper().Trim().Equals(user.ToUpper()))
+            {
+                return;
+            }
+        }
+        hasAccess = false;
+        pop.Title = "Error";
+        pop.Message = "You do not have access to this application";
+        pop.ShowPopup();
+
+
+    }
+}
