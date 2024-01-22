@@ -42,6 +42,9 @@ namespace LabelPrint
 
             string computername = Environment.MachineName;
 
+            user = "TSTUART";
+            computername = "tstuart-dt";
+
             SqlConnection cnxn = new SqlConnection(g.db);
 
             try

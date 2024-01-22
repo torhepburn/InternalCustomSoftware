@@ -36,7 +36,7 @@ namespace LabelPrint
         {
             Litem.Text = g.item;
             Ldescription.Text = g.iDescription;
-            tbRevision.Text = g.iRevision.ToUpper();
+            //tbRevision.Text = g.iRevision.ToUpper();
             tbRevision.ReadOnly = true;
             tbRevision.BackColor = Color.LightGray;
 

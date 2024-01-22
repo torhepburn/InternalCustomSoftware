@@ -17,6 +17,7 @@ namespace LabelPrint
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new F1_DGV_SELECT());
+            //Application.Run(new F1_GPI());
         }
     }
 }
