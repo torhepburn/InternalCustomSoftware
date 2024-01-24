@@ -22,6 +22,9 @@ namespace LabelPrint
         {
             Litem.Text = gpi.item;
             Ldescription.Text = gpi.iDescription;
+            tbBinNumber.Text = gpi.iBinNumber;
+            tbFullBin.Text = gpi.iQuantity;
+            LBinLocation.Text = "Bin Location: " + gpi.iBinCode;
         }
 
         private void bPrint_Click(object sender, EventArgs e)
@@ -35,7 +38,7 @@ namespace LabelPrint
             str += "A120,110,0,4,1,1,N,\"" + tbBinNumber.Text.ToString() + "\"\n";
             str += "A300,110,0,4,1,1,N,\"FULL BIN: \"\n";
             str += "A500,110,0,4,1,1,N,\"" + tbFullBin.Text.ToString() + "\"\n";
-            str += "A200,150,0,4,1,1,N,\"WAREHOUSE: 26\"\n";
+            str += "A20,150,0,4,1,1,N,\"BIN LOCATION: "+ gpi.iBinCode + "\"\n";
             
             str += "P1\n";
             RawPrinterHelper.SendStringToPrinter(gpi.printer, str);

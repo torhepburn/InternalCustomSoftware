@@ -38,6 +38,7 @@
             this.Ldescription = new System.Windows.Forms.Label();
             this.Litem = new System.Windows.Forms.Label();
             this.tbFullBin = new System.Windows.Forms.TextBox();
+            this.LBinLocation = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // tbBinNumber
@@ -140,12 +141,23 @@
             this.tbFullBin.Size = new System.Drawing.Size(74, 26);
             this.tbFullBin.TabIndex = 20;
             // 
+            // LBinLocation
+            // 
+            this.LBinLocation.AutoSize = true;
+            this.LBinLocation.Location = new System.Drawing.Point(403, 171);
+            this.LBinLocation.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.LBinLocation.Name = "LBinLocation";
+            this.LBinLocation.Size = new System.Drawing.Size(101, 20);
+            this.LBinLocation.TabIndex = 39;
+            this.LBinLocation.Text = "Bin Location:";
+            // 
             // F2_GPI_Details
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(200)))), ((int)(((byte)(150)))));
             this.ClientSize = new System.Drawing.Size(802, 440);
+            this.Controls.Add(this.LBinLocation);
             this.Controls.Add(this.tbBinNumber);
             this.Controls.Add(this.bExit);
             this.Controls.Add(this.bPrint);
@@ -178,5 +190,6 @@
         private System.Windows.Forms.Label Ldescription;
         private System.Windows.Forms.Label Litem;
         private System.Windows.Forms.TextBox tbFullBin;
+        private System.Windows.Forms.Label LBinLocation;
     }
 }

@@ -108,6 +108,8 @@
             this.DGV.Location = new System.Drawing.Point(54, 153);
             this.DGV.Name = "DGV";
             this.DGV.ReadOnly = true;
+            this.DGV.RowHeadersWidth = 5;
+            this.DGV.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.DGV.Size = new System.Drawing.Size(425, 281);
             this.DGV.TabIndex = 17;
             this.DGV.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGV_CellContentClick);
