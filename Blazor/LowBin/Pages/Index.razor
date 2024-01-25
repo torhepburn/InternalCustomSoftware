@@ -1,0 +1,179 @@
+﻿@page "/"
+@page "/index"
+
+@using LowBin.Data
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+<PageTitle>Index</PageTitle>
+
+<h1>Report low or empty bin</h1>
+<div>
+    <div style="display:flex;justify-content:center">
+  
+   
+    <EditForm Model=@f OnValidSubmit="@DataEntry">
+        <DataAnnotationsValidator />
+
+    
+            <div>
+                
+                <InputCheckbox @bind-Value="cbBBO"></InputCheckbox> Check if Both Bins Out of stock.
+                <br />
+                <br />
+            </div>
+            Scan Item Number or type part number and hit enter:
+            <div>
+              
+        <InputText style="width: 70%" @bind-Value="f.item" @onfocus="InputOnFocus" />
+        <ValidationMessage For="() => f.item" style="display:inline" />
+        @*<h1><label style="color:red">@successLabel</label></h1>*@
+    </div>
+     
+
+        </EditForm>
+</div>
+
+</div>
+
+<table>
+    <thead>
+        <tr>
+            @*<th>ID</th>*@
+            <th>Item Number</th>
+            <th>Quantity</th>
+            <th>Location</th>
+            @*<th>Location</th>
+            <th>In/Out</th>*@
+
+            @*<th>Contact / Operator</th>
+
+            <th>Cost Center</th>
+            <th>Controller/Computer Name</th>
+            <th>Failure Description</th>
+            <th>Assigned To</th>
+            <th>Resolution</th>*@
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (DataRow r in dt.Rows)
+        {
+            <tr>
+                @*<td style="width:80px">@r[0].ToString()</td>*@
+                <td style="width:200px">@r[0].ToString()</td>
+                <td style="width:150px">@r[1].ToString()</td>
+                <td style="width:150px">@r[2].ToString()</td>
+                @*<td style="width:150px">@r[3].ToString()</td>
+                <td style="width:150px">@r[4].ToString()</td>*@
+
+                @*<td style="width:150px">@r[6].ToString()</td>
+            <td style="width:150px">@r[7].ToString()</td>
+            <td style="width:150px">@r[9].ToString()</td>
+            <td style="width:500px">@r[8].ToString()</td>
+            <td>@r[10].ToString()</td>
+            <td>@r[11].ToString()</td>*@
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+@code
+{
+    private FormModel f = new FormModel();
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    private string successLabel= string.Empty;
+    private bool cbBBO = false;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(f.dbNAV);
+
+        cmd = new("SELECT " +
+                    "[Item No_] " +            
+                    ",CAST(SUM(Quantity) as int) [Quantity] " +
+                    ",[Bin Code] " +
+                    "FROM [ZYGO$Warehouse Entry] " +
+                    "WHERE [Item No_] = '" + f.item + "' " +
+                    "GROUP BY [Item No_], [Bin Code] " +
+                    "HAVING SUM(Quantity) > 0 ",cnxn);
+
+        dt = new DataTable();
+
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dt.Load(dr);
+
+            dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                SqlConnection cnxn1 = new SqlConnection(f.db);
+
+                cmd = new("INSERT INTO StockroomLowBins (" +
+                    " EnteredOn " +
+                    ",PartNo " +
+                    ",QuantityOnHand " +
+                    ",StockLocation " +
+                    ",BothBinsOut " +
+                    ") values (" +
+                    "'" + DateTime.Now + "'" +
+                    ",'" + dr.GetString(0).Trim() + "'" +
+                    ",'" + dr.GetInt32(1).ToString().Trim() + "'" +
+                    ",'" + dr.GetString(2).Trim() + "'" +
+                    ", '" + cbBBO + "'" +
+                    ")", cnxn1);
+                try
+                {
+                    cnxn1.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    ex.ToString();
+                }
+                finally
+                {
+                    cnxn1.Close();
+
+                }
+
+            }
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+            successLabel = "Data ENTERED.";
+        }
+
+
+
+        f.item = string.Empty;
+        cbBBO = false;
+        //f.workOrder = string.Empty;*/
+    }
+
+    public void InputOnFocus()
+    {
+        successLabel = string.Empty;
+    }
+    
+}
