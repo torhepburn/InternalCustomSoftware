@@ -16,62 +16,63 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>DataSource1</DataSourceName>
-        <CommandText>WITH s1 AS
-(
-Select
+        <CommandText>select 
 
-MKReceiptTransactionID
+CASE 
+	WHEN rr.Name is not null THEN rr.Name
+	ELSE r.name
+END Inspector
+,lt.TimeInLocation/60 TimeInHours
 ,PartNumber
-,OperatorName
-,Location
-,MovedToDate
-,MovedToQty
-,MovedOutDate
-,MovedOutQty
-,OriginalQty
-,TimeInMin
-,LocationTrackingID
-,ReceiptNumber
-,KanbanTransactionID
-,RMAItemsNumber
-,ServiceID
-,Name as SignatureName
+,lt.MovedOutDate
+,l.Location
+--,rr.name
 
-FROM [Middb01.zygo.com].dashboard.dbo.view_tracking t
+from [MIDDB01.zygo.com].Dashboard.dbo.LocationTracking lt
 
-LEFT JOIN [Middb01.zygo.com].dashboard.dbo.view_employees_all e 
-
-on t.signatureBadgeID = e.BadgeID
-
-where MkReceiptTransactionId &gt; 0
-
---and ((MovedOutDate &gt; (GETDATE()-90)) OR (MovedOutDate is null))
-)
+INNER JOIN [MIDDB01.zygo.com].Dashboard.dbo.Requisitioner r ON lt.MovedToOperator = r.ID
 
 
-select 
 
-OperatorName
-,TimeInMin
+INNER JOIN [MIDDB01.zygo.com].Dashboard.dbo.Locations l ON lt.MovedToLocation = l.LocationID
+
+LEFT JOIN [MIDDB01.zygo.com].Dashboard.dbo.MK_PurchaseReceipt_Approvals a ON lt.MKReceiptTransactionID = a.MKReceiptTransactionID AND lt.MovedToLocation = a.LocationTrackingID
+
+LEFT JOIN [MIDDB01.zygo.com].Dashboard.dbo.MK_PurchaseReceipt_TransactionLog tl ON lt.MKReceiptTransactionID = tl.MKReceiptTransactionID
+
+LEFT JOIN [MIDDB01.zygo.com].Dashboard.dbo.Requisitioner rr ON a.Operator = rr.ID
+
+WHERE 1=1 --lt.MKReceiptTransactionID = 451164
+
+AND (Location like 'QC IN O%'
+
+OR Location LIKE 'QC OPT%'
+
+OR Location LIKE 'QC OPT%'
+
+OR Location LIKE 'QC OUT%'
+
+OR Location = 'Incoming Work-cell testing')
+
+ORDER BY 
+
+CASE 
+	WHEN rr.Name is not null THEN rr.Name
+	ELSE r.name
+END 
 ,PartNumber
 ,MovedOutDate
-,Location
 
-
-from s1
-
-WHERE Location like 'QC TEST%'
-
-OR Location = 'QC PROCESS'</CommandText>
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
-        <Field Name="OperatorName">
-          <DataField>OperatorName</DataField>
+        <Field Name="Inspector">
+          <DataField>Inspector</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="TimeInMin">
-          <DataField>TimeInMin</DataField>
+        <Field Name="TimeInHours">
+          <DataField>TimeInHours</DataField>
           <rd:TypeName>System.Double</rd:TypeName>
         </Field>
         <Field Name="PartNumber">
@@ -153,7 +154,7 @@ OR Location = 'QC PROCESS'</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Operator Name</Value>
+                                  <Value>Signature Name</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -344,14 +345,14 @@ OR Location = 'QC PROCESS'</CommandText>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="OperatorName">
+                        <Textbox Name="SignatureName">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!OperatorName.Value</Value>
+                                  <Value>=Fields!SignatureName.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -361,7 +362,7 @@ OR Location = 'QC PROCESS'</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>OperatorName</rd:DefaultName>
+                          <rd:DefaultName>SignatureName</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
