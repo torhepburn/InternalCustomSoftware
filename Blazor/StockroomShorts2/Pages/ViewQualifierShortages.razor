@@ -1,0 +1,94 @@
+﻿@page "/viewqualifiershortages"
+@using Pages
+
+
+<PageTitle>Qualifier Stockroom Shortages</PageTitle>
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using static PopUp
+
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<div style="display:flex;">
+    @*<Table TableStyle="table-shortages"> </Table>*@
+    <TableQualifier TableStyle="table-shortages" CreateGroup="HandleCreateGroup"></TableQualifier>
+</div>
+
+
+@if (g.groups.Count > 0)
+{
+    <br />
+    <h4 style="font-weight:bold">Group Lists:</h4>
+}
+
+ @if (dtg != null)
+ {
+    <br />
+    <h4 style="font-weight:bold">Group Lists:</h4>
+    
+    @foreach (DataRow items in dtg.Rows)
+    {
+        <GroupTableDisplay groupID="@items[0].ToString().Trim()"></GroupTableDisplay>
+    }
+ }
+
+
+
+@code {
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    DataTable dtg;
+
+    private ElementReference textBoxRef;
+
+    PopUp GroupPop = new PopUp();
+
+    public string item = "";
+    public string stockLocation = "";
+    public string ID = "";
+    public string quantity = "";
+    
+    public string groupID;
+    Group? groupRef;
+
+    protected override void OnInitialized()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        dtg = new DataTable();
+
+        cmd = new(" SELECT StockroomGroupID " +
+                  " FROM StockroomGroupsQ " +
+                  " WHERE GroupStatus = 'Active'", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtg.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+
+    private void HandleCreateGroup(Group newGroup)
+    {
+        if(newGroup.Table().Rows.Count > 0)
+        {
+            g.groups.Add(newGroup);
+        }
+    }
+}
+

@@ -1,0 +1,425 @@
+﻿@page "/editqualifiershortage"
+
+
+@using StockroomShorts.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<div style="display:flex">
+    <label style="font-size:1.5em;width:90%">@status </label>
+    <label style=" font-size:1.5em;">@enteredOn</label>
+</div>
+
+<div style="display:flex;justify-content:center">
+    <h4>Change Status</h4>
+</div>
+<div style="display:flex;justify-content:center">
+    <button style="border-color:rgb(135,206,250)" class="button-85" @onclick="ColorBlue">Actively Searching for Part</button>
+ 
+    <button style="border-color:rgb(0,255,255)" class="button-85" @onclick="ColorCyan">Inadequate Quantity on Hand</button>
+    <button style="border-color:white" class="button-85" @onclick="ColorReset">Clear Status</button>
+</div>
+
+<br />
+<br />
+
+<div style="display:flex;justify-content:center;flex-wrap:wrap">
+    <CommentTable dt="@dtc" TableStyle="table-comments"></CommentTable>  
+</div>
+<br />
+<br />
+<div style="display:flex;justify-content:center;">
+    <AddComment></AddComment>
+</div>
+<br />
+<br />
+
+<div style="display:flex;justify-content:center;">
+    <table class="table-work-order">
+        <thead>
+            <tr>
+                <th>Work Order Number</th>
+                <th>Part Number</th>
+                <th>Part Description</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@wo</td>
+                <td>@item</td>
+                <td>@partdescription</td>
+                <td>@quantity</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<br />
+<br />
+<div style="display:flex;justify-content:center">
+    <table class="table-work-order">
+        <thead>
+            <tr>
+                <th>Production Order Line Number</th>
+                <th>Job Descriptioin</th>
+                <th>Job Reference</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@woline</td>
+                <td>@job</td>
+                <td>@jobreference</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+ <br />
+ <br />
+<div style="display:flex;justify-content:center">
+<EditForm Model="item" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+        <table style="box-shadow: .5px .5px 3px red;">
+        <tbody>
+            <tr>
+                <td align="right">
+                    <label style="width:100%">Location :</label>
+                    <InputText id="n8" placeholder="Location" @bind-Value="location" />
+                </td>
+                <td align="right">
+                    
+                        <label style="width:100%">Bin Code :</label>
+                    <InputText id="n9" placeholder="BinCode" @bind-Value="binCode" /> 
+                </td>
+                <td align="right">
+                        <label style="width:100%">Stockroom Associate :</label>
+                    
+                    <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="storekeeper" />
+                </td>
+            </tr>
+            <tr>
+                <td align="right">
+                    
+                        <label style="width:100%">Cost Center :</label>
+                    <InputText id="n11" placeholder="CostCenter" @bind-Value="costcenter" />
+                </td>
+                <td align="right">
+                        <label style="width:100%">Planner :</label>
+                    
+                    <InputText id="n12" placeholder="Planner" @bind-Value="planner" />
+                </td>
+                <td align="right">
+                        <label style="width:100%">Due Date :</label>
+                   
+                    <InputText id="n13" placeholder="Due Date" @bind-Value="duedate" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+</EditForm>
+
+<br />
+
+</div>
+<br />
+<div style="display:flex;justify-content:center">
+    <button class="button-58" style="margin-right:40px" @onclick="DataEntry">Save Data</button>
+
+    <button class="button-58" @onclick="Archive">Archive</button>
+</div>
+
+
+@code {
+
+    public class DateSample
+    {
+        public DateTime ddate { get; set; }
+    }
+    private DateSample _dateSample = new DateSample();
+
+    public string enteredOn = "";
+    public string wo = "";
+    public string woline = "";
+    public string job = "";
+    public string jobreference = "";
+    public string item = "";
+    public string partdescription = "";
+    public string quantity = "";
+    public string location = "";
+    public string binCode = "";
+    public string storekeeper = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
+    public string color = "";
+    public string status = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    DataTable dtc;
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                " ID " +                                                //0
+                ", COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +     //1
+                ", COALESCE(WO, '') " +                                 //2
+                ", COALESCE(PartNo, '') " +                             //3
+                ", COALESCE(PartDescription, '') " +                    //4
+                ", COALESCE(WOLine, '') " +                             //5
+                ", COALESCE(JobDescription, '') " +                     //6
+                ", COALESCE(JobReference, '') " +                       //7
+                ", COALESCE(Quantity, 0) " +                            //8
+                ", COALESCE(Stocklocation, '') " +                      //9
+                ", COALESCE(CostCenter, '') " +                         //10
+                ", COALESCE(StockRoomAssociate,'') " +                  //11
+                ", COALESCE(Planner, '') " +                            //12
+                ", COALESCE([DueDate], '') " +                          //13
+                ", COALESCE(Location, '') " +                           //14
+                ", Color " +                                            //15
+                " from StockroomShortagesQ WHERE ID = '" + g.ShortageID + "' " +
+                " AND Archived = 0 " +
+                "ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                enteredOn = dr.GetString(1);
+                wo = dr.GetString(2);
+                item = dr.GetString(3);
+                partdescription = dr.GetString(4);
+                woline = dr.GetInt32(5).ToString();
+                job = dr.GetString(6);
+                jobreference = dr.GetString(7);
+                quantity = dr.GetInt32(8).ToString();
+                binCode = dr.GetString(9);
+                storekeeper = dr.GetString(11);
+                costcenter = dr.GetString(10);
+                planner = dr.GetString(12);
+                duedate = dr.GetString(13);
+                location = dr.GetString(14);
+                color = dr.IsDBNull(15) ? "white" : dr.GetString(15);
+            }
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+        color = color.Trim();
+        if (color == "green")
+        {
+            status = "On Hand";
+        }
+        else if (color == "yellow")
+        {
+            status = "On Order";
+        }
+        else if (color == "red")
+        {
+            status = "Not On Order/Not On Hand";
+        }
+        else if (color == "blue")
+        {
+            status = "Actively Searching";
+        }
+        else if (color == "orange")
+        {
+            status = "OFS";
+        }
+        else if (color == "purple")
+        {
+            status = "IQC";
+        }
+        else if (color == "cyan")
+        {
+            status = "IQ/HP";
+        }
+
+
+        dtc = new DataTable();
+
+        cmd = new SqlCommand("SELECT " +
+                "COALESCE(Comment, '') as [Comment] " +
+                ",[EnteredOn] " +
+                " from StockroomCommentsQ WHERE ShortageID = '" + g.ShortageID + "' " +
+                "ORDER BY [EnteredOn] DESC", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtc.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        _dateSample.ddate = DateTime.Now;
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortagesQ " +
+                    "SET [StockLocation] = '" + binCode + "'" +
+                    ",[StockRoomAssociate] = '" + storekeeper + "'" +
+                    ",[CostCenter] = '" + costcenter + "'" +
+                    ",[Planner] = '" + planner + "'" + 
+                    ",[DueDate] = '" + duedate + "'" +
+                    ",Location = '" + location + "' " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("viewqualifiershortages");
+    }
+
+    public void Archive()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortagesQ " +
+                    "SET [Archived] = 1 " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("viewqualifiershortages");
+    }
+
+    public void ColorBlue()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortagesQ " +
+                    "SET [Color] = 'blue' " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("viewqualifiershortages");
+    }
+
+    public void ColorReset()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortagesQ " +
+                    "SET [Color] = '' " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+        
+        NavMgr.NavigateTo("updateData");
+
+        NavMgr.NavigateTo("viewqualifiershortages");
+    }
+
+    public void ColorCyan()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomShortagesQ " +
+                    "SET [Color] = 'cyan' " +
+                    "WHERE ID = '" + g.ShortageID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("viewqualifiershortages");
+    }
+}

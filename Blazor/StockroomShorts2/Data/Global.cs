@@ -52,6 +52,46 @@ namespace StockroomShorts.Data
                                 " from StockroomShortages s" +
                                 " LEFT JOIN s2 ON s.ID = s2.ShortageID ";
 
+        public string SQLsQ { get; set; } = "WITH s1 AS " +
+                                 "( " +
+                                " SELECT " +
+                                " ShortageID " +
+                                ",MAX(CommentID) CommentID " +
+                                " FROM StockroomCommentsQ " +
+                                " GROUP BY ShortageID  " +
+                                ") " +
+                                ",s2 AS " +
+                                "( " +
+                                "	SELECT " +
+                                "	s1.ShortageID " +
+                                "	,Comment " +
+                                "   ,FORMAT([EnteredOn],'MM/dd/yy') EnteredOn " +
+                                "	FROM StockroomCommentsQ c " +
+                                " INNER JOIN s1 ON s1.ShortageID = c.ShortageID and s1.CommentID = c.CommentID " +
+                                ") " +
+                                " select " +
+                                " ID " +
+                                ", COALESCE(FORMAT(s.[EnteredOn],'MM/dd/yy'), '') Date " +
+                                ", COALESCE(WO, '') [Work Order #] " +
+                                ", COALESCE(PartNo, '') [Part Number] " +
+                                ", COALESCE(LEFT(PartDescription, 10), '') [Part Description] " +
+                                ", COALESCE(WOLine, '') [Work Order Line] " +
+                                ", COALESCE(JobDescription, '') [Job Description] " +
+                                ", COALESCE(JobReference, '') [Job Reference] " +
+                                ", COALESCE(Quantity, 0) [Quantity Short] " +
+                                ", COALESCE(Location, '') [Location] " +
+                                ", COALESCE(Stocklocation, '') [Bin Code] " +
+                                ", COALESCE(CostCenter, '') [Cost Center] " +
+                                ", COALESCE(StockRoomAssociate,'') [Stockroom Associate] " +
+                                ", COALESCE(Planner, '') [Planner] " +
+                                ", COALESCE(DueDate, '') [Due Date] " +
+                                ", COALESCE(s2.Comment,'') [Most Recent Comment] " +
+                                //", COALESCE(s2.EnteredOn,'') [Comment Date] " +
+                                ", COALESCE(TRIM(color),'') [Status] " +
+                                " from StockroomShortagesQ s" +
+                                " LEFT JOIN s2 ON s.ID = s2.ShortageID ";
+
+
         public string? archive { get; set; }
 
         public string? exportFile { get; set; }

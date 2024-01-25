@@ -161,7 +161,7 @@
         await CopyTable(select, tableName);
 
 
-        //archived issued components
+        //archive issued components
         cnxn = new SqlConnection(g.db);
         cnxn.Open();
         try
@@ -188,7 +188,31 @@
 
         }
 
+        //archive qualifier issued components
 
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET Archived = 1 " +
+                      " from StockroomshortagesQ ss " +
+                      " inner join [StS_WO_Components_Issued] s1 " +
+                      " on s1.[WO] = ss.WO " +
+                      " AND s1.WOLine = ss.WOLine " +
+                      " AND s1.ComponentLine = ss.ComponentLine " +
+                      " where archived = 0 ", cnxn);
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+        }
 
         //green first - On Hand in warehouse
 
@@ -203,6 +227,37 @@
             cmd = new(" UPDATE ss " +
                       " SET color = 'green' " +
                       " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH > 0 " +
+                      " AND color NOT IN ('blue','cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        try
+        {
+            cmd = new("UPDATE StockroomShortagesQ set color = '' WHERE color IN  ('green','orange','purple') AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'green' " +
+                      " from StockroomshortagesQ ss " +
                       " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
                       " where s1.OH > 0 " +
                       " AND color NOT IN ('blue','cyan') " +
@@ -251,6 +306,33 @@
 
         }
 
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'orange' " +
+                      " from StockroomshortagesQ ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH = 0 " +
+                      " AND OFS > 0" +
+                      " AND color NOT IN ('blue','cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        
         //purple IQC
 
         //orange  OFS
@@ -260,6 +342,32 @@
             cmd = new(" UPDATE ss " +
                       " SET color = 'purple' " +
                       " from Stockroomshortages ss " +
+                      " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OH = 0 " +
+                      " AND IQC > 0" +
+                      " AND color NOT IN ('blue', 'cyan') " +
+                      " AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
+        try
+        {
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'purple' " +
+                      " from StockroomshortagesQ ss " +
                       " inner join [Item_OH_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
                       " where s1.OH = 0 " +
                       " AND IQC > 0" +
@@ -315,6 +423,37 @@
 
         }
 
+        try
+        {
+            cmd = new("UPDATE StockroomShortagesQ set color = '' WHERE color = 'yellow' AND archived = 0 ", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+
+            cmd = new(" UPDATE ss " +
+                      " SET color = 'yellow' " +
+                      " from StockroomshortagesQ ss " +
+                      " inner join [Item_WO_Released_MID_OFS] s1 on s1.[Item No_] = ss.PartNo " +
+                      " where s1.OO > 0 " +
+                      " AND archived = 0 " +
+                      " AND ss.color NOT IN ('green','blue','cyan')", cnxn);
+
+
+            cmd.ExecuteNonQuery();
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
+
         //red third
 
         try
@@ -337,7 +476,25 @@
 
         }
 
+        try
+        {
+            cmd = new("UPDATE StockroomShortagesQ set color = 'red' WHERE LEN(COALESCE(color,'')) = 0 AND archived = 0 ", cnxn);
 
+
+            cmd.ExecuteNonQuery();
+
+
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+
+
+        }
         ////groups fourth
         //try
         //{
@@ -466,6 +623,13 @@
                 cmd = new SqlCommand("UPDATE StockroomShortages " +
                "SET [Quantity] = '" + UpQuantity.ToString() + "' " +
                "WHERE [ID] = '" + items[0].ToString() + "'", cnxn);
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+                cnxn.Close();
+
+                cmd = new SqlCommand("UPDATE StockroomShortagesQ " +
+              "SET [Quantity] = '" + UpQuantity.ToString() + "' " +
+              "WHERE [ID] = '" + items[0].ToString() + "'", cnxn);
                 cnxn.Open();
                 cmd.ExecuteNonQuery();
                 cnxn.Close();
