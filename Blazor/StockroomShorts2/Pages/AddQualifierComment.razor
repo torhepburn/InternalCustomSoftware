@@ -1,0 +1,60 @@
+﻿@page "/addqualifiercomment"
+
+
+@using StockroomShorts.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@inject Global g
+@inject NavigationManager NavMgr
+
+<EditForm Model="comment" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputTextArea id="n1" placeholder="Enter comment here" style="width: 25em; height:100%;margin-inline:20px" @bind-Value="comment" />
+        
+</EditForm>
+
+<button class="button-58" @onclick="DataEntry">Add Comment</button>
+
+
+
+@code
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+
+    public string comment = "";
+
+    public void DataEntry()
+    {
+        if(comment != "")
+        {
+            cnxn = new SqlConnection(g.db);
+
+            cmd = new("Insert into StockroomCommentsQ (ShortageID,Comment,EnteredOn) values ( " +
+                "'" + g.ShortageID + "'" +
+                ",'" + comment + "'" +
+                ",'" + DateTime.Now + "'" +
+                ")", cnxn);
+
+            try
+            {
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                ex.ToString();
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+
+            NavMgr.NavigateTo("editQualifiershortage", forceLoad: true);
+        }
+        
+    }
+}

@@ -1,0 +1,121 @@
+﻿@using StockroomShorts.Data
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+
+
+
+<div class="@TableStyle">
+    <table>
+        <thead>
+            <tr>
+                @for (int i = 0; i < n; i++)
+                {
+                    int index = i; // Create a local variable and assign it to i
+                    <th>
+                        <button @onclick="() => SortTable(index)">
+                            @dt.Columns[i]
+                            @if (isVisible[i])
+                            {
+                                <section class="sort-arrow-down @(isSortedDescending[i] ? "rotate" : "")"></section>
+                            }
+                        </button>
+                    </th>
+                }
+
+
+
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt.Rows.Count != 0)
+            {
+                @foreach (DataRow items in dt.Rows)
+                {
+                    <tr>
+                        @for (int i = 0; i < n; i++)
+                        {
+                            <td>@items[i].ToString()</td>
+                        }
+                    </tr>
+
+                }
+            }
+            else
+            {
+                <tr><td style="text-align:center">No comments yet</td><td></td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public DataTable? dt { get; set; }
+    [Parameter]
+    public string? TableStyle { get; set; }
+
+
+    public int currentColNum = 0;
+
+    private bool newBrowse = true;
+    int n;
+    private List<bool>? isSortedDescending;
+
+    private List<bool>? isVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //SqlConnection cnxn = new SqlConnection(Databases.db);
+        n = dt.Columns.Count;
+        if (n > 0)
+        {
+            isSortedDescending = Enumerable.Repeat(true, n - 1).ToList();
+            isSortedDescending.Insert(0, false);
+
+            isVisible = Enumerable.Repeat(false, n - 1).ToList();
+            isVisible.Insert(0, true);
+        }
+
+    }
+    public void SortTable(int columnNum, bool forceAsc = false)
+    {
+        currentColNum = columnNum;
+        string ascendingString = "ASC";
+        for (int i = 0; i < n; i++)
+        {
+            if (columnNum == i)
+            {
+                isVisible[i] = true;
+
+                if (isSortedDescending[i] | forceAsc)
+                {
+                    isSortedDescending[i] = false;
+                    ascendingString = "ASC";
+                }
+                else
+                {
+                    isSortedDescending[i] = true;
+                    ascendingString = "DESC";
+                }
+            }
+            else
+            {
+                isSortedDescending[i] = true;
+                isVisible[i] = false;
+            }
+        }
+
+        dt.DefaultView.Sort = dt.Columns[columnNum] + " " + ascendingString;
+        dt = dt.DefaultView.ToTable();
+        StateHasChanged();
+
+    }
+}
