@@ -8,50 +8,100 @@
 
 @using View_Low_Bins.Data
 
+@inject NavigationManager NavMgr
+@inject Global g
 
 <h1>View Low Bins</h1>
 
-<div>
+<table class="table-shortages">
+    <thead class="border border-dark">
+            <tr>
+            <th><div style="background-color:rgb(175,255,140)">On Hand</div></th>
+            <th><div style="background-color:rgb(0,255,255)">Inadequate Quantity</div></th>
+            <th><div style="background-color:rgb(255,255,140)">On Order</div></th>
+            <th><div style="background-color:rgb(255,109,106)">Not On Order/Not On Hand</div></th>
+            <th><div style="background-color:rgb(135,206,250)">Actively Searching</div></th>
+            <th><div style="background-color:rgb(255,187,51)">OFS (Offsite)</div></th>
+            <th><div style="background-color:rgb(213,128,255)">IQC (QC Inspection)</div></th>
+        </tr>
+    </thead>
+</table>
+<br />
+
+<div class="table-shortages" style="min-height:60px;border:solid 1px black;">
     <table>
-        <thead>
+        
+
             <tr>
                 <td>Date Entered</td>
                 <td>Item Number</td>
                 <td>Quantity on Hand</td>
                 <td>Stock Location</td>
+                <td>Full Bin Quantity</td>
             </tr>
             @*<tr>
                 @* th header for first column which contains the check boxes to be able to group
                 the rows - does not need a button as the others do to sort
-                *@
-               @* <th>Group</th>*@
-
-                @* loop to make each column heading a button to be able to sort *@
-                @*@for (int i = 1; i < n; i++)
-                {
-                    int index = i; // Create a local variable and assign it to i
-                    <th>
-                        <button @onclick="() => SortTable(index)">
-                            @dt.Columns[i]
-                            @if (isVisible[i])
-                            {
-                                <section class="sort-arrow-down @(isSortedDescending[i] ? "rotate" : "")"></section>
-                            }
-                        </button>
-                    </th>
-                }*@
-            @*</tr>*@
-        </thead>
-        <tbody>
+                
+              
+            </tr>*@
+        
+        <tbody class="border border-dark">
             @foreach (DataRow r in dt.Rows)
             {
-                <tr>
-               @* <tr @onclick="() => Select(r[0].ToString())">*@
-                    <td style ="width:180px">@r[0].ToString()</td>
-                            <td style="width:150px">@r[1].ToString()</td>
+                string green = "rgb(175,255,140)";
+                string yellow = "rgb(255, 255, 140)";
+                string red = "rgb(255,109,106)";
+                string blue = "rgb(135,206,250)";
+                string orange = "rgb(255,187,51)";
+                string purple = "rgb(213,128,255)";
+                string cyan = "rgb(0,255,255)";
+                string color = "white";
+                string status = "None";
+
+                if (r[7].ToString().Trim() == "green")
+                {
+                    color = green;
+
+                    status = "OH";
+                }
+                else if (r[7].ToString().Trim() == "yellow")
+                {
+                    color = yellow;
+                    status = "OO";
+                }
+                else if (r[7].ToString().Trim() == "red")
+                {
+                    color = red;
+                    status = "NOO/NOH";
+                }
+                else if (r[7].ToString().Trim() == "blue")
+                {
+                    color = blue;
+                    status = "AS";
+                }
+                else if (r[7].ToString().Trim() == "orange")
+                {
+                    color = orange;
+                    status = "OFS";
+                }
+                else if (r[7].ToString().Trim() == "purple")
+                {
+                    color = purple;
+                    status = "IQC";
+                }
+                else if (r[7].ToString().Trim() == "cyan")
+                {
+                    color = cyan;
+                    status = "IQ/HP";
+                }
+
+                <tr style="background-color:@color" @onclick="() => Select(r[0].ToString())">
+                            <td style ="width:180px">@r[1].ToString()</td>
                             <td style="width:150px">@r[2].ToString()</td>
                             <td style="width:150px">@r[3].ToString()</td>
-                            @*<td style="width:150px">@r[3].ToString()</td>*@
+                            <td style="width:250px">@r[4].ToString()</td>
+                            <td style="width:100px">@r[5].ToString()</td>
                             @*<td style="width:150px">@r[5].ToString()</td>
                             <td style="width:150px">@r[6].ToString()</td>
                             @*<td style="width:150px">@r[7].ToString()</td>
@@ -60,80 +110,85 @@
                             <td>@r[10].ToString()</td>
                             <td>@r[11].ToString()</td>*@
                         
-                        </tr>
+                </tr>
+               
             }
             @*
             @if (dt != null)
-            {
-                int count = -1;
-                @foreach (DataRow items in dt.Rows)
-                {
-                    string green = "rgb(175,255,140)";
-                    string yellow = "rgb(255, 255, 140)";
-                    string red = "rgb(255,109,106)";
-                    string blue = "rgb(135,206,250)";
-                    string orange = "rgb(255,187,51)";
-                    string purple = "rgb(213,128,255)";
-                    string cyan = "rgb(0,255,255)";
-                    string color = "white";
-                    string status = "None";
-
-                    @* items[16] is the column of the datatable which contains the name
-            of the color from the stockroomshortages table
-            
-
-                    if (items[16].ToString() == "green")
                     {
-                        color = green;
-                        status = "OH";
-                    }
-                    else if (items[16].ToString() == "yellow")
-                    {
-                        color = yellow;
-                        status = "OO";
-                    }
-                    else if (items[16].ToString() == "red")
-                    {
-                        color = red;
-                        status = "NOO/NOH";
-                    }
-                    else if (items[16].ToString() == "blue")
-                    {
-                        color = blue;
-                        status = "AS";
-                    }
-                    else if (items[16].ToString() == "orange")
-                    {
-                        color = orange;
-                        status = "OFS";
-                    }
-                    else if (items[16].ToString() == "purple")
-                    {
-                        color = purple;
-                        status = "IQC";
-                    }
-                    else if (items[16].ToString() == "cyan")
-                    {
-                        color = cyan;
-                        status = "IQ/HP";
-                    }
-
-                    <tr style="background-color:@color">
-
-                        @*<td style="width:1%"><input style="transform: scale(2)" type="checkbox" @bind-value=@checkboxList[dt.Rows.IndexOf(items)] /></td>*@
-                      @*  @for (int i = 1; i < n - 1; i++)
+                        int count = -1;
+                        @foreach (DataRow items in dt.Rows)
                         {
-                            <td @onclick="() => Select(items[0].ToString())">@items[i].ToString()</td>
-                            if (i == (n - 2))
+                            string green = "rgb(175,255,140)";
+                            string yellow = "rgb(255, 255, 140)";
+                            string red = "rgb(255,109,106)";
+                            string blue = "rgb(135,206,250)";
+                            string orange = "rgb(255,187,51)";
+                            string purple = "rgb(213,128,255)";
+                            string cyan = "rgb(0,255,255)";
+                            string color = "white";
+                            string status = "None";
+
+                            string bgstyle = "";
+                            string bgclass = "";
+
+                            @* items[7] is the column of the datatable which contains the name
+                               of the color from the stockroomlowbins table*@
+
+                            @*if (items[7].ToString().Trim() == "green")
                             {
-                                <td @onclick="() => Select(items[0].ToString())">@status</td>
+                                color = green;
+                                bgstyle = color;
+                                status = "OH";
                             }
+                            else if (items[7].ToString() == "yellow")
+                            {
+                                color = yellow;
+                                status = "OO";
+                            }
+                            else if (items[7].ToString() == "red")
+                            {
+                                color = red;
+                                status = "NOO/NOH";
+                            }
+                            else if (items[7].ToString() == "blue")
+                            {
+                                color = blue;
+                                status = "AS";
+                            }
+                            else if (items[7].ToString() == "orange")
+                            {
+                                color = orange;
+                                status = "OFS";
+                            }
+                            else if (items[7].ToString() == "purple")
+                            {
+                                color = purple;
+                                status = "IQC";
+                            }
+                            else if (items[7].ToString() == "cyan")
+                            {
+                                @*color = cyan;
+                                 status = "IQ/HP";
+                            }
+
+                    <tr style="background-color:rgb(175,255,140)">
+                               
+
+                                <td style="width:1%"><input style="transform: scale(2)" type="checkbox" @bind-value=@checkboxList[dt.Rows.IndexOf(items)] /></td>
+                                @for (int i = 1; i < n - 1; i++)
+                                {
+                                    <td @onclick="() => Select(items[0].ToString())">@items[i].ToString()</td>
+                                    if (i == (n - 2))
+                                    {
+                                        <td @onclick="() => Select(items[0].ToString())">@status</td>
+                                    }
+                                }
+
+                            </tr>
+
                         }
-
-                    </tr>*@
-
-                
-
+                    }*@
            
         </tbody>
     </table>
@@ -146,14 +201,14 @@
 
 @code
 {
-    Global g = new Global();
-
     SqlCommand cmd;
     SqlConnection cnxn;
     SqlDataReader dr;
     DataTable dt;
 
     int n;
+
+    public List<bool> checkboxList = new List<bool>();
 
     protected override void OnInitialized()
     {
@@ -162,13 +217,17 @@
         dt = new DataTable();
 
         cmd = new("SELECT " +
-                  " EnteredOn " +
+                  " ID " +
+                  ",EnteredOn " +
                   ",PartNo " +
                   ",QuantityOnHand " +
-                  //",Location " +
                   ",StockLocation " +
-
-        " FROM StockroomLowBins", cnxn);
+                  ",FullBinQuantity " +
+                  ",BothBinsOut " +
+                  ",Color " +
+                  " FROM StockroomLowBins "+
+                  " WHERE Archived = 0 " +
+                  " ORDER BY EnteredOn ", cnxn);
 
         try
         {
@@ -185,6 +244,12 @@
             cnxn.Close();
         }
 
+    }
+
+    private void Select(string id)
+    {
+        g.ID = id;
+        NavMgr.NavigateTo("editdata");
     }
 
 }

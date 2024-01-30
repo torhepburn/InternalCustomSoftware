@@ -1,0 +1,286 @@
+﻿@page "/editdata"
+
+<PageTitle>Edit Data</PageTitle>
+
+@using View_Low_Bins.Data
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+
+<h1>Edit Data</h1>
+
+<div style="display:flex;justify-content:center">
+<EditForm Model="formX" OnValidSubmit="DataEntry">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+        <table style="box-shadow: .5px .5px 3px red;">
+        <tbody>
+            <tr>
+                <td align="right">
+                   <label style="width:100%">Entered On :</label>
+                    <InputText id="n8" @bind-Value="enteredOn" />
+                </td>
+                <td align="right">
+
+                        <label style="width:100%">Bin Code :</label>
+                    <InputText id="n9"  @bind-Value="binCode" /> 
+                </td>
+               @* <td align="right">
+                        <label style="width:100%">Stockroom Associate :</label>
+
+                    <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="storekeeper" />
+                </td>*@
+            </tr>
+            <tr>
+                <td align="right">
+
+                        <label style="width:100%">Item Number :</label>
+                    <InputText id="n11" @bind-Value="item" />
+                </td>
+                <td align="right">
+                        <label style="width:100%">Full Bin Quantity :</label>
+
+                    <InputText id="n12" p @bind-Value="fullBinQuantity" />
+                </td>
+                <td align="right">
+                        <label style="width:100%">Location :</label>
+
+                    <InputText id="n13" @bind-Value="location" />
+                </td>
+                    <td align="right">
+                        <label style="width:100%">Color :</label>
+
+                        <InputText id="n13" @bind-Value="color" />
+                    </td>
+            </tr>
+        </tbody>
+    </table>
+
+</EditForm>
+
+<br />
+
+</div>
+<br />
+<div style="display:flex;justify-content:center">
+    <button class="button-58" style="margin-right:40px" @onclick="DataEntry">Save Data</button>
+
+    <button class="button-58" @onclick="Archive">Archive</button>
+</div>
+
+
+
+
+@code 
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+    DataTable dtc;
+
+    //Global g = new Global();
+
+    public string enteredOn = "";
+    public string fullBinQuantity = "";
+    public string job = "";
+    public string jobreference = "";
+    public string item = "";
+    public string partdescription = "";
+    public string quantity = "";
+    public string location = "";
+    public string binCode = "";
+    public string storekeeper = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
+    public string color = "";
+    public string status = "";
+
+
+    string formX = "";
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand("SELECT " +
+                " ID " +                                                //0
+                ", COALESCE(FORMAT([EnteredOn], 'MM/dd/yy'),'') " +     //1
+                ", COALESCE(FullBinQuantity, 0) " +                                 //2
+                ", COALESCE(PartNo, '') " +                             //3
+                ", COALESCE(PartDescription, '') " +                    //4
+                                                                        //", COALESCE(WOLine, '') " +                             //5
+                                                                        //", COALESCE(JobDescription, '') " +                     //6
+                                                                        //", COALESCE(JobReference, '') " +                       //7
+                                                                        //", COALESCE(QuantityOnHand, 0) " +                            //8
+                ", COALESCE(Stocklocation, '') " +                      //9
+                                                                        ////", COALESCE(CostCenter, '') " +                         //10
+                                                                        ////", COALESCE(StockRoomAssociate,'') " +                  //11
+                                                                        ////", COALESCE(Planner, '') " +                            //12
+                                                                        ////", COALESCE([DueDate], '') " +                          //13
+                ", COALESCE(Location, '') " +                           //14
+                ", Color " +                                            //15
+                " from StockroomLowBins WHERE ID = '" + g.ID + "' " +
+                " AND Archived = 0 " 
+                 //"ORDER BY [EnteredOn] DESC, [WO], [WOline], ComponentLine"
+                 , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                enteredOn = dr.GetString(1);
+                fullBinQuantity = dr.GetInt32(2).ToString();
+                item = dr.GetString(3);
+                partdescription = dr.GetString(4);
+                binCode = dr.GetString(5);
+                location = dr.GetString(6);
+                //storekeeper = dr.GetString(11);
+                //costcenter = dr.GetString(10);
+                //planner = dr.GetString(12);
+                //duedate = dr.GetString(13);
+                //woline = dr.GetInt32(5).ToString();
+                //job = dr.GetString(6);
+                //jobreference = dr.GetString(7);
+                //quantity = dr.GetInt32(8).ToString();
+                color = dr.IsDBNull(7) ? "white" : dr.GetString(7);
+            }
+
+            g.item = item;
+
+            //dr = cmd.ExecuteReader();
+            //dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+        color = color.Trim();
+        if (color == "green")
+        {
+            status = "On Hand";
+        }
+        else if (color == "yellow")
+        {
+            status = "On Order";
+        }
+        else if (color == "red")
+        {
+            status = "Not On Order/Not On Hand";
+        }
+        else if (color == "blue")
+        {
+            status = "Actively Searching";
+        }
+        else if (color == "orange")
+        {
+            status = "OFS";
+        }
+        else if (color == "purple")
+        {
+            status = "IQC";
+        }
+        else if (color == "cyan")
+        {
+            status = "IQ/HP";
+        }
+
+
+        //dtc = new DataTable();
+
+        //cmd = new SqlCommand("SELECT " +
+        //        "COALESCE(Comment, '') as [Comment] " +
+        //        ",[EnteredOn] " +
+        //        " from StockroomComments WHERE ShortageID = '" + g.ShortageID + "' " +
+        //        "ORDER BY [EnteredOn] DESC", cnxn);
+
+        //try
+        //{
+        //    cnxn.Open();
+        //    dr = cmd.ExecuteReader();
+
+        //    dtc.Load(dr);
+        //}
+        //catch (SqlException ex)
+        //{
+        //    ex.ToString();
+        //}
+        //finally
+        //{
+        //    cnxn.Close();
+        //}
+
+        //_dateSample.ddate = DateTime.Now;
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomLowBinsAppendix " +
+                    "SET [FullBinQuantity] = '" + fullBinQuantity + "'" +
+                    "WHERE PartNo = '" + g.item + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("index");
+    }
+
+
+    public void Archive()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomLowBins " +
+                    "SET [Archived] = 1 " +
+                    "WHERE ID = '" + g.ID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("index");
+    }
+
+    
+}

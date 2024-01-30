@@ -12,6 +12,8 @@
 
         public string? exportFile { get; set; }
 
+        public string? ID { get; set; }
 
+        public string? item { get; set; }
     }
 }
