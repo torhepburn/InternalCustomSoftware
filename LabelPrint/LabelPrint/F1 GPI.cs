@@ -58,9 +58,9 @@ namespace LabelPrint
             {
                 cnxn.Open();
                 da = new SqlDataAdapter(
-                    "SELECT ItemNo, [Description], BinNumber, [Bin Code], FullQuantity FROM StockroomLowBinsAppendix " +
+                    "SELECT PartNo, [Description], BinNumber, [Bin Code], FullQuantity FROM StockroomLowBinsAppendix " +
                     "WHERE LEN(Description) > 0 " +
-                    "ORDER BY ItemNo"
+                    "ORDER BY PartNo"
                     , cnxn);
                 table = new DataTable();
                 da.Fill(table);
@@ -114,10 +114,10 @@ namespace LabelPrint
         {
             cnxn = new SqlConnection(g.db);
             da = new SqlDataAdapter
-                ("SELECT ItemNo, [Description] FROM StockroomLowBinsAppendix " +
+                ("SELECT PartNo, [Description] FROM StockroomLowBinsAppendix " +
                  " where ItemNo LIKE '%" + tbSearchPartNumber.Text + "%' " +
                  "or [Description] like '%" + tbSearchPartNumber.Text + "%' " +
-                 " order by ItemNo ", cnxn);
+                 " order by PartNo ", cnxn);
             DataTable table = new DataTable();
             da.Fill(table);
             DGV.DataSource = table;
@@ -128,8 +128,8 @@ namespace LabelPrint
             g.item = tbSearchPartNumber.Text.ToString().Trim().ToUpper();
             tbSearchPartNumber.Text = "";
             SqlCommand cmd = new SqlCommand(
-                "SELECT ItemNo FROM StockroomLowBinsAppendix " +
-                "where ItemNo = '" + g.item + "'");
+                "SELECT PartNo FROM StockroomLowBinsAppendix " +
+                "where PartNo = '" + g.item + "'");
             cnxn = new SqlConnection(g.db);
             cmd.Connection = cnxn;
             cnxn.Open();
@@ -144,8 +144,8 @@ namespace LabelPrint
                 cnxn = new SqlConnection(g.db);
                 cnxn.Open();
                 da = new SqlDataAdapter(
-                    "SELECT ItemNo, [Description], BinNumber, [Bin Code], FullQuantity FROM StockroomLowBinsAppendix " +
-                    "where ItemNo = '" + g.item + "'", cnxn);
+                    "SELECT PartNo, [Description], BinNumber, [Bin Code], FullQuantity FROM StockroomLowBinsAppendix " +
+                    "where PartNo = '" + g.item + "'", cnxn);
                 DataTable table2 = new System.Data.DataTable();
                 da.Fill(table2);
                 gpi.item = table2.Rows[0].ItemArray[0].ToString().Trim();
