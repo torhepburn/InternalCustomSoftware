@@ -12,12 +12,18 @@
 
 
 <h1>Edit Data</h1>
-
+<div>
+<br />
+Only Edit Full Bin Quantity, Archive, and Actively Searching are currently functional.
+<br />
+<br />
+<br />
+</div>
 <div style="display:flex;justify-content:center">
 <EditForm Model="formX" OnValidSubmit="DataEntry">
     <DataAnnotationsValidator />
     <ValidationSummary />
-        <table style="box-shadow: .5px .5px 3px red;">
+        <table >
         <tbody>
             <tr>
                 <td align="right">
@@ -69,7 +75,11 @@
 <div style="display:flex;justify-content:center">
     <button class="button-58" style="margin-right:40px" @onclick="DataEntry">Save Data</button>
 
-    <button class="button-58" @onclick="Archive">Archive</button>
+    <button class="button-58" style="margin-right:40px"@onclick="Archive">Archive</button>
+
+    <button class="button-58" style="margin-right:40px" @onclick="Searching">Actively Searching for Part</button>
+
+    <button class="button-58" style="margin-right:40px" @onclick="StopSearching">No Longer Searching for Part</button>
 </div>
 
 
@@ -234,6 +244,27 @@
         cnxn = new SqlConnection(g.db);
 
         cmd = new("UPDATE StockroomLowBinsAppendix " +
+                    "SET [FullQuantity] = '" + fullBinQuantity + "'" +
+                    "WHERE PartNo = '" + g.item + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomLowBins " +
                     "SET [FullBinQuantity] = '" + fullBinQuantity + "'" +
                     "WHERE PartNo = '" + g.item + "'"
                     , cnxn);
@@ -282,5 +313,56 @@
         NavMgr.NavigateTo("index");
     }
 
+    public void Searching()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomLowBins " +
+                    "SET [Color] = 'blue' " +
+                    "WHERE ID = '" + g.ID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("index");
+    }
     
+    public void StopSearching()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("UPDATE StockroomLowBins " +
+                    "SET [Color] = '' " +
+                    "WHERE ID = '" + g.ID + "'"
+                    , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("index");
+    }
+
 }
