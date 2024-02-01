@@ -5,6 +5,9 @@
 @using Microsoft.Data.SqlClient
 @using System.Data
 
+@inject NavigationManager NavMgr
+@inject FormModel f
+
 <PageTitle>Index</PageTitle>
 
 <h1>Report low or empty bin</h1>
@@ -12,7 +15,7 @@
     <div style="display:flex;justify-content:center">
   
    
-    <EditForm Model=@f OnValidSubmit="@DataEntry">
+    <EditForm Model=@w OnValidSubmit="@DataEntry">
         <DataAnnotationsValidator />
 
     
@@ -25,13 +28,13 @@
             Scan Item Number or type part number and hit enter:
             <div>
               
-        <InputText style="width: 70%" @bind-Value="f.item" @onfocus="InputOnFocus" />
+        <InputText style="width: 70%" @bind-Value="f.item" />
         <ValidationMessage For="() => f.item" style="display:inline" />
         @*<h1><label style="color:red">@successLabel</label></h1>*@
     </div>
-     
-
         </EditForm>
+
+
 </div>
 
 </div>
@@ -83,7 +86,8 @@
 
 @code
 {
-    private FormModel f = new FormModel();
+    //private FormModel f = new FormModel();
+    string w = "";
     SqlCommand cmd;
     SqlConnection cnxn;
     SqlDataReader dr;
@@ -156,7 +160,7 @@
                             "SET FullBinQuantity =  a.FullQuantity " +
                             ",PartDescription = a.Description " +
                             ",Location = a.[Location Code] " +
-                            "FROM StockroomLowBins l INNER JOIN StockroomLowBinsAppendix a ON l.PartNo = a.itemNo " +
+                            "FROM StockroomLowBins l INNER JOIN StockroomLowBinsAppendix a ON l.PartNo = a.partNo " +
                             "AND l.StockLocation = a.[Bin Code] " +
                             "WHERE PartNo = '" + dr.GetString(0).Trim() + "'", cnxn1 );
 
@@ -185,10 +189,34 @@
             successLabel = "Data ENTERED.";
         }
 
+        SqlConnection cnxn2 = new SqlConnection(f.db);
+
+        cmd = new("SELECT partno from StockroomLowBinsAppendix where partno = '" + f.item + "'", cnxn2);
+
+        try
+        {
+            cnxn2.Open();
+            object o = cmd.ExecuteScalar();
+
+            if (o is null)
+            {
+                f.inTable = false;
+                NavMgr.NavigateTo("EditBinContent");
+            }
 
 
+                }
+                catch (SqlException ex)
+                {
+                    ex.ToString();
+                }
+                finally
+                {
+                    cnxn2.Close();
+                }
 
-        f.item = string.Empty;
+
+        //f.item = string.Empty;
         cbBBO = false;
         //f.workOrder = string.Empty;*/
     }

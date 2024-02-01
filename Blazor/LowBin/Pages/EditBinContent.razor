@@ -1,13 +1,15 @@
-﻿@page "/fetchdata"
+﻿@page "/editbincontent"
 
 <PageTitle>Edit Bin Contents Fields</PageTitle>
 
 @using LowBin.Data
 @using Microsoft.Data.SqlClient
-@inject FormModel g
+@using System.Data
+
+@inject FormModel f
 
 <h1>Edit Fields</h1>
-
+<br />
 <EditForm Model="model">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -15,8 +17,15 @@
         <tbody>
             <tr>
                 <td align="right">
+                    Part Number :
+                    <InputText id="n10" @bind-Value="f.item" />
+                </td>
+            </tr>
+
+            <tr>
+                <td align="right">
                     Full Quantity :
-                    <InputText id="n10" @bind-Value="g.FullQty" />
+                    <InputText id="n10" @bind-Value="f.FullQty" />
                 </td>
             </tr>
             @*<tr>
@@ -36,13 +45,174 @@
     </table>
 
 </EditForm>
-
+<br />
+<br />
+<button class="btn btn-primary" @onclick="DataEntry">Save Data</button>
 
 
 @code 
 {
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
     public string model = "";
 
+
+    protected override void OnInitialized()
+    {
+        if(f.inTable)
+        {
+            cnxn = new SqlConnection(f.db);
+            cmd = new("SELECT FullQuantity FROM StockroomLowBinsAppendix WHERE PartNo = '" + f.item + "'", cnxn);
+            cnxn.Open();
+            object oo = cmd.ExecuteScalar();
+            f.FullQty = oo.ToString();
+            cnxn.Close();
+        }
+        else
+        {
+            cnxn = new SqlConnection(f.dbNAV);
+
+            cmd = new("SELECT " +
+                      "i.No_ " +
+                      ",[Description] " +
+                      ",b.[Bin Code] " +
+                      ",b.[Location Code] " +
+                      "FROM [ZYGO$Bin Content] b " +
+                      "INNER JOIN ZYGO$Item i ON b.[Item No_] = i.No_ " +
+                      " WHERE i.No_ = '" + f.item + "'", cnxn);
+
+            DataTable dt = new DataTable();
+
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
+
+            if (dt.Rows.Count == 0)
+            {
+                //should show a popup
+            }
+            else
+            {
+                dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    SqlConnection cnxn1 = new SqlConnection(f.db);
+
+                    cmd = new("INSERT INTO StockroomLowBinsAppendix (" +
+                        " PartNo " +
+                        ",Description " +
+                        ",[Bin Code] " +
+                        ",[Location Code] " +
+                        ") values (" +
+                        "'" + dr.GetString(0).Trim() + "'" +
+                        ",'" + dr.GetString(1).ToString().Trim() + "'" +
+                        ",'" + dr.GetString(2).Trim() + "'" +
+                        ",'" + dr.GetString(3).Trim() + "'" +
+                        ")", cnxn1);
+                    try
+                    {
+                        cnxn1.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (SqlException ex)
+                    {
+                        ex.ToString();
+                    }
+                    finally
+                    {
+                        cnxn1.Close();
+                    }
+
+                }
+
+
+            }
+            cnxn.Close();
+        }
+    }
+
+    public void DataEntry()
+    {
+        SqlConnection cnxn = new SqlConnection(f.db);
+
+        cmd = new("UPDATE StockroomLowBinsAppendix " +
+            " SET FullQuantity = " + f.FullQty + 
+            " WHERE PartNo = '" + f.item + "'"         
+            , cnxn);
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+
+        //try
+        //{
+        //    SqlDataReader drL1;
+        //    SqlConnection cnxnL1 = new SqlConnection(f.db);
+        //    cnxnL1.Open();
+        //    //drL1 = cmd.ExecuteReader();
+        //    //dt.Load(dr);
+
+        //    drL1 = cmd.ExecuteReader();
+
+        //    while (drL1.Read())
+        //    {
+            
+                cmd = new(
+                            "UPDATE StockroomLowBins " +
+                            "SET FullBinQuantity =  a.FullQuantity " +
+                            ",PartDescription = a.Description " +
+                            ",Location = a.[Location Code] " +
+                            "FROM StockroomLowBins l INNER JOIN StockroomLowBinsAppendix a ON l.PartNo = a.itemNo " +
+                            "AND l.StockLocation = a.[Bin Code] " +
+                            "WHERE PartNo = '" + f.item + "'", cnxn);
+
+                try
+                {
+                    cnxn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    ex.ToString();
+                }
+                finally
+                {
+                    cnxn.Close();
+                }
+            //}
+        //}
+        //catch (SqlException ex)
+        //{
+        //    ex.ToString();
+        //}
+        //finally
+        //{
+        //    cnxn.Close();
+            
+        //}
+
+
+
+
+        f.FullQty = string.Empty;
+        
+        //f.workOrder = string.Empty;*/
+    }
 
 
 }

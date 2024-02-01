@@ -1,0 +1,77 @@
+﻿@page "/selectpartnumber"
+
+@using LowBin.Data
+@using Microsoft.Data.SqlClient
+
+@inject NavigationManager NavMgr
+@inject FormModel f
+
+<PageTitle>Select Part Number</PageTitle>
+
+<h1>Select Part Number</h1>
+
+<EditForm Model="model">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table>
+        <tbody>
+            <tr>
+                <td align="right">
+                    Part Number :
+                    <InputText id="n10" @bind-Value="f.item" />
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+</EditForm>
+<br />
+<br />
+
+<button class="btn btn-primary" @onclick="Select">Enter Data</button>
+
+@code 
+{
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+
+
+    public string model = "";
+
+
+    private void Select()
+    {
+        SqlConnection cnxn2 = new SqlConnection(f.db);
+
+        cmd = new("SELECT partno from StockroomLowBinsAppendix where partno = '" + f.item + "'", cnxn2);
+
+        try
+        {
+            cnxn2.Open();
+            object o = cmd.ExecuteScalar();
+
+            if (o is null)
+            {
+                f.inTable = false;
+                NavMgr.NavigateTo("EditBinContent");
+            }
+            else
+            {
+                f.inTable = true;
+                NavMgr.NavigateTo("EditBinContent");
+            }
+
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn2.Close();
+        }
+    }
+
+}
