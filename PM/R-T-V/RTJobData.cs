@@ -247,7 +247,13 @@ namespace R_T_V
 
             SqlParameter pDesignReview4 = new SqlParameter("@DesignReview4", SqlDbType.VarChar, 50);
             pDesignReview4.Value = tbDesignReview4.Text.Trim();
-            
+
+            SqlParameter pDeliverTo = new SqlParameter("@DeliverTo", SqlDbType.VarChar, 100);
+            pDeliverTo.Value = tbDeliverTo.Text.Trim();
+
+            SqlParameter pProjectChargeNumber = new SqlParameter("@ProjectchargeNumber", SqlDbType.VarChar, 50);
+            pProjectChargeNumber.Value = tbProjectChargeNumber.Text.Trim();
+
             SqlParameter pCompletiondDate = new SqlParameter("@completionDate", SqlDbType.Date);
             if (dtpCompletionDate.Checked)
             {
@@ -281,6 +287,8 @@ namespace R_T_V
                     ",DesignReview2 = " + pDesignReview2 +
                     ",DesignReview3 = " + pDesignReview3 +
                     ",DesignReview4 = " + pDesignReview4 +
+                    ",DeliverTo = " + pDeliverTo +
+                    ",Project_Charge_Number = " + pProjectChargeNumber +
                     " WHERE ID = " + g.ID + " ", cnxn); ;
 
                 cnxn.Open();
@@ -298,6 +306,8 @@ namespace R_T_V
                 cmd.Parameters.Add(pDesignReview2);
                 cmd.Parameters.Add(pDesignReview3);
                 cmd.Parameters.Add(pDesignReview4);
+                cmd.Parameters.Add(pDeliverTo);
+                cmd.Parameters.Add(pProjectChargeNumber);
 
                 cmd.ExecuteNonQuery();
             }
@@ -526,6 +536,8 @@ namespace R_T_V
                ",DesignReview3 " +
                ",DesignReview4 " +
                ",Requestor_email " +
+               ",DeliverTo " +
+               ",Project_Charge_Number " +
                 "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
 
@@ -660,6 +672,14 @@ namespace R_T_V
                 if (table.Rows[0][23].ToString().Length > 0)
                 {
                     requestor_Email = table.Rows[0][23].ToString();
+                }
+                if (table.Rows[0][24].ToString().Length > 0)
+                {
+                    tbDeliverTo.Text = table.Rows[0][24].ToString();
+                }
+                if (table.Rows[0][25].ToString().Length > 0)
+                {
+                    tbProjectChargeNumber.Text = table.Rows[0][25].ToString();
                 }
             }
             catch (SqlException ex)

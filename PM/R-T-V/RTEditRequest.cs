@@ -99,7 +99,7 @@ namespace R_T_V
             pPriority.Value = cbddPriority.Text.Trim(); ;
 
             SqlParameter pExistingTool = new SqlParameter("@ExistingTool", SqlDbType.VarChar, 50);
-            pExistingTool.Value = tbToolToModify.Text.Trim();
+            pExistingTool.Value = tbExistingTool.Text.Trim();
 
             SqlParameter pMachineNumber = new SqlParameter("@MachineNumber", SqlDbType.VarChar, 50);
             pMachineNumber.Value = tbMachineNumber.Text.Trim();
@@ -121,9 +121,23 @@ namespace R_T_V
             SqlParameter pOpticDrawingPath = new SqlParameter("@OpticDrawingPath", SqlDbType.VarChar, 200);
             pOpticDrawingPath.Value = tbOpticDrawing_Path.Text.Trim();
 
-            
+            SqlParameter pToolDrawingPath = new SqlParameter("@ToolDrawingPath", SqlDbType.VarChar, 200);
+            pToolDrawingPath.Value = tbToolDrawingPath.Text.Trim();
 
+            SqlParameter pPart = new SqlParameter("@Part", SqlDbType.VarChar, 50);
+            pPart.Value = tbPart.Text.Trim();
 
+            SqlParameter pOpticPart = new SqlParameter("@opticPart", SqlDbType.VarChar, 50);
+            pOpticPart.Value = tbOpticPartNumber.Text.Trim();
+
+            SqlParameter pFinish = new SqlParameter("@finish", SqlDbType.VarChar, 50);
+            pFinish.Value = tbFinishing.Text.Trim();
+
+            SqlParameter pMaterials = new SqlParameter("@Materials", SqlDbType.VarChar, 100);
+            pMaterials.Value = tbMaterials.Text.Trim();
+
+            SqlParameter pDepartment = new SqlParameter("@Department", SqlDbType.VarChar, 100);
+            pDepartment.Value = cbddDepartment.Text.Trim();
 
             SqlParameter pRequiredDate = new SqlParameter("@requiredDate", SqlDbType.Date);
 
@@ -151,6 +165,12 @@ namespace R_T_V
                     ",AdditionalInformation = " + pAdditionalInformation +
                     ",FocalSurface = " + pFocalSurface +
                     ",OpticDrawing_Path = " + pOpticDrawingPath +
+                    ",ToolDrawingPath = " + pToolDrawingPath +
+                    ",Part = " + pPart +
+                    ",OpticPart = " + pOpticPart +
+                    ",Finish = " + pFinish +
+                    ",Materials = " + pMaterials +
+                    ",Department = " + pDepartment +
                     " WHERE ID = " + g.ID, cnxn);
 
             cmd.Parameters.Add(pProject);
@@ -163,8 +183,13 @@ namespace R_T_V
             cmd.Parameters.Add(pAdditionalInformation);
             cmd.Parameters.Add(pFocalSurface);
             cmd.Parameters.Add(pOpticDrawingPath);
+            cmd.Parameters.Add(pToolDrawingPath);
             cmd.Parameters.Add(pRequiredDate);
-            
+            cmd.Parameters.Add(pPart);
+            cmd.Parameters.Add(pOpticPart);
+            cmd.Parameters.Add(pFinish);
+            cmd.Parameters.Add(pMaterials);
+            cmd.Parameters.Add(pDepartment);
 
             try
             {
@@ -208,6 +233,11 @@ namespace R_T_V
                 ",DesignReview3 " +
                 ",DesignReview4 " +
                 ",TechnicalContactName " +
+                ",part " +
+                ",OpticPart " +
+                ",Department " +
+                ",Materials " +
+                ",ToolDrawingPath " +
                 "from RIC.designrequests where " +
                 "id = " + g.ID + " ", cnxn);
 
@@ -223,7 +253,7 @@ namespace R_T_V
                     cbddProjectChargeNumber.Text = table.Rows[0][2].ToString();
                     cbddPriority.Text = table.Rows[0][3].ToString();
                     dtpDateNeeded.Text = table.Rows[0][4].ToString();
-                    tbToolToModify.Text = table.Rows[0][5].ToString();
+                    tbToolDrawingPath.Text = table.Rows[0][22].ToString();
                     tbMachineNumber.Text = table.Rows[0][6].ToString();
                     tbQuantity.Text = table.Rows[0][7].ToString();
                     tbToolRequirements.Text = table.Rows[0][8].ToString();
@@ -233,6 +263,13 @@ namespace R_T_V
                     tbOpticDrawing_Path.Text = table.Rows[0][12].ToString();
                     
                     tbTechnicalContact.Text = table.Rows[0][17].ToString();
+
+                    tbPart.Text = table.Rows[0][18].ToString();
+                    tbOpticPartNumber.Text = table.Rows[0][19].ToString();
+                    cbddDepartment.Text = table.Rows[0][20].ToString();
+                    tbMaterials.Text = table.Rows[0][21].ToString();
+                    tbFinishing.Text = table.Rows[0][10].ToString();
+                    tbExistingTool.Text = table.Rows[0][5].ToString();
                 }
             }
             catch (SqlException ex)

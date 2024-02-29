@@ -132,11 +132,11 @@ namespace R_T_V
             "IBF",
             "METROLOGY",
             "CNC",
-            "Work Cell",
+            "WorkCell",
             "QC",
             "ASSEMBLY",
             "ENGINEERING",
-            "SMALL OPTICS",
+            "SmallOptics",
             "Other"});
             this.cbddDepartment.Location = new System.Drawing.Point(210, 229);
             this.cbddDepartment.Name = "cbddDepartment";

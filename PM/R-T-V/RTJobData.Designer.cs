@@ -78,6 +78,10 @@ namespace R_T_V
             this.bEmailBoth = new System.Windows.Forms.Button();
             this.label16 = new System.Windows.Forms.Label();
             this.tbTechnicalContactEmail = new System.Windows.Forms.TextBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.tbDeliverTo = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.tbProjectChargeNumber = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
@@ -182,7 +186,7 @@ namespace R_T_V
             // 
             this.Breject.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(200)))), ((int)(((byte)(100)))));
             this.Breject.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Breject.Location = new System.Drawing.Point(246, 658);
+            this.Breject.Location = new System.Drawing.Point(246, 679);
             this.Breject.Name = "Breject";
             this.Breject.Size = new System.Drawing.Size(150, 50);
             this.Breject.TabIndex = 19;
@@ -194,7 +198,7 @@ namespace R_T_V
             // 
             this.Bexit.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.Bexit.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Bexit.Location = new System.Drawing.Point(425, 658);
+            this.Bexit.Location = new System.Drawing.Point(420, 679);
             this.Bexit.Name = "Bexit";
             this.Bexit.Size = new System.Drawing.Size(150, 50);
             this.Bexit.TabIndex = 18;
@@ -206,7 +210,7 @@ namespace R_T_V
             // 
             this.Benter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(150)))), ((int)(((byte)(240)))));
             this.Benter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.Benter.Location = new System.Drawing.Point(65, 658);
+            this.Benter.Location = new System.Drawing.Point(60, 679);
             this.Benter.Name = "Benter";
             this.Benter.Size = new System.Drawing.Size(150, 50);
             this.Benter.TabIndex = 17;
@@ -557,12 +561,52 @@ namespace R_T_V
             this.tbTechnicalContactEmail.Size = new System.Drawing.Size(197, 21);
             this.tbTechnicalContactEmail.TabIndex = 53;
             // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label17.Location = new System.Drawing.Point(57, 647);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(77, 17);
+            this.label17.TabIndex = 56;
+            this.label17.Text = "Deliver To:";
+            // 
+            // tbDeliverTo
+            // 
+            this.tbDeliverTo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbDeliverTo.Location = new System.Drawing.Point(147, 647);
+            this.tbDeliverTo.Name = "tbDeliverTo";
+            this.tbDeliverTo.Size = new System.Drawing.Size(369, 21);
+            this.tbDeliverTo.TabIndex = 55;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label18.Location = new System.Drawing.Point(545, 647);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(148, 17);
+            this.label18.TabIndex = 58;
+            this.label18.Text = "Charge #/Cost Center:";
+            // 
+            // tbProjectChargeNumber
+            // 
+            this.tbProjectChargeNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbProjectChargeNumber.Location = new System.Drawing.Point(696, 647);
+            this.tbProjectChargeNumber.Name = "tbProjectChargeNumber";
+            this.tbProjectChargeNumber.Size = new System.Drawing.Size(197, 21);
+            this.tbProjectChargeNumber.TabIndex = 57;
+            // 
             // RTJobData
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(200)))), ((int)(((byte)(240)))));
             this.ClientSize = new System.Drawing.Size(1376, 741);
+            this.Controls.Add(this.label18);
+            this.Controls.Add(this.tbProjectChargeNumber);
+            this.Controls.Add(this.label17);
+            this.Controls.Add(this.tbDeliverTo);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.tbTechnicalContactEmail);
             this.Controls.Add(this.bEmailBoth);
@@ -670,5 +714,9 @@ namespace R_T_V
         private System.Windows.Forms.Button bEmailBoth;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.TextBox tbTechnicalContactEmail;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox tbDeliverTo;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox tbProjectChargeNumber;
     }
 }

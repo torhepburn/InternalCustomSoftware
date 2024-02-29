@@ -41,7 +41,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.cbddPriority = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.tbToolToModify = new System.Windows.Forms.TextBox();
+            this.tbToolDrawingPath = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.tbMachineNumber = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
@@ -55,6 +55,18 @@
             this.Benter = new System.Windows.Forms.Button();
             this.label11 = new System.Windows.Forms.Label();
             this.tbTechnicalContact = new System.Windows.Forms.TextBox();
+            this.cbddDepartment = new System.Windows.Forms.ComboBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.tbExistingTool = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.tbPart = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.tbOpticPartNumber = new System.Windows.Forms.TextBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.tbFinishing = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.tbMaterials = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // tbToolRequirements
@@ -199,13 +211,13 @@
             this.label4.TabIndex = 51;
             this.label4.Text = "Drawing # or Path of tool to modify:";
             // 
-            // tbToolToModify
+            // tbToolDrawingPath
             // 
-            this.tbToolToModify.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.tbToolToModify.Location = new System.Drawing.Point(289, 244);
-            this.tbToolToModify.Name = "tbToolToModify";
-            this.tbToolToModify.Size = new System.Drawing.Size(348, 21);
-            this.tbToolToModify.TabIndex = 50;
+            this.tbToolDrawingPath.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbToolDrawingPath.Location = new System.Drawing.Point(289, 244);
+            this.tbToolDrawingPath.Name = "tbToolDrawingPath";
+            this.tbToolDrawingPath.Size = new System.Drawing.Size(348, 21);
+            this.tbToolDrawingPath.TabIndex = 50;
             // 
             // label7
             // 
@@ -333,12 +345,135 @@
             this.tbTechnicalContact.Size = new System.Drawing.Size(418, 21);
             this.tbTechnicalContact.TabIndex = 63;
             // 
+            // cbddDepartment
+            // 
+            this.cbddDepartment.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.cbddDepartment.FormattingEnabled = true;
+            this.cbddDepartment.Location = new System.Drawing.Point(827, 74);
+            this.cbddDepartment.Name = "cbddDepartment";
+            this.cbddDepartment.Size = new System.Drawing.Size(246, 24);
+            this.cbddDepartment.TabIndex = 65;
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label13.Location = new System.Drawing.Point(683, 77);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(86, 17);
+            this.label13.TabIndex = 66;
+            this.label13.Text = "Department:";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label14.Location = new System.Drawing.Point(643, 248);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(299, 17);
+            this.label14.TabIndex = 68;
+            this.label14.Text = "If modification of existing tooling - tool number:";
+            // 
+            // tbExistingTool
+            // 
+            this.tbExistingTool.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbExistingTool.Location = new System.Drawing.Point(948, 248);
+            this.tbExistingTool.Name = "tbExistingTool";
+            this.tbExistingTool.Size = new System.Drawing.Size(182, 21);
+            this.tbExistingTool.TabIndex = 67;
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label15.Location = new System.Drawing.Point(683, 122);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(38, 17);
+            this.label15.TabIndex = 70;
+            this.label15.Text = "Part:";
+            // 
+            // tbPart
+            // 
+            this.tbPart.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbPart.Location = new System.Drawing.Point(827, 122);
+            this.tbPart.Name = "tbPart";
+            this.tbPart.Size = new System.Drawing.Size(246, 21);
+            this.tbPart.TabIndex = 69;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label16.Location = new System.Drawing.Point(683, 566);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(129, 17);
+            this.label16.TabIndex = 72;
+            this.label16.Text = "Optic Part Number:";
+            // 
+            // tbOpticPartNumber
+            // 
+            this.tbOpticPartNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbOpticPartNumber.Location = new System.Drawing.Point(827, 563);
+            this.tbOpticPartNumber.Name = "tbOpticPartNumber";
+            this.tbOpticPartNumber.Size = new System.Drawing.Size(246, 21);
+            this.tbOpticPartNumber.TabIndex = 71;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label17.Location = new System.Drawing.Point(683, 166);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(68, 17);
+            this.label17.TabIndex = 74;
+            this.label17.Text = "Finishing:";
+            // 
+            // tbFinishing
+            // 
+            this.tbFinishing.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbFinishing.Location = new System.Drawing.Point(827, 166);
+            this.tbFinishing.Name = "tbFinishing";
+            this.tbFinishing.Size = new System.Drawing.Size(246, 21);
+            this.tbFinishing.TabIndex = 73;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label18.Location = new System.Drawing.Point(683, 447);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(69, 17);
+            this.label18.TabIndex = 76;
+            this.label18.Text = "Materials:";
+            // 
+            // tbMaterials
+            // 
+            this.tbMaterials.BackColor = System.Drawing.Color.White;
+            this.tbMaterials.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.tbMaterials.Location = new System.Drawing.Point(827, 444);
+            this.tbMaterials.Multiline = true;
+            this.tbMaterials.Name = "tbMaterials";
+            this.tbMaterials.Size = new System.Drawing.Size(303, 62);
+            this.tbMaterials.TabIndex = 75;
+            // 
             // RTEditRequest
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(200)))), ((int)(((byte)(190)))));
-            this.ClientSize = new System.Drawing.Size(685, 759);
+            this.ClientSize = new System.Drawing.Size(1160, 759);
+            this.Controls.Add(this.label18);
+            this.Controls.Add(this.tbMaterials);
+            this.Controls.Add(this.label17);
+            this.Controls.Add(this.tbFinishing);
+            this.Controls.Add(this.label16);
+            this.Controls.Add(this.tbOpticPartNumber);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.tbPart);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.tbExistingTool);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.cbddDepartment);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.tbTechnicalContact);
             this.Controls.Add(this.Bexit);
@@ -353,7 +488,7 @@
             this.Controls.Add(this.label7);
             this.Controls.Add(this.tbMachineNumber);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.tbToolToModify);
+            this.Controls.Add(this.tbToolDrawingPath);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.cbddPriority);
             this.Controls.Add(this.label2);
@@ -389,7 +524,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cbddPriority;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox tbToolToModify;
+        private System.Windows.Forms.TextBox tbToolDrawingPath;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox tbMachineNumber;
         private System.Windows.Forms.Label label8;
@@ -403,5 +538,17 @@
         private System.Windows.Forms.Button Benter;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox tbTechnicalContact;
+        private System.Windows.Forms.ComboBox cbddDepartment;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox tbExistingTool;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.TextBox tbPart;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox tbOpticPartNumber;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox tbFinishing;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox tbMaterials;
     }
 }
