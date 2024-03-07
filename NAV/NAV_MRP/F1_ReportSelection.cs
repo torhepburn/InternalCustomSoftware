@@ -103,6 +103,7 @@ namespace NAV_MRP
 
         public static string Main = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Selection Code] not like 'K%' " +
+                             "AND i.[Selection Code] <> 'LTA' " +
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 " +
@@ -112,6 +113,7 @@ namespace NAV_MRP
 
         public static string Irvine = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Selection Code] not like 'K%' " +
+                             "AND i.[Selection Code] <> 'LTA' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND [Reference Component] <> 1 " +
                              "AND r.[Starting Date] <= (GETDATE() + 28) " +
@@ -123,6 +125,7 @@ namespace NAV_MRP
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI' " +
                              "AND i.[Selection Code] not like 'K%' " +
+                             "AND i.[Selection Code] <> 'LTA' " +
                              "AND r.[Starting Date] <= (GETDATE() + 7) " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 ";
 
@@ -131,6 +134,7 @@ namespace NAV_MRP
                             "AND r.[Starting Date] <= (GETDATE() + 7) " +
                             "AND r.[Location Code] NOT IN ('IRV', 'IRV MRB') " +
                             "AND i.[Selection Code] not like 'K%' " +
+                            "AND i.[Selection Code] <> 'LTA' " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
 
         public static string KBP = "AND i.[Selection Code] = 'KBP' " +

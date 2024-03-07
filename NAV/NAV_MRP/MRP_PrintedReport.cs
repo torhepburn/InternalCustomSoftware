@@ -13,7 +13,7 @@ namespace NAV_MRP
     public partial class MRP_PrintedReport : Form
     {
        private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
-       //private string directory = "C:\\A";
+       //private string directory = @"C:\A";
 
         private string[] aItemNo = new string[20000];
         private string[] abuyerPlanner = new string[20000];
@@ -270,7 +270,7 @@ namespace NAV_MRP
               "AND i.No_ <> '9999' " +
               "AND i.No_ != 'SERVICE ITEM' " +
               /*    for testing   */ 
-              //"AND r.No_ = '1420-255-052' " +
+              //"AND r.No_ = '1600-003-025' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
                //"AND r.No_ LIKE'X700620%' " +
                

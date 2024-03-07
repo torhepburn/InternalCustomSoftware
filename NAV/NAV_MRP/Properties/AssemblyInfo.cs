@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Zygo Corporation")]
 [assembly: AssemblyProduct("NAV_MRP")]
-[assembly: AssemblyCopyright("Copyright © Zygo Corporation 2023")]
+[assembly: AssemblyCopyright("Copyright © Zygo Corporation 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("31.0.0.0")]
-[assembly: AssemblyFileVersion("31.0.0.0")]
+[assembly: AssemblyVersion("32.0.0.0")]
+[assembly: AssemblyFileVersion("32.0.0.0")]
