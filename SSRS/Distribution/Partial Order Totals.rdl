@@ -14,6 +14,8 @@
       <Query>
         <DataSourceName>NAV</DataSourceName>
         <CommandText>declare @order varchar(30)
+declare @customer varchar(60)
+declare @segment varchar(60)
 declare @line varchar(30)
 declare @shipdate date
 declare @amount decimal(10,2)
@@ -34,6 +36,8 @@ CREATE TABLE #Temp
 (
 [A] varchar(1)
 , [Order #] varchar(20)
+, Customer varchar(60)
+,Segment varchar(60)
 ,[Total Order Value] varchar(20)
 ,[Shipment1] varchar(20)
 ,[Shipment2] varchar(20)
@@ -68,18 +72,22 @@ select
 
  SUM([Line Amount]) Amount
 ,[Document No_]
-,[Shipment Date]
+,[Bill-to Name] Customer
+,l.[Shortcut Dimension 2 Code] Segment
+,l.[Shipment Date]
 
-from [ZYGO$Sales Line]
+from [ZYGO$Sales Line] l
+
+INNER JOIN [ZYGO$Sales Header] h on l.[Document No_] = h.No_ 
 
 WHERE 1=1
 
-	--AND [Document No_] &lt; '8745'
+	AND [Document No_] &lt; '8745'
 	AND [Outstanding Quantity] &gt; 0
 
-	AND No_ NOT LIKE 'FREIGHT%'
+	AND l.No_ NOT LIKE 'FREIGHT%'
 
-	GROUP BY [Document No_], [Shipment Date]
+	GROUP BY [Document No_], l.[Shipment Date], [Bill-to Name], l.[Shortcut Dimension 2 Code]
 )
 ,s2 AS
 (
@@ -109,6 +117,8 @@ WHERE 1=1
 	
 	 CAST(s1.Amount as varchar) Amount
 	,s1.[Document No_]
+	,s1.Customer
+	,s1.Segment
 	,s1.[Shipment Date]
 	,s2.sDates
 	,CAST(s3.TotalAmount as varchar) TotalAmount
@@ -121,7 +131,7 @@ WHERE 1=1
 	ORDER BY [Document No_], [Shipment Date]
 
 open orderCursor
-fetch next from orderCursor into @amount,@order, @shipdate, @sdates,@totalamount
+fetch next from orderCursor into @amount,@order,@customer,@segment, @shipdate, @sdates,@totalamount
 while @@FETCH_STATUS = 0
 begin
 
@@ -129,10 +139,10 @@ begin
 		BEGIN
 		SET @line = @order
 		SET @l = 0
-		SET @htext = @order + ',' +  + CAST(@totalamount as varchar)
-		SET @ltext = @order + ',' +  + CAST(@totalamount as varchar)
-			Insert into #Temp ([A],[Order #], [Total Order Value]) SELECT 'A',@order, @totalamount
-			Insert into #Temp ([A],[Order #], [Total Order Value]) SELECT 'B',@order, @totalamount
+		SET @htext = @order + ',' + @customer + ',' + @segment + ',' + CAST(@totalamount as varchar)
+		SET @ltext = @order + ','  + @customer + ',' + @segment + ','   + CAST(@totalamount as varchar)
+			Insert into #Temp ([A],[Order #],[Customer],[Segment], [Total Order Value]) SELECT 'A',@order,@customer,@segment, @totalamount
+			Insert into #Temp ([A],[Order #],[Customer],[Segment], [Total Order Value]) SELECT 'B',@order,'','', @totalamount
 		END
 	
 	IF @order = @line
@@ -276,11 +286,10 @@ begin
 
 		END
 		
-	fetch next from orderCursor into  @amount,@order, @shipdate,@sdates,@totalamount
+	fetch next from orderCursor into  @amount,@order,@customer,@segment, @shipdate,@sdates,@totalamount
 end
 close orderCursor
 deallocate orderCursor
-
 
 
 select * from #Temp
@@ -299,8 +308,16 @@ select * from #Temp
           <DataField>Order #</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
+        <Field Name="Customer">
+          <DataField>Customer</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
         <Field Name="Total_Order_Value">
           <DataField>Total Order Value</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Segment">
+          <DataField>Segment</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Shipment1">
@@ -504,6 +521,12 @@ select * from #Temp
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
               </TablixColumns>
               <TablixRows>
                 <TablixRow>
@@ -577,6 +600,80 @@ select * from #Temp
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox27">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Customer</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox27</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox29">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Segment</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox29</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1538,6 +1635,76 @@ select * from #Temp
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Customer">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Customer.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Customer</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Segment">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Segment.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Segment</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Total_Order_Value">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -2395,6 +2562,8 @@ select * from #Temp
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -2420,7 +2589,7 @@ select * from #Temp
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>25in</Width>
+            <Width>27in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2428,7 +2597,7 @@ select * from #Temp
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>25in</Width>
+      <Width>27in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
