@@ -34,13 +34,19 @@
 ,c.[Expected Quantity]
 ,c.[Difference Qty_]
 ,CASE 
-	WHEN [Expected Quantity] &gt; 0 THEN (c.[Quantity (Base)]/c.[Expected Quantity]) 
+	WHEN [Expected Quantity] &gt; 0 THEN
+		CASE WHEN [Expected Quantity] &gt; c.[Quantity (Base)] THEN (c.[Quantity (Base)]/c.[Expected Quantity])
+			WHEN [Expected Quantity] &lt; c.[Quantity (Base)] THEN ((c.[Quantity (Base)]-c.[Expected Quantity])/c.[Expected Quantity])
+			WHEN [Expected Quantity] = c.[Quantity (Base)] THEN 1.00
+			ELSE 555
+		END
 	ELSE 0
 END [Count Percentage]
 ,[Unit Cost]
 ,([Quantity (Base)] * [Unit Cost]) [Total Cost (Quantity Base x Unit Cost]
 ,([Expected Quantity] * [Unit Cost]) [Total Expected Cost (Expected Quantity x Unit Cost]
 ,([Difference Qty_] * [Unit Cost]) [Total Difference Cost (difference Qty x Unit Cost]
+,[Count No_]
 
 FROM [ZYGO$IWX Count Sheet Line] c
 
@@ -48,9 +54,12 @@ LEFT JOIN ZYGO$Item i ON c.[Item No_] = i.No_
 
 WHERE [Location Code] = 'MID'
 
-AND [Count No_] = @CountNo
+--AND CAST([Date Entered] as date) ='2023-08-11'
 
-order by [Tag No_] </CommandText>
+AND [Count No_] = @CountNo
+order by [Tag No_] 
+
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -117,6 +126,10 @@ order by [Tag No_] </CommandText>
         <Field Name="Total_Difference_Cost__difference_Qty_x_Unit_Cost">
           <DataField>Total Difference Cost (difference Qty x Unit Cost</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Count_No_">
+          <DataField>Count No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -223,7 +236,7 @@ ORDER BY [Count No_] DESC</CommandText>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.9375in</Width>
                 </TablixColumn>
               </TablixColumns>
               <TablixRows>
@@ -927,7 +940,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Item_No_.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -963,7 +975,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Sheet_Name.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -999,7 +1010,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Tag_No_.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1035,7 +1045,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Description.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1071,7 +1080,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Location_Code.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1107,7 +1115,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Bin_Code.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1144,7 +1151,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;(0)</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1180,7 +1186,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value>=Fields!Unit_of_Measure_Code.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1219,7 +1224,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>0</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1256,7 +1260,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>0</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1293,7 +1296,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;- 0</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1330,7 +1332,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>0.00%</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1367,7 +1368,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;('$'0.00)</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1405,7 +1405,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;'$'-0.00</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1443,7 +1442,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;'$'-0.00</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1481,7 +1479,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;'$'-0.00</Format>
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -1518,7 +1515,6 @@ ORDER BY [Count No_] DESC</CommandText>
                                   <Value />
                                   <Style>
                                     <FontFamily />
-                                    <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -2093,7 +2089,7 @@ ORDER BY [Count No_] DESC</CommandText>
                                     <FontFamily />
                                     <FontWeight>Bold</FontWeight>
                                     <Format>'$'0.00</Format>
-                                    <Color>#333333</Color>
+                                    <Color>=IIF(ABS(SUM(Fields!Total_Difference_Cost__difference_Qty_x_Unit_Cost.Value)) &gt; "$1000", "Red","LimeGreen")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -2181,7 +2177,7 @@ ORDER BY [Count No_] DESC</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.64in</Height>
-            <Width>17in</Width>
+            <Width>17.9375in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2189,7 +2185,7 @@ ORDER BY [Count No_] DESC</CommandText>
         <Height>1.07in</Height>
         <Style />
       </Body>
-      <Width>17in</Width>
+      <Width>18.07292in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
