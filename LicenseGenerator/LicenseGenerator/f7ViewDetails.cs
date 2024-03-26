@@ -15,7 +15,21 @@ namespace LicenseGenerator
         SqlConnection cnxn;
         SqlDataReader dr;
         SqlCommand cmd;
-        
+        private string SQL1 = "select " +
+                "  id " +
+                ",TRIM([Dongle ID]) [Dongle ID] " +
+                ",TRIM([Serial Number]) [Serial Number] " +
+                ",TRIM([Sales Order]) [Sales Order] " +
+                ",TRIM([Owner]) [Owner] " +
+                ",[Start Date] " +
+                ",[Expiration Date] " +
+                ",TRIM(Application) Application " +
+                ",TRIM(License) License " +
+                ",TRIM([Customer Number]) [Customer Number] " +
+                ",ExpirationDate [Sortable Exp Date]" +
+                "from DongleFullDetails where ";
+
+
         public f7ViewDetails()
         {
             InitializeComponent();
@@ -28,6 +42,7 @@ namespace LicenseGenerator
             
             cnxn = new SqlConnection(g.db);
             cnxn.Open();
+
             if (g.task == "Show All")
             {
                 tbSearch.Visible = false;
@@ -37,17 +52,7 @@ namespace LicenseGenerator
                 this.Text = "F7 All Licenses";
                 
                 cmd = new SqlCommand(
-                "select " +
-                "id " +
-                ",[Dongle ID] " +
-                ",[Sales Order] " +
-                ",[Owner] " +
-                ",[Start Date] " +
-                ",[Expiration Date] " +
-                ",Application " +
-                ",License " +
-                ",ExpirationDate [Sortable Exp Date]" +
-                "from DongleFullDetails where " +
+                SQL1 +
                 "productline = '" + g.productLine + "' and " +
                 "activedemo = '" + g.activeDemo + "' " +
                 "order by ExpirationDate", cnxn);
@@ -62,17 +67,7 @@ namespace LicenseGenerator
                 this.Text = "F7 EXPIRATION LESS THAN FIVE YEARS";
                 
                 cmd= new SqlCommand(
-                "select " +
-                "id, " +
-                "[Dongle ID], " +
-                "[Sales Order], " +
-                "[Owner], " +
-                "[Start Date], " +
-                "[Expiration Date], " +
-                "Application, " +
-                "License " +
-                ",ExpirationDate [Sortable Exp Date]" +
-                "from DongleFullDetails where " +
+                 SQL1 +
                 "productline = '" + g.productLine + "' and " +
                 "activedemo = '" + g.activeDemo + "' and " +
                 "expirationdate < dateadd(year, 5, getdate()) and " +
@@ -86,18 +81,7 @@ namespace LicenseGenerator
                 g.task == "Sales Order Details")
             {
                 cmd = new SqlCommand(   
-               "select " +
-               "id, " +
-               "[Dongle ID], " +
-               "[Sales Order], " +
-               "Owner, " +
-               "[Start Date], " +
-               "[Expiration Date], " +
-               "Application, " +
-               "License, " +
-               "[Customer Number] " +
-               ",ExpirationDate [Sortable Exp Date]" +
-               "from DongleFullDetails where " +
+                SQL1 +
                "productline = '" + g.productLine + "' and " +
                "activedemo = '" + g.activeDemo + "' " +
                "order by [Dongle ID], ExpirationDate", cnxn);
@@ -151,14 +135,14 @@ namespace LicenseGenerator
 
         private void SetColumns()
         {
-            DGV.Columns[1].Width = 130;
+            DGV.Columns[1].Width = 110;
             DGV.Columns[2].Width = 120;
-            DGV.Columns[3].Width = 240;
-            DGV.Columns[4].Width = 120;
+            DGV.Columns[3].Width = 110;
+            DGV.Columns[4].Width = 350;
             DGV.Columns[5].Width = 120;
             DGV.Columns[6].Width = 150;
-            DGV.Columns[7].Width = 200;
-            DGV.Columns[8].Width = 120;
+            DGV.Columns[7].Width = 210;
+            DGV.Columns[8].Width = 170;
             
         }
 
@@ -214,19 +198,7 @@ namespace LicenseGenerator
         private void bSearch_Click(object sender, EventArgs e)
         {
             cmd = new SqlCommand(
-                
-                    "select " +
-                    "id, " +
-                    "[Dongle ID], " +
-                    "[Serial Number] " +
-                    "[Sales Order], " +
-                    "Owner, " +
-                    "[Start Date], " +
-                    "[Expiration Date], " +
-                    "Application, " +
-                    "License, " +
-                    "[Customer Number] " +
-                    "from DongleFullDetails where " +
+                     SQL1 +
                     "productline = '" + g.productLine + "' and " +
                     "activedemo = '" + g.activeDemo + "' and " +
                     "([Sales Order] like '%" + tbSearch.Text.Trim() + "%' or " +
@@ -281,21 +253,13 @@ namespace LicenseGenerator
                 LDelete.Text = "";
                 
                 cmd = new SqlCommand(
-                    "select " +
-                    "id, " +
-                    "[Dongle ID], " +
-                    "[Sales Order], " +
-                    "Owner, " +
-                    "[Start Date], " +
-                    "[Expiration Date], " +
-                    "Application, " +
-                    "License, " +
-                    "[Customer Number] " +
+                     SQL1 +
                     "from DongleFullDetails where " +
                     "productline = '" + g.productLine + "' and " +
                     "activedemo = '" + g.activeDemo + "' and " +
                     "([Sales Order] like '%" + tbSearch.Text.Trim() + "%' or " +
                     "Owner like '%" + tbSearch.Text.Trim() + "%'  or" +
+                    "[Serial Number] like '%" + tbSearch.Text.Trim() + "%'  or" +
                     "[Dongle ID] like '%" + tbSearch.Text.Trim() + "%') " +
                     "order by [Dongle ID], ExpirationDate", cnxn);
 

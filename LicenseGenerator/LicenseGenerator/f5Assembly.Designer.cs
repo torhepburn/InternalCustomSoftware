@@ -149,9 +149,9 @@
             this.label4.Location = new System.Drawing.Point(45, 287);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(98, 17);
+            this.label4.Size = new System.Drawing.Size(148, 17);
             this.label4.TabIndex = 22;
-            this.label4.Text = "Serial Number";
+            this.label4.Text = "System Serial Number";
             // 
             // label3
             // 
