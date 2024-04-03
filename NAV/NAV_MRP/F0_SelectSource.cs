@@ -26,7 +26,7 @@ namespace NAV_MRP
         {
             g.server = "server=PA-HOR-AS408.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-PROD;";
-            g.rptName = "PROD ";
+            g.rptName = g.buyer + "PROD ";
             Nexxt();
         }
 
@@ -34,7 +34,7 @@ namespace NAV_MRP
         {
             g.server = "server=PA-HOR-AS406.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-TEST;";
-            g.rptName = "TEST ";
+            g.rptName = g.buyer + "TEST ";
             Nexxt();
         }
 
@@ -42,7 +42,7 @@ namespace NAV_MRP
         {
             g.server = "server=PA-HOR-AS406.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-REFRESH;";
-            g.rptName = "REFRESH ";
+            g.rptName = g.buyer + "REFRESH ";
             Nexxt();
         }
 
@@ -50,7 +50,7 @@ namespace NAV_MRP
         {
             g.server = "server=PA-HOR-AS406.ametek.com; password=2018#ameteK; " +
                             "user=navdb_read; database=ZYGO-NAV-COPY;";
-            g.rptName = "COPY ";
+            g.rptName = g.buyer + "COPY ";
             Nexxt();
         }
 

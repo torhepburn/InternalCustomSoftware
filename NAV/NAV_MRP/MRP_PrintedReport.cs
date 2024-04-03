@@ -250,7 +250,104 @@ namespace NAV_MRP
               "     No_ FROM s2 " +
               "     WHERE No_ " + g.messageChoice + " IN (select No_ from s3) " +
               ") " +
-
+              ",s111 AS ( " + 
+              "SELECT  " + 
+              " CASE [Action Message] " + 
+              "WHEN 1 THEN 'New' " + 
+              "WHEN 2 THEN 'Change Quantity' " + 
+              "WHEN 3 THEN 'Reschedule' " + 
+              "WHEN 4 THEN 'Reschedule and Change Quantity' " + 
+              "WHEN 5 THEN 'Cancel' " + 
+              " END [Action Message] " + 
+              ",l.[Buyer Planner Code] " + 
+              ",CASE  " + "WHEN [Action Message] = 3 THEN " + 
+              "CASE " + 
+              "WHEN [Due Date] > [Original Due Date] THEN 'Push Out' " + 
+              "WHEN [Due Date] < [Original Due Date] THEN 'Pull In' " + 
+              "ELSE '' " + "END " + 
+              "ELSE '' " + 
+              "END Direction " + 
+              ",CONVERT(varchar(10),[Due Date], 1) [Due Date] " +
+              ",l.No_ [Part Number] " + 
+              ",CASE COALESCE(pl.[Best Delivery],0)  " + 
+              "     WHEN 0 THEN ''  " + 
+              "     WHEN 1 THEN 'YES'  " + 
+              " END Best " +
+              "FROM [ZYGO$Requisition Line] l " + 
+              "LEFT JOIN ZYGO$Item i on l.No_ = i.No_ " + 
+              "LEFT JOIN [ZYGO$Purchase Line] pl ON l.[Ref_ Order No_] = pl.[Document No_] " + 
+              "WHERE " + 
+              "[Ref_ Order Type] = 1 " +             //1 = purchase
+              "AND l.[Replenishment System] = 0 " +  //0 = purchase
+              "AND [Worksheet Template Name] = 'PLANNING' " + 
+              "AND [Journal Batch Name] = 'DEFAULT' " + 
+              "AND [Starting Date] < GETDATE()+28 " + 
+              ") " +
+              ",s21 AS ( " + 
+              "select " + 
+              "COUNT([Action Message]) MessageCount " + 
+              ",[Action Message] " + 
+              ",[Part Number] " + 
+              "from s111 " + 
+              "WHERE [Action Message] = 'New' " + 
+              "GROUP BY [Part Number], [Action Message] " + 
+              ")" +
+              ",s22 AS ( " + 
+              "Select " + 
+              "COUNT([Action Message]) MessageCount " + 
+              ",[Action Message] " + 
+              ",[Part Number] " + "from s111 " + 
+              "WHERE [Action Message] = 'Change Quantity' " + 
+              "GROUP BY [Part Number], [Action Message] " + 
+              "),s23 AS ( " + 
+              "select " + 
+              "COUNT([Action Message]) MessageCount " + 
+              ",[Action Message] " + 
+              ",Direction " + 
+              ",[Part Number] " + 
+              ",Best " + 
+              "from s111 " + 
+              "WHERE [Action Message] = 'Reschedule' " + 
+              "GROUP BY [Part Number], [Action Message],Direction,Best " + "),s24 AS ( " + 
+              "select " + 
+              "COUNT([Action Message]) MessageCount " + 
+              ",[Action Message] " + 
+              ",[Part Number] " + 
+              "from s111 " + 
+              "WHERE [Action Message] = 'Reschedule and Change Quantity' " + 
+              "GROUP BY [Part Number], [Action Message] " + 
+              "),s25 AS ( " + 
+              "select " + 
+              "COUNT([Action Message]) MessageCount " + 
+              ",[Action Message] " + 
+              ",[Part Number] " + 
+              "from s111 " + 
+              "WHERE [Action Message] = 'Cancel' " + 
+              "GROUP BY [Part Number], [Action Message] " + 
+              "),s26 AS ( " + 
+              "select  " + 
+              "No_ " + 
+              ",s21.MessageCount N " + 
+              ",s21.[Action Message]'21am' " + 
+              ",s22.MessageCount C " + 
+              ",s22.[Action Message] '22am' " +
+              ",s23.MessageCount R " + 
+              ",s23.[Action Message] '23am' " + 
+              ",s23.Direction " + 
+              ",s23.Best " + ",s24.MessageCount M " + 
+              ",s24.[Action Message] '24am' " + 
+              ",s25.MessageCount CN " + 
+              ",s25.[Action Message] '25am' " + 
+              "from ZYGO$Item i " + 
+              "LEFT JOIN s21 ON i.No_ = s21.[Part Number] " + 
+              "LEFT JOIN s22 ON i.No_ = s22.[Part Number] " + 
+              "LEFT JOIN s23 ON i.No_ = s23.[Part Number] " + 
+              "LEFT JOIN s24 ON i.No_ = s24.[Part Number] " + 
+              "LEFT JOIN s25 ON i.No_ = s25.[Part Number] " + 
+              "WHERE i.[Replenishment System] = 0 " + 
+              "),s27 AS (SELECT No_ FROM s26 " + 
+              "WHERE R > 0 AND Direction = 'Push Out' AND Best = 'YES' " + "and N is null and C is null and M is null and CN is null)" +
+             
               "SELECT " +
               //"TOP 5 " +    /*  for testing purposes        */
               "DISTINCT " +    /* should always be faster than group by   */
@@ -261,6 +358,7 @@ namespace NAV_MRP
               "LEFT JOIN [" + NAVprefix + "Item] i " +
               "ON r.No_ = i.No_ " +
               "INNER JOIN s4 ON r.No_ = s4.No_ " +
+              "LEFT JOIN s27 ON r.No_ = s27.No_ " +
               "WHERE r.[Ref_ Order Type] = 1 " +                    // 1 = purchase
               "AND r.Type = 2 " +                                   // type 2 = item
               "AND i.[Replenishment System] = 0 " +                 //0 = purchased 
@@ -269,6 +367,7 @@ namespace NAV_MRP
               "AND i.[Selection Code] not like 'CFM%' " +
               "AND i.No_ <> '9999' " +
               "AND i.No_ != 'SERVICE ITEM' " +
+              "AND i.No_ NOT IN (SELECT * FROM s27) " +
               /*    for testing   */ 
               //"AND r.No_ = '1600-003-025' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
