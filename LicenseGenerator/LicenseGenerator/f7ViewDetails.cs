@@ -254,7 +254,7 @@ namespace LicenseGenerator
                 
                 cmd = new SqlCommand(
                      SQL1 +
-                    "from DongleFullDetails where " +
+                    //"from DongleFullDetails where " +
                     "productline = '" + g.productLine + "' and " +
                     "activedemo = '" + g.activeDemo + "' and " +
                     "([Sales Order] like '%" + tbSearch.Text.Trim() + "%' or " +
