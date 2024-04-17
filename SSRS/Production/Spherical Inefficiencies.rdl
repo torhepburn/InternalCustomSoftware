@@ -19,8 +19,12 @@
 ,l.[Routing No_] [Item No]
 ,l.[Operation No_]
 ,l.Description
-,l.[Setup Time] TimeCharged
+, CASE 
+	WHEN r.[Input Quantity] = 1 THEN l.[Setup Time]
+	WHEN r.[Input Quantity] &gt; 1 THEN l.[Setup Time]/r.[Input Quantity]
+ END TimeCharged
 ,r.[Run Time] RoutingTime
+,r.[Input Quantity]
 ,l.[Posting Date]
 ,r.[Starting Date-Time] [Planned Start]
 ,r.[Ending Date-Time] [Planned End]
@@ -34,7 +38,11 @@ where  [Global Dimension 1 Code] = '5074'
 
 AND CAST([Posting Date] as date) = CAST((GETDATE()-1) as date)
 
-AND l.[Setup Time] &gt; r.[Run Time]
+AND  CASE 
+	WHEN r.[Input Quantity] = 1 THEN l.[Setup Time]
+	WHEN r.[Input Quantity] &gt; 1 THEN l.[Setup Time]/r.[Input Quantity]
+ END &gt; r.[Run Time]
+
 </CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -61,6 +69,10 @@ AND l.[Setup Time] &gt; r.[Run Time]
         </Field>
         <Field Name="RoutingTime">
           <DataField>RoutingTime</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Input_Quantity">
+          <DataField>Input Quantity</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Posting_Date">
@@ -124,6 +136,9 @@ AND l.[Setup Time] &gt; r.[Run Time]
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.22917in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -370,6 +385,45 @@ AND l.[Setup Time] &gt; r.[Run Time]
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox9">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Input Quantity</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox9</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -714,6 +768,44 @@ AND l.[Setup Time] &gt; r.[Run Time]
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Input_Quantity">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Input_Quantity.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>0;(0)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Input_Quantity</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Posting_Date">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -840,6 +932,7 @@ AND l.[Setup Time] &gt; r.[Run Time]
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -865,7 +958,7 @@ AND l.[Setup Time] &gt; r.[Run Time]
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>10.22917in</Width>
+            <Width>11.22917in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -873,7 +966,7 @@ AND l.[Setup Time] &gt; r.[Run Time]
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>10.22917in</Width>
+      <Width>11.22917in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
