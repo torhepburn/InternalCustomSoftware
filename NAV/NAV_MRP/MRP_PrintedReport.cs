@@ -250,7 +250,7 @@ namespace NAV_MRP
               "     No_ FROM s2 " +
               "     WHERE No_ " + g.messageChoice + " IN (select No_ from s3) " +
               ") " +
-              ",s111 AS ( " + 
+              /*",s111 AS ( " + 
               "SELECT  " + 
               " CASE [Action Message] " + 
               "WHEN 1 THEN 'New' " + 
@@ -347,27 +347,26 @@ namespace NAV_MRP
               "WHERE i.[Replenishment System] = 0 " + 
               "),s27 AS (SELECT No_ FROM s26 " + 
               "WHERE R > 0 AND Direction = 'Push Out' AND Best = 'YES' " + "and N is null and C is null and M is null and CN is null)" +
-             
+             */
               "SELECT " +
               //"TOP 5 " +    /*  for testing purposes        */
               "DISTINCT " +    /* should always be faster than group by   */
               "r.No_  " +
               ",r.[Buyer Planner Code]" +
               ",r.[Vendor No_] " +
-              "from [" + NAVprefix + "Requisition Line] r " +
-              "LEFT JOIN [" + NAVprefix + "Item] i " +
-              "ON r.No_ = i.No_ " +
+              "from [ZYGO$Requisition Line] r " +
+              " LEFT JOIN [ZYGO$Item] i " +
+              " ON r.No_ = i.No_ " +
               "INNER JOIN s4 ON r.No_ = s4.No_ " +
-              "LEFT JOIN s27 ON r.No_ = s27.No_ " +
+              //"LEFT JOIN s27 ON r.No_ = s27.No_ " +
               "WHERE r.[Ref_ Order Type] = 1 " +                    // 1 = purchase
               "AND r.Type = 2 " +                                   // type 2 = item
               "AND i.[Replenishment System] = 0 " +                 //0 = purchased 
               "AND r.[Worksheet Template Name] = 'PLANNING' " +
               "AND r.[Journal Batch Name] = 'DEFAULT' " +
               "AND i.[Selection Code] not like 'CFM%' " +
-              "AND i.No_ <> '9999' " +
-              "AND i.No_ != 'SERVICE ITEM' " +
-              "AND i.No_ NOT IN (SELECT * FROM s27) " +
+              "AND i.No_ NOT IN ('SERVICE ITEM','9999') " +
+              //"AND i.No_ NOT IN (SELECT * FROM s27) " +
               /*    for testing   */ 
               //"AND r.No_ = '1600-003-025' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +

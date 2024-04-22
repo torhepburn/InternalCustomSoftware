@@ -29,48 +29,96 @@ namespace NAV_MRP
             {
                 /* Main report     */
 
-                g.SQLselection = g.Main;
-                g.ReportSelection = "";
+                g.SQLselection = g.Main + " AND r.[Starting Date] <= (GETDATE() + 14) " +
+                    " AND r.[Action Message] = 1 ";
+                g.ReportSelection = " Purchase News ";
 
                 MRP_PrintedReport r = new MRP_PrintedReport();
                 r.ShowDialog();
+
+                g.SQLselection = g.Main + g.Reschedule + g.Main + 
+                    " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                    " AND rr.[Action Message] = 1  /*Purchase New */ )";
+
+                g.ReportSelection = " Reschedules ";
+
+                MRP_PrintedReport rr = new MRP_PrintedReport();
+                rr.ShowDialog();
 
 
                 /*  MinMAx    */
 
                 g.SQLselection = g.MinMax;
-                g.ReportSelection = "minmax ";
+                g.ReportSelection = "MinMax Purchase News ";
                 MRP_PrintedReport t = new MRP_PrintedReport();
                 t.ShowDialog();
+
+                g.SQLselection = g.MinMax + g.Reschedule + g.MinMax +
+                    " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                    " AND rr.[Action Message] = 1  /*Purchase New */ )"; 
+
+                g.ReportSelection = "MinMax Reschedules ";
+                MRP_PrintedReport tt = new MRP_PrintedReport();
+                tt.ShowDialog();
 
                 /*  X    */
 
                 g.SQLselection = g.X;
-                g.ReportSelection = "X Report ";
+                g.ReportSelection = "X Purchase News ";
                 MRP_PrintedReport u = new MRP_PrintedReport();
+                u.ShowDialog();
+
+                g.SQLselection = g.X + g.Reschedule + g.X +
+                    " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                    " AND rr.[Action Message] = 1  /*Purchase New */ )"; 
+              
+                g.ReportSelection = "X Reschedules ";
+                MRP_PrintedReport uu = new MRP_PrintedReport();
                 u.ShowDialog();
 
                 /*  Irvine    */
 
                 g.SQLselection = g.Irvine;
-                g.ReportSelection = "Irvine ";
+                g.ReportSelection = "Irvine Purchase News ";
                 MRP_PrintedReport s = new MRP_PrintedReport();
                 s.ShowDialog();
-                //run = true;
 
-                /*  Richmond    */
+                g.SQLselection = g.Irvine + g.Reschedule + g.Irvine +
+                   " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                   " AND rr.[Action Message] = 1  /*Purchase New */ )"; ;
+                g.ReportSelection = "Irvine Reschedules ";
+                MRP_PrintedReport ss = new MRP_PrintedReport();
+                ss.ShowDialog();
+
+                ///*  Richmond    */
 
                 g.SQLselection = g.Richmond;
-                g.ReportSelection = "Richmond ";
+                g.ReportSelection = "Richmond Purchase News ";
                 MRP_PrintedReport v = new MRP_PrintedReport();
                 v.ShowDialog();
-                //run = true;
+
+
+                g.SQLselection = g.Richmond + g.Reschedule + g.Richmond +
+                   " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                   " AND rr.[Action Message] = 1  /*Purchase New */ )"; ;
+                g.ReportSelection = "Richmond reschedules ";
+                MRP_PrintedReport vv = new MRP_PrintedReport();
+                vv.ShowDialog();
 
                 /*  MRP KBP    */
-                g.ReportSelection = "KBP ";
+                g.ReportSelection = "KBP Purchase News ";
                 g.SQLselection = g.KBP;
                 MRP_PrintedReport k = new MRP_PrintedReport();
                 k.ShowDialog();
+
+
+                g.ReportSelection = "KBP Reschedules ";
+                g.SQLselection = g.KBP + g.Reschedule + g.KBP +
+                   " AND rr.[Starting Date] <= (GETDATE() + 14) " +
+                   " AND rr.[Action Message] = 1  /*Purchase New */ )"; ;
+                MRP_PrintedReport kk = new MRP_PrintedReport();
+                kk.ShowDialog();
+
 
                 /*  LTA    */
                 g.ReportSelection = "LTA ";
@@ -78,7 +126,12 @@ namespace NAV_MRP
                 LTA l = new LTA();
                 l.ShowDialog();
 
-                run = true;
+                //+g.Reschedule + g.MinMax +
+                //   " AND rr.[Starting Date] <= (GETDATE() + 28) " +
+                //   " AND rr.[Action Message] = 1  /*Purchase New */ )"; ;
+
+
+                //run = true;
 
                 this.Close();
             }
