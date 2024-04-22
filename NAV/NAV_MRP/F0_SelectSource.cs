@@ -76,6 +76,9 @@ namespace NAV_MRP
         public static string LTAbucket;
         public static string buyer = " ";
 
+        public static string dateAndAction = " AND r.[Starting Date] <= (GETDATE() + 14) " +
+                                          " AND r.[Action Message] = 1 /* purchase new */ ";
+            
         public static string Main = "AND i.[Selection Code] <> 'MMX' " +
                              "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Selection Code] <> 'LTA' " +
@@ -90,7 +93,7 @@ namespace NAV_MRP
                              "AND i.[Selection Code] <> 'LTA' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND [Reference Component] <> 1 " +
-                             "AND r.[Starting Date] <= (GETDATE() + 14) " +
+                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND r.[Location Code] IN ('IRV', 'IRV MRB') ";
 
         public static string MinMax = "AND ((i.[Selection Code] = 'MMX' " +
@@ -100,12 +103,12 @@ namespace NAV_MRP
                              "AND i.[Item Group Code] <> 'VMI' " +
                              "AND i.[Selection Code] not like 'K%' " +
                              "AND i.[Selection Code] <> 'LTA' " +
-                             "AND r.[Starting Date] <= (GETDATE() + 14) " +
+                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 ";
 
         public static string X = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
                             "AND [Reference Component] <> 1 " +
-                            "AND r.[Starting Date] <= (GETDATE() + 14) " +
+                            //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                             "AND r.[Location Code] NOT IN ('IRV', 'IRV MRB') " +
                             "AND i.[Selection Code] not like 'K%' " +
                             "AND i.[Selection Code] <> 'LTA' " +
@@ -113,7 +116,7 @@ namespace NAV_MRP
 
         public static string KBP = "AND i.[Selection Code] = 'KBP' " +
                             "AND [Reference Component] <> 1 " +
-                            "AND r.[Starting Date] <= (GETDATE() + 14) " +
+                            //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
 
         public static string LTA = "AND i.[Selection Code] = 'LTA' " +
@@ -125,7 +128,7 @@ namespace NAV_MRP
                              "AND i.[Vetted] <> '1' " +
                              "AND i.[Item Group Code] <> 'VMI'  " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 " +
-                             "AND r.[Starting Date] <= (GETDATE() + 14) " +
+                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND [Reference Component] <> 1 " +
                              "AND r.[Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') ";
 
