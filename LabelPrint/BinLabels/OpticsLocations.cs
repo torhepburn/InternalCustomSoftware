@@ -29,7 +29,7 @@ namespace BinLabels
                 "server = ct-mid-sql11; password = Read+Write!; user = readWrite; database = Optics;");
                         
             SqlCommand cmd = new SqlCommand(
-           "SELECT top 5" +
+           "SELECT top 2 " +
            " [Location] " +
            " FROM[Optics].[dbo].[OpticTrackLocations] " +
            " ORDER BY [Location]  ", cnxn);
@@ -83,13 +83,14 @@ namespace BinLabels
 
                 /* ^FO = field origin  see oneNote for explanations     */
 
-                ZplBuilder.Append("^FO10,10^BY1");
+                ZplBuilder.Append("^FO10,30^BY1");
                 ZplBuilder.Append("^B3N,N, 50,N,N");
-                ZplBuilder.Append("^FD%B%").Append(dr.GetString(0));
+                //ZplBuilder.Append("^FD").Append(dr.GetString(0));
+                ZplBuilder.Append("^FD").Append("PD510236");
                 ZplBuilder.Append("^FS");
 
 
-                ZplBuilder.Append("^FO10,100^A0N,40,40");
+                ZplBuilder.Append("^FO10,130^A0N,40,40");
                 ZplBuilder.Append("^FD").Append(dr.GetString(0));
                 ZplBuilder.Append("^FS");
                 

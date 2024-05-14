@@ -15,8 +15,8 @@ namespace BinLabels
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new BinLabels());
-            Application.Run(new OpticsLocations());
+            Application.Run(new BinLabels());
+            //Application.Run(new OpticsLocations());
         }
     }
 }
