@@ -46,8 +46,8 @@
             <th>Item Number</th>
             <th>Quantity</th>
             <th>Location</th>
-            @*<th>Location</th>
-            <th>In/Out</th>*@
+            <th>Full Bin Quantity</th>
+            @*<th>In/Out</th>*@
 
             @*<th>Contact / Operator</th>
 
@@ -67,8 +67,8 @@
                 <td style="width:200px">@r[0].ToString()</td>
                 <td style="width:150px">@r[1].ToString()</td>
                 <td style="width:150px">@r[2].ToString()</td>
-                @*<td style="width:150px">@r[3].ToString()</td>
-                <td style="width:150px">@r[4].ToString()</td>*@
+                <td style="width:150px">@r[3].ToString()</td>
+                @*<td style="width:150px">@r[4].ToString()</td>*@
 
                 @*<td style="width:150px">@r[6].ToString()</td>
             <td style="width:150px">@r[7].ToString()</td>
@@ -105,13 +105,15 @@
         cnxn = new SqlConnection(f.dbNAV);
 
         cmd = new("SELECT " +
-                    "[Item No_] " +            
-                    ",CAST(SUM(Quantity) as int) [Quantity] " +
-                    ",[Bin Code] " +
-                    "FROM [ZYGO$Warehouse Entry] " +
-                    "WHERE [Item No_] = '" + f.item + "' " +
-                    "GROUP BY [Item No_], [Bin Code] " +
-                    "HAVING SUM(Quantity) > 0 ",cnxn);
+                    "w.[Item No_] " +            
+                    ",CAST(SUM(w.Quantity) as int) [Quantity] " +
+                    ",w.[Bin Code] " +
+                    ",MAX(b.[Full Bin Quantity]) " +
+                    "FROM [ZYGO$Warehouse Entry] w " +
+                    "LEFT JOIN [ZYGO$Bin Content] b ON w.[Bin Code] = b.[Bin Code] and w.[Item No_] = b.[Item No_]" +
+                    "WHERE w.[Item No_] = '" + f.item + "' " +
+                    "GROUP BY w.[Item No_], w.[Bin Code]  " +
+                    "HAVING SUM(w.Quantity) > 0 ",cnxn);
 
         dt = new DataTable();
 
@@ -133,12 +135,14 @@
                     ",PartNo " +
                     ",QuantityOnHand " +
                     ",StockLocation " +
+                    ",FullBinQuantity " +
                     ",BothBinsOut " +
                     ") values (" +
                     "'" + DateTime.Now + "'" +
                     ",'" + dr.GetString(0).Trim() + "'" +
                     ",'" + dr.GetInt32(1).ToString().Trim() + "'" +
                     ",'" + dr.GetString(2).Trim() + "'" +
+                    ",'" + dr.GetInt32(3).ToString().Trim() + "'" +
                     ", '" + cbBBO + "'" +
                     ")", cnxn1);
                 try
@@ -154,7 +158,7 @@
                 {
                     cnxn1.Close();
                 }
-
+                /*
                 cmd = new(
                             "UPDATE StockroomLowBins " +
                             "SET FullBinQuantity =  a.FullQuantity " +
@@ -177,6 +181,7 @@
                 {
                     cnxn1.Close();
                 }
+                */
             }
         }
         catch (SqlException ex)
