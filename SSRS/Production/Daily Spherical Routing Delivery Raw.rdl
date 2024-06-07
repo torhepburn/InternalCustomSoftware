@@ -44,7 +44,8 @@ s1.Item
 ,l.Description
 ,s1.firstScan
 ,l.[Run Time]
-,DATEADD(hh, [Run Time], firstScan) PlannedEnd
+,DATEADD(hh, [Run Time], firstScan) EstimatedEnd
+,l.[Ending Date-Time]
 
 FROM s1
 
@@ -75,8 +76,8 @@ LEFT JOIN NAVprodOrdRoutingLine l ON s1.OrderNo = l.[Prod_ Order No_] AND s1.ope
 
 
 )
-
-
+,s4 AS
+(
 select 
 
 Item
@@ -86,10 +87,11 @@ Item
 ,Description
 ,firstScan
 ,[Run Time]
-,PlannedEnd
+,EstimatedEnd
 ,'' CompletionDate
+,s2.[Ending Date-Time]
 
-from s2 WHERE CAST(PlannedEnd as date) = CAST(DATEADD(dd, -1, GETDATE()) as date)
+from s2 WHERE CAST(EstimatedEnd as date) = CAST(DATEADD(dd, -1, GETDATE()) as date)
 
 UNION ALL
 
@@ -104,17 +106,84 @@ Item
 ,0
 ,''
 ,CompletionDate
+,''
 
 FROM s3 
 
 WHERE CAST(CompletionDate as date) = CAST(DATEADD(dd, -1, GETDATE()) as date)
+)
+,s5 AS
+(
+SELECT
 
-ORDER BY 
-
-OrderNo
+Item
+,ItemDescription
+,OrderNo
 ,Operation
+,MAX(Description) Description
+,MAX(firstScan) FirstScan
+,MAX([Run Time]) [Run Time]
+,MAX(EstimatedEnd) EstimatedEndDate
+,MAX(CompletionDate) CompletionDate
 
-</CommandText>
+
+FROM s4
+
+GROUP BY 
+
+ Item
+,ItemDescription
+,OrderNo
+,Operation
+)
+,s6 AS
+(
+select
+
+s5.*
+,CASE
+	WHEN DATEDIFF(dd, EstimatedEndDate,CompletionDate) = 0 THEN CAST(0 as nchar(2))
+	WHEN CAST(EstimatedEndDate as date) = CAST('1900-01-01' as date) THEN 'NA'
+	WHEN CAST(CompletionDate as date) = CAST('1900-01-01' as date) THEN 'NA'
+	ELSE CAST(DATEDIFF(dd, EstimatedEndDate,CompletionDate) as nchar(3))
+END [status]
+
+from s5
+)
+
+
+SELECT
+
+Item
+,[ItemDescription]
+,OrderNo
+,Operation
+,Description
+,CASE CAST(firstScan as nchar(24)) 
+	WHEN 'Jan  1 1900 12:00AM     ' THEN ''
+	ELSE CAST(firstScan as nchar(24)) 
+END FirstScan
+,[Run Time]
+,CASE CAST(EstimatedEndDate as nchar(24)) 
+	WHEN 'Jan  1 1900 12:00AM     ' THEN ''
+	ELSE CAST(EstimatedEndDate as nchar(24)) 
+END EstimatedEndDate
+,CASE CAST(CompletionDate as nchar(24)) 
+	WHEN 'Jan  1 1900 12:00AM     ' THEN ''
+	ELSE CAST(CompletionDate as nchar(24)) 
+END CompletionDate
+,CASE 
+	WHEN Status != 'NA'
+		THEN CASE
+			WHEN  ABS(CAST(Status as int)) &lt;=1 THEN 'Green'
+			WHEN  ABS(CAST(Status as int)) &lt;=3 THEN 'Yellow'
+			WHEN  ABS(CAST(Status as int)) &gt; 4 THEN 'Red'
+		END
+	ELSE Status
+END Status
+			
+
+FROM s6</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -139,20 +208,24 @@ OrderNo
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="firstScan">
-          <DataField>firstScan</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <DataField>FirstScan</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Run_Time">
           <DataField>Run Time</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="PlannedEnd">
-          <DataField>PlannedEnd</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+        <Field Name="EstimatedEndDate">
+          <DataField>EstimatedEndDate</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="CompletionDate">
           <DataField>CompletionDate</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Status">
+          <DataField>Status</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -208,13 +281,16 @@ OrderNo
                   <Width>2in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.40625in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.59375in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.5in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -422,7 +498,7 @@ OrderNo
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>first Scan</Value>
+                                  <Value>First Scan</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -501,7 +577,7 @@ OrderNo
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Planned End</Value>
+                                  <Value>Estimated End</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -560,6 +636,43 @@ OrderNo
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox11">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Status</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox11</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -805,7 +918,9 @@ OrderNo
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Run_Time</rd:DefaultName>
@@ -827,14 +942,14 @@ OrderNo
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="PlannedEnd">
+                        <Textbox Name="EstimatedEndDate">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!PlannedEnd.Value</Value>
+                                  <Value>=Fields!EstimatedEndDate.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -844,7 +959,7 @@ OrderNo
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>PlannedEnd</rd:DefaultName>
+                          <rd:DefaultName>EstimatedEndDate</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -897,12 +1012,48 @@ OrderNo
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Status">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Status.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Status</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -937,7 +1088,7 @@ OrderNo
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>10in</Width>
+            <Width>12.5in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -945,7 +1096,7 @@ OrderNo
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>10in</Width>
+      <Width>12.5in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
