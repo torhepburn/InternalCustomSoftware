@@ -13,7 +13,8 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>AFE</DataSourceName>
-        <CommandText>WITH s1 AS	/*	start date	*/
+        <CommandText>
+WITH s1 AS	/*	start date	*/
 (
 	SELECT 
 	   [OrderNo]
@@ -74,46 +75,8 @@ LEFT JOIN NAVprodOrdRoutingLine l ON s1.OrderNo = l.[Prod_ Order No_] AND s1.ope
 
 
 )
-
-/*
-select 
-
-Item
-,ItemDescription
-,OrderNo
-,Operation
-,firstScan
-,[Run Time]
-,PlannedEnd
-,'' CompletionDate
-
-from s2 WHERE CAST(PlannedEnd as date) = '2024-04-17'
-
-UNION ALL
-
-SELECT 
-
-Item
-,ItemDescription
-,OrderNo
-,Operation
-,''
-,0
-,''
-,CompletionDate
-
-FROM s3 
-
-WHERE CAST(CompletionDate as date) = '2024-04-17'
-
-ORDER BY 
-
-OrderNo
-,Operation
-
-*/
-
-
+,s4 AS
+(
 SELECT 
 
 COUNT(Operation) PlannedEnd
@@ -133,7 +96,16 @@ SELECT
 
 FROM s3 
 
-WHERE CAST(CompletionDate as date) =  CAST(DATEADD(dd, -1, GETDATE()) as date)</CommandText>
+WHERE CAST(CompletionDate as date) =  CAST(DATEADD(dd, -1, GETDATE()) as date)
+)
+
+SELECT
+
+MAX(PLannedEnd) PlannedEnd
+,MAX(Actual) Actual
+,DataDate
+
+FROM s4 GROUP BY DataDate</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
