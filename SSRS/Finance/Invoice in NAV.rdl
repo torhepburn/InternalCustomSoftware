@@ -24,16 +24,7 @@
             <Value>=Parameters!end.Value</Value>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>/*	Invoice in NAV	*/
-
---DECLARE @start Date
---DECLARE @end Date
-
---SET @start = '03-01-2020'
---SET @end = '03-31-2020';
-
-
-SELECT
+        <CommandText>SELECT
 
   vih.[Location Code]
 , vih.[Ship-to Name]
@@ -47,6 +38,8 @@ SELECT
 , [Ship-to City]
 , [Ship-to County]
 , [Ship-to Country_Region Code]
+, [Order No_]
+, '' OrderNo
 
  FROM [ZYGO$Service Invoice Header] vih 
 
@@ -63,6 +56,7 @@ GROUP BY
 , vih.[Customer No_]
 , vih.[Your Reference]
 , vih.[No_]
+, vih.[Order No_]
 , vih.[Posting Date]
 , [Ship-to City]
 , [Ship-to County]
@@ -84,7 +78,8 @@ GROUP BY
 , [Ship-to City]
 , [Ship-to County]
 , [Ship-to Country_Region Code]
-
+, [Order No_]
+, '' OrderNo
 
  FROM [ZYGO$Sales Invoice Header] sih 
  
@@ -101,6 +96,7 @@ GROUP BY
 , sih.[Sell-to Customer No_] 
 , sih.[Your Reference]
 , sih.[No_]
+, sih.[Order No_]
 , sih.[Posting Date]
 , [Ship-to City]
 , [Ship-to County]
@@ -120,18 +116,27 @@ SELECT
 , SUM([Amount]) Amount
 , SUM([Amount Including VAT]) [Amount Including VAT]
 , SUM([Amount Including VAT]) - SUM([Amount]) [Sales Tax]
-, [Ship-to City]
-, [Ship-to County]
-, [Ship-to Country_Region Code]
+, sch.[Ship-to City]
+, sch.[Ship-to County]
+, sch.[Ship-to Country_Region Code]
+, sch.[Applies-to Doc_ No_]
+,COALESCE(CASE
+	WHEN LEFT(sch.[Applies-to Doc_ No_],3) = 'SOI' THEN vih.[Order No_]
+	WHEN LEFT(sch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
+END,'') OrderNo
 
 
  FROM [ZYGO$Sales Cr_Memo Header] sch 
  
  LEFT JOIN [ZYGO$Sales Cr_Memo Line] scl on scl.[Document No_] = sch.[No_]
 
+ LEFT JOIN [ZYGO$Service Invoice Header] vih ON sch.[Applies-to Doc_ No_] = vih.No_
+
+ LEFT JOIN [ZYGO$Sales Invoice Header] sih on sch.[Applies-to Doc_ No_] = sih.No_
+
  where sch.[Posting Date] &gt;= @start and sch.[Posting Date] &lt;= @end
 
- AND [Ship-to Country_Region Code] = 'USA'
+ AND sch.[Ship-to Country_Region Code] = 'USA'
 
  GROUP BY 
 
@@ -140,13 +145,17 @@ sch.[Location Code]
 , sch.[Bill-to Customer No_]
 , sch.[Your Reference]
 , sch.[No_]
+, sch.[Applies-to Doc_ No_]
 , sch.[Posting Date]
-, [Ship-to City]
-, [Ship-to County]
-, [Ship-to Country_Region Code]
+, sch.[Ship-to City]
+, sch.[Ship-to County]
+, sch.[Ship-to Country_Region Code]
+,COALESCE(CASE
+	WHEN LEFT(sch.[Applies-to Doc_ No_],3) = 'SOI' THEN vih.[Order No_]
+	WHEN LEFT(sch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
+END,'') 
 
-
-UNION
+ UNION
 
 SELECT 
 
@@ -162,14 +171,24 @@ SELECT
 , vch.[Ship-to City]
 , vch.[Ship-to County]
 , vch.[Ship-to Country_Region Code]
+, vch.[Applies-to Doc_ No_]
+,COALESCE(CASE
+	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'SOI' THEN vih.[Order No_]
+	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
+END,'') OrderNo
 
  FROM [ZYGO$Service Cr_Memo Header] vch 
  
  LEFT JOIN [ZYGO$Service Cr_Memo Line] vcl on vcl.[Document No_] = vch.[No_]
 
+ LEFT JOIN [ZYGO$Service Invoice Header] vih ON vch.[Applies-to Doc_ No_] = vih.No_
+
+LEFT JOIN [ZYGO$Sales Invoice Header] sih on vch.[Applies-to Doc_ No_] = sih.No_
+
+
  where vch.[Posting Date] &gt;= @start and vch.[Posting Date] &lt;= @end
 
- AND [Ship-to Country_Region Code] = 'USA'
+ AND vch.[Ship-to Country_Region Code] = 'USA'
 
  GROUP BY 
 
@@ -178,10 +197,18 @@ SELECT
 , vch.[Bill-to Customer No_]
 , vch.[Your Reference]
 , vch.[No_]
+, vch.[Applies-to Doc_ No_]
 , vch.[Posting Date]
 , vch.[Ship-to City]
 , vch.[Ship-to County]
-, vch.[Ship-to Country_Region Code]</CommandText>
+, vch.[Ship-to Country_Region Code]
+,COALESCE(CASE
+	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'SOI' THEN vih.[Order No_]
+	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
+END,'')
+
+
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -231,6 +258,14 @@ SELECT
         </Field>
         <Field Name="Ship_to_Country_Region_Code">
           <DataField>Ship-to Country_Region Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Order_No_">
+          <DataField>Order No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="OrderNo">
+          <DataField>OrderNo</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -294,6 +329,12 @@ SELECT
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.63542in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -774,6 +815,80 @@ SELECT
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox13">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Order No </Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox16">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Order No</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox16</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -1226,12 +1341,88 @@ SELECT
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Order_No_">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Order_No_.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Order_No_</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="OrderNo">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!OrderNo.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>OrderNo</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1274,7 +1465,7 @@ SELECT
             </SortExpressions>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>13.88542in</Width>
+            <Width>15.88542in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1282,7 +1473,7 @@ SELECT
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>13.88542in</Width>
+      <Width>15.88542in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
