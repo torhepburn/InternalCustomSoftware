@@ -221,6 +221,7 @@ namespace AVALARA
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
                 ", [Ship-to Country_Region Code] " +
+                ", [Order No_]" +
                 " FROM[ZYGO$Service Invoice Header] vih " +
                 "LEFT JOIN[ZYGO$Service Invoice Line] vil on vih.No_ = vil.[Document No_] " +
                 "WHERE YEAR(vih.[Posting Date]) = " + dataYear + " " +
@@ -232,6 +233,7 @@ namespace AVALARA
                 ", vih.[Customer No_] " +
                 ", vih.[Your Reference] " +
                 ", vih.[No_] " +
+                ", vih.[Order No_] " +
                 ", vih.[Posting Date] " +
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
@@ -250,6 +252,7 @@ namespace AVALARA
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
                 ", [Ship-to Country_Region Code] " +
+                ", [Order No_]" +
                 " FROM[ZYGO$Sales Invoice Header] sih " +
                 "LEFT JOIN[ZYGO$Sales Invoice Line] sil on sil.[Document No_] = sih.[No_] " +
                 "WHERE YEAR(sih.[Posting Date]) = " + dataYear + " " +
@@ -261,6 +264,7 @@ namespace AVALARA
                 ", sih.[Sell-to Customer No_] " +
                 ", sih.[Your Reference] " +
                 ", sih.[No_] " +
+                ", sih.[Order No_] " +
                 ", sih.[Posting Date] " +
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
@@ -279,6 +283,7 @@ namespace AVALARA
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
                 ", [Ship-to Country_Region Code] " +
+                ", sch.[Applies-to Doc_ No_] " +
                 " FROM[ZYGO$Sales Cr_Memo Header] sch " +
                 "LEFT JOIN[ZYGO$Sales Cr_Memo Line] scl on scl.[Document No_] = sch.[No_] " +
                 "WHERE YEAR(sch.[Posting Date]) = " + dataYear + " " +
@@ -290,6 +295,7 @@ namespace AVALARA
                 ", sch.[Bill-to Customer No_] " +
                 ", sch.[Your Reference] " +
                 ", sch.[No_] " +
+                ", sch.[Applies-to Doc_ No_] " +
                 ", sch.[Posting Date] " +
                 ", [Ship-to City] " +
                 ", [Ship-to County] " +
@@ -308,6 +314,7 @@ namespace AVALARA
                 ", vch.[Ship-to City] " +
                 ", vch.[Ship-to County] " +
                 ", vch.[Ship-to Country_Region Code] " +
+                ", vch.[Applies-to Doc_ No_] " +
                 " FROM[ZYGO$Service Cr_Memo Header] vch " +
                 "LEFT JOIN[ZYGO$Service Cr_Memo Line] vcl on vcl.[Document No_] = vch.[No_] " +
                  "WHERE YEAR(vch.[Posting Date]) = " + dataYear + " " +
@@ -319,6 +326,7 @@ namespace AVALARA
                 ", vch.[Bill-to Customer No_] " +
                 ", vch.[Your Reference] " +
                 ", vch.[No_] " +
+                ", vch.[Applies-to Doc_ No_] " +
                 ", vch.[Posting Date] " +
                 ", vch.[Ship-to City] " +
                 ", vch.[Ship-to County] " +
@@ -331,6 +339,7 @@ namespace AVALARA
             {
                 cnxnNAV.Open();
                 dr = cmd.ExecuteReader();
+
 
                 while (dr.Read())
                 {
@@ -349,6 +358,7 @@ namespace AVALARA
                         ",[Ship-to City] " +
                         ",[Ship-to County] " +
                         ",[Ship-to Country_Region Code] " +
+                        ",[Order No_] " +
                         ") VALUES (" +
                         "'" + dr.GetString(0) +
                         "','" + dr.GetString(1) +
@@ -361,7 +371,8 @@ namespace AVALARA
                         "," + dr.GetDecimal(8) +
                         ",'" + dr.GetString(9) +
                         "','" + dr.GetString(10) +
-                        "','" + dr.GetString(11) + "')", cnxn);
+                        "','" + dr.GetString(11) +
+                        "','" + dr.GetString(12) + "')", cnxn);
 
                     try
                     {
@@ -389,11 +400,12 @@ namespace AVALARA
                 cnxn.Close();
             }
 
-
+            
             string[] aCustomer = new string[500];
             string[] aCity = new string[500];
             string[] aState = new string[500];
             string[] aLocation = new string[500];
+            string[] aOrder = new string[500];
             int i = 0;
 
             cmd = new SqlCommand(
@@ -402,6 +414,7 @@ namespace AVALARA
                 ",COALESCE([Ship-to City],'') " +
                 ",COALESCE([Ship-to County],'') " +
                 ",COALESCE([Location Code],'') " +
+                ",COALESCE([Order No_],'') " +
                 "FROM AVALARA_match a " +
                 "LEFT JOIN AVALARA_s1_NAVinvoiceData t ON a.CustomerNo = t.[Customer No] " +
                 "AND a.DocumentCode = t.No_ " +
@@ -425,6 +438,7 @@ namespace AVALARA
                         aState[i] = "NoState";
                     }
                     aLocation[i] = dr.GetString(3);
+                    aOrder[i] = "'" + dr.GetString(4).Trim();
                     i++;
                 }
             }
@@ -449,17 +463,19 @@ namespace AVALARA
             wbookM = xlappM.ActiveWorkbook;
             wsheetM = (Microsoft.Office.Interop.Excel.Worksheet)xlappM.ActiveSheet;
 
-            wsheetM.Cells[14, 9] = "Customer Name";
-            wsheetM.Cells[14, 10] = "Ship to City";
-            wsheetM.Cells[14, 11] = "Ship to State";
-            wsheetM.Cells[14, 12] = "Ship from Location";
+            wsheetM.Cells[14, 9] = "Order No";
+            wsheetM.Cells[14, 10] = "Customer Name";
+            wsheetM.Cells[14, 11] = "Ship to City";
+            wsheetM.Cells[14, 12] = "Ship to State";
+            wsheetM.Cells[14, 13] = "Ship from Location";
 
             for (int n = 0; n < i; n++)
             {
-                wsheetM.Cells[(15 + n), 9] = aCustomer[n];
-                wsheetM.Cells[(15 + n), 10] = aCity[n];
-                wsheetM.Cells[(15 + n), 11] = aState[n];
-                wsheetM.Cells[(15 + n), 12] = aLocation[n];
+                wsheetM.Cells[(15 + n), 9] = aOrder[n];
+                wsheetM.Cells[(15 + n), 10] = aCustomer[n];
+                wsheetM.Cells[(15 + n), 11] = aCity[n];
+                wsheetM.Cells[(15 + n), 12] = aState[n];
+                wsheetM.Cells[(15 + n), 13] = aLocation[n];
             }
 
             wsheetM.Columns.AutoFit();
@@ -488,6 +504,7 @@ namespace AVALARA
             decimal[] aSalesTax = new decimal[500];
             string[] aNCity = new string[500];
             string[] aNState = new string[500];
+            string[] aRefOrderNo = new string[500];
 
             int j = 0;
 
@@ -518,6 +535,7 @@ namespace AVALARA
                     aSalesTax[j] = dr.GetDecimal(15);
                     aNCity[j] = dr.GetString(16);
                     aNState[j] = dr.GetString(17);
+                    aRefOrderNo[j] = "'" + dr.GetString(18);
                     j++;
                 }
             }
@@ -554,6 +572,7 @@ namespace AVALARA
             wsheetM.Cells[1, 16] = "Sales Tax";
             wsheetM.Cells[1, 17] = "Ship-to City";
             wsheetM.Cells[1, 18] = "Ship-to State";
+            wsheetM.Cells[1, 19] = "Order No";
 
             for (int n = 0; n < j; n++)
             {
@@ -575,6 +594,7 @@ namespace AVALARA
                 wsheetM.Cells[(2 + n), 16] = aSalesTax[n];
                 wsheetM.Cells[(2 + n), 17] = aNCity[n];
                 wsheetM.Cells[(2 + n), 18] = aNState[n];
+                wsheetM.Cells[(2 + n), 19] = aRefOrderNo[n];
             }
 
             wsheetM.Columns.AutoFit();
@@ -673,6 +693,7 @@ namespace AVALARA
                        ", [Ship-to City] " +
                        ", [Ship-to County] " +
                        ", [Location Code] " +
+                       ", [Order No_] " +
                        " FROM AVALARA_match a " +
                        " LEFT JOIN AVALARA_s1_NAVinvoiceData t ON a.CustomerNo = t.[Customer No] " +
                        " AND a.DocumentCode = t.No_ " +
@@ -691,6 +712,8 @@ namespace AVALARA
                     string[] aCity1 = new string[500];
                     string[] aState1 = new string[500];
                     string[] aLoc1 = new string[500];
+                    string[] aOrderNo = new string[500];
+
 
                     int i1 = 0;
 
@@ -715,6 +738,7 @@ namespace AVALARA
                             aCity1[i1] = dr2.GetString(9).Trim();
                             aState1[i1] = dr2.GetString(10).Trim();
                             aLoc1[i1] = dr2.GetString(11).Trim();
+                            aOrderNo[i1] = "'" + dr2.GetString(12).Trim();
                             i1++;
                         }
                     }
@@ -737,10 +761,11 @@ namespace AVALARA
                         wsheetM1.Cells[(15 + n), 6] = aAmountNT[n];
                         wsheetM1.Cells[(15 + n), 7] = aAmountT[n];
                         wsheetM1.Cells[(15 + n), 8] = aTax[n];
-                        wsheetM1.Cells[(15 + n), 9] = aName[n];
-                        wsheetM1.Cells[(15 + n), 10] = aCity1[n];
-                        wsheetM1.Cells[(15 + n), 11] = aState1[n];
-                        wsheetM1.Cells[(15 + n), 12] = aLoc1[n];
+                        wsheetM1.Cells[(15 + n), 9] = aOrderNo[n];
+                        wsheetM1.Cells[(15 + n), 10] = aName[n];
+                        wsheetM1.Cells[(15 + n), 11] = aCity1[n];
+                        wsheetM1.Cells[(15 + n), 12] = aState1[n];
+                        wsheetM1.Cells[(15 + n), 13] = aLoc1[n];
                     }
 
                     wsheetM1.Cells[(15 + i1), 1] = "";
