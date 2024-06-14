@@ -39,7 +39,7 @@
 , [Ship-to County]
 , [Ship-to Country_Region Code]
 , [Order No_]
-, '' OrderNo
+, '' [Cr Memo OrderNo]
 
  FROM [ZYGO$Service Invoice Header] vih 
 
@@ -47,7 +47,7 @@
 
 where vih.[Posting Date] &gt;= @start and vih.[Posting Date] &lt;= @end
 
-AND [Ship-to Country_Region Code] = 'USA'
+AND [Ship-to Country_Region Code]  IN ('USA', 'PRI')
 
 GROUP BY 
 
@@ -79,7 +79,8 @@ GROUP BY
 , [Ship-to County]
 , [Ship-to Country_Region Code]
 , [Order No_]
-, '' OrderNo
+, '' [Cr Memo OrderNo]
+
 
  FROM [ZYGO$Sales Invoice Header] sih 
  
@@ -87,7 +88,7 @@ GROUP BY
 
  where sih.[Posting Date] &gt;= @start and sih.[Posting Date] &lt;= @end
 
- AND [Ship-to Country_Region Code] = 'USA'
+ AND [Ship-to Country_Region Code]  IN ('USA', 'PRI')
   
  GROUP BY 
 
@@ -136,7 +137,7 @@ END,'') OrderNo
 
  where sch.[Posting Date] &gt;= @start and sch.[Posting Date] &lt;= @end
 
- AND sch.[Ship-to Country_Region Code] = 'USA'
+ AND sch.[Ship-to Country_Region Code]  IN ('USA', 'PRI')
 
  GROUP BY 
 
@@ -155,7 +156,7 @@ sch.[Location Code]
 	WHEN LEFT(sch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
 END,'') 
 
- UNION
+UNION
 
 SELECT 
 
@@ -167,7 +168,7 @@ SELECT
 , vch.[Posting Date]
 , SUM([Amount]) Amount
 , SUM([Amount Including VAT]) [Amount Including VAT]
-, SUM([Amount Including VAT]) - SUM([Amount]) [Sales Tax]
+, (SUM([Amount Including VAT]) - SUM([Amount])) [Sales Tax]
 , vch.[Ship-to City]
 , vch.[Ship-to County]
 , vch.[Ship-to Country_Region Code]
@@ -185,10 +186,9 @@ END,'') OrderNo
 
 LEFT JOIN [ZYGO$Sales Invoice Header] sih on vch.[Applies-to Doc_ No_] = sih.No_
 
-
  where vch.[Posting Date] &gt;= @start and vch.[Posting Date] &lt;= @end
 
- AND vch.[Ship-to Country_Region Code] = 'USA'
+ AND vch.[Ship-to Country_Region Code] IN ('USA', 'PRI')
 
  GROUP BY 
 
@@ -206,8 +206,6 @@ LEFT JOIN [ZYGO$Sales Invoice Header] sih on vch.[Applies-to Doc_ No_] = sih.No_
 	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'SOI' THEN vih.[Order No_]
 	WHEN LEFT(vch.[Applies-to Doc_ No_],3) = 'ZSI' THEN sih.[Order No_]
 END,'')
-
-
 </CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -264,8 +262,8 @@ END,'')
           <DataField>Order No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="OrderNo">
-          <DataField>OrderNo</DataField>
+        <Field Name="Cr_Memo_OrderNo">
+          <DataField>Cr Memo OrderNo</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -328,6 +326,9 @@ END,'')
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
                   <Width>1.63542in</Width>
                 </TablixColumn>
                 <TablixColumn>
@@ -343,10 +344,7 @@ END,'')
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.59375in</Width>
                 </TablixColumn>
               </TablixColumns>
               <TablixRows>
@@ -468,14 +466,14 @@ END,'')
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox4">
+                        <Textbox Name="Textbox18">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Your Reference</Value>
+                                  <Value>Order No </Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -487,7 +485,7 @@ END,'')
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <rd:DefaultName>Textbox18</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -495,7 +493,43 @@ END,'')
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox20">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Cr Memo Order No</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox20</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -817,14 +851,14 @@ END,'')
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox13">
+                        <Textbox Name="Textbox15">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Order No </Value>
+                                  <Value>Your Reference</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -836,44 +870,7 @@ END,'')
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox13</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox16">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Order No</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox16</rd:DefaultName>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1003,14 +1000,14 @@ END,'')
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Your_Reference">
+                        <Textbox Name="Order_No_1">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Your_Reference.Value</Value>
+                                  <Value>=Fields!Order_No_.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1020,7 +1017,7 @@ END,'')
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Your_Reference</rd:DefaultName>
+                          <rd:DefaultName>Order_No_1</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1028,7 +1025,41 @@ END,'')
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cr_Memo_OrderNo1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Cr_Memo_OrderNo.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Cr_Memo_OrderNo1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1343,14 +1374,14 @@ END,'')
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Order_No_">
+                        <Textbox Name="Your_Reference1">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Order_No_.Value</Value>
+                                  <Value>=Fields!Your_Reference.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1362,44 +1393,7 @@ END,'')
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Order_No_</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="OrderNo">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!OrderNo.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>OrderNo</rd:DefaultName>
+                          <rd:DefaultName>Your_Reference1</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1465,7 +1459,7 @@ END,'')
             </SortExpressions>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>15.88542in</Width>
+            <Width>16.47917in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1473,7 +1467,7 @@ END,'')
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>15.88542in</Width>
+      <Width>17.88542in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
