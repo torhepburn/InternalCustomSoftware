@@ -555,7 +555,7 @@ namespace NAV_MRP
                         ",FORMAT([Reorder Point],'N', 'en-us')" +
                         ",FORMAT([Reorder Quantity],'N', 'en-us') " +
                         ",[Vetted] " +  /*  23    */
-                        ",CASE SIM " +
+                        ",COALESCE(CASE SIM " +
                         "   WHEN 1 THEN 'A1' " +
                         "   WHEN 2 THEN 'A2' " +
                         "   WHEN 3 THEN 'A3' " +
@@ -565,7 +565,7 @@ namespace NAV_MRP
                         "   WHEN 7 THEN 'C1' " +
                         "   WHEN 8 THEN 'C2' " +
                         "   WHEN 9 THEN 'C3' " +
-                        "END SIM " +
+                        "END,'') SIM " +
                         ",[Dampener Days Late] " +
                         ",[SDS Document No_] " +
                         ",P6 " +
@@ -586,14 +586,17 @@ namespace NAV_MRP
                         "END NonDomesticVendor " +
                          ",CASE " +
                         "   WHEN CHARINDEX(CHAR(3),[Dampener Period]) > 0 THEN " +  // --work days 
-                        "        REPLACE([Dampener Period], CHAR(3), '') " +
-                        "    WHEN CHARINDEX(CHAR(4),[Dampener Period]) > 0 THEN " + // --week 
-                        "       REPLACE([Dampener Period], CHAR(4), '') * 5	" +       //--convert to days 
-                        "    WHEN CHARINDEX(CHAR(5),[Dampener Period]) > 0 THEN " + // --month 
-                        "       REPLACE([Dampener Period], CHAR(5), '') * 20	" +       //--convert to days 
-                        "   WHEN CHARINDEX(CHAR(2),[Dampener Period]) > 0 THEN " +      //-- days 
-                        "       REPLACE([Dampener Period], CHAR(2), '')		" +
+                        "        CAST(REPLACE([Dampener Period], CHAR(3), '') as nchar(15)) " +
+                        "    WHEN CHARINDEX(CHAR(4), [Dampener Period]) > 0 THEN " +  /* week */
+                        "       CAST((REPLACE([Dampener Period], CHAR(4), '') * 5) as nchar(15)) " +	        /* convert to days */
+                        "   WHEN CHARINDEX(CHAR(5), [Dampener Period]) > 0 AND ASCII(SUBSTRING([Dampener Period], 1, 1)) <> 1 THEN " +  /* month */
+                        "       CAST((REPLACE([Dampener Period], CHAR(5), '') * 20) as nchar(15)) " +	        /* convert to days */
+                        "   WHEN CHARINDEX(CHAR(2), [Dampener Period]) > 0 THEN " +      /* days */
+                        "       CAST(REPLACE([Dampener Period], CHAR(2), '') as nchar(15)) " +
                         "   WHEN LEN([Dampener Period]) = 0 THEN '0' " +
+                        "   WHEN ASCII(SUBSTRING([Dampener Period], 1, 1)) = 1 " +
+                        "   AND ASCII(SUBSTRING([Dampener Period], 2, 1)) = 5 " +
+                        "     THEN 'Current Month'" +
                         " END [Dampener Period]" +
                         ",FORMAT([Dampener Quantity],'N', 'en-us') " +    /*FORMAT([Order Multiple],'N', 'en-us') */
                         ",CASE " +
@@ -1440,8 +1443,14 @@ namespace NAV_MRP
                                          if greater than one week then add extra week  replace \u00003 with ""*/
 
                                     //aLeadTime[i] = lt.ToString() + " Days (" + Convert.ToInt32(Math.Ceiling(lt / 5)).ToString() + " Weeks)";
-
-                                    aDampenerPeriod[i] = dtItem.Rows[0][33].ToString() + " Days";
+                                    if (dtItem.Rows[0][33].ToString() == "Current Month")
+                                    {
+                                        aDampenerPeriod[i] = dtItem.Rows[0][33].ToString();
+                                    }
+                                    else
+                                    {
+                                        aDampenerPeriod[i] = dtItem.Rows[0][33].ToString() + " Days";
+                                    }
                                 }
                                 catch //(SqlException ex)
                                 {
@@ -2100,7 +2109,15 @@ namespace NAV_MRP
                 }
 
                 ev.Graphics.DrawString("Dampener Period: ", heading, Brushes.Black, 25, 365);
-                ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 185, 365);
+                /*  need to start the text in different spots due to length of string    */
+                if (aDampenerPeriod[lineNo] == "Current Month")
+                {
+                    ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 140, 366);
+                }
+                else
+                {
+                    ev.Graphics.DrawString(aDampenerPeriod[lineNo], A9R, Brushes.Black, 185, 365);
+                }
 
                 ev.Graphics.DrawString("Dampener Quantity: ", heading, Brushes.Black, 260, 365);
                 ev.Graphics.DrawString(aDampenerQuantity[lineNo], A9R, Brushes.Black, 400, 365);
