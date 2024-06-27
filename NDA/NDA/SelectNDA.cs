@@ -288,7 +288,7 @@ namespace NDA
         public static string userType;
         public static string dbNAV = "server = PA-HOR-AS408; Database = ZYGO-NAV-PROD; " +
                             "user = navdb_read; password = 2018#ameteK;";
-                public static string dbDash = "server = MIDDB01.zygo.com; Database = Dashboard; " +
+        public static string dbAFE = "server = CT-MID-SQL11; Database = AccessFrontEnds; " +
                             "user = views; password = views;";
         public static string db = "server = CT-MID-SQL11; Database = ZygoNonDisclosureAgreements; " +
                             "user = NdaAdmin; password = $ecur1Ty;";

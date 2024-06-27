@@ -60,12 +60,11 @@ namespace NDA
                  * Employee
                  * 
                  * */
-                cnxnDash = new SqlConnection(g.dbDash);
+                cnxn = new SqlConnection(g.dbAFE);
 
                 da = new SqlDataAdapter(
-                     "select distinct NAME from view_employees_all " +
-                     "where status = 1 " +
-                     "order by name ", cnxnDash);
+                     "select CN NAME from EmployeesAmetekAD " +
+                     "order by SN ", cnxn);
 
                 DataTable dt1 = new DataTable();
                 DataTable dt2 = new DataTable();

@@ -164,8 +164,9 @@
             this.cbddProductLine.FormattingEnabled = true;
             this.cbddProductLine.Items.AddRange(new object[] {
             "",
-            "Instrumenrt",
+            "Instrument",
             "Optics",
+            "NAVITAR",
             "PPS",
             "Global"});
             this.cbddProductLine.Location = new System.Drawing.Point(639, 13);

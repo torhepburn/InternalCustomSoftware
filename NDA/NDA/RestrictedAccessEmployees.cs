@@ -37,12 +37,11 @@ namespace NDA
              * Employee
              * 
              * */
-            SqlConnection cnxnDash = new SqlConnection(g.dbDash);
+            SqlConnection cnxnAFE = new SqlConnection(g.dbAFE);
 
             da = new SqlDataAdapter(
-                 "select distinct NAME from view_employees_all " +
-                 "where status = 1 " +
-                 "order by name ", cnxnDash);
+                 "select distinct CN NAME from EmployeesAmetekAD " +
+                 "order by SN ", cnxnAFE);
 
             DataTable dt1 = new DataTable();
             dt1.Rows.Add();
@@ -58,7 +57,7 @@ namespace NDA
             }
             finally
             {
-                cnxnDash.Close();
+                cnxnAFE.Close();
             }
             cbddZygoEmployee.DataSource = dt1;
             cbddZygoEmployee.DisplayMember = "Name";
