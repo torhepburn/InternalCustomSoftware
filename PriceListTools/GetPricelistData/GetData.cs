@@ -69,7 +69,9 @@ namespace GetPricelistData
                 " ,CAST(sp1.[Unit Price] as int) [Unit Price] " +
                 " ,CASE " +
                 "   WHEN [Global Dimension 2 Code] LIKE 'LASER%' THEN 'Large Aperture Systems' " +
+                "   WHEN [Global Dimension 2 Code] = 'CMS LI' THEN 'Large Aperture Systems' " +
                 "   WHEN [Global Dimension 2 Code] LIKE 'OPT P%' THEN 'Optical Profilers' " +
+                "   WHEN [Global Dimension 2 Code] = 'CMS OP' THEN 'Optical Profilers' " +
                 "   WHEN [Global Dimension 2 Code] LIKE 'PPS%' THEN 'Motion Measurement Products' " +
                 " END sales_price_group " +
                 ",'" + effectiveDate + "' " +
