@@ -345,7 +345,7 @@ namespace PCCGraphs
             cnxn.Close();
 
             string odb1 = @"ODBC; Connect ""Description=ProductionControl;DRIVER=SQL Server;"" &" + Environment.NewLine +
-                          @"""SERVER=CT-MID-SQL11;UID=views;PWD=views;APP=Minitab Release 19;WSID=MIDWS0167;""&" + Environment.NewLine +
+                          @"""SERVER=CT-MID-SQL11;UID=views;PWD=views;APP=Minitab Release 21;WSID=MIDWS0167;""&" + Environment.NewLine +
                           @"""DATABASE=ProductionControl"";" + Environment.NewLine +
                           @"SQLString ""Select sn, [its build number], [Test Date], iteration, "" &" + Environment.NewLine +
                           @""" [board promver], "" &" + Environment.NewLine;
