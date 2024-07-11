@@ -10,7 +10,7 @@ namespace StockroomShorts.Data
     {
         //public Global? global;
 
-        Global g = new Global();
+        Global g = new ();
 
         public int gID { get; set; }
 
