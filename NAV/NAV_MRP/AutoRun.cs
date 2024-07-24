@@ -76,7 +76,7 @@ namespace NAV_MRP
                 MRP_PrintedReport ss = new MRP_PrintedReport();
                 ss.ShowDialog();
 
-                ///*  Richmond    */
+                /*  Richmond    */
 
                 g.SQLselection = g.Richmond + g.dateAndAction;
                 g.ReportSelection = "Richmond Purchase News ";
@@ -88,6 +88,17 @@ namespace NAV_MRP
                 g.ReportSelection = "Richmond Reschedules ";
                 MRP_PrintedReport vv = new MRP_PrintedReport();
                 vv.ShowDialog();
+
+                g.SQLselection = g.XRichmond + g.dateAndAction;
+                g.ReportSelection = "Richmond X Purchase News ";
+                MRP_PrintedReport vx = new MRP_PrintedReport();
+                vx.ShowDialog();
+
+
+                g.SQLselection = g.XRichmond + g.Reschedule + g.Richmond + g.dateAndAction + " )";
+                g.ReportSelection = "Richmond X Reschedules ";
+                MRP_PrintedReport vvx = new MRP_PrintedReport();
+                vvx.ShowDialog();
 
                 /*  MRP KBP    */
                 g.ReportSelection = "KBP Purchase News ";

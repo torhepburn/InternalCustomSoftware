@@ -368,7 +368,7 @@ namespace NAV_MRP
               "AND i.No_ NOT IN ('SERVICE ITEM','9999') " +
               //"AND i.No_ NOT IN (SELECT * FROM s27) " +
               /*    for testing   */ 
-              //"AND r.No_ = '1600-003-025' " +
+              //"AND r.No_ = '1949-000-052' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
                //"AND r.No_ LIKE'X700620%' " +
                

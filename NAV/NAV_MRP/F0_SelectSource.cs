@@ -109,7 +109,7 @@ namespace NAV_MRP
         public static string X = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
                             "AND [Reference Component] <> 1 " +
                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
-                            "AND r.[Location Code] NOT IN ('IRV', 'IRV MRB') " +
+                            "AND r.[Location Code] NOT IN ('IRV', 'IRV MRB', 'RIC', 'RIC MRB', 'RIC SVC') " +
                             "AND i.[Selection Code] not like 'K%' " +
                             "AND i.[Selection Code] <> 'LTA' " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
@@ -131,6 +131,14 @@ namespace NAV_MRP
                              //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND [Reference Component] <> 1 " +
                              "AND r.[Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') ";
+
+        public static string XRichmond = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
+                            "AND [Reference Component] <> 1 " +
+                            //"AND r.[Starting Date] <= (GETDATE() + 14) " +
+                            "AND r.[Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') " +
+                            "AND i.[Selection Code] not like 'K%' " +
+                            "AND i.[Selection Code] <> 'LTA' " +
+                            "AND i.[Item Group Code] <> 'VMI'  ";
 
 
         public static string sMRP = "SELECT " +
