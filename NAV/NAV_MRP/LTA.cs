@@ -486,16 +486,18 @@ namespace NAV_MRP
                         "END NonDomesticVendor " +
                          ",CASE " +
                         "   WHEN CHARINDEX(CHAR(3),[Dampener Period]) > 0 THEN " +  // --work days 
-                        "        REPLACE([Dampener Period], CHAR(3), '') " +
-                        "    WHEN CHARINDEX(CHAR(4),[Dampener Period]) > 0 THEN " + // --week 
-                        "       REPLACE([Dampener Period], CHAR(4), '') * 5	" +       //--convert to days 
-                        "    WHEN CHARINDEX(CHAR(5),[Dampener Period]) > 0 THEN " + // --month 
-                        "       REPLACE([Dampener Period], CHAR(5), '') * 20	" +       //--convert to days 
-                        "   WHEN CHARINDEX(CHAR(2),[Dampener Period]) > 0 THEN " +      //-- days 
-                        "       REPLACE([Dampener Period], CHAR(2), '')		" +
+                        "        CAST(REPLACE([Dampener Period], CHAR(3), '') as nchar(15)) " +
+                        "    WHEN CHARINDEX(CHAR(4), [Dampener Period]) > 0 THEN " +  /* week */
+                        "       CAST((REPLACE([Dampener Period], CHAR(4), '') * 5) as nchar(15)) " +	        /* convert to days */
+                        "   WHEN CHARINDEX(CHAR(5), [Dampener Period]) > 0 AND ASCII(SUBSTRING([Dampener Period], 1, 1)) <> 1 THEN " +  /* month */
+                        "       CAST((REPLACE([Dampener Period], CHAR(5), '') * 20) as nchar(15)) " +	        /* convert to days */
+                        "   WHEN CHARINDEX(CHAR(2), [Dampener Period]) > 0 THEN " +      /* days */
+                        "       CAST(REPLACE([Dampener Period], CHAR(2), '') as nchar(15)) " +
                         "   WHEN LEN([Dampener Period]) = 0 THEN '0' " +
-                        " END [Dampener Period]" +
-                        ",FORMAT([Dampener Quantity],'N', 'en-us') " +    /*FORMAT([Order Multiple],'N', 'en-us') */
+                        "   WHEN ASCII(SUBSTRING([Dampener Period], 1, 1)) = 1 " +
+                        "   AND ASCII(SUBSTRING([Dampener Period], 2, 1)) = 5 " +
+                        "     THEN 'Current Month'" +
+                        " END [Dampener Period]" + ",FORMAT([Dampener Quantity],'N', 'en-us') " +    /*FORMAT([Order Multiple],'N', 'en-us') */
                         ",CASE " +
                         "   WHEN CHARINDEX(CHAR(4),[LTA Release Bucket (Weeks)]) > 0 THEN " +
                         "       REPLACE([LTA Release Bucket (Weeks)], CHAR(4), '') * 5 " +  //convert to work days for sheet display
@@ -521,7 +523,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        MessageBox.Show(" 471  " + ex.ToString());
+                        MessageBox.Show(" 519  " + ItemNo + "   " + ex.ToString());
                     }
                     finally
                     {
