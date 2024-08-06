@@ -68,7 +68,12 @@ namespace LicenseGenerator
                         Application.Run(new f1SelectProduct());
                     }
                 }
-               
+                else
+                {
+                    Application.Run(new f1SelectProduct());
+                }
+
+
             }
             catch (SqlException ex)
             {
