@@ -182,7 +182,10 @@ namespace LicenseGenerator
                 {
                     f8ChangeSalesOrder f8 = new f8ChangeSalesOrder();
                     f8.Show();
-                    this.Close();
+                    if (g.role != "QC")
+                    {
+                        this.Close();
+                    }
                 }
 
                 if (g.task == "Delete")

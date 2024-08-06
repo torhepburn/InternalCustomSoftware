@@ -33,7 +33,7 @@ namespace LicenseGenerator
                 user = userBase.Name.Replace("AMETEK-AD\\", "");
             }
 
-            //string computername = Environment.MachineName;
+
 
             SqlConnection cnxn = new SqlConnection(g.dbAFE);
 
@@ -61,6 +61,8 @@ namespace LicenseGenerator
                         Bblock.Visible = true;
                         Bunblock.Visible= true;
                     }
+
+                    
                 }
                 //else
                 //{
@@ -143,7 +145,7 @@ namespace LicenseGenerator
         public static string uid;
         public static string MkNAV;
         public static string customerName;
-        public static string owner;
+        public static string role;
         public static string user;
         public static string db = "server=CT-MID-SQL11; password = Read+Write!;" +
                                   " user = readwrite; database = ZygoProductLicenses";
