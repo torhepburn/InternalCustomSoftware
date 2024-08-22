@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.SqlClient;
+using GetPricelistData.Properties;
 
 namespace GetPricelistData
 {
@@ -43,10 +44,6 @@ namespace GetPricelistData
             effectiveDate = monthCalendar1.SelectionStart.ToString("MM-dd-yyyy");
             monthCalendar1.Hide();
 
-
-            //tableName = "PriceList_s1";
-
-            //MakeTables();
 
             select =
                 "with s1 AS " +
@@ -84,7 +81,43 @@ namespace GetPricelistData
                 " AND LEN(i.[Price List Code]) > 0 " +
                 " AND sp1.[Sales Code] IN('DOM', 'EXP', 'INT','EUR','ZCV','ZJV', 'ZKK', 'DIS') " +
                 " AND(sp1.[Ending Date] >= '" + effectiveDate + "' OR sp1.[Ending Date] IS NULL) " +
-                " AND sp1.[Starting Date] <= '" + effectiveDate + "' ";
+                " AND sp1.[Starting Date] <= '" + effectiveDate + "' " +
+                " UNION ALL " +
+                " select " +
+                "'DOM' " +
+                ",No_" +
+                ",'YVC' " +
+                ",'SERVICE CONTRACTS' " +
+                ",999 " +
+                ",[Unit Price] " +
+                ",'Service Contracts' " +
+                ",GETDATE() " +
+                " from ZYGO$Resource " +
+                "WHERE(LEFT(No_, 2) IN('FL', 'VE', 'DY', 'MS', 'VF', 'IR', 'ZE', 'NE', 'NV', 'NX', 'IH', 'Z-', 'PM') " +
+                "AND No_ NOT LIKE 'IRVINE%' " +
+                "AND No_ NOT LIKE 'VENDOR%' " +
+                "AND No_ NOT LIKE '%TSFR%' " +
+                "AND No_<> 'Z-PART' " +
+                "OR No_ = 'CERTIFICATE SERVICE') " +
+                "AND No_ LIKE '%-DOM' " +
+                "UNION ALL " +
+                "select " +
+                "'DOM' " +
+                ",No_ " +
+                ",'YVI' " +
+                ",'SERVICE ITEMS' " +
+                ",999 " +
+                ",[Unit Price] " +
+                ",'Service Items' " +
+                ",GETDATE() " +
+                "from ZYGO$Resource " +
+                "WHERE (LEFT(No_, 2) IN('FL', 'VE', 'DY', 'MS', 'VF', 'IR', 'ZE', 'NE', 'NV', 'NX', 'IH', 'Z-', 'PM') " +
+                "AND No_ NOT LIKE 'IRVINE%' " +
+                "AND No_ NOT LIKE 'VENDOR%' " +
+                "AND No_ NOT LIKE '%TSFR%' " +
+                "AND No_<> 'Z-PART' " +
+                "OR No_ = 'CERTIFICATE SERVICE') " +
+                "AND No_ NOT LIKE '%-DOM' ";
 
             tableName = "PriceList_s1";
 
@@ -108,7 +141,33 @@ namespace GetPricelistData
                 "[Starting Date] > '02-06-1995' and " +
                 "[Starting Date] <= '" + effectiveDate + "' and " +
                 "([Ending Date] >=  '" + effectiveDate + "' OR " +
-                " [Ending Date] is null))";
+                " [Ending Date] is null)) " +
+                "UNION ALL " +
+                "select " +
+                "No_ " +
+                ",10000 " +
+                ",[Name] " + 
+                "from ZYGO$Resource " + 
+                " WHERE (LEFT(No_, 2) IN ('FL', 'VE', 'DY','MS','VF','IR','ZE','NE','NV','NX','IH','Z-','PM')" + 
+                " AND No_ NOT LIKE 'IRVINE%'" + 
+                " AND No_ NOT LIKE 'VENDOR%'" + 
+                " AND No_ NOT LIKE '%TSFR%'" + 
+                " AND No_ <> 'Z-PART'" + 
+                " OR No_ = 'CERTIFICATE SERVICE')" + 
+                " AND No_ NOT LIKE '%-DOM' " +
+                "UNION ALL " +
+                " select " + 
+                " No_" + 
+                ",10000 " + 
+                ",[Name] " + 
+                " from ZYGO$Resource" + 
+                " WHERE (LEFT(No_, 2) IN ('FL', 'VE', 'DY','MS','VF','IR','ZE','NE','NV','NX','IH','Z-','PM')" + 
+                " AND No_ NOT LIKE 'IRVINE%'" + 
+                " AND No_ NOT LIKE 'VENDOR%'" + 
+                " AND No_ NOT LIKE '%TSFR%'" + 
+                " AND No_ <> 'Z-PART'" + 
+                " OR No_ = 'CERTIFICATE SERVICE')" + 
+                " AND No_ LIKE '%-DOM'";
 
             
 
