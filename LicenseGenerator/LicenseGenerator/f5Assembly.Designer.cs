@@ -42,6 +42,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.tbSerialNumber = new System.Windows.Forms.TextBox();
             this.tbDongle = new System.Windows.Forms.TextBox();
+            this.bRePrint = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // bPrint
@@ -199,12 +200,25 @@
             this.tbDongle.Size = new System.Drawing.Size(322, 23);
             this.tbDongle.TabIndex = 17;
             // 
+            // bRePrint
+            // 
+            this.bRePrint.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(150)))), ((int)(((byte)(250)))));
+            this.bRePrint.Location = new System.Drawing.Point(56, 619);
+            this.bRePrint.Margin = new System.Windows.Forms.Padding(4);
+            this.bRePrint.Name = "bRePrint";
+            this.bRePrint.Size = new System.Drawing.Size(598, 62);
+            this.bRePrint.TabIndex = 31;
+            this.bRePrint.Text = "Reprint Existing License (DongleID entry only needed)";
+            this.bRePrint.UseVisualStyleBackColor = false;
+            this.bRePrint.Click += new System.EventHandler(this.bRePrint_Click);
+            // 
             // f5Assembly
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LemonChiffon;
-            this.ClientSize = new System.Drawing.Size(707, 652);
+            this.ClientSize = new System.Drawing.Size(707, 706);
+            this.Controls.Add(this.bRePrint);
             this.Controls.Add(this.bPrint);
             this.Controls.Add(this.bAnother);
             this.Controls.Add(this.label6);
@@ -245,5 +259,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tbSerialNumber;
         private System.Windows.Forms.TextBox tbDongle;
+        private System.Windows.Forms.Button bRePrint;
     }
 }
