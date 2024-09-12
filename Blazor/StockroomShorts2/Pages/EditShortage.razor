@@ -80,7 +80,7 @@
  <br />
  <br />
 <div style="display:flex;justify-content:center">
-<EditForm Model="item" OnValidSubmit="DataEntry">
+<EditForm Model="item" OnValidSubmit="@HandleValidSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
         <table style="box-shadow: .5px .5px 3px red;">
@@ -96,9 +96,18 @@
                     <InputText id="n9" placeholder="BinCode" @bind-Value="binCode" /> 
                 </td>
                 <td align="right">
-                        <label style="width:100%">Stockroom Associate :</label>
+
+                        <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="storekeeper" />
                     
-                    <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="storekeeper" />
+                        <label style="width:100%">Click below to Change :</label>
+                                                
+                        <InputSelect id="s4" class="form-control" style="width:80%" @bind-Value="storekeeper">
+ 
+                            @foreach (System.Data.DataRow r in dtStorekeeper.Rows)
+                            {
+                                <option value="@r[0].ToString()">@r[0].ToString()</option>
+                            }
+                        </InputSelect>
                 </td>
             </tr>
             <tr>
@@ -168,6 +177,7 @@
     SqlDataReader dr;
     DataTable dt;
     DataTable dtc;
+    DataTable dtStorekeeper;
 
     private string line1 = "";
     private string line2 = "";
@@ -192,6 +202,11 @@
     private string printer = string.Empty;
     private string lineNo = "";
     private string reference = "";
+
+    private void HandleValidSubmit()
+    {
+        DataEntry();
+    }
 
     protected override void OnInitialized()
     {
@@ -310,6 +325,39 @@
         }
 
         _dateSample.ddate = DateTime.Now;
+
+        dtStorekeeper = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                  //"CN " +
+                  " mail " +
+                  "FROM EmployeesAmetekAD " +
+                  "WHERE BU = 'ct-mid' " +
+                  "AND Manager LIKE '%Fornal%' " +
+                  "order by SN "
+                  , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtStorekeeper.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            // pop.Title = "Error";
+            // pop.Message = ex.ToString();
+            // pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+
     }
 
     public void DataEntry()

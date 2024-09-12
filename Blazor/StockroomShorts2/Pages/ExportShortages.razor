@@ -23,9 +23,39 @@
 
 <h1>Export Stockroom Shortages</h1>
 
+<EditForm Model="item" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <table>
+        <tbody>
+            <tr>
+                <td align="right">
+                    Stockroom Associate :
+                    @*  <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="g.storekeeper" /> *@
+                    <InputSelect id="s4" class="form-control" style="width:80%" @bind-Value="g.storekeeper">
+                        <option value=""</Option>
+                        @foreach (System.Data.DataRow r in dtStorekeeper.Rows)
+                        {
+                            <option value="@r[0].ToString()">@r[0].ToString()</option>
+                        }
+                    </InputSelect>
+                </td>
+            </tr>
+           
+        </tbody>
+    </table>
+
+</EditForm>
+
+<div style="display:flex;justify-content:center">
+    <button class="button-58" style="margin-right:40px" @onclick="HandleValidSubmit">Export Data</button>
+</div>
+
+
 
 @code {
 
+    
     SqlCommand cmd;
     SqlConnection cnxn;
     SqlDataReader dr;
@@ -38,7 +68,46 @@
     public string ID = "";
     public string quantity = "";
 
-    protected override async Task OnInitializedAsync()
+    
+    DataTable dtStorekeeper;
+
+
+    protected override void OnInitialized()
+    {
+        dtStorekeeper = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                  //"CN " +
+                  " mail " +
+                  "FROM EmployeesAmetekAD " +
+                  "WHERE BU = 'ct-mid' " +
+                  "AND Manager LIKE '%Fornal%' " +
+                  "order by SN "
+                  , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtStorekeeper.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            // pop.Title = "Error";
+            // pop.Message = ex.ToString();
+            // pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+    }
+
+    protected void HandleValidSubmit()
     {
 
 
@@ -51,6 +120,7 @@
             cmd = new(g.SQLs1+
 
                     " WHERE Archived = " + g.archive + 
+                    " AND StockroomAssociate = '" + g.storekeeper + "' " +
                     " ORDER BY s.[EnteredOn], [WO], [WOline], ComponentLine", cnxn);
         }
         else
@@ -77,7 +147,7 @@
         }
         try
         {
-            string filepathServer = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\StockroomShortages" + g.exportFile + ".csv";
+            string filepathServer = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\StockroomShortages" + g.exportFile + " " + g.storekeeper + ".csv";
             File.Delete(filepathServer);
             var lines = new List<string>();
 
@@ -116,5 +186,6 @@
         }
         //NavMgr.NavigateTo("viewshortages");
     }
+    
 }
 

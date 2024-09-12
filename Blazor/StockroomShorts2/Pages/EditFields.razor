@@ -22,7 +22,14 @@
             <tr>
                 <td align="right">
                     Stockroom Associate :
-                    <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="g.storekeeper" />
+                   @*  <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="g.storekeeper" /> *@
+                        <InputSelect id="s4" class="form-control" style="width:80%" @bind-Value="g.storekeeper">
+                            <option value=""</Option>
+                            @foreach (System.Data.DataRow r in dtStorekeeper.Rows)
+                            {
+                                <option value="@r[0].ToString()">@r[0].ToString()</option>
+                            }
+                        </InputSelect>
                 </td>
             </tr>
             <tr>
@@ -49,10 +56,45 @@
 @code {
         
     public string item = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dtStorekeeper;
    
 
     protected override void OnInitialized()
     {
+        dtStorekeeper = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                  //"CN " +
+                  " mail " +
+                  "FROM EmployeesAmetekAD " +
+                  "WHERE BU = 'ct-mid' " +
+                  "AND Manager LIKE '%Fornal%' " +
+                  "order by SN "
+                  , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtStorekeeper.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            // pop.Title = "Error";
+            // pop.Message = ex.ToString();
+            // pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
         
     }
 
