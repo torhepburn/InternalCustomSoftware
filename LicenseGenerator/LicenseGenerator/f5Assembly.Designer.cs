@@ -43,15 +43,16 @@
             this.tbSerialNumber = new System.Windows.Forms.TextBox();
             this.tbDongle = new System.Windows.Forms.TextBox();
             this.bRePrint = new System.Windows.Forms.Button();
+            this.bChangeSN = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // bPrint
             // 
             this.bPrint.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(150)))), ((int)(((byte)(250)))));
-            this.bPrint.Location = new System.Drawing.Point(364, 549);
+            this.bPrint.Location = new System.Drawing.Point(364, 565);
             this.bPrint.Margin = new System.Windows.Forms.Padding(4);
             this.bPrint.Name = "bPrint";
-            this.bPrint.Size = new System.Drawing.Size(290, 62);
+            this.bPrint.Size = new System.Drawing.Size(290, 46);
             this.bPrint.TabIndex = 30;
             this.bPrint.Text = "Print License";
             this.bPrint.UseVisualStyleBackColor = false;
@@ -60,10 +61,10 @@
             // bAnother
             // 
             this.bAnother.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.bAnother.Location = new System.Drawing.Point(56, 549);
+            this.bAnother.Location = new System.Drawing.Point(56, 564);
             this.bAnother.Margin = new System.Windows.Forms.Padding(4);
             this.bAnother.Name = "bAnother";
-            this.bAnother.Size = new System.Drawing.Size(300, 62);
+            this.bAnother.Size = new System.Drawing.Size(300, 46);
             this.bAnother.TabIndex = 29;
             this.bAnother.Text = "Generate Another License";
             this.bAnother.UseVisualStyleBackColor = false;
@@ -72,7 +73,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(51, 487);
+            this.label6.Location = new System.Drawing.Point(51, 461);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(0, 17);
@@ -212,12 +213,25 @@
             this.bRePrint.UseVisualStyleBackColor = false;
             this.bRePrint.Click += new System.EventHandler(this.bRePrint_Click);
             // 
+            // bChangeSN
+            // 
+            this.bChangeSN.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(100)))));
+            this.bChangeSN.Location = new System.Drawing.Point(366, 510);
+            this.bChangeSN.Margin = new System.Windows.Forms.Padding(4);
+            this.bChangeSN.Name = "bChangeSN";
+            this.bChangeSN.Size = new System.Drawing.Size(288, 46);
+            this.bChangeSN.TabIndex = 32;
+            this.bChangeSN.Text = "Change SN (DongleID entry needed)";
+            this.bChangeSN.UseVisualStyleBackColor = false;
+            this.bChangeSN.Click += new System.EventHandler(this.bChangeSN_Click);
+            // 
             // f5Assembly
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LemonChiffon;
             this.ClientSize = new System.Drawing.Size(707, 706);
+            this.Controls.Add(this.bChangeSN);
             this.Controls.Add(this.bRePrint);
             this.Controls.Add(this.bPrint);
             this.Controls.Add(this.bAnother);
@@ -260,5 +274,6 @@
         private System.Windows.Forms.TextBox tbSerialNumber;
         private System.Windows.Forms.TextBox tbDongle;
         private System.Windows.Forms.Button bRePrint;
+        private System.Windows.Forms.Button bChangeSN;
     }
 }

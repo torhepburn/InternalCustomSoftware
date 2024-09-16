@@ -339,5 +339,24 @@ namespace LicenseGenerator
             f63_PrintPDFsnOnly f63 = new f63_PrintPDFsnOnly();
             f63.Show();
         }
+
+        private void bChangeSN_Click(object sender, EventArgs e)
+        {
+            if (tbDongle.Text.Length < 1)
+            {
+                MessageBox.Show("DongleID entry needed.");
+                tbDongle.Focus();
+                return;
+            }
+            else
+            {
+                g.DongleID = tbDongle.Text.Trim();
+
+                f88ChangeSN f88 = new f88ChangeSN();
+                f88.Show();
+            }
+            this.Close();
+
+        }
     }
 }
