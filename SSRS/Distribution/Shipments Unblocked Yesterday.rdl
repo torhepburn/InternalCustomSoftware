@@ -18,41 +18,11 @@
 [Date and Time] 
 ,[User ID]
 ,CASE [Field No_]
-	WHEN 1 THEN 'No.'
-	WHEN 2 THEN 'Name'
 	WHEN 20 THEN 'Credit Limit (LCY)'
-	WHEN 22 THEN 'Unit Cost'
-	WHEN 24 THEN 'Standard Cost'
-	WHEN 29 THEN 'Salesperson Code'
 	WHEN 39 THEN 'Blocked'
-	WHEN 62 THEN 'Last Date Modified date'
-	WHEN 63 THEN 'Last Time Modified time'
-	WHEN 91 THEN 'General Prod Posting Group'
-	WHEN 5400 THEN 'Low-Level Code'
-	WHEN 5403 THEN 'Last Unit cost Calc. Date date'
-	WHEN 5404 THEN 'Rolled-up Material Cost'
-	WHEN 5405 THEN 'Rolled-up Capacity Cost'
-	WHEN 5409 THEN 'Inventory Value Zero'
-	WHEN 5813 THEN 'Inventory Posting Setup'
-	WHEN 7380 THEN 'Phys Invt Counting Period Code'
-	WHEN 7381 THEN 'Last Counting Period Update date'
-	WHEN 7386 THEN 'Next counting End Date date'
-	WHEN 7385 THEN 'Next counting Start Date date'
-	WHEN 50027 THEN 'Proposed Purchase Cost'
-	WHEN 50041 THEN 'P6'
-	WHEN 50042 THEN 'F6'
-	WHEN 50043 THEN 'EAU'
-	WHEN 50044 THEN 'FAI Class'
-	WHEN 50053 THEN 'Last Modified by'
-	WHEN 50054 THEN 'Last Modified Date-Time datetime'
-	WHEN 99000752 THEN 'Single-Level Material Cost'
-	WHEN 99000753 THEN 'Single-Level Capacity Cost'
-	WHEN 99000755 THEN 'Single-Level Cap. Ovhd Cost'
-	WHEN 99000760 THEN 'Rolled-up Cap. Overhead Cost'
-	ELSE 'Not Coded'
 END [Field]
 ,CASE 
-	WHEN [Field No_] = 39 THEN
+	WHEN [Field No_] = 39 THEN	/*	39 = Blocked  */
 	CASE
 		WHEN [Old Value] = 3 THEN 'All'
 		ELSE ''
@@ -76,9 +46,9 @@ LEFT JOIN [ZYGO$Sales Header] h ON c.No_ = h.[Bill-to Customer No_]
 
 INNER JOIN [ZYGO$Sales Line] sl ON h.No_ = sl.[Document No_]
 
-WHERE [Table No_] = 18
+WHERE [Table No_] = 18  /*	Customer Table	*/
 
-AND [Field No_] IN (20,39)
+AND [Field No_] IN (20,39)		/* 20=Credit Limit (LCY), 39=Blocked  */
 
 AND [Date and Time] &gt;= GETDATE() - 1
 
@@ -88,7 +58,7 @@ AND [Outstanding Quantity] &gt; 0
 
 AND sl.[Planned Shipment Date] &lt; (GETDATE() + 21)
 
-UNION ALL
+UNION ALL	/*	Sales  */
 
 SELECT DISTINCT
 
@@ -130,7 +100,7 @@ SELECT DISTINCT
 END [Field]
 --,[Type of Change]
 ,CASE
-	WHEN [Field No_] = 50018 THEN
+	WHEN [Field No_] = 50018 THEN	/*	On Hold Reason Code  */
 COALESCE(CASE [Old Value]
 	WHEN '1' THEN 'Customer Requested Hold'
 	WHEN '2' THEN 'Lack of PO'
@@ -149,7 +119,7 @@ END,'')
 	ELSE [Old Value]
 END [Old Value]
 ,CASE
-	WHEN [Field No_] = 50018 THEN
+	WHEN [Field No_] = 50018 THEN	/*	On Hold Reason Code  */
 COALESCE(CASE [New Value]
 	WHEN '1' THEN 'Customer Requested Hold'
 	WHEN '2' THEN 'Lack of PO'
@@ -178,9 +148,9 @@ LEFT JOIN [ZYGO$Sales Header] h ON l.[Primary Key Field 2 Value] = h.No_
 
 INNER JOIN [ZYGO$Sales Line] sl ON h.No_ = sl.[Document No_]
 
-WHERE [Table No_] = 36
+WHERE [Table No_] = 36	/*	Sales header  */
 
-AND [Field No_] IN (51,50018,73)
+AND [Field No_] IN (51,50018,73)	/*	51 = On Hold, 50018=On Hold Reason Code, 73=Reason Code	*/
 
 AND LEN([New Value]) = 0
 
@@ -190,8 +160,79 @@ AND [Outstanding Quantity] &gt; 0
 
 AND sl.[Planned Shipment Date] &lt; (GETDATE() + 21)
 
+UNION ALL	/*	Service  */
 
+SELECT DISTINCT
 
+[Date and Time]
+, [User ID]
+,CASE [Field No_]
+	WHEN 73 THEN 'Reason Code'
+	WHEN 50007 THEN 'On Hold Reason Code'
+END [Field]
+--,[Type of Change]
+,CASE
+	WHEN [Field No_] = 50007 THEN	/*	On Hold Reason Code  */
+COALESCE(CASE [Old Value]
+	WHEN '1' THEN 'Customer Requested Hold'
+	WHEN '2' THEN 'Lack of PO'
+	WHEN '3' THEN 'Lack of L/C or License'
+	WHEN '4' THEN 'Change Order Required'
+	WHEN '5' THEN 'No Back Orders Allowed'
+	WHEN '6' THEN 'Sales Administration'
+	WHEN '7' THEN 'Required Bar Code'
+	WHEN '8' THEN 'Required Special Invoice'
+	WHEN '9' THEN 'Customer Material Required'
+	WHEN '10' THEN 'Advance Payment Owed'
+	WHEN '11' THEN 'Customer Visit Required'
+	WHEN 'F01' THEN 'Finance Hold - Credit'
+	WHEN 'PHR' THEN 'Photos Required'
+END,'')
+	ELSE [Old Value]
+END [Old Value]
+,CASE
+	WHEN [Field No_] = 50007 THEN	/*	On Hold Reason Code  */
+COALESCE(CASE [New Value]
+	WHEN '1' THEN 'Customer Requested Hold'
+	WHEN '2' THEN 'Lack of PO'
+	WHEN '3' THEN 'Lack of L/C or License'
+	WHEN '4' THEN 'Change Order Required'
+	WHEN '5' THEN 'No Back Orders Allowed'
+	WHEN '6' THEN 'Sales Administration'
+	WHEN '7' THEN 'Required Bar Code'
+	WHEN '8' THEN 'Required Special Invoice'
+	WHEN '9' THEN 'Customer Material Required'
+	WHEN '10' THEN 'Advance Payment Owed'
+	WHEN '11' THEN 'Customer Visit Required'
+	WHEN 'F01' THEN 'Finance Hold - Credit'
+	WHEN 'PHR' THEN 'Photos Required'
+END,'')
+	ELSE [New Value]
+END [New Value]
+,h.[Bill-to Customer No_] [Customer No.]
+,c.Name
+,[Primary Key Field 2 Value] [Sales Order]
+,svl.[Planned Delivery Date]
+
+FROM [ZYGO$Change Log Entry] l
+
+LEFT JOIN [ZYGO$Service Header] h ON l.[Primary Key Field 2 Value] = h.No_
+
+INNER JOIN [ZYGO$Service Line] svl ON h.No_ = svl.[Document No_]
+
+LEFT JOIN ZYGO$Customer c ON svl.[Bill-to Customer No_] = c.No_
+
+WHERE [Table No_] = 5900	/*	Service header  */
+
+AND [Field No_] IN (50007,73)	/*	50007 = On Hold Reason Code, 73 = Reason Code	*/
+
+AND LEN([New Value]) = 0
+
+AND [Date and Time] &gt;= GETDATE() - 1
+
+AND [Outstanding Quantity] &gt; 0
+
+AND svl.[Planned Delivery Date] &lt; (GETDATE() + 21)
 
 ORDER BY [Date and Time] DESC</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
@@ -719,7 +760,6 @@ ORDER BY [Date and Time] DESC</CommandText>
                             <PaddingBottom>2pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                        <rd:Selected>true</rd:Selected>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
