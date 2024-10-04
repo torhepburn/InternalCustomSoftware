@@ -1,16 +1,22 @@
 ﻿@page "/"
+@page "/Index"
 
 @inject NavigationManager nav
 
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1></h1>
 
-Welcome to your new app.
+Select ADP csv File to upload.
+<br />
+<br />
+Use format MM.YY Daily Close or MM.YY Pay Groups
+<br />
+<br />
 
 @* inut file contains a button for choose file  *@
-<InputFile style="width:100%" OnChange="OnFileSelected"></InputFile>
+<InputFile style="width:100%" OnChange="OnFileSelected" accept=".csv"></InputFile>
 @*the brs put two rows between the button from input file and the upload button*@
 <br />
 <br />
@@ -25,6 +31,12 @@ Welcome to your new app.
     Microsoft.Data.SqlClient.SqlConnection cnxn;
 
 
+
+    protected override void OnInitialized()
+    {
+
+    }
+
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         cnxn = new Microsoft.Data.SqlClient.SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
@@ -34,49 +46,48 @@ Welcome to your new app.
         {
             string[] lines = File.ReadAllLines(@"c:\a\" + e.File.Name.ToString());
 
-            data = lines[0].Split(',');
-            string[] n = data[1].Split('/');
-            month = Convert.ToInt32(n[0]);
-            year = Convert.ToInt32(n[2]);
+            year = Convert.ToInt32(e.File.Name.Substring(3, 2)) + 2000;
+            month = Convert.ToInt32(e.File.Name.Substring(0, 2));
 
+            var whatfile = e.File.Name.ToUpper().ToString();
+            var whatletter0 = e.File.Name.ToUpper().ToString().Substring(0, 1);
+            var whatletter1 = e.File.Name.ToUpper().ToString().Substring(1, 1);
+            var whatletter2 = e.File.Name.ToUpper().ToString().Substring(2, 1);
 
-
-            for (int i = 1; 1< lines.Length; i++)
+            if (e.File.Name.ToUpper().ToString().Substring(6, 10) == "PAY GROUPS")
             {
-                if (lines[i].Substring(0,3) == "ALV")
+                cmd = new(" TRUNCATE TABLE ADPpayGroup ", cnxn);
+
+                try
                 {
-                    data = lines[i].Split(',');
+                    cnxn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Microsoft.Data.SqlClient.SqlException ex)
+                {
+                    ex.ToString();
+                }
+                finally
+                {
+                    cnxn.Close();
+                }
+
+                for (int i = 3; 1 < lines.Length; i++)
+                {
+                    /*  Splits the line on the comma when the comma is not between two double quotes  */
+                    data = System.Text.RegularExpressions.Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
 
                     cmd = new Microsoft.Data.SqlClient.SqlCommand(
-                        "INSERT into ADP (" +
-                        " [Pay Group] " +
-                        ",[Payroll Department] " +
-                        ",[Empl ID] " +
-                        ",[Direct_Indirect] " +
-                        ",[Reg Hrs] " +
-                        ",[OT Hours] " +
-                        ",[Doubletime Hours] " +
-                        ",[Holiday Hours] " +
-                        ",[Personal Hours] " +
-                        ",[Vacation Hours] " +
-                        ",[Total Hours Worked] " +
-                        ",[Year] " +
-                        ",[Month] " +
-                        ") VALUES ( " +
-                        "'" + data[0] + "'" +
-                        ",'" + data[1].Substring(2,4) + "'" +
-                        ",'" + data[2] + "'" +
-                        ",'" + data[3] + "'" +
-                        "," + data[4] +
-                        "," + data[5] +
-                        "," + data[6] +
-                        "," + data[7] +
-                        "," + data[8] +
-                        "," + data[9] +
-                        "," + data[10] +
-                        "," + year +
-                        "," + month + ")",cnxn
-                    );
+                          "INSERT into ADPpayGroup (" +
+                          " [PayGroup] " +
+                          ",[Empl ID] " +
+                          ",[Direct or Indirect] " +
+                          ") VALUES ( " +
+                          "'" + data[0] + "'" +
+                          ",'" + data[1] + "'" +
+                          ",'" + data[3] + "'" +
+                          ")", cnxn);
 
                     cnxn.Open();
 
@@ -95,6 +106,91 @@ Welcome to your new app.
                 }
             }
 
+            if (e.File.Name.ToUpper().ToString().Substring(6, 11) == "DAILY CLOSE")
+            {
+                cmd = new(" TRUNCATE TABLE ADPdataRaw ", cnxn);
+
+                try
+                {
+                    cnxn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Microsoft.Data.SqlClient.SqlException ex)
+                {
+                    ex.ToString();
+                }
+                finally
+                {
+                    cnxn.Close();
+                }
+
+                for (int i = 10; 1 < lines.Length; i++)
+                {
+                    /*  Splits the line on the comma when the comma is not between two double quotes  */
+                    data = System.Text.RegularExpressions.Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+                    if (data[0].Length > 0)
+                    {
+                        for (int j = 3; j < 22; j++)
+                        {
+                            if (data[j].Length == 0)
+                            {
+                                data[j] = "0";
+                            }
+                        }
+
+                        if (data[0] == "ALV")
+                        {
+                            if (data[6].Length == 6)
+                            {
+                                data[6] = data[6].Substring(2, 4);
+                            }
+
+                        }
+
+
+                        cmd = new Microsoft.Data.SqlClient.SqlCommand(
+                              "INSERT into ADPdataraw (" +
+                              " [Emp ID] " +
+                              ",[Department #] " +
+                               ",[Worked Hrs] " +
+                               ",[OT Hours] " +
+                               ",[Double Time] " +
+                               ",[Paid Hours] " + 
+                               ",[Vacation] " +
+                               ",[Personal] " +
+                               ",PTO " +
+                               ",[Holiday] " +
+                              ") VALUES ( " +
+                              " '" + data[3] + "'" +
+                              ",'" + data[6] + "'" +
+                               "," + Convert.ToDecimal(data[11])  + 
+                              "," + Convert.ToDecimal(data[12]) +
+                              "," + Convert.ToDecimal(data[13]) +
+                              "," + Convert.ToDecimal(data[14])  + 
+                              "," + Convert.ToDecimal(data[17]) +
+                              "," + Convert.ToDecimal(data[19]) +
+                              "," + Convert.ToDecimal(data[20]) +
+                              "," + Convert.ToDecimal(data[21]) +
+                              ")", cnxn);
+
+                        cnxn.Open();
+
+                        try
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch (Microsoft.Data.SqlClient.SqlException ex)
+                        {
+                            ex.ToString();
+                        }
+                        finally
+                        {
+                            cnxn.Close();
+                        }
+                    }
+                }
+            }
 
         }
         catch (Exception ex)
@@ -102,8 +198,90 @@ Welcome to your new app.
             ex.ToString();
         }
 
+        cmd = new(" TRUNCATE TABLE ADP9 ", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cmd = new("INSERT INTO ADP9 (" +
+                  " [Pay Group] " +
+                  ",[Empl ID] " +
+                  ",[Payroll Department] " +
+                  ",[Worked Hours] " +
+                  ",[OT Hours] " +
+                  ",[Doubletime Hours] " +
+                  ",[Paid Hours] " +
+                  ",[Vacation Hours] " +
+                  ",[Personal Hours] " +
+                  ",PTO " +
+                  ",[Holiday Hours] " +
+                  ",[Direct_Indirect] " +
+                  ") " +
+                  "SELECT " +
+                  " [PayGroup] " +
+                  ",[Emp ID] " +
+                  ",[Department #] " +
+                  ",[Worked Hrs] " +
+                  ",[OT Hours] " +
+                  ",[Double Time] " +
+                  ",[Paid Hours] " +
+                  ",[Vacation] " +
+                  ",[Personal] " +
+                  ",PTO " +
+                  ",[Holiday] " +
+                  ",[Direct or Indirect] " +
+                  "FROM ADPdataRaw r " +
+                  "INNER JOIN [ADPpayGroup] a ON r.[Emp ID] = a.[Empl ID] " +
+                  "WHERE [Direct or Indirect]  = 'Direct'", cnxn);
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
         cmd = new Microsoft.Data.SqlClient.SqlCommand(
-            "UPDATE ADP " +
+            "UPDATE ADP9 " +
+            "SET [Month] = " + month + " " +
+            ",[Year] = '" + year + "'"  
+            , cnxn);
+
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cmd = new Microsoft.Data.SqlClient.SqlCommand(
+            "UPDATE ADP9 " +
             "SET [MonthName] = " +
             "CASE [Month] " +
             "   WHEN 1 THEN 'JAN' " +
@@ -120,10 +298,10 @@ Welcome to your new app.
             "   WHEN 12 THEN 'DEC' " +
             "END ", cnxn);
 
-        cnxn.Open();
 
         try
         {
+            cnxn.Open();
             cmd.ExecuteNonQuery();
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
@@ -135,8 +313,9 @@ Welcome to your new app.
             cnxn.Close();
         }
 
+
         cmd = new Microsoft.Data.SqlClient.SqlCommand(
-            "UPDATE ADP " +
+            "UPDATE ADP9 " +
             "SET BusinessSegment =  " +
             "CASE " +
             "   WHEN [Payroll Department] in ( " +
@@ -145,7 +324,7 @@ Welcome to your new app.
             "   '5215', " +
             "   '5225', " +
             "   '5230') " +
-            "           THEN 'LFO'" +
+            "           THEN 'MFO'" +
             "   WHEN [Payroll Department] in ( " +
             "   '5062', " +
             "	'5065', " +
@@ -168,7 +347,7 @@ Welcome to your new app.
             "	'8077', " +
             "	'8177', " +
             "	'8190') " +
-            "           THEN 'PO'" +
+            "           THEN 'MFO'" +
                         "   WHEN [Payroll Department] in ( " +
             "   '1140', " +
             "	'5017', " +
@@ -228,13 +407,19 @@ Welcome to your new app.
             "   '8120', " +
             "   '8180') " +
             "            THEN 'Instruments' " +
-            "ELSE 'Other' " +
-            "END ", cnxn);
+            "ELSE CASE " +
+            "   WHEN [Pay Group] = 'GC9' THEN 'NAVITAR' " +
+            "   WHEN [Pay Group] = 'H9G' THEN 'Special Optics' " +
+            "   WHEN [Pay Group] = 'IAM' THEN 'Pixelink' " +
+            "END " +
+            "END "
 
-        cnxn.Open();
+            , cnxn);
+
 
         try
         {
+            cnxn.Open();
             cmd.ExecuteNonQuery();
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
@@ -246,6 +431,41 @@ Welcome to your new app.
             cnxn.Close();
         }
 
+        cmd = new(
+                    "UPDATE ADP9 " +
+                    "SET SortDate = " +
+                    "CAST(Year as nchar(4)) + CASE Month " +
+                    "    WHEN 1 THEN '01' " +
+                    "    WHEN 2 THEN '02' " +
+                    "    WHEN 3 THEN '03' " +
+                    "    WHEN 4 THEN '04' " +
+                    "    WHEN 5 THEN '05' " +
+                    "    WHEN 6 THEN '06' " +
+                    "    WHEN 7 THEN '07' " +
+                    "    WHEN 8 THEN '08' " +
+                    "    WHEN 9 THEN '09' " +
+                    "    WHEN 10 THEN '10' " +
+                    "    WHEN 11 THEN '11' " +
+                    "    WHEN 12 THEN '12' " +
+                    "END " +
+                    "FROM ADP9", cnxn);
+
+
+    try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        
         nav.NavigateTo("counter");
     }
 
