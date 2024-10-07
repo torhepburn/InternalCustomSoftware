@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Zygo Corporation")]
 [assembly: AssemblyProduct("Omega iTHX-SD")]
-[assembly: AssemblyCopyright("Copyright © Zygo Corporation 2021")]
+[assembly: AssemblyCopyright("Copyright © Zygo Corporation 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

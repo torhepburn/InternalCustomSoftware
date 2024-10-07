@@ -15,7 +15,7 @@ namespace Omega_iTHX_SD
     {
         private static System.Timers.Timer timer;
         static Process P = new Process();
-        static string site = "10.213.71.65";
+        static string site = "10.213.67.254";
         static string receivedData;
         static string log;
         
@@ -27,7 +27,7 @@ namespace Omega_iTHX_SD
             timer = new System.Timers.Timer((1000) * (60) * (.5));
             timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
             timer.Enabled = true;
-            timer.Interval = (1000) * (60) * (5);
+            timer.Interval = (1000) * (60) * (.5);
             Console.ReadLine();
         }
 
