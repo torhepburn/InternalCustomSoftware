@@ -78,6 +78,9 @@ namespace NAV_MRP
         private string[] aDampenerQuantity = new string[20000];
         private string[] aLTAReleaseBucket = new string[20000];
         private string[] aSupplierReplenishment = new string[20000];
+        private string[] aFAIonOrder = new string[20000];
+        private string[] aFAINettable = new string[20000];
+        private string[] aFAINonNettable = new string[20000];
 
         private string[,] acOrderDate = new string[10000, 100];
         private string[,] acDeliveryDate = new string[10000, 100];
@@ -149,8 +152,11 @@ namespace NAV_MRP
         private string ItemNo = string.Empty;
         private string VendorNo = string.Empty;
         private string onOrder = string.Empty;
+        private string FAIonOrder = string.Empty;
         private string nettableStock = string.Empty;
         private string nonnetStock = string.Empty;
+        private string FAInettable = string.Empty;
+        private string FAInonnettable = string.Empty;
         private string blockedStock = string.Empty;
         private string buyerPlanner = string.Empty;
         private string F6 = string.Empty;
@@ -368,7 +374,7 @@ namespace NAV_MRP
               "AND i.No_ NOT IN ('SERVICE ITEM','9999') " +
               //"AND i.No_ NOT IN (SELECT * FROM s27) " +
               /*    for testing   */ 
-              //"AND r.No_ = '1949-000-052' " +
+              //"AND r.No_ = '1115-836-X30' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
                //"AND r.No_ LIKE'X700620%' " +
                
@@ -409,7 +415,7 @@ namespace NAV_MRP
                     }
 
                     /*  TEST PART NUMBER    */
-                    //ItemNo = "1436-000-005";
+                    //ItemNo = "1115-836-X30";
                     //ItemNo = "1420-255-052";
                     //ItemNo = "1115-801-782";
 
@@ -624,13 +630,51 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        MessageBox.Show(" 471  " + ex.ToString());
+                        MessageBox.Show(" 627  " + ex.ToString());
                     }
                     finally
                     {
                         cnxn.Close();
                     }
 
+                    /*
+                     * FAI On Order ?
+                     * 
+                     * */
+
+                    loopCmd = new SqlCommand(
+                        "SELECT " +
+                        "COALESCE(FORMAT([Outstanding Quantity],'N', 'en-us'), '0') " +
+                        "FROM [ZYGO$Purchase Line] WHERE No_ IN " +
+                        "(SELECT No_ FROM ZYGO$Item where No_ Like '" + ItemNo + "%FAI') ",cnxn);
+
+                    object f = "";
+
+                    try
+                    {
+                        cnxn.Open();
+                        
+                        f = loopCmd.ExecuteScalar();
+                    }
+                    catch (SqlException ex)
+                    {
+                        MessageBox.Show(" 661  " + ex.ToString());
+                    }
+                    finally
+                    {
+                        cnxn.Close();
+                    }
+
+                    if (f == null)
+                    {
+                        //MessageBox.Show("This item does not exist.");
+                        FAIonOrder = "0.00";
+                    }
+                    else
+                    {
+                        FAIonOrder = f.ToString();
+                    }
+                    
 
 
                     /*
@@ -673,24 +717,24 @@ namespace NAV_MRP
                         nettableStock = n.ToString();
                     }
 
-
-                    /*  Non-Nettable stock  */
+                    /*
+                     * FAI nettable
+                     * */
 
                     loopCmd = new SqlCommand
                         ("SELECT " +
                         "COALESCE(FORMAT(SUM([Quantity]),'N', 'en-us'), '0.00') " +
                         "FROM [" + NAVprefix + "Item Ledger Entry] " +
-                        "WHERE [Non-Nettable] = 1 " +
-                        "AND [Location Code] IN ('MID MRB', 'IRV MRB', 'RIC MRB') " +
-                        "and [Item No_] = '" + ItemNo + "' "
+                        "WHERE [Non-Nettable] = 0 " +
+                        "and [Item No_] LIKE '" + ItemNo + "%FAI' "
                         , cnxn);
 
-                    object nn = "";
+                    object fn = "";
 
                     try
                     {
                         cnxn.Open();
-                        nn = loopCmd.ExecuteScalar();
+                        fn = loopCmd.ExecuteScalar();
                     }
                     catch (SqlException ex)
                     {
@@ -701,14 +745,55 @@ namespace NAV_MRP
                         cnxn.Close();
                     }
 
-                    if (nn == null)
+                    if (fn == null)
+                    {
+                        MessageBox.Show("This item does not exist.");
+                    }
+                    else
+                    {
+                        FAInettable = fn.ToString();
+                    }
+
+                    /*  Non-Nettable stock  */
+
+                    /*
+                     * FAI Non-nettable
+                     * */
+
+                    loopCmd = new SqlCommand
+                        ("SELECT " +
+                        "COALESCE(FORMAT(SUM([Quantity]),'N', 'en-us'), '0.00') " +
+                        "FROM [" + NAVprefix + "Item Ledger Entry] " +
+                        "WHERE [Non-Nettable] = 1 " +
+                        "AND [Location Code] IN ('MID MRB', 'IRV MRB', 'RIC MRB') " +
+                        "and [Item No_] LIKE '" + ItemNo + "%FAI' "
+                        , cnxn);
+
+                    object fnn = "";
+
+                    try
+                    {
+                        cnxn.Open();
+                        fnn = loopCmd.ExecuteScalar();
+                    }
+                    catch (SqlException ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+                    finally
+                    {
+                        cnxn.Close();
+                    }
+
+                    if (fnn == null)
                     {
                         ////MessageBox.Show("This item does not exist.");
                     }
                     else
                     {
-                        nonnetStock = nn.ToString();
+                        FAInonnettable = fnn.ToString();
                     }
+
 
                     /*  stock on order  */
 
@@ -1434,7 +1519,9 @@ namespace NAV_MRP
                                 aHTS[i] = dtItem.Rows[0][30].ToString();
                                 aNetWeight[i] = dtItem.Rows[0][31].ToString();
                                 aNonDomesticVendor[i] = dtItem.Rows[0][32].ToString();
-
+                                aFAIonOrder[i] = FAIonOrder;
+                                aFAINettable[i] = FAInettable;
+                                aFAINonNettable[i] = FAInonnettable; 
                                 try
                                 {
                                     //object y = dtItem.Rows[0][7].GetType();
@@ -2149,6 +2236,34 @@ namespace NAV_MRP
                 //box = new Rectangle(500, 350, 55, 20);
                 ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, 380);
 
+                if (aFAIonOrder[lineNo] != "0.00" | aFAINettable[lineNo] != "0.00" | aFAINonNettable[lineNo] != "0.00")
+                {
+                    Bpen = new Pen(Color.Red);
+                }
+                else
+                {
+                    Bpen = new Pen(Color.Black);
+                }
+                                
+                Bpen.Width = 4;
+
+                ev.Graphics.DrawLine(Bpen, 438, 378, 747, 378);
+                ev.Graphics.DrawLine(Bpen, 438, 412, 747, 412);
+                ev.Graphics.DrawLine(Bpen, 440, 378, 440, 412);
+                ev.Graphics.DrawLine(Bpen, 745, 378, 745, 412);
+
+                //box = new Rectangle(400, 350, 100, 20);
+                ev.Graphics.DrawString("FAI On Order: ", heading, Brushes.Black, 450, 380);
+                //box = new Rectangle(500, 350, 55, 20);
+                ev.Graphics.DrawString(aFAIonOrder[lineNo], A9R, Brushes.Black, 540, 380);
+
+                ev.Graphics.DrawString("FAI Nettable: ", heading, Brushes.Black, 590, 380);
+                //box = new Rectangle(500, 350, 55, 20);
+                ev.Graphics.DrawString(aFAINettable[lineNo], A9R, Brushes.Black, 710, 380);
+
+                ev.Graphics.DrawString("FAI Non-Nettable: ", heading, Brushes.Black, 590, 395);
+                //box = new Rectangle(500, 350, 55, 20);
+                ev.Graphics.DrawString(aFAINonNettable[lineNo], A9R, Brushes.Black, 710, 395);
 
             }
             catch //(SqlException ex)
