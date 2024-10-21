@@ -168,7 +168,8 @@
             "Optics",
             "NAVITAR",
             "PPS",
-            "Global"});
+            "Global",
+            "ZYG-NAV"});
             this.cbddProductLine.Location = new System.Drawing.Point(639, 13);
             this.cbddProductLine.Name = "cbddProductLine";
             this.cbddProductLine.Size = new System.Drawing.Size(121, 24);
