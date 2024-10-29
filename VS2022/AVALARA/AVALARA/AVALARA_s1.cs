@@ -17,9 +17,9 @@ namespace AVALARA
         {
             this.Text = "Program Running";
 
-            SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11; Database = AccessFrontEnds; " +
+            SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11.ametek.com; Database = AccessFrontEnds; " +
                             "user = readWrite; password = Read+Write!;");
-            SqlConnection cnxnNAV = new SqlConnection("server = PA-HOR-AS408; Database = ZYGO-NAV-PROD; " +
+            SqlConnection cnxnNAV = new SqlConnection("server = PA-HOR-AS408.ametek.com; Database = ZYGO-NAV-PROD; " +
                             "user = navdb_read; password = 2018#ameteK;");
 
             SqlCommand cmd = new SqlCommand("TRUNCATE TABLE AVALARA_match", cnxn);
