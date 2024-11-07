@@ -13,7 +13,7 @@
 
         public string? requestor { get; set; }
 
-        public string? requestType { get; set; }
+        public string? request_Type { get; set; }
 
         public int requestID { get; set; }
 
@@ -42,5 +42,7 @@
         public string requestReport { get; set; }
 
         public string contactEmail { get; set; }
+               
+        public string requestComments { get; set; }
     }
 }

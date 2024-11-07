@@ -119,23 +119,58 @@
                     <ValidationMessage For="()=> validations.Priority" style="display:inline" />
 
             </div>
+
             <div>
-                * Request Type :   <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.RequestType">
+                * Request Reason :   
+                    <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.Request_Reason">
                         <option value="">Selection Required</option>
-                        <option value="Production">Production</option>
-                        <option value="Prototype">Prototype</option>
+                        <option value="Tooling">R&D</option>
                         <option value="Tooling">Tooling</option>
-                   
+                        <option value="Prototype">Prototype</option>
+                        <option value="Production">Production</option>
+                        
                     </InputSelect>
-                    <ValidationMessage For="()=> validations.RequestType" />
+                    <ValidationMessage For="()=> validations.Request_Reason" />
             </div>
 
+            <div>  * Request Type :
+
+                    <select class="form-control" style="width: 80%" @onchange="OnCategoryChanged">
+                    <option value="">Selection Required</option>
+                    @foreach (var category in Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="()=> validations.Request_Type" />
+            </div>
+
+                <div>
+                    * Type SubCategory :
+                    @if (filteredItems != null && filteredItems.Any())
+                    {
+
+                    <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.TypeSubcategory">
+                        
+                        {
+                            <option value="">Selection Required</option>
+                            @foreach (var item in filteredItems )
+                            {
+                                <option value="@item.Name">@item.Name</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="()=> validations.TypeSubcategory" />
+                    }
+                </div>
+
+                
             <div>
                 * Cost Center:
                     <br />
                             <InputSelect id="s4" class="form-control" style="width: 80%" @bind-Value="validations.CostCenter">
 
-                                <option value="">Cost Center Lookup</option>
+                            <option value="">Cost Center Lookup</option>
                             @foreach (System.Data.DataRow r in dtCostCenters.Rows)
                             {
                                         <option value="@r[0].ToString()">@r[0].ToString()</option>
@@ -168,14 +203,14 @@
             </div>
 
             <div>
-                * Cost Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+                Cost Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
                     <InputNumber id="n10" style="width: 10%" placeholder="" @bind-Value="validations.CostSavings" />
                     <ValidationMessage For="()=> validations.CostSavings" />
             </div>
 
     
             <div>
-                 * Revenue Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+                 Revenue Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
 
                     <InputNumber id="n10" style="width: 10%" placeholder="" @bind-Value="validations.RevenueSavings" />
                     <ValidationMessage For="()=> validations.RevenueSavings" />
@@ -191,9 +226,24 @@
                     <InputText id="n9" style="width: 10%" placeholder="" @bind-Value="reworkNumber" />
             </div>
 
+                <div>
+                    Part Number :
+                    <InputText id="n81" style="width: 50%" placeholder="if no part number enter 'no part number'" @bind-Value="validations.partnumber" />
+                </div>
+
+                <div>
+                    FAST Number :
+                    <InputText id="n82" style="width: 50%" placeholder="if no FAST number enter 'no FAST number'" @bind-Value="validations.FastNumber" />
+                </div>
+
+                <div>
+                    Production Number :
+                    <InputText id="n83" style="width: 50%" placeholder="if no production number enter 'no production number'" @bind-Value="validations.ProductionNumber" />
+                </div>
+
             <div>
                 * Select Requested Date :
-                    <InputDate id="ds1" style="width: 50%; height: 100px" @bind-Value="validations.RequestedDate" />
+                    <InputDate id="ds1" style="width: 50%; height: 50px" @bind-Value="validations.RequestedDate" />
                     <ValidationMessage For="()=> validations.RequestedDate" />
             </div>
 
@@ -204,14 +254,23 @@
 
             </div>
 
+                <div>
+                    Comments :
+                    <InputTextArea id="a15" placeholder="Comments" style="width: 70%; height: 30px" @bind-Value="g.requestComments" />
+                    
+
+                </div>
+
             <div>
                 <InputText id="a133" placeholder="Name" style="visibility:hidden" @bind-Value="validations.Employee" />
                     <ValidationMessage For="()=> validations.Employee" />
             </div>
     
         </div>
-         <button class="btn btn-primary">Submit Request</button>
-       
+          <div>
+                <button class="btn btn-primary" style="height:250px">Submit Request</button>
+          </div>
+         
     </div>
 </EditForm>
 </div>
@@ -290,15 +349,61 @@
 
     private ValidationComponents validations = new ValidationComponents();
 
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+    public class Item
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int CategoryId { get; set; }
+    }
+
+    private List<Category> Categories = new()
+    {
+        new Category { Id = 1, Name = "New" }
+        ,new Category { Id = 2, Name = "Modification" }
+        ,new Category { Id = 3, Name = "Rework" }
+    };
+
+    private List<Item> Items = new()
+    {
+         new Item { Id = 1, Name = "Leadtime", CategoryId = 1 }
+        ,new Item { Id = 2, Name = "Cost", CategoryId = 1 }
+        ,new Item { Id = 3, Name = "Lost or Missing", CategoryId = 1 }
+        ,new Item { Id = 4, Name = "Non-Std Type", CategoryId = 1 }
+        ,new Item { Id = 5, Name = "ECO", CategoryId = 2 }
+        ,new Item { Id = 6, Name = "Development", CategoryId = 2 }
+        ,new Item { Id = 7, Name = "Supplier Quality", CategoryId = 3 }
+        ,new Item { Id = 8, Name = "Training", CategoryId = 3 }
+        ,new Item { Id = 9, Name = "Handling", CategoryId = 3 }
+        ,new Item { Id = 10, Name = "Storage", CategoryId = 3 }
+        ,new Item { Id = 11, Name = "Packaging", CategoryId = 3 }
+        ,new Item { Id = 12, Name = "Dwg/Specification Error", CategoryId = 3 }
+    };
+
+    private void OnCategoryChanged(ChangeEventArgs e)
+    {
+        selectedCategoryId = Convert.ToInt32(e.Value);
+        filteredItems = Items.Where(item => item.CategoryId == selectedCategoryId).ToList();
+        validations.Request_Type = (Categories[selectedCategoryId - 1]).Name;
+    }
+
+
+    private int selectedCategoryId;
+    private List<Item> filteredItems = new List<Item>();
+
     private void HandleValidSubmit()
     {
         DataEntry();
     }
 
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-    }
+    // protected override void OnParametersSet()
+    // {
+    //     base.OnParametersSet();
+    // }
 
 
 
@@ -377,7 +482,7 @@
             validations.Request = g.request_text;
             validations.Employee = g.requestor;
             extension = g.requestorPhone;
-            validations.RequestType = g.requestType;
+            validations.Request_Type = g.request_Type;
             cbPersist = g.persist;
 
         }
@@ -415,6 +520,14 @@
             "Time Savings Est: " + validations.TimeSavings.ToString() + "\n\r" +
             "Cost Savings Est: " + validations.CostSavings.ToString() + "\n\r" +
             "Revenue Savings Est: " + validations.RevenueSavings.ToString() + "\n\r" +
+            "\n\r" +
+            "Request Reason..: " + validations.Request_Reason + "\n\r" +
+            "Request Type....: " + validations.Request_Type + "\n\r" +
+            "Subcategory.....: " + validations.TypeSubcategory + "\n\r" +
+            "Part Number.....: " + validations.partnumber + "\n\r" +
+            "FAST Number.....: " + validations.FastNumber + "\n\r" +
+            "Production Number.: " + validations.ProductionNumber + "\n\r" +
+            "Request Comments..: " + g.requestComments + "\n\r" +
             "Tool Request Description: " +
             "\r\r" +
             validations.Request;
@@ -422,7 +535,7 @@
 
         // email to tool room to report request
 
-        g.subjectLine = "Tool Request: " + g.contactEmail;
+        g.subjectLine = "Tool Request AA: " + g.contactEmail;
 
         g.requestReport =
                     "Tool Request Description: " +
@@ -436,6 +549,13 @@
                     "Project.........: " + g.project + "\r" +
                     "Rework Number...: " + reworkNumber + "\r" +
                     "Cost Center.....: " + validations.CostCenter + "\r\r" +
+                    "Request Reason..: " + validations.Request_Reason + "\n\r" +
+                    "Request Type....: " + validations.Request_Type + "\n\r" +
+                    "Subcategory.....: " + validations.TypeSubcategory + "\n\r" +
+                    "Part Number.....: " + validations.partnumber + "\n\r" +
+                    "FAST Number.....: " + validations.FastNumber + "\n\r" +
+                    "Production Number.: " + validations.ProductionNumber + "\n\r" +
+                    "Request Comments..: " + g.requestComments + "\n\r" +
                     "Date of Submission: " + submitDate;
 
         cnxn = new SqlConnection(g.db);
@@ -477,9 +597,18 @@
 
         SqlParameter pReworkNumber = new SqlParameter("@reworkNumber", SqlDbType.VarChar, 50);
         pReworkNumber.Value = reworkNumber;
+                
+        SqlParameter pPartNumber = new SqlParameter("@partnumber", SqlDbType.VarChar, 30);
+        pPartNumber.Value = validations.partnumber;
 
-        SqlParameter pRequestType = new SqlParameter("@requestType", SqlDbType.VarChar, 50);
-        pRequestType.Value = validations.RequestType;
+        SqlParameter pFASTnumber = new SqlParameter("@fastNumber", SqlDbType.VarChar, 10);
+        pFASTnumber.Value = validations.FastNumber;
+
+        SqlParameter pProductionNumber = new SqlParameter("@productionNumber", SqlDbType.VarChar, 10);
+        pProductionNumber.Value = validations.ProductionNumber;
+
+        SqlParameter pRequestComments = new SqlParameter("@requestComments", SqlDbType.VarChar, 5000);
+        pRequestComments.Value = g.requestComments;
 
         //SqlParameter pFocalSurface = new SqlParameter("@FocalSurface", SqlDbType.VarChar, 50);
         //pFocalSurface.Value = surface;
@@ -510,10 +639,16 @@
                     ",request_response_email_body " +
                     ",request_report_email_body " +
                     ",rework_order_number " +
-                    ",[type] " +
+                    ",Request_Type " +
                     ",TimeSavingsEstimate " +
                     ",CostSavingsEstimate " +
                     ",RevenueSavingsEstimate " +
+                    ",PartNumber " +
+                    ",FAST_Number " +
+                    ",Production_Number " +
+                    ",TypeSubcategory " +
+                    ",Request_Reason " +
+                    ",Request_Comments " +
                     ") values (" +
                     "'" + DateTime.Now.Date +        //1
                     "'," + Request_Text +
@@ -529,10 +664,16 @@
                     "," + response +
                     "," + report +
                     "," + pReworkNumber +
-                    "," + pRequestType +
-                    "," + validations.TimeSavings.ToString() +
-                    "," + validations.CostSavings.ToString() +
-                    "," + validations.RevenueSavings.ToString() +
+                    ",'" + validations.Request_Type.ToString() +
+                    "','" + validations.TimeSavings.ToString() +
+                    "','" + validations.CostSavings.ToString() +
+                    "','" + validations.RevenueSavings.ToString() +
+                    "'," + pPartNumber +
+                    "," + pFASTnumber +
+                    "," + pProductionNumber +
+                    ",'" + validations.TypeSubcategory.ToString() +
+                    "','" + validations.Request_Reason.ToString() +
+                    "'," + pRequestComments +
                     ") SET @ID = SCOPE_IDENTITY() ", cnxn);
         cmd.Parameters.Add(Request_Text);
         cmd.Parameters.Add(pQuantity);
@@ -546,7 +687,10 @@
         cmd.Parameters.Add(pCostCenter);
         cmd.Parameters.Add(pProject);
         cmd.Parameters.Add(pReworkNumber);
-        cmd.Parameters.Add(pRequestType);
+        cmd.Parameters.Add(pPartNumber);
+        cmd.Parameters.Add(pFASTnumber);
+        cmd.Parameters.Add(pProductionNumber);
+        cmd.Parameters.Add(pRequestComments);
         cmd.Parameters.Add(pRequestID);
         try
         {
@@ -574,7 +718,7 @@
             g.request_text = validations.Request;
             g.requestor = validations.Employee;
             g.requestorPhone = extension;
-            g.requestType = validations.RequestType;
+            g.request_Type = validations.Request_Type;
             g.persist = cbPersist;
         }
 

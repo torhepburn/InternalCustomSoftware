@@ -4,9 +4,7 @@ namespace TRequest.Pages
 {
     public class ValidationComponents
     {
-        [Required]
-        public string RequestType { get; set; }
-
+        
         [Required]
         public string Request { get; set; }
 
@@ -24,18 +22,30 @@ namespace TRequest.Pages
         public string Priority { get; set; }
 
         [Required]
+        public string Request_Reason { get; set; }
+
+        [Required]
+        public string Request_Type { get; set; }
+
+        [Required]
+        public string TypeSubcategory { get; set; }
+
+        [Required]
+        public string partnumber { get; set; }
+        
+        [Required]
+        public string FastNumber { get; set; }
+        
+        [Required]
+        public string ProductionNumber { get; set; }
+
+        [Required]
         [Range(1, 100000,
             ErrorMessage = "Value invalid (1-100000).")]
         public int TimeSavings { get; set; }
 
-        [Required]
-        [Range(1, 100000,
-            ErrorMessage = "Value invalid (1-100000).")]
         public int CostSavings { get; set; }
 
-        [Required]
-        [Range(1, 100000,
-            ErrorMessage = "Value invalid (1-100000).")]
         public int RevenueSavings { get; set; }
 
         //[Required]
