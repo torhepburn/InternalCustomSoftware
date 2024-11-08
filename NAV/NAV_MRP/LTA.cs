@@ -11,7 +11,7 @@ namespace NAV_MRP
 
     public partial class LTA : Form
     {
-        private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+        private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
         //private string directory = "C:\\A";
 
         private string[] aItemNo = new string[20000];
@@ -210,7 +210,7 @@ namespace NAV_MRP
              *Connection used to get the old MK data
              */
 
-            SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11; password=views; " +
+            SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11.ametek.com; password=views; " +
                           "user=views; database=AccessFrontEnds;");
 
             /*

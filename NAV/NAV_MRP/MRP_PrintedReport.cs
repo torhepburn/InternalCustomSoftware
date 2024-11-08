@@ -12,7 +12,7 @@ namespace NAV_MRP
 {
     public partial class MRP_PrintedReport : Form
     {
-       private string directory = "\\\\MIDFILE01\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+       private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
        //private string directory = @"C:\A";
 
         private string[] aItemNo = new string[20000];
@@ -92,15 +92,15 @@ namespace NAV_MRP
         private string[,] acOrigDueDate = new string[20000, 100];
         private string[,] acBestDate = new string[20000, 100];
 
-        private string[,] afOrderDate = new string[20000, 50];
-        private string[,] afDeliveryDate = new string[20000, 50];
-        private string[,] afOrderQuantity = new string[20000, 50];
-        private string[,] afAmountStandard = new string[20000, 50];
-        private string[,] afLocation = new string[20000, 50];
-        private string[,] afAction = new string[10000, 50];
-        private string[,] afBinCode = new string[20000, 50];
-        private string[,] afOrigDueDate = new string[20000, 50];
-        private string[,] afBestDate = new string[20000, 50];
+        private string[,] afOrderDate = new string[20000, 100];
+        private string[,] afDeliveryDate = new string[20000, 100];
+        private string[,] afOrderQuantity = new string[20000, 100];
+        private string[,] afAmountStandard = new string[20000, 100];
+        private string[,] afLocation = new string[20000, 100];
+        private string[,] afAction = new string[10000, 100];
+        private string[,] afBinCode = new string[20000, 100];
+        private string[,] afOrigDueDate = new string[20000, 100];
+        private string[,] afBestDate = new string[20000, 100];
 
         private string[,] aRecriptDate = new string[20000, 5];
         private string[,] aReceiptOrder = new string[20000, 5];
@@ -132,6 +132,8 @@ namespace NAV_MRP
         private bool[] partTwoPrinted = new bool[20000];
         private bool[] threePagesRequired = new bool[20000];
         private bool[] pageThreePrinted = new bool[20000];
+        private bool[] fourPagesRequired = new bool[20000];
+        private bool[] fourThreePrinted = new bool[20000];
         private bool[] currentOverflowPrinted = new bool[20000];
 
         private int i = 0;
@@ -213,7 +215,7 @@ namespace NAV_MRP
              *Connection used to get the old MK data
              */
 
-            SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11; password=views; " +
+            SqlConnection cnxnAFE = new SqlConnection("server=CT-MID-SQL11.ametek.com; password=views; " +
                                           "user=views; database=AccessFrontEnds;");
 
             
@@ -374,7 +376,7 @@ namespace NAV_MRP
               "AND i.No_ NOT IN ('SERVICE ITEM','9999') " +
               //"AND i.No_ NOT IN (SELECT * FROM s27) " +
               /*    for testing   */ 
-              //"AND r.No_ = '1115-836-X30' " +
+              //"AND r.No_ = '1125-663-040' " +
               //"AND r.No_ IN ('1454-100-044','1205-730-089') " +
                //"AND r.No_ LIKE'X700620%' " +
                
@@ -466,9 +468,9 @@ namespace NAV_MRP
                         dtVendor.Load(dr);
 
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //    MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -814,9 +816,9 @@ namespace NAV_MRP
                         cnxn.Open();
                         p = loopCmd.ExecuteScalar();
                     }
-                    catch ////(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -1386,9 +1388,9 @@ namespace NAV_MRP
                             dr = loopCmd.ExecuteReader();
                             dtTemp.Load(dr);
                         }
-                        catch //(SqlException ex)
+                        catch (SqlException ex)
                         {
-                            //MessageBox.Show(ex.ToString());
+                            MessageBox.Show(ex.ToString());
                         }
                         finally
                         {
@@ -1406,9 +1408,9 @@ namespace NAV_MRP
                             shortageProductLine[i] = "";
                         }
                     }
-                    catch //(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ex.ToString());
+                        MessageBox.Show(ex.ToString());
                     }
                     finally
                     {
@@ -1676,7 +1678,7 @@ namespace NAV_MRP
                             aLocation[i] = dtMRPOrdersFuture.Rows[0][4].ToString();
                         }
 
-                            if (dtMRPOrdersFuture.Rows.Count > 0)
+                        if (dtMRPOrdersFuture.Rows.Count > 0)
                         {
                             for (int ii = 0; ii < dtMRPOrdersFuture.Rows.Count; ii++)
                             {
@@ -1720,9 +1722,9 @@ namespace NAV_MRP
                                     aPOLinePromisedDate[i, ii] = dtPOLines.Rows[ii][4].ToString();
                                     aPOBest[i, ii] = dtPOLines.Rows[ii][5].ToString();
                                 }
-                                catch //(SqlException ex)
+                                catch (SqlException ex)
                                 {
-                                    //MessageBox.Show(ex.ToString());
+                                    MessageBox.Show(ex.ToString());
                                 }
                             }
                         }
@@ -1743,9 +1745,9 @@ namespace NAV_MRP
                                     aReceiptDeliveredQuantity[i, ii] = dtReceipts.Rows[ii][5].ToString();
                                     aReceiptNetAmount[i, ii] = dtReceipts.Rows[ii][6].ToString();
                                 }
-                                catch //(SqlException ex)
+                                catch (SqlException ex)
                                 {
-                                    //MessageBox.Show(ex.ToString());
+                                    MessageBox.Show(ex.ToString());
                                 }
                             }
                         }
@@ -1760,9 +1762,9 @@ namespace NAV_MRP
                                     aItemText[i, ii] = dtItemText.Rows[ii][1].ToString();
 
                                 }
-                                catch //(SqlException ex)
+                                catch (SqlException ex)
                                 {
-                                    //MessageBox.Show(ex.ToString());
+                                    MessageBox.Show(ex.ToString());
                                 }
                             }
                         }
@@ -1801,7 +1803,7 @@ namespace NAV_MRP
                                 twoPagesRequired[i] = true;
                                 extraPageCount++;
 
-                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 40)
+                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 80)
                                 {
                                     threePagesRequired[i] = true;
                                 }
@@ -1809,18 +1811,28 @@ namespace NAV_MRP
                                 {
                                     threePagesRequired[i] = false;
                                 }
+
+                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 80)
+                                {
+                                    fourPagesRequired[i] = true;
+                                }
+                                else
+                                {
+                                    fourPagesRequired[i] = false;
+                                }
                             }
                             else
                             {
                                 twoPagesRequired[i] = false;
                                 threePagesRequired[i] = false;
+                                fourPagesRequired[i] = false;
                             }
                         }
                         i++;
                     }
-                    catch //(SqlException ex)
+                    catch (SqlException ex)
                     {
-                        //MessageBox.Show(ItemNo + " " + i.ToString() + "    " + ex.ToString());
+                        MessageBox.Show(ItemNo + " " + i.ToString() + "    " + ex.ToString());
                     }
                 }
             }
