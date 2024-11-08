@@ -14,7 +14,8 @@ namespace NAV_MRP
     {
        private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
        private string ErrorLog = @"\\midfile01.ametek.com\departments\procurement\purchasing\mrp_requisitions\Archive\MRPerrorLog.txt";
-       //private string directory = @"C:\A";
+        //private string directory = @"C:\A";
+        //private string ErrorLog = @"C:\A\MRPerrorLog.txt";
 
         private string[] aItemNo = new string[20000];
         private string[] abuyerPlanner = new string[20000];
@@ -410,7 +411,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 414 Initial Selection List " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 414 Initial Selection List "  + ItemNo + "  " + ex.ToString() + Environment.NewLine);
 
                     }
                     finally
@@ -436,7 +437,7 @@ namespace NAV_MRP
 
                     if (o == null)
                     {
-                        MessageBox.Show("This item does not exist: " + ItemNo + " Vendor Data 437 ");
+                        File.AppendAllText(ErrorLog, "This item does not exist: " + ItemNo + " Vendor Data 440" + Environment.NewLine);
                     }
                     else
                     {
@@ -472,7 +473,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 474 Vendor Data " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 474 Vendor Data " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
                     }
                     finally
                     {
@@ -634,7 +635,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 637  Item Data " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 637  Item Data " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
                     }
                     finally
                     {
@@ -662,7 +663,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 665 FAI On Order " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 665 FAI On Order " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
                     }
                     finally
                     {
@@ -671,7 +672,6 @@ namespace NAV_MRP
 
                     if (f == null)
                     {
-                        File.AppendAllText(ErrorLog, "This item does not exist: " + ItemNo + " FAI 672" + Environment.NewLine);
                         FAIonOrder = "0.00";
                     }
                     else
@@ -705,7 +705,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 709 " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 709 " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
 
                     }
                     finally
@@ -715,7 +715,7 @@ namespace NAV_MRP
 
                     if (n == null)
                     {
-                        MessageBox.Show("This item does not exist: " + ItemNo + " Nettable 715 ");
+
                     }
                     else
                     {
@@ -743,7 +743,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 747 " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 747 " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
 
                     }
                     finally
@@ -753,7 +753,7 @@ namespace NAV_MRP
 
                     if (fn == null)
                     {
-                        MessageBox.Show("This item does not exist: " + ItemNo + " FAI Nettable 752 ");
+
                     }
                     else
                     {
@@ -784,7 +784,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 787  " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 787  " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
 
                     }
                     finally
@@ -794,7 +794,7 @@ namespace NAV_MRP
 
                     if (fnn == null)
                     {
-                        MessageBox.Show("This item does not exist: " + ItemNo + " FAI Non-Net 792 ");
+
                     }
                     else
                     {
@@ -823,7 +823,7 @@ namespace NAV_MRP
                     }
                     catch (SqlException ex)
                     {
-                        File.AppendAllText(ErrorLog, " 826  " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 826  " + ItemNo + "  " + ex.ToString() + Environment.NewLine);
 
                     }
                     finally
@@ -834,7 +834,6 @@ namespace NAV_MRP
 
                     if (p == null)
                     {
-                        File.AppendAllText(ErrorLog, "This item does not exist: " + ItemNo + " On Order 837" + Environment.NewLine);
 
                     }
                     else
@@ -873,8 +872,7 @@ namespace NAV_MRP
 
                     if (b == null)
                     {
-                        File.AppendAllText(ErrorLog, "This item does not exist: " + ItemNo + " Blocked Stock 876" + Environment.NewLine);
-
+                        
                     }
                     else
                     {
@@ -1454,7 +1452,7 @@ namespace NAV_MRP
                                 aVendorTitle[i] = dtVendor.Rows[0][9].ToString();
                                 aVendorCommodityCode[i] = dtVendor.Rows[0][10].ToString();
                             }
-                            catch (SqlException ex)
+                            catch (Exception ex)
                             {
                                 File.AppendAllText(ErrorLog, " 1459 " + ItemNo + "   " + ex.ToString() + Environment.NewLine);
                             }
@@ -1497,9 +1495,9 @@ namespace NAV_MRP
 
                                     aLotAccumulationPeriod[i] = dtItem.Rows[0][8].ToString() + " Days";
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1502 " + aItemNo[i] + "     " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1502      " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
                                 }
 
 
@@ -1550,9 +1548,9 @@ namespace NAV_MRP
                                         aDampenerPeriod[i] = dtItem.Rows[0][33].ToString() + " Days";
                                     }
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1555 " + aItemNo[i] + "     " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1555     " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
                                 }
 
                                 aDampenerQuantity[i] = dtItem.Rows[0][34].ToString();
@@ -1561,9 +1559,9 @@ namespace NAV_MRP
                                 aSupplierReplenishment[i] = dtItem.Rows[0][36].ToString();
 
                             }
-                            catch (SqlException ex)
+                            catch (Exception ex)
                             {
-                                File.AppendAllText(ErrorLog, " 1567 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                File.AppendAllText(ErrorLog, " 1567   " + ex.ToString() + Environment.NewLine);
                             }
                         }
                         else
@@ -1613,9 +1611,9 @@ namespace NAV_MRP
                                 aDateRevCreated[i] = dtDocCtrl.Rows[0][1].ToString();
                                 aOwner[i] = dtDocCtrl.Rows[0][4].ToString();
                             }
-                            catch (SqlException ex)
+                            catch (Exception ex)
                             {
-                                File.AppendAllText(ErrorLog, " 1619 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                File.AppendAllText(ErrorLog, " 1619    " + ex.ToString() + Environment.NewLine);
                             }
                         }
                         else
@@ -1636,9 +1634,9 @@ namespace NAV_MRP
                                 aPreferred[i] = dtPINS.Rows[0][3].ToString();
                                 aMfrDescription[i] = dtPINS.Rows[0][4].ToString();
                             }
-                            catch (SqlException ex)
+                            catch (Exception ex)
                             {
-                                File.AppendAllText(ErrorLog, " 1641 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                File.AppendAllText(ErrorLog, " 1641   " + ex.ToString() + Environment.NewLine);
                             }
                         }
                         else
@@ -1675,9 +1673,9 @@ namespace NAV_MRP
                                     }
                                     acBestDate[i, ii] = dtMRPOrdersCurrent.Rows[ii][8].ToString();
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1681 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1681    " + ex.ToString() + Environment.NewLine);
                                 }
                             }
                         }
@@ -1710,9 +1708,9 @@ namespace NAV_MRP
                                     }
                                     afBestDate[i, ii] = dtMRPOrdersFuture.Rows[ii][8].ToString();
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1716 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1716    " + ex.ToString() + Environment.NewLine);
                                 }
                             }
                         }
@@ -1731,9 +1729,9 @@ namespace NAV_MRP
                                     aPOLinePromisedDate[i, ii] = dtPOLines.Rows[ii][4].ToString();
                                     aPOBest[i, ii] = dtPOLines.Rows[ii][5].ToString();
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1737 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1737    " + ex.ToString() + Environment.NewLine);
                                 }
                             }
                         }
@@ -1754,9 +1752,9 @@ namespace NAV_MRP
                                     aReceiptDeliveredQuantity[i, ii] = dtReceipts.Rows[ii][5].ToString();
                                     aReceiptNetAmount[i, ii] = dtReceipts.Rows[ii][6].ToString();
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1760 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1760    " + ex.ToString() + Environment.NewLine);
                                 }
                             }
                         }
@@ -1771,18 +1769,18 @@ namespace NAV_MRP
                                     aItemText[i, ii] = dtItemText.Rows[ii][1].ToString();
 
                                 }
-                                catch (SqlException ex)
+                                catch (Exception ex)
                                 {
-                                    File.AppendAllText(ErrorLog, " 1777 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                                    File.AppendAllText(ErrorLog, " 1777    " + ex.ToString() + " i " + i.ToString() + " ii " + ii.ToString() + "  "  + Environment.NewLine);
                                 }
                             }
                         }
 
                         /*
-                     * 
-                     * Determine if it will fit on one page
-                     * 
-                     */
+                        * 
+                        * Determine if it will fit on one page
+                        * 
+                        */
                         int aa = aMRPCurrentCount[i];
                         int ab = aPOLineCount[i];
                         int ac = aMRPFutureCount[i];
@@ -1812,7 +1810,7 @@ namespace NAV_MRP
                                 twoPagesRequired[i] = true;
                                 extraPageCount++;
 
-                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 80)
+                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 40)
                                 {
                                     threePagesRequired[i] = true;
                                 }
@@ -1821,7 +1819,7 @@ namespace NAV_MRP
                                     threePagesRequired[i] = false;
                                 }
 
-                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 80)
+                                if ((aMRPFutureCount[i] + aReceiptCount[i] + aItemTextCount[i]) > 40)
                                 {
                                     fourPagesRequired[i] = true;
                                 }
@@ -1839,15 +1837,15 @@ namespace NAV_MRP
                         }
                         i++;
                     }
-                    catch (SqlException ex)
+                    catch (Exception ex)
                     {
-                        File.AppendAllText(ErrorLog, " 1845 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                        File.AppendAllText(ErrorLog, " 1845    " + ex.ToString() + Environment.NewLine);
                     }
                 }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                File.AppendAllText(ErrorLog, " 1854    " + ex.ToString() + Environment.NewLine);
             }
 
             /*  colins and back slashes in the date time make the path unreadable    */
@@ -1863,7 +1861,7 @@ namespace NAV_MRP
             {
                 file = "MRP " + g.rptName + g.ReportSelection + today + ".pdf";
             }
-
+            
             PrintDocument pd = new PrintDocument();
             pd.DefaultPageSettings.PrinterSettings.PrinterName = "Microsoft Print to PDF";
             pd.PrinterSettings.PrintToFile = true;
@@ -1879,9 +1877,9 @@ namespace NAV_MRP
             }
             catch (Exception ex)
             {
-                File.AppendAllText(ErrorLog, " 1882 " + aItemNo[i] + "   " + ex.ToString() + Environment.NewLine);
+                File.AppendAllText(ErrorLog, " 1882    " + ex.ToString() + Environment.NewLine);
             }
-
+            
             this.Close();
         }
 
@@ -2083,7 +2081,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString("Supplier Line of Business: " + aVendorCommodityCode[lineNo], A9R, Brushes.Black, 300, 120);
 
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2089 Vendor Data " + ex.ToString() + Environment.NewLine);
 
@@ -2158,7 +2156,7 @@ namespace NAV_MRP
                     ev.Graphics.DrawString("Rev Date: ", heading, Brushes.Black, 250, 220);
                     ev.Graphics.DrawString(aDateRevCreated[lineNo], A9R, Brushes.Black, 315, 220);
                 }
-                catch (SqlException ex)
+                catch (Exception ex)
                 {
                     File.AppendAllText(ErrorLog, " 2163 Revision Data " + ex.ToString() + Environment.NewLine);
 
@@ -2289,7 +2287,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString(aFAINonNettable[lineNo], A9R, Brushes.Black, 710, 395);
 
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2294 Item Data   " + ex.ToString() + Environment.NewLine);
 
@@ -2388,7 +2386,7 @@ namespace NAV_MRP
 
 
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2393 Stock Data  " + ex.ToString() + Environment.NewLine);
 
@@ -2413,7 +2411,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString(aPreferred[lineNo], A9R, Brushes.Black, 540, 426);
                 ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, 425);
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2418 Manufacturer Data  " + ex.ToString() + Environment.NewLine);
 
@@ -2495,7 +2493,7 @@ namespace NAV_MRP
                         ev.Graphics.DrawString(aPOLinePromisedDate[lineNo, ii], A9R, Brushes.Black, 750, 485 + (ii * 20));
                     }
                 }
-                catch (SqlException ex)
+                catch (Exception ex)
                 {
                     File.AppendAllText(ErrorLog, " 2501 PO Lines " + ex.ToString() + Environment.NewLine);
 
@@ -2509,7 +2507,7 @@ namespace NAV_MRP
                     partTwoPrinted[lineNo] = true;
                 }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2515 MRP Current Data   " + ex.ToString() + Environment.NewLine);
 
@@ -2562,7 +2560,7 @@ namespace NAV_MRP
                     }
                 }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2567 MRP Future   " + ex.ToString() + Environment.NewLine);
             }
@@ -2625,7 +2623,7 @@ namespace NAV_MRP
                     }
                 }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2630 Receipt Data   " + ex.ToString() + Environment.NewLine);
             }
@@ -2650,7 +2648,7 @@ namespace NAV_MRP
                     }
                 }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 File.AppendAllText(ErrorLog, " 2655 Item Text   " + ex.ToString() + Environment.NewLine);
             }
