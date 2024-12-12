@@ -12,7 +12,7 @@ namespace CNCpRograms
     public partial class CNC_Programs : Form
     {
         private string[] Companies;
-        private string path = @"\\zygocorp\departments\optics\opt_cnc\" +
+        private string path = @"\\CT-MID-FS09.ametek.com\optics\opt_cnc\" +
             @"cnc programs";
         //private string path = @"c:\a\";
         private int selected;
