@@ -35,22 +35,76 @@ Item in
 			,'LL-AAA08-105746'
 	)
 
-AND 
+AND (CAST(ApportionTimeStamp as date) = CAST(GETDATE()-1 as date)
 
-CAST(ApportionTimeStamp as date) = CAST(GETDATE() as date)
+OR (CAST(StartTime as date) = CAST(GETDATE()-1 as date) AND Endtime is null))
 
 GROUP BY Item,OrderNo
 )
+, s2 AS
+(
+SELECT 
+
+Item
+,SUM(OrderCount) PartsInWIP
+,CAST(GETDATE()-1 AS date)  [Date]
+,'Actual' [Status]
+
+from s1
+
+GROUP BY Item
+)
+,s3 AS
+(
+
+select
+
+[Prod_ Order No_] OrderNo
+,[Routing No_] item
+,Count([Prod_ Order No_]) OrderCount
+
+
+
+from [NAVprodOrdRoutingLine]
+
+where 
+
+[Routing No_] in
+
+(
+			 'CEA-F710483-3-IMP-B'
+			,'CEA-F712PD17TO0483-3'
+			,'CEA-F712PD17TO0482-3'
+			,'CEA-F712PD17TO0476-3'
+			,'LL-AAA08-105746'
+)
+
+AND CAST([Ending Date-Time] as date) = CAST(GETDATE()-1 as date) 
+
+
+GROUP BY [Routing No_], [Prod_ Order No_]
+)
+
+,s4 AS
+(
 
 SELECT 
 
 Item
 ,SUM(OrderCount) PartsInWIP
-,CAST(GETDATE() AS date)  [Date]
+,CAST(GETDATE()-1 AS date)  [Date]
+,'Planned' [Status]
 
-from s1
+from s3
 
-GROUP BY Item</CommandText>
+GROUP BY Item
+)
+
+select * from s2
+
+UNION ALL
+
+Select * from s4</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -65,6 +119,10 @@ GROUP BY Item</CommandText>
         <Field Name="Date">
           <DataField>Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="Status">
+          <DataField>Status</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -106,6 +164,9 @@ GROUP BY Item</CommandText>
               <TablixColumns>
                 <TablixColumn>
                   <Width>2in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -237,6 +298,45 @@ GROUP BY Item</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Status</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -353,12 +453,50 @@ GROUP BY Item</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Status">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Status.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Status</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -387,7 +525,7 @@ GROUP BY Item</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>4in</Width>
+            <Width>5in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
