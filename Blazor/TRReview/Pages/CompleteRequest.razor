@@ -1,0 +1,476 @@
+﻿@page "/completeRequest"
+
+<PageTitle>Complete Request</PageTitle>
+
+@using TRReview.Data
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+@inject Global g
+@inject NavigationManager NavMgr
+@inject IJSRuntime JSRuntime
+@* @inject HttpClient Http *@
+
+
+
+<h1>Tool Room Request ID @g.RequestID.ToString()</h1>
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="btn" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+<div style="display:flex;justify-content:center; width:auto">
+    
+        <div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Request Reason</th>
+                        <th>Request Type</th>
+                        <th>Type Subcategory</th>
+                        <th>Part Number</th>
+                        <th>pdf</th>
+                        <th>dxf</th>
+                        <th>Date Needed</th>
+                    </tr>
+                    <tr>
+                        <td>@g.Request_reason</td>
+                        <td>@g.Request_type</td>
+                        <td>@g.Typesubcategory</td>
+                        <td>@g.Partnumber</td>
+                        <td>@g.Pdf</td>
+                        <td>@g.Dxf</td>
+                        <td>@g.Request_need_date</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+    
+</div>
+<div style="display:flex;justify-content:center; width:auto">
+    
+
+        <table>
+            <tbody>
+                <tr>
+                    <th>Request</th>
+                </tr>
+
+                <tr>
+                    <td>@g.Request_text</td>
+                </tr>
+
+                <tr>
+                    <th>Request Comments</th>
+                </tr>
+
+                <tr>
+                    <td>@g.Request_comments</td>
+                </tr>
+                <br />
+            <div style="display:flex;justify-content:center; gap:20px">
+                    <button id="B1" class="btn btn-primary" @onclick="B1OnClick">Edit Request</button>
+            
+
+                <button id="B2" class="btn btn-primary" disabled=@dxf  @onclick="BdxfOnClick">Open DXF File</button>
+                <button id="B3" class="btn btn-primary" disabled=@pdf @onclick="OpenPdf">Open PDF File</button>
+
+               
+            </div>
+
+            </tbody>
+        </table>
+</div>
+
+<br />
+
+    
+                <EditForm Model="complete" OnValidSubmit="@HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div style="display:flex;width:auto">
+                        
+                        <div style="display:flex;width:auto">
+                            <label style="width:100%">Actual Hours :</label>
+                            <InputNumber id="n9" @bind-Value="complete.ActualHours" />
+                                <ValidationMessage For="()=> complete.ActualHours" />
+                        </div> 
+                   
+                        <br />
+                            <label>Check When Request Completed</label>
+
+                                <InputCheckbox id="myCheckbox" style="transform:  scale(2)" @bind-Value="g.Request_completed"></InputCheckbox>
+                            
+                            <label>Select Today and then Select Completed Date :</label>
+
+                            <InputDate id="ds1" @bind-Value=complete.Date_Completed />
+
+                            <ValidationMessage For="()=> complete.Date_Completed" />
+                    </div>
+                   
+                    <div style="display:block;justify-content:center; width:auto;">
+
+                                <label>Notes/Comments :</label>
+
+                                <InputText id="D10" style="height:100px; width:100%;" @bind-Value="g.Comments" />
+                       
+                    </div>
+                    <br />
+    <div style="display:flex;justify-content:center; width:auto;">
+        <button class="btn btn-primary" >Enter Data</button>
+    </div>
+                </EditForm>
+                <br />
+                    <div style="display:flex;justify-content:center; width:auto;gap:20px;">
+                        @* <button id="B2" class="btn btn-primary" style="width:200px" >Enter Data</button> *@
+                        <button id="B3" class="btn btn-reject" style="width:200px" @onclick="B3OnClick">Reject</button>
+                        <button id="B4" class="btn btn-exit" style="width:200px" @onclick="B4OnClick">Exit</button>
+                    </div>
+
+<br />
+
+
+@code
+{
+    //public DateTime date_completed = Convert.ToDateTime("01-01-2000");
+    private const string V = "0001-01-01";
+    //public int actual_hours = 0;
+    //public int cost_savings = 0;
+    //public string comments = "";
+    //public string partdescription = "";
+    //private double hours;
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+
+    private string line1 = "";
+    private string line2 = "";
+    private string line3 = "";
+    private string labelQuantity = "";
+    private string quantityPerLabel = "";
+    private string pos = "";
+    private int firstLastIndex;
+    private int secondLastIndex;
+    private bool standard = false;
+    private bool custom = false;
+    private bool printCheckQty = false;
+    private bool multiLevel = false;
+    private string iDescription = "";
+    private string dbMID = "user=readWrite; password=Read+Write!; " +
+                "server=CT-MID-SQL11.ametek.com; database=AccessFrontEnds;";
+
+    private string query = string.Empty;
+    private string parent = string.Empty;
+    private string printer = string.Empty;
+    private string lineNo = "";
+    private string reference = "";
+
+    private bool pdf = true;
+    private bool dxf = true;
+
+    private ValidationComplete complete = new ValidationComplete();
+
+    PopUp pop = new PopUp();
+
+
+    protected override void OnInitialized()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand(
+         "Select ID, " +
+         "COALESCE(Request_Completed,'False') [Request Completed] " +
+         ",FORMAT(Request_Date, 'MM/dd/yy') [Request Date] " +
+         ",Priority " +
+         ",FORMAT(Request_Need_Date, 'MM/dd/yy') [Date Needed] " +
+         ",Requestor " +
+         ",COALESCE(PROJECT,'') Project " +
+         ", COALESCE(CASE costcenter " +
+         "  when 1100 then CAST(CostCenter as nchar(4)) " +
+         "  when 5030 then CAST(CostCenter as nchar(4)) " +
+         "  when 7050 then '7050    Instruments' " +
+         "  when 7055 then '7055    Instruments' " +
+         "	else CAST(CostCenter as nchar(4)) + '    ' + BusinessUnit " +
+         " end,'') as [Cost Center] " +
+         ",CostCenterDescription [Description] " +
+         ",Quantity " +
+         ",Request_Text " +
+         ",COALESCE(Request_Comments,'No Comments Entered') " +
+         ",IIF (Uploaded_pdf is null, 'No', 'Yes') [Pdf]  " +
+         ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
+         ",COALESCE(Completion_Date, '1900-01-01') " +
+         ",COALESCE(Actual_Hours,0.00) [Actual Hours] " +
+         ",Rework_Order_Number [Rework #] " +
+         ",[Type] " +
+         ",COALESCE(Request_Reason,'') [Reason]" +
+         ",COALESCE(Request_Type,'') [rType]" +
+         ",COALESCE(TypeSubcategory,'') " +
+         ",COALESCE(PartNumber,'') [P/N]" +
+         ",COALESCE(FAST_Number,'') [FAST]" +
+         ",COALESCE(Production_Number,'') [WO]" +
+         ",TimeSavingsEstimate [Time Savings Estimate] " +
+         ",CostSavingsEstimate [Cost Savings Estimate] " +
+         ",RevenueSavingsEstimate [Revenue Savings Estimate] " +
+         ",COALESCE(Comments,'') " +
+         ",Savings " +
+         ",COALESCE(Rejected,'False') " +
+         ",requestor_email " +
+         ",requestor_phone " +
+         "from [tool_requests] h " +
+         "left join expensecostcenters s on " +
+         "h.cost_center = s.costcenter " +
+         "where " +
+         "ID = " + g.RequestID, cnxn);
+
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                try
+                {
+                    g.Request_completed = dr.GetBoolean(1);
+                    g.Request_date = dr.GetString(2);
+                    g.Priority = dr.GetString(3);
+                    g.Request_need_date = dr.GetString(4);
+                    g.Requestor = dr.GetString(5);
+                    g.Project = dr.GetString(6);
+                    g.Costcenter = dr.GetString(7);
+                    g.Quantity = dr.GetInt32(9).ToString();
+                    g.Request_text = dr.GetString(10);
+                    g.Request_comments = dr.GetString(11);
+                    g.Pdf = dr.GetString(12);
+                    g.Dxf = dr.GetString(13);
+                    if (g.Request_completed)
+                    {
+                        complete.Date_Completed = dr.GetDateTime(14);
+                    }
+                    complete.ActualHours = dr.GetDecimal(15);
+                    g.Rework_order_number = dr.GetString(16);
+                    g.Request_reason = dr.GetString(18);
+                    g.Request_type = dr.GetString(19);
+                    g.Typesubcategory = dr.GetString(20);
+                    g.Partnumber = dr.GetString(21);
+                    g.FastNumber = dr.GetString(22);
+                    g.ProductionNumber = dr.GetString(23);
+                    g.TimeSavings = dr.GetString(24);
+                    //g.CostSavings = dr.GetString(25);
+                    g.RevenueSavings = dr.GetString(26);
+                    g.Comments = dr.GetString(27).Trim();
+                    g.Savings = dr.GetBoolean(28);
+
+                    g.Requestor_email = dr.GetString(30);
+                    g.Requestor_phone = dr.GetString(31);
+
+
+                }
+                catch (Exception ex)
+                {
+                    pop.Title = "Error";
+                    pop.Message = ex.ToString();
+                    pop.ShowPopup();
+
+                }
+            }
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+        if (g.Pdf == "Yes")
+        {
+            pdf = false;
+        }
+
+        if (g.Dxf == "Yes")
+        {
+            dxf = false;
+        }
+
+    }
+
+    private void HandleValidSubmit()
+    {
+        if (g.Request_completed == true)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "Update Tool_Requests  set " +
+                    "request_completed = '" + g.Request_completed +
+                    "', completion_date = '" + complete.Date_Completed +
+                    "', actual_hours = " + complete.ActualHours +
+                    ", comments = '" + g.Comments +
+                    "' where id = " + g.RequestID + " ", cnxn);
+
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Problem";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+        }
+        else
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "Update Tool_Requests  set " +
+                    " actual_hours = " + complete.ActualHours +
+                    ", comments = '" + g.Comments +
+                    "' where id = " + g.RequestID + " ", cnxn);
+
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Problem";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+        }
+
+        NavMgr.NavigateTo("index");
+    }
+
+    public void B1OnClick()     /*  Edit Request  */
+    {   
+        SqlCommand cmd = new SqlCommand(
+            "SELECT DATE_MODIFIED FROM Tool_Requests " +
+            " where id = " + g.RequestID + " ", cnxn);
+
+        cnxn.Open();
+        object o = cmd.ExecuteScalar();
+        
+        cnxn.Close();
+        
+
+        if (o is DBNull)
+        {
+            try
+            {
+                cnxn = new SqlConnection(g.db);
+
+                SqlCommand cmd1 = new SqlCommand(
+                    "Update Tool_Requests SET " +
+                    "[ORIG REQUEST_TEXT] = [REQUEST_TEXT] " +
+                    ",[ORIG QUANTITY] = [QUANTITY] " +
+                    ",[ORIG REQUEST_NEED_DATE] = REQUEST_NEED_DATE " +
+                      ",[ORIG REQUESTOR] = REQUESTOR " +
+                      ",[ORIG REQUESTOR_PHONE] = REQUESTOR_PHONE " +
+                      ",[ORIG REQUESTOR_EMAIL] = REQUESTOR_EMAIL " +
+                      ",[ORIG COST_CENTER] = COST_CENTER " +
+                      ",[ORIG PROJECT] = PROJECT " +
+                      ",[ORIG REWORK_ORDER_NUMBER] = REWORK_ORDER_NUMBER " +
+                      ",[ORIG TimeSavingsEstimate] = TIMESAVINGSESTIMATE " +
+                      ",[ORIG CostSavingsEstimate] = COSTSAVINGSESTIMATE " +
+                      ",[ORIG RevenueSavingsEstimate] = REVENUESAVINGSESTIMATE " +
+                      ",[ORIG PartNumber] = PARTNUMBER " +
+                      ",[ORIG FAST_number] = FAST_NUMBER " +
+                      ",[ORIG Production_Number] = PRODUCTION_NUMBER " +
+                      ",[ORIG TypeSubcategory] = TYPESUBCATEGORY " +
+                      ",[ORIG REQUEST_REASON] = REQUEST_REASON " +
+                      ",[ORIG REQUEST_TYPE] = REQUEST_TYPE " +
+                      ",[ORIG REQUEST_COMMENTS] = request_comMENTS " +
+                      ",[ORIG PRIORITY] = [priority] " +
+                      " WHERE ID = " + g.RequestID + " ", cnxn);
+
+                cnxn.Open();
+                cmd1.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                pop.Title = "Problem";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+        }
+
+        NavMgr.NavigateTo("editrequest");
+    }
+       
+    public void B3OnClick()     /*  Reject  */
+    {
+        try
+        {
+            cnxn = new SqlConnection(g.db);
+
+            SqlCommand cmd = new SqlCommand(
+                "Update Tool_Requests  set " +
+                "request_completed = 'true' " +
+                ",Rejected = 'true' " +
+                ", completion_date = GETDATE() " +
+                ", comments = '" + g.Comments +
+                "' where id = " + g.RequestID + " ", cnxn);
+
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Problem";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        NavMgr.NavigateTo("index");
+    }
+    public void B4OnClick()     /*  Exit  */
+    {
+        NavMgr.NavigateTo("index");
+    }
+
+    public void BdxfOnClick()     /*  Dxf  */
+    {
+        NavMgr.NavigateTo("dxf");
+    }
+
+    private async Task OpenPdf()
+    {
+        NavMgr.NavigateTo("Pdf");
+    }
+}

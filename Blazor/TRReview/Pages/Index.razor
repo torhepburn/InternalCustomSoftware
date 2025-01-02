@@ -1,0 +1,435 @@
+﻿@page "/" 
+@page "/index"
+
+<PageTitle>Index</PageTitle>
+
+@using TRReview.Data
+
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="btn" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+<div style="display:flex; gap:20px; justify-content:left">
+    @* while the content looks to be right justified, it is actually centered in the whole container defined by the width of the table*@
+    Filters
+    <select @bind=@selectedRequestID>
+        <option value="">Select Request ID</option>
+         @foreach (System.Data.DataRow r in dtRequestID.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        } 
+    </select> 
+
+        <select @bind=@selectedStatus>
+        <option value="">Select Status</option>
+        <option value="1">Completed</option>
+        <option value="0">Not Completed</option>
+    </select> 
+
+    <select @bind=@selectedPriority>
+        <option value="">Select Priority</option>
+        <option value="Routine">Routine</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Production Down">Production Down</option>
+    </select>
+
+        <select @bind=@selectedCostCenter>
+        <option value="">Select Cost Center</option>
+          @foreach (System.Data.DataRow r in dtCostCenters.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        }  
+    </select> 
+
+    <select @bind=@selectedRequestor>
+        <option value="">Select Requested By</option>
+         @foreach (System.Data.DataRow r in dtRequestors.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        } 
+    </select>
+    
+    
+ </div>
+ <br />
+<div>
+     <button @onclick="selectFilter">Apply Filters</button> 
+</div>
+
+<br />
+<h1>Click on the row and it will open a new screen to enable Editing</h1>
+<br />
+<br />
+
+<div class="table-shortages" style="border:solid 1px black">
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Request Completed</th>
+            <th>Request Date</th>
+            <th>Priority</th>
+            <th>Date Needed</th>
+            <th>Requestor</th>
+            <th>Project</th>
+            <th>Cost Center</th>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Request Text</th>
+            <th>Request Comments</th>
+            <th>Pdf</th>
+            <th>Dxf</th>
+            <th>Completed Date</th>
+            <th>Actual Hours</th>
+            <th>Rework #</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Request Type</th>
+            <th>Type Subcategory</th>
+            <th>Part Number</th>
+            <th>Fast Number</th>
+            <th>Work Order Number</th>
+            <th>Time Savings Estimate</th>
+            <th>Cost Savings Estimate</th>
+            <th>Revenue Savings Estimate</th>
+            <th>Comments</th>
+            <th>Savings</th>
+            <th>Rejected</th>
+
+        </tr>
+    </thead>
+    <tbody>
+         @foreach (DataRow r in dt.Rows)
+            {
+                string color = "white";
+                string green = "rgb(175,255,140)";
+                string yellow = "rgb(255, 255, 140)";
+                string red = "rgb(255,109,106)";
+                string blue = "rgb(135,206,250)";
+
+                if(r[3].ToString().ToUpper() == "ROUTINE")
+                {
+                    color = green;
+                }
+
+                if (r[3].ToString().ToUpper() == "URGENT")
+                {
+                    color = yellow;
+                }
+
+                if (r[3].ToString().ToUpper() == "PRODUCTION DOWN")
+                {
+                    color = red;
+                }
+                <tr style="background-color:@color" @onclick="() => Select(r[0].ToString())">
+                <td style="width:80px">@r[0].ToString()</td>
+                <td style="width:150px"><input style="transform:  scale(2)" type="checkbox" checked=@r[1] /></td>
+                <td style="width:150px" >@r[2].ToString()</td>
+                <td style="width:150px">@r[3].ToString()</td>
+                <td style="width:150px">@r[4].ToString()</td>
+                <td style="width:150px">@r[5].ToString()</td>
+                <td style="width:150px">@r[6].ToString()</td>
+                <td style="width:150px">@r[7].ToString()</td>
+                <td style="width:150px">@r[8].ToString()</td>
+                <td style="width:500px">@r[9].ToString()</td>
+                <td style="width:80px">@r[10].ToString()</td>
+                <td style="width:150px">@r[11].ToString()</td>
+                <td style="width:150px">@r[12].ToString()</td>
+                <td style="width:150px">@r[13].ToString()</td>
+                <td style="width:150px">@r[14].ToString()</td>
+                <td style="width:150px">@r[15].ToString()</td>
+                <td style="width:150px">@r[16].ToString()</td>
+                <td style="width:150px">@r[17].ToString()</td>
+                <td style="width:150px">@r[18].ToString()</td>
+                <td style="width:500px">@r[19].ToString()</td>
+                <td style="width:80px">@r[20].ToString()</td>
+                <td style="width:150px">@r[21].ToString()</td>
+                <td style="width:150px">@r[22].ToString()</td>
+                <td style="width:150px">@r[23].ToString()</td>
+                <td style="width:150px">@r[24].ToString()</td>
+                <td style="width:150px">@r[25].ToString()</td>
+                <td style="width:150px">@r[26].ToString()</td>
+                <td style="width:150px">@r[27].ToString()</td>
+                <td style="width:150px"><input style="transform:  scale(2)" type="checkbox" checked=@r[28] /></td>
+                <td style="width:150px"><input style="transform:  scale(2)" type="checkbox" checked=@r[29] /></td>
+            </tr>
+            }
+    </tbody>
+</table>
+</div>
+
+@code {
+
+    public string enteredOn = "";
+    public string wo = "";
+    public string woline = "";
+    public string job = "";
+    public string jobreference = "";
+    public string item = "";
+    public string partdescription = "";
+    public string quantity = "";
+    public string location = "";
+    public string binCode = "";
+    public string storekeeper = "";
+    public string costcenter = "";
+    public string planner = "";
+    public string duedate = "";
+    public string comment = "";
+    public string commentEntered = "";
+    public string assignedTo = "";
+    public string resolution = "";
+    public string computer = "";
+    public string selectedStatus = "";
+    public string selectedPriority = "";
+    public string selectedRequestID = "";
+    public string selectedRequestor = "";
+    public string selectedCostCenter = "";
+    public string selection = "";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    DataTable? dtRequestID;
+    DataTable? dtParts;
+    DataTable? dtRequestors;
+    DataTable? dtCostCenters;
+
+    PopUp pop = new PopUp();
+
+
+    protected override void OnInitialized()
+    {
+
+        selection = "AND COALESCE(Request_Completed,'False') = 'False' ";
+
+        GetAsyncData();
+    }
+
+    private async void GetAsyncData()
+    {
+        dtCostCenters = new System.Data.DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand(
+            "select Code + '  ' + Name As Number from [ZYGO$Dimension Value] " +
+            "WHERE [Dimension Code] = 'COSTCENTER' AND Blocked = 0 ORDER BY Number", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtCostCenters.Load(dr);
+            //await Task.Delay(2000);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+        //Request ID
+
+        dtRequestID = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand
+            ("select distinct id from tool_requests " +
+             "order by id", cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtRequestID.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        //Requestors
+
+        dtRequestors = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand
+            ("select distinct Requestor from tool_requests " +
+             "order by Requestor", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtRequestors.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        // await CallDB(g.db, "select distinct Requestor from tool_requests " +
+        //      "order by Requestor");
+
+        GridData();
+
+        await Task.Delay(15000);
+    }
+
+
+    private void Select(string ID)
+    {
+        g.RequestID = Convert.ToInt32(ID);
+        NavMgr.NavigateTo("completerequest");
+    }
+
+    private void selectFilter()
+    {
+        selection = string.Empty;
+
+        if (selectedRequestID.Length > 0)
+        {
+            selection += " and id = " + selectedRequestID + " ";
+        }
+
+        if (selectedPriority.Length > 0)
+        {
+            selection += " and priority = '" + selectedPriority + "' ";
+        }
+
+        if (selectedCostCenter.Length > 0)
+        {
+            selection += " and cost_center = '" + selectedCostCenter + "' ";
+        }
+
+        if (selectedRequestor.Length > 0)
+        {
+            if (selectedRequestor.IndexOf(":") > 0)
+            {
+                selection += " AND requestor like '%" + selectedRequestor.Substring(0, (selectedRequestor.IndexOf(":")) - 2) + "%' ";
+            }
+            else
+            {
+                selection += " and requestor LIKE '%" + selectedRequestor + "%' ";
+            }
+        }
+
+        if (selectedStatus.Length > 0)
+        {
+            if (selectedStatus == "1")
+            {
+                selection += " and request_completed = 1 ORDER BY Completion_Date DESC ";
+            }
+            else
+            {
+                selection += " and COALESCE(request_completed,0) = 0 " +
+                    " ORDER BY ID DESC ";
+            }
+        }
+        else
+        {
+            selection += " ORDER BY ID DESC ";
+        }
+
+        GridData();
+    }
+
+    private void GridData()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand(
+         "Select ID " +
+         ",COALESCE(Request_Completed,'False') [Request Completed] " +
+         ",FORMAT(Request_Date, 'MM/dd/yy') [Request Date] " +
+         ",Priority " +
+         ",FORMAT(Request_Need_Date, 'MM/dd/yy') [Date Needed] " +
+         ",Requestor " +
+         ",COALESCE(PROJECT,'') Project " +
+         ", CASE costcenter " +
+         "  when 1100 then CAST(CostCenter as nchar(4)) " +
+         "  when 5030 then CAST(CostCenter as nchar(4)) " +
+         "  when 7050 then '7050    Instruments' " +
+         "  when 7055 then '7055    Instruments' " +
+         "	else CAST(CostCenter as nchar(4)) + '    ' + BusinessUnit " +
+         " end as [Cost Center] " +
+         ",CostCenterDescription [Description] " +
+         ",Quantity " +
+         ",Request_Text " +
+         ",COALESCE(Request_Comments,'') " +
+         ",IIF (Uploaded_pdf is null, 'No', 'Yes') [Pdf]  " +
+         ",IIF (Uploaded_dxf is null, 'No', 'Yes') [Dxf]  " +
+         ",FORMAT(Completion_Date,'MM/dd/yy') [Completed Date] " +
+         ",Actual_Hours [Actual Hours] " +
+         ",Rework_Order_Number [Rework #] " +
+         ",[Type] " +
+         ",COALESCE(Request_Reason,'') [Reason]" +
+         ",COALESCE(Request_Type,'') [rType]" +
+         ",COALESCE(TypeSubcategory,'') " +
+         ",COALESCE(PartNumber,'') [P/N]" +
+         ",COALESCE(FAST_Number,'') [FAST]" +
+         ",COALESCE(Production_Number,'') [WO]" +
+         ",TimeSavingsEstimate [Time Savings Estimate] " +
+         ",CostSavingsEstimate [Cost Savings Estimate] " +
+         ",RevenueSavingsEstimate [Revenue Savings Estimate] " +
+         ",COALESCE(Comments,'') " +
+         ",COALESCE(Savings,'False') " +
+         ",COALESCE(Rejected,'False') " +
+         "from [tool_requests] h " +
+         "left join expensecostcenters s on " +
+         "h.cost_center = s.costcenter " +
+         "where 1=1 " +
+         //COALESCE(Request_Completed,'False') = 'False' " // + 
+         selection
+         , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+
+
+}
+

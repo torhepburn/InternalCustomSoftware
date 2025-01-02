@@ -1,0 +1,808 @@
+﻿@page "/editrequest"
+
+<PageTitle>Edit Request</PageTitle>
+
+@using TRReview.Data
+@using Microsoft.Data.SqlClient
+@using System.ComponentModel.DataAnnotations
+@using System.Data
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<h1>Edit Tool Room Request ID @g.RequestID.ToString()</h1>
+<h1><lblO>Original Entries</lblO></h1>
+
+
+<div style="display:flex;justify-content:center">
+    
+    
+    <EditForm EditContext="EditContext">
+        Requestor: <lblO>@requestor</lblO>
+            <div>
+                <InputSelect id="employees" style="width: 60%" @bind-Value="g.EIndex">
+                        <option value="">Must Select an Employee</option>
+
+                        @foreach (DataRow r in dtEmployees.Rows)
+                        {
+                                <option value="@r[0].ToString()">@r[1].ToString()</option>
+                        }
+                    </InputSelect>
+            </div>
+                 
+            
+             <div>
+            Contact Email : <lblO>@requestor_email</lblO>
+                <InputText id="n3" placeholder="" style="width: 70%" @bind-Value="validations.Requestor_email" />
+            </div> 
+                <br />
+            <div>
+            Phone Extension : <lblO>@requestor_phone</lblO>
+                    <InputText id="n13" placeholder="" style="width: 20%" @bind-Value="validations.Requestor_phone" />
+
+            </div>
+    </EditForm>
+</div>
+
+<div style="display:flex; justify-content:center">
+    <EditForm Model="validations" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div style="display:flex">
+        <div>
+
+            <div>
+                    * Priority : <lblO>@priority</lblO>
+                    <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.Priority">
+                        <option value="">Selection Required</option>
+                        <option value="Routine">Routine</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="Production Down">Production Down</option>
+                    </InputSelect>
+
+                    <ValidationMessage For="()=> validations.Priority" style="display:inline" />
+
+            </div>
+
+            <div>
+                    * Request Reason : <lblO>@request_reason</lblO>
+                    <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.Request_Reason">
+                        <option value="">Selection Required</option>
+                        <option value="Tooling">R&D</option>
+                        <option value="Tooling">Tooling</option>
+                        <option value="Prototype">Prototype</option>
+                        <option value="Production">Production</option>
+                        
+                    </InputSelect>
+                    <ValidationMessage For="()=> validations.Request_Reason" />
+            </div>
+
+            <div>  * Request Type : <lblO>@requestType</lblO>
+
+                    <select class="form-control" style="width: 80%" @onchange="OnCategoryChanged">
+                    <option value="">Selection Required</option>
+                    @foreach (var category in Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="()=> validations.Request_Type" />
+            </div>
+
+                <div>
+                    To Edit Type SubCategory reselect Request Type: <lblO>@typesubcategory</lblO>
+                    @if (filteredItems != null && filteredItems.Any())
+                    {
+
+                    <InputSelect class="form-control" style="width: 80%" @bind-Value="validations.TypeSubcategory">
+                        
+                        {
+                            <option value="">Selection Required</option>
+                            @foreach (var item in filteredItems )
+                            {
+                                <option value="@item.Name">@item.Name</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="()=> validations.TypeSubcategory" />
+                    }
+                </div>
+
+                
+            <div>
+                    Cost Center: <lblO>@cost_center</lblO>
+                    <br />
+                            <InputSelect id="s4" class="form-control" style="width: 80%" @bind-Value="validations.CostCenter">
+
+                            <option value="">Cost Center Lookup</option>
+                            @foreach (System.Data.DataRow r in dtCostCenters.Rows)
+                            {
+                                        <option value="@r[0].ToString()">@r[0].ToString()</option>
+                            }
+                            </InputSelect>
+                
+                    <ValidationMessage For="()=> validations.CostCenter" />
+
+            </div>
+
+            <div>
+                    Quantity : <lblO>@quantity</lblO>
+                    <InputNumber id="n4" style="width: 20%" placeholder="" @bind-Value="validations.Quantity" />
+
+                    <ValidationMessage For="()=> validations.Quantity" />
+            </div>
+
+            <div>
+                
+            </div>
+        </div>
+
+        <div>
+            
+
+            <div>
+                Time Savings Estimate (work days:  whole numbers only: no decimals) :
+                    <lblO>@timesavingsestimate</lblO>
+                    <InputNumber id="n100" style="width: 10%" placeholder="" @bind-Value="validations.TimeSavings" />
+                    <ValidationMessage For="()=>validations.TimeSavings"  style="display:inline" />
+            </div>
+                
+                <div>
+                Cost Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+                    <lblO>@costsavingsestimate</lblO>
+                    <InputNumber id="n10" style="width: 10%" placeholder="" @bind-Value="validations.CostSavings" />
+                    <ValidationMessage For="()=> validations.CostSavings" />
+            </div>
+
+    
+            <div>
+                 Revenue Savings Estimate (whole numbers only; no decimals: no $ sign: 0 for n/a):
+                    <lblO>@revenuesavingsestimate</lblO>
+                    <InputNumber id="n10" style="width: 10%" placeholder="" @bind-Value="validations.RevenueSavings" />
+                    <ValidationMessage For="()=> validations.RevenueSavings" />
+            </div>
+
+            <div>
+                    Project : <lblO>@project</lblO>
+                    <InputText id="n8" style="width: 50%" placeholder="" @bind-Value="validations.Project" />
+            </div>
+
+            <div>
+                Rework # : <lblO>@reworkNumber</lblO>
+                    <InputText id="n9" style="width: 10%" placeholder="" @bind-Value="validations.Rework_order_number" />
+            </div>
+
+                <div>
+                    Part Number : <lblO>@partnumber</lblO>
+                    <InputText id="n81" style="width: 50%" placeholder="if no part number enter 'no part number'" @bind-Value="validations.partnumber" />
+                </div>
+
+                <div>
+                    FAST Number : <lblO>@fast</lblO>
+                    <InputText id="n82" style="width: 50%" placeholder="if no FAST number enter 'no FAST number'" @bind-Value="validations.FastNumber" />
+                </div>
+
+                <div>
+                    Production Number : <lblO>@production_number</lblO>
+                    <InputText id="n83" style="width: 50%" placeholder="if no production number enter 'no production number'" @bind-Value="validations.ProductionNumber" />
+                </div>
+
+            <div>
+                Select Requested Date : <lblO>@request_need_date</lblO>
+                    <InputDate id="ds1" style="width: 50%; height: 50px" @bind-Value="validations.Request_need_date" />
+                    <ValidationMessage For="()=> validations.Request_need_date" />
+            </div>
+
+            <div>
+                Describe Request/List Requirements : <lblO>@request_text</lblO>
+                    <InputTextArea id="a13" style="width: 80%; height: 100px" @bind-Value="validations.Request_text" />
+                    <ValidationMessage For="()=> validations.Request_text" />
+
+            </div>
+
+                <div>
+                    Comments : <lblO>@request_comments</lblO>
+                    <InputTextArea id="a15" placeholder="Comments" style="width: 70%; height: 30px" @bind-Value="validations.Request_comments" />
+                    
+
+                </div>
+
+            <div>
+                <InputText id="a133" placeholder="Name" style="visibility:hidden" @bind-Value="validations.Employee" />
+                    <ValidationMessage For="()=> validations.Employee" />
+            </div>
+    
+        </div>
+          <div>
+                <button class="btn btn-primary" style="height:250px">Save Changes</button>
+          </div>
+         
+    </div>
+</EditForm>
+
+</div>
+
+@code {
+
+    private FormModel dataModel = new FormModel();
+
+    public EditContext? EditContext;
+    //private ValidationMessageStore? messageStore;
+
+    PopUp pop = new PopUp();
+
+    private string priority = "";
+    private string request_need_date = "";
+    private string requestor = "";
+    private string project = "";
+    private string cost_center = "";
+    private string quantity = "";
+    private string request_text = "";
+    private string request_comments = "";
+    private string reworkNumber = "";
+    private string request_reason = "";
+    private string requestType = "";
+    private string typesubcategory = "";
+    private string partnumber = "";
+    private string fast = "";
+    private string production_number = "";
+    private string timesavingsestimate = "";
+    private string costsavingsestimate = "";
+    private string revenuesavingsestimate = "";
+    private string requestor_email = "";
+    private string requestor_phone = "";
+
+
+
+    private string? LCostCenter = " Cost Center  ";
+    private string? LProjectNumber = " Project Number  ";
+
+
+    static string SqlTable = "Tool_Requests";
+    static string filetypeLoaded;
+
+    static string ename;
+    static int uid;
+
+    SqlDataReader dr;
+    SqlConnection cnxn;
+    SqlCommand cmd;
+    System.Data.DataTable dtEmployees;
+    System.Data.DataTable dtParts;
+    System.Data.DataTable dtProjectCharges;
+    System.Data.DataTable dtCostCenters;
+
+    DataTable table;
+    DataTable table1;
+
+    static string Sql;
+    static string db = "server=CT-MID-SQL11; user=readWrite; password=Read+Write!;" +
+    "database=AccessFrontEnds";
+    static string subjectline;
+
+    static string testing = "NO";
+
+
+    private string? selectedID;
+
+    private ValidationComponents validations = new ValidationComponents();
+
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class Item
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int CategoryId { get; set; }
+    }
+
+    private List<Category> Categories = new()
+    {
+    new Category { Id = 1, Name = "New" }
+    ,new Category { Id = 2, Name = "Modification" }
+    ,new Category { Id = 3, Name = "Rework" }
+    };
+
+    private List<Item> Items = new()
+    {
+    new Item { Id = 1, Name = "Leadtime", CategoryId = 1 }
+    ,new Item { Id = 2, Name = "Cost", CategoryId = 1 }
+    ,new Item { Id = 3, Name = "Lost or Missing", CategoryId = 1 }
+    ,new Item { Id = 4, Name = "Non-Std Type", CategoryId = 1 }
+    ,new Item { Id = 5, Name = "ECO", CategoryId = 2 }
+    ,new Item { Id = 6, Name = "Development", CategoryId = 2 }
+    ,new Item { Id = 7, Name = "Supplier Quality", CategoryId = 3 }
+    ,new Item { Id = 8, Name = "Training", CategoryId = 3 }
+    ,new Item { Id = 9, Name = "Handling", CategoryId = 3 }
+    ,new Item { Id = 10, Name = "Storage", CategoryId = 3 }
+    ,new Item { Id = 11, Name = "Packaging", CategoryId = 3 }
+    ,new Item { Id = 12, Name = "Dwg/Specification Error", CategoryId = 3 }
+    };
+
+    private void OnCategoryChanged(ChangeEventArgs e)
+    {
+        selectedCategoryId = Convert.ToInt32(e.Value);
+        filteredItems = Items.Where(item => item.CategoryId == selectedCategoryId).ToList();
+        validations.Request_Type = (Categories[selectedCategoryId - 1]).Name;
+    }
+
+
+    private int selectedCategoryId;
+    private List<Item> filteredItems = new List<Item>();
+
+    private void HandleValidSubmit()
+    {
+        DataEntry();
+
+        NavMgr.NavigateTo("CompleteRequest");
+    }
+
+    protected override void OnInitialized()
+    {
+
+        EditContext = new EditContext(dataModel);
+        EditContext.OnFieldChanged += EditContext_OnFieldChanged;
+
+        dtEmployees = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new("select " +
+                "  ROW_NUMBER() OVER " +
+                "(Order BY sn) " +
+                ", SN + '  : ' + CN " +
+                ", mail " +
+                "FROM EmployeesAmetekAD " +
+                "WHERE BU = 'ct-mid' " +
+                "order by SN "
+        , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtEmployees.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+
+        }
+
+
+        dtCostCenters = new System.Data.DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand(
+        "select Code + '  ' + Name As Number from [ZYGO$Dimension Value] " +
+        "WHERE [Dimension Code] = 'COSTCENTER' AND Blocked = 0 ORDER BY Number", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtCostCenters.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand(
+         "Select  " +
+         "[ORIG Priority] " +
+         ",FORMAT([ORIG Request_Need_Date], 'MM/dd/yy') " +
+         ",[ORIG Requestor] " +
+         ",[ORIG PROJECT] " +
+         ",[ORIG Cost_Center] " +
+         ",[ORIG Quantity] " +
+         ",[ORIG Request_Text] " +
+         ",COALESCE([ORIG Request_Comments],'') " +
+         ",COALESCE([ORIG Rework_Order_Number],'') " +
+         ",COALESCE([ORIG Request_Reason],'') " +
+         ",COALESCE([ORIG Request_Type],'') " +
+         ",COALESCE([ORIG TypeSubcategory],'') " +
+         ",COALESCE([ORIG PartNumber],'') " +
+         ",COALESCE([ORIG FAST_Number],'') " +
+         ",COALESCE([ORIG Production_Number],'') " +
+         ",[ORIG TimeSavingsEstimate] " +
+         ",[ORIG CostSavingsEstimate] " +
+         ",[ORIG RevenueSavingsEstimate] " +
+         ",COALESCE([ORIG requestor_email],'') " +
+         ",COALESCE([ORIG requestor_phone],'') " +
+         "from [tool_requests] " +
+         "where " +
+         "ID = " + g.RequestID, cnxn);
+
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                priority = dr.GetString(0);
+                request_need_date = dr.GetString(1);
+                requestor = dr.GetString(2);
+                project = dr.GetString(3);
+                cost_center = dr.GetString(4);
+                quantity = dr.GetInt32(5).ToString();
+                request_text = dr.GetString(6);
+                request_comments = dr.GetString(7);
+                reworkNumber = dr.GetString(8);
+                request_reason = dr.GetString(9);
+                requestType = dr.GetString(10);
+                typesubcategory = dr.GetString(11);
+                partnumber = dr.GetString(12);
+                fast = dr.GetString(13);
+                production_number = dr.GetString(14);
+                timesavingsestimate = dr.GetString(15);
+                costsavingsestimate = dr.GetString(16);
+                revenuesavingsestimate = dr.GetString(17);
+                requestor_email = dr.GetString(18);
+                requestor_phone = dr.GetString(19);
+            }
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
+        }
+    }
+
+    public void DataEntry()
+    {
+        cnxn = new SqlConnection(g.db);
+
+        string SQL = "UPDATE Tool_Requests SET DATE_MODIFIED = '" + DateTime.Now.Date + "' ";
+
+        if (validations.Employee is not null)
+        {
+            SQL += " ,Requestor = '" + validations.Employee + "' ";
+        }
+
+        if (validations.Requestor_email is not null)
+        {
+            SQL += " ,Requestor_email = '" + validations.Requestor_email + "' ";
+        }
+
+        if (validations.Requestor_phone is not null)
+        {
+            SQL += " ,Requestor_phone = '" + validations.Requestor_phone + "' ";
+        }
+
+        if (validations.Priority is not null)
+        {
+            SQL += " ,priority = '" + validations.Priority + "' ";
+        }
+
+        if (validations.Request_Reason is not null)
+        {
+            SQL += " ,Request_reason = '" + validations.Request_Reason + "' ";
+        }
+
+        if (validations.Request_Type is not null)
+        {
+            SQL += " ,Request_type = '" + validations.Request_Type + "' ";
+        }
+
+        if (validations.TypeSubcategory is not null)
+        {
+            SQL += " ,typesubcategory = '" + validations.TypeSubcategory + "' ";
+        }
+
+        if (validations.CostCenter is not null)
+        {
+            SQL += " ,Cost_center = '" + validations.CostCenter + "' ";
+        }
+
+        if (validations.Quantity > 0)
+        {
+            SQL += " ,Quantity = '" + validations.Quantity + "' ";
+        }
+
+        if (validations.TimeSavings > 0 )
+        {
+            SQL += " ,TimeSavingsEstimate = '" + validations.TimeSavings + "' ";
+        }
+
+        if (validations.CostSavings > 0 )
+        {
+            SQL += " ,CostSavingsEstimate = '" + validations.CostSavings + "' ";
+        }
+
+        if (validations.RevenueSavings > 0 )
+        {
+            SQL += " ,RevenueSavingsEstimate = '" + validations.RevenueSavings + "' ";
+        }
+
+        if (validations.Project is not null)
+        {
+            SQL += " ,Project = '" + validations.Project + "' ";
+        }
+
+        if (validations.Rework_order_number is not null)
+        {
+            SQL += " ,Rework_order_number = '" + validations.Rework_order_number + "' ";
+        }
+
+        if (validations.partnumber is not null)
+        {
+            SQL += " ,partnumber = '" + validations.partnumber + "' ";
+        }
+
+        if (validations.FastNumber is not null)
+        {
+            SQL += " ,FAST_number = '" + validations.FastNumber + "' ";
+        }
+
+        if (validations.ProductionNumber is not null)
+        {
+            SQL += " ,Production_number = '" + validations.ProductionNumber + "' ";
+        }
+
+        if (validations.Request_text is not null)
+        {
+            SQL += " ,Request_Text = '" + validations.Request_text + "' ";
+        }
+
+        if (validations.Request_comments is not null)
+        {
+            SQL += " ,Request_comments = '" + validations.Request_comments + "' ";
+        }
+
+        if (validations.Request_need_date > Convert.ToDateTime("0001-01-01") )
+        {
+            SQL += " ,Request_Need_Date = '" + validations.Request_need_date + "' ";
+        }
+
+        SQL += "WHERE ID =" + g.RequestID;
+
+        try
+        {
+            cmd = new SqlCommand(SQL, cnxn);
+
+            cnxn.Open();
+
+            cmd.ExecuteNonQuery();
+
+        }
+        catch (SqlException ex)
+        {
+            pop.Title = "Problem";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+
+        // SqlParameter pSubjectLine = new SqlParameter("@subject_line", SqlDbType.VarChar, 4000);
+        // pSubjectLine.Value = g.subjectLine;
+
+        // SqlParameter pName = new SqlParameter("@name", SqlDbType.VarChar, 100);
+        // pName.Value = validations.Employee;
+
+        // SqlParameter Request_Text = new SqlParameter("@request_text", SqlDbType.VarChar, 4000);
+        // Request_Text.Value = validations.Request;
+
+        // SqlParameter Phone = new SqlParameter("@Phone", SqlDbType.VarChar, 50);
+        // Phone.Value = extension;
+
+        // SqlParameter pCostCenter = new SqlParameter("@costcenter", SqlDbType.VarChar, 50);
+        // pCostCenter.Value = validations.CostCenter.Substring(0, 4);
+
+        // SqlParameter pProject = new SqlParameter("@Project", SqlDbType.VarChar, 20);
+        // pProject.Value = g.project;
+
+        // SqlParameter pQuantity = new SqlParameter("@quantity", SqlDbType.Int);
+        // pQuantity.Value = validations.Quantity;
+
+        // SqlParameter pContactEmail = new SqlParameter("@ContactEmail", SqlDbType.VarChar, 50);
+        // pContactEmail.Value = g.contactEmail;
+
+        // SqlParameter pPriority = new SqlParameter("@priority", SqlDbType.VarChar, 25);
+        // pPriority.Value = validations.Priority;
+
+        // SqlParameter report = new SqlParameter("@report", SqlDbType.VarChar, 5000);
+        // report.Value = g.requestReport;
+
+        // SqlParameter response = new SqlParameter("@response", SqlDbType.VarChar, 5000);
+        // response.Value = g.requestResponse;
+
+        // SqlParameter pReworkNumber = new SqlParameter("@reworkNumber", SqlDbType.VarChar, 50);
+        // pReworkNumber.Value = reworkNumber;
+
+        // SqlParameter pPartNumber = new SqlParameter("@partnumber", SqlDbType.VarChar, 30);
+        // pPartNumber.Value = validations.partnumber;
+
+        // SqlParameter pFASTnumber = new SqlParameter("@fastNumber", SqlDbType.VarChar, 10);
+        // pFASTnumber.Value = validations.FastNumber;
+
+        // SqlParameter pProductionNumber = new SqlParameter("@productionNumber", SqlDbType.VarChar, 10);
+        // pProductionNumber.Value = validations.ProductionNumber;
+
+        // SqlParameter pRequestComments = new SqlParameter("@requestComments", SqlDbType.VarChar, 5000);
+        // pRequestComments.Value = g.requestComments;
+
+        // //SqlParameter pFocalSurface = new SqlParameter("@FocalSurface", SqlDbType.VarChar, 50);
+        // //pFocalSurface.Value = surface;
+
+
+
+
+        // /* defining the paramater as output to be able to get the id of the row from the data being input into the database  */
+
+        // SqlParameter pRequestID = new SqlParameter("@ID", SqlDbType.Int);
+        // pRequestID.Direction = ParameterDirection.Output;
+
+
+        // cnxn.Open();
+
+        // SqlCommand cmd = new SqlCommand("Insert into " + SqlTable + " (" +
+        // " request_date " +
+        // ",request_text " +
+        // ",quantity " +
+        // ",cost_center " +
+        // ",project" +              //5
+        // ",request_need_date " +
+        // ",priority " +
+        // ",requestor " +                        //10
+        // ",requestor_phone " +
+        // ",requestor_email " +
+        // ",subject_line " +
+        // ",request_response_email_body " +
+        // ",request_report_email_body " +
+        // ",rework_order_number " +
+        // ",Request_Type " +
+        // ",TimeSavingsEstimate " +
+        // ",CostSavingsEstimate " +
+        // ",RevenueSavingsEstimate " +
+        // ",PartNumber " +
+        // ",FAST_Number " +
+        // ",Production_Number " +
+        // ",TypeSubcategory " +
+        // ",Request_Reason " +
+        // ",Request_Comments " +
+        // ") values (" +
+        // "'" + DateTime.Now.Date +        //1
+        // "'," + Request_Text +
+        // "," + pQuantity +
+        // "," + pCostCenter +
+        // "," + pProject +
+        // ",'" + validations.RequestedDate.ToShortDateString() +
+        // "'," + pPriority +
+        // "," + pName +
+        // "," + Phone +
+        // "," + pContactEmail +
+        // "," + pSubjectLine +
+        // "," + response +
+        // "," + report +
+        // "," + pReworkNumber +
+        // ",'" + validations.Request_Type.ToString() +
+        // "','" + validations.TimeSavings.ToString() +
+        // "','" + validations.CostSavings.ToString() +
+        // "','" + validations.RevenueSavings.ToString() +
+        // "'," + pPartNumber +
+        // "," + pFASTnumber +
+        // "," + pProductionNumber +
+        // ",'" + validations.TypeSubcategory.ToString() +
+        // "','" + validations.Request_Reason.ToString() +
+        // "'," + pRequestComments +
+        // ") SET @ID = SCOPE_IDENTITY() ", cnxn);
+        // cmd.Parameters.Add(Request_Text);
+        // cmd.Parameters.Add(pQuantity);
+        // cmd.Parameters.Add(Phone);
+        // cmd.Parameters.Add(pContactEmail);
+        // cmd.Parameters.Add(pPriority);
+        // cmd.Parameters.Add(response);
+        // cmd.Parameters.Add(pSubjectLine);
+        // cmd.Parameters.Add(pName);
+        // cmd.Parameters.Add(report);
+        // cmd.Parameters.Add(pCostCenter);
+        // cmd.Parameters.Add(pProject);
+        // cmd.Parameters.Add(pReworkNumber);
+        // cmd.Parameters.Add(pPartNumber);
+        // cmd.Parameters.Add(pFASTnumber);
+        // cmd.Parameters.Add(pProductionNumber);
+        // cmd.Parameters.Add(pRequestComments);
+        // cmd.Parameters.Add(pRequestID);
+        // try
+        // {
+        //     int rowsReturned = cmd.ExecuteNonQuery();
+        //     g.requestID = (int)cmd.Parameters["@ID"].Value;
+        // }
+        // catch (SqlException ex)
+        // {
+        //     // pop.Title = "Error";
+        //     // pop.Message = ex.ToString();
+        //     // pop.ShowPopup();
+        //     // return;
+        // }
+        // finally
+        // {
+        //     cnxn.Close();
+        // }
+
+        // cmd.Dispose();
+
+        // if (cbPersist)
+        // {
+        //     g.costcenter = validations.CostCenter;
+        //     g.priority = validations.Priority;
+        //     g.request_text = validations.Request;
+        //     g.requestor = validations.Employee;
+        //     g.requestorPhone = extension;
+        //     g.request_Type = validations.Request_Type;
+        //     g.persist = cbPersist;
+        // }
+
+        // if (!cbPDF & !cbDXF)
+        // {
+        //     uid = 0;
+
+        //     NavMgr.NavigateTo("thankyou");
+        // }
+        // else if (cbPDF & !cbDXF)
+        // {
+        //     g.filetypeSelected = "pdf";
+        //     g.Ftwofiles = false;
+        //     NavMgr.NavigateTo("uploadpdffiles");
+        // }
+        // else if (cbPDF & cbDXF)
+        // {
+        //     g.Ftwofiles = true;
+        //     g.Ftwofiles2BUploaded = true;
+        //     g.filetypeSelected = "pdf";
+        //     NavMgr.NavigateTo("uploadpdffiles");
+        // }
+        // else if (!cbPDF & cbDXF)
+        // {
+        //     g.Ftwofiles = false;
+        //     NavMgr.NavigateTo("uploaddxffiles");
+        // }
+
+
+        // /*  this clears the fields  */
+
+        // validations = new ValidationComponents();
+
+    }
+
+
+            public void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+            {
+                if (e.FieldIdentifier.FieldName == "EIndex")
+                {
+                    validations.Employee = dtEmployees.Rows[g.EIndex - 1][1].ToString();
+                    //g.ContactEmail = dtEmployees.Rows[g.EIndex - 1][2].ToString();
+                }
+            }
+
+
+        
+}

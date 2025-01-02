@@ -1,0 +1,120 @@
+﻿@page "/dxf" 
+ 
+<PageTitle>DXF</PageTitle>
+
+@using TRReview.Data
+
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+@inject Global g
+@inject NavigationManager NavMgr
+
+<a>Use FileExplorer to go to c:\dxf folder and open Drawing.dxf</a>
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="btn" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+@* <div class="container"> *@
+     @* <InputFile src="C:\\dxf\\Drawing.dxf" />  *@
+@* </div>
+ *@
+
+
+@code {
+
+    PopUp pop = new PopUp();
+
+    // private string b64;
+    private string PdfSource { get; set; }
+    private string Dxtract = @"C:\dxf\Drawing.dxf";
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Directory.Exists("c:\\dxf"))
+        {
+
+        }
+        else
+        {
+            System.IO.Directory.CreateDirectory("c:\\dxf");
+        }
+
+        cnxn = new SqlConnection(g.db);
+
+        SqlCommand cmd = new SqlCommand
+            ("Select uploaded_dxf from tool_requests where id = '" + g.RequestID + "' and uploaded_dxf is not null", cnxn);
+        cnxn.Open();
+
+        object o = cmd.ExecuteScalar();
+
+        var n = o.GetType();
+
+        byte[] xData = (byte[])o;
+
+        try
+        {
+            // write bytes to disk as file
+            FileStream fs1 = new FileStream
+                (Dxtract, FileMode.Create, FileAccess.ReadWrite);
+            BinaryWriter bw = new BinaryWriter(fs1);
+            bw.Write(xData);
+            bw.Close();
+        }
+        catch (Exception ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+        }
+
+
+
+        //var dxfData = Convert.ToBase64String(xData);
+
+        cnxn.Close();
+
+
+
+        // try
+        // {
+        //     await JSRuntime.InvokeVoidAsync("openPDF", pdfData);
+        // }
+        // catch (Exception ex)
+        // {
+        //     pop.Title = "Error";
+        //     pop.Message = ex.ToString();
+        //     pop.ShowPopup();
+        // }
+
+
+        //await ProcessPdfStream(pdfStream);
+
+        // Assuming you have a method to fetch the PDF data from your server
+        //byte[] pdfBytes = await GetPdfDataFromServer();
+
+        //PdfSource = $"data:application/dxf;base64,{Dxtract}";
+    }
+
+    // private async Task ProcessPdfStream(Stream pdfStreams)
+    // {
+    //     var memoryStream = new MemoryStream();
+    //     await pdfStreams.CopyToAsync(memoryStream);
+    //     var base64Pdf = Convert.ToBase64String(memoryStream.ToArray());
+    //     b64 = base64Pdf;
+    // }
+
+    private void LoadDxf(InputFileChangeEventArgs e)
+    {
+        
+    }
+}
