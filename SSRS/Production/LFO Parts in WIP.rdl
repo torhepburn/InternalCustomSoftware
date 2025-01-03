@@ -19,7 +19,8 @@ select
 
 OrderNo
 ,item
-,Count(OrderNo) OrderCount
+,ItemDescription
+
 
 FROM [MIDDB01.zygo.com].Dashboard.dbo.timecardNAVProdHours
 
@@ -39,77 +40,29 @@ AND (CAST(ApportionTimeStamp as date) = CAST(GETDATE()-1 as date)
 
 OR (CAST(StartTime as date) = CAST(GETDATE()-1 as date) AND Endtime is null))
 
-GROUP BY Item,OrderNo
+GROUP BY Item,ItemDescription,OrderNo
 )
-, s2 AS
-(
+
 SELECT 
 
 Item
-,SUM(OrderCount) PartsInWIP
+,ItemDescription
+,COUNT(OrderNo) PartsInWIP
 ,CAST(GETDATE()-1 AS date)  [Date]
 ,'Actual' [Status]
 
 from s1
 
-GROUP BY Item
-)
-,s3 AS
-(
-
-select
-
-[Prod_ Order No_] OrderNo
-,[Routing No_] item
-,Count([Prod_ Order No_]) OrderCount
-
-
-
-from [NAVprodOrdRoutingLine]
-
-where 
-
-[Routing No_] in
-
-(
-			 'CEA-F710483-3-IMP-B'
-			,'CEA-F712PD17TO0483-3'
-			,'CEA-F712PD17TO0482-3'
-			,'CEA-F712PD17TO0476-3'
-			,'LL-AAA08-105746'
-)
-
-AND CAST([Ending Date-Time] as date) = CAST(GETDATE()-1 as date) 
-
-
-GROUP BY [Routing No_], [Prod_ Order No_]
-)
-
-,s4 AS
-(
-
-SELECT 
-
-Item
-,SUM(OrderCount) PartsInWIP
-,CAST(GETDATE()-1 AS date)  [Date]
-,'Planned' [Status]
-
-from s3
-
-GROUP BY Item
-)
-
-select * from s2
-
-UNION ALL
-
-Select * from s4</CommandText>
+GROUP BY Item, ItemDescription</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
         <Field Name="Item">
           <DataField>Item</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ItemDescription">
+          <DataField>ItemDescription</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="PartsInWIP">
@@ -166,6 +119,9 @@ Select * from s4</CommandText>
                   <Width>2in</Width>
                 </TablixColumn>
                 <TablixColumn>
+                  <Width>3.14583in</Width>
+                </TablixColumn>
+                <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
@@ -209,6 +165,43 @@ Select * from s4</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Item Description</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -380,6 +373,41 @@ Select * from s4</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="ItemDescription">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ItemDescription.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>ItemDescription</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="PartsInWIP">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -500,6 +528,7 @@ Select * from s4</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -525,7 +554,7 @@ Select * from s4</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>5in</Width>
+            <Width>8.14583in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -533,7 +562,7 @@ Select * from s4</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>5in</Width>
+      <Width>8.14583in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
