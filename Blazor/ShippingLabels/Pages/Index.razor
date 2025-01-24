@@ -1,9 +1,111 @@
 ﻿@page "/"
+@page "/index"
+
+@using Microsoft.Data.SqlClient
+@using System.Data
+
+@inject Printer printer
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Enter Serial Number (if there is one) then Scan Work Order</h1>
 
-Welcome to your new app.
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+
+<EditForm Model=@f OnValidSubmit="@DataEntry">
+    <DataAnnotationsValidator />
+
+    <div>
+        <br />
+        Serial Number:
+        <div>
+            <InputText ID="N1" style="width: 70%" @bind-Value="f.serialNumber" />
+
+        </div>
+        <br />
+
+        <div>
+            Scan Work Order :
+            <div>
+                <InputText style="width: 70%" @bind-Value="f.workOrder" @onfocus="InputOnFocus" />
+                <ValidationMessage For="() => f.workOrder" style="display:inline" />
+                @*<h1><label style="color:red">@successLabel</label></h1>*@
+            </div>
+        </div>
+        <br />
+    </div>
+    <button type="submit" class="btn btn-success">If scan does not work then type in Work Order number and click here to Submit</button>
+    @*The submit button automatically finds data entry and does not need an onclick*@
+</EditForm>
+
+@code
+{
+
+    private FormModel f = new FormModel();
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    //DataTable dt;
+    private string? successLabel;
+
+    public void DataEntry()
+    {
+        f.workOrder = f.workOrder.ToUpper();
+
+        if (f.workOrder.Substring(0, 3) == "%P%")
+        {
+            f.workOrder = f.workOrder.Substring(3, 8);
+        }
+
+        cnxn = new SqlConnection(f.dbNAV);
+
+        cmd = new("SELECT [Source No_], Description FROM [ZYGO$Production Order] " +
+                    "WHERE No_ = '" + f.workOrder + "' ", cnxn);
+
+        try
+        {
+            DataTable dt = new DataTable();
+            cnxn.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
+
+            f.part = dt.Rows[0][0].ToString();
+            f.description = dt.Rows[0][1].ToString().Replace(@"""", "in");
+
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        string str = "";
+
+        str = "\nN\nq609Q203,20\n";
+
+        string printer1 = @"\\CT-MID-PS01\ZEBRA068254";
+        //string printer1 = @"\\CT-MID-PS01\ZEBRASN17";
+        //string printer1 = "ZDesigner ZD421-203dpi ZPL (Copy 1)";
+        //string printer1 = @"\\thepburn-lt1\10.213.68.254";
+
+
+        str += "A150,10,0,4,1,1,N,\"ZYGO Corporation\"\n";
+        str += "A150,40,0,4,1,1,N,\"Desc: " + f.description + "\"\n";
+        str += "A150,70,0,4,1,1,N,\"P/N: " + f.part + "\"\n";
+        str += "A150,100,0,4,1,1,N,\"WO#: " + f.workOrder + "\"\n";
+        str += "A150,130,0,4,1,1,N,\"S/N: " + f.serialNumber + "\"\n";
+        str += "P1\n";
+        RawPrinterHelper.SendStringToPrinter(printer1, str); // With EPL
+
+        f.workOrder = string.Empty;
+    }
+
+    public void InputOnFocus()
+    {
+        //successLabel = string.Empty;
+    }
+}
+
