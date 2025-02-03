@@ -15,6 +15,14 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
 <br />
 <br />
 
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="btn" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
 @* inut file contains a button for choose file  *@
 <InputFile style="width:100%" OnChange="OnFileSelected" accept=".csv"></InputFile>
 @*the brs put two rows between the button from input file and the upload button*@
@@ -30,6 +38,7 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
     Microsoft.Data.SqlClient.SqlCommand cmd;
     Microsoft.Data.SqlClient.SqlConnection cnxn;
 
+    PopUp pop = new PopUp();
 
 
     protected override void OnInitialized()
@@ -39,7 +48,7 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
-        cnxn = new Microsoft.Data.SqlClient.SqlConnection("server = CT-MID-SQL11; password = Read+Write!; " +
+        cnxn = new Microsoft.Data.SqlClient.SqlConnection("server = CT-MID-SQL11.ametek.com; password = Read+Write!; " +
                             "user = readwrite; database = AccessFrontEnds; encrypt=false");
 
         try
@@ -86,7 +95,7 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                           ") VALUES ( " +
                           "'" + data[0] + "'" +
                           ",'" + data[1] + "'" +
-                          ",'" + data[3] + "'" +
+                          ",'" + data[6] + "'" +
                           ")", cnxn);
 
                     cnxn.Open();
@@ -97,7 +106,9 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                     }
                     catch (Microsoft.Data.SqlClient.SqlException ex)
                     {
-                        ex.ToString();
+                        pop.Title = "Error";
+                        pop.Message = ex.ToString();
+                        pop.ShowPopup();
                     }
                     finally
                     {
@@ -117,7 +128,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                 }
                 catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
-                    ex.ToString();
+                    pop.Title = "Error";
+                    pop.Message = ex.ToString();
+                    pop.ShowPopup();
+
                 }
                 finally
                 {
@@ -182,7 +196,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                         }
                         catch (Microsoft.Data.SqlClient.SqlException ex)
                         {
-                            ex.ToString();
+                            pop.Title = "Error";
+                            pop.Message = ex.ToString();
+                            pop.ShowPopup();
+
                         }
                         finally
                         {
@@ -195,7 +212,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Exception ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
 
         cmd = new(" TRUNCATE TABLE ADP9 ", cnxn);
@@ -207,7 +227,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
@@ -251,7 +274,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
@@ -273,7 +299,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
@@ -306,7 +335,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
@@ -424,7 +456,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
@@ -451,14 +486,76 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                     "FROM ADP9", cnxn);
 
 
-    try
+        try
         {
             cnxn.Open();
             cmd.ExecuteNonQuery();
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            ex.ToString();
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        cmd = new(
+            "insert into ADP " +
+            "( [Pay Group] " +
+            " ,[Payroll Department] " +
+            " ,[Empl ID] " +
+            " ,[Direct_Indirect] " +
+            " ,[Reg Hrs] " +
+            " ,[OT Hours] " +
+            " ,[Doubletime Hours] "+
+            " ,[Holiday Hours] "+
+            " ,[Personal Hours] "+
+            " ,[Vacation Hours] "+
+            " ,[Worked Hours] "+
+            " ,[Paid Hours] "+
+            " ,[Year] "+
+            " ,[Month] "+
+            " ,[MonthName] "+
+            " ,[BusinessSegment] "+
+            " ,PTO "+
+            " ,SortDate "+
+            ") "+
+            "SELECT "+
+            " [Pay Group] "+
+            ",[Payroll Department] "+
+            ",[Empl ID] "+
+            ",[Direct_Indirect] "+
+            ",[Worked Hours] -([OT Hours] + [Doubletime Hours]) [Reg Hrs] "+
+            ",[OT Hours] "+
+            ",[Doubletime Hours] "+
+            ",[Holiday Hours] "+
+            ",[Personal Hours] "+
+            ",[Vacation Hours] "+
+            ",[Worked Hours] "+
+            ",[Paid Hours] "+
+            ",[Year] "+
+            ",[Month] "+
+            ",[MonthName] "+
+            ",[BusinessSegment] "+
+            ",PTO "+
+            ",SortDate "+
+            " FROM [AccessFrontEnds].[dbo].[ADP9]", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            pop.Title = "Error";
+            pop.Message = ex.ToString();
+            pop.ShowPopup();
+
         }
         finally
         {
