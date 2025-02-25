@@ -78,7 +78,7 @@ WITH s1 as
 (	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
 	SELECT
 	No_
-    ,COALESCE(SUM([Quantity]), 0) [Qty on Service Order]
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on Service Order]
     FROM [ZYGO$Service Line] WHERE [Type] = 1
     GROUP BY No_
 )
@@ -99,147 +99,6 @@ WITH s1 as
     FROM [ZYGO$Prod_ Order Line]
     WHERE [Remaining Quantity] &gt; 0 and [Status] in (2,3)
 	GROUP BY [Item No_]
-)
-, s7 as
-(
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Remaining Quantity]), 0) F9   
-    FROM [ZYGO$Prod_ Order Component]    
-    WHERE 1=1    
-    AND [Due Date] &lt;= DATEADD(m, 9, GETDATE())    
-    AND Status in (2, 3)
-	--AND [Shortcut Dimension 2 Code] like 'PPS%'
-    GROUP BY [Item No_]      
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Quantity]), 0) F9   
-    FROM [ZYGO$Sales Line]    
-    WHERE    
-    [Promised Delivery Date] &lt;= DATEADD(m, 9, GETDATE())    
-	AND [Promised Delivery Date] &gt;= GETDATE()
-    AND Type = 2 
-	AND [Completely Shipped] = 0 
-	--AND [Shortcut Dimension 2 Code] LIKE 'PPS%'
-    GROUP BY [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F9   
-    FROM [ZYGO$Service Line]    
-    WHERE 1=1 
-	--AND [Shortcut Dimension 2 Code] like 'PPS%'
-	AND [Planned Delivery Date] &lt;= DATEADD(m, 9, GETDATE())
-    AND [Type] = 1    
-    GROUP BY  [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F9
-    FROM [ZYGO$Job Journal Line]    
-    WHERE    
-    [Due Date] &lt;= DATEADD(m, 9, GETDATE())    
-    AND [Journal Template Name] = 'INVREQ'
-	--AND [Shortcut Dimension 2 Code] like 'PPS%'
-    GROUP BY [No_] 
-
-UNION
-
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Expected Quantity]),0) F9   
-    FROM [ZYGO$Planning Component]     
-    WHERE    
-    [Ref_ Order Status] = 1   --'PLANNED'    
-    AND [Due Date] &lt;= DATEADD(m, 9, GETDATE())   
-    --AND [Shortcut Dimension 2 Code] like '%PPS%'
-    GROUP BY [Item No_] 
-)
-, s8 as
-(
-	select 
-
-		ItemNo
-		,SUM(F9) F9 
-
-	from s7
-
-	GROUP BY ItemNo
-)
-, s9 as
-(
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Remaining Quantity]), 0) F12   
-    FROM [ZYGO$Prod_ Order Component]    
-    WHERE 1=1    
-    AND [Due Date] &lt;= DATEADD(m, 12, GETDATE())    
-    AND Status in (2, 3)
-	GROUP BY [Item No_]      
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Quantity]), 0) F12
-    FROM [ZYGO$Sales Line]    
-    WHERE    
-    [Promised Delivery Date] &lt;= DATEADD(m, 12, GETDATE())    
-	AND [Promised Delivery Date] &gt;= GETDATE()
-    AND Type = 2 
-	AND [Completely Shipped] = 0 
-	GROUP BY [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F12
-    FROM [ZYGO$Service Line]    
-    WHERE 1=1 
-	AND [Planned Delivery Date] &lt;= DATEADD(m, 12, GETDATE())
-    AND [Type] = 1    
-    GROUP BY  [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F12
-    FROM [ZYGO$Job Journal Line]    
-    WHERE    
-    [Due Date] &lt;= DATEADD(m, 12, GETDATE())    
-    AND [Journal Template Name] = 'INVREQ'
-	GROUP BY [No_] 
-
-UNION
-
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Expected Quantity]),0) F12
-    FROM [ZYGO$Planning Component]     
-    WHERE    
-    [Ref_ Order Status] = 1   --'PLANNED'    
-    AND [Due Date] &lt;= DATEADD(m, 12, GETDATE())   
-    GROUP BY [Item No_] 
-)
-, s10 as
-(
-	select 
-
-		ItemNo
-		,SUM(F12) F12 
-
-	from s9
-
-	GROUP BY ItemNo
 )
 ,s112 AS
 (
@@ -342,74 +201,7 @@ FROM s412
 GROUP BY [Item No_]
 )
 
-,s12 AS  --F3
-(
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Remaining Quantity]), 0) F3   
-    FROM [ZYGO$Prod_ Order Component]    
-    WHERE 1=1    
-    AND [Due Date] &lt;= DATEADD(m, 3, GETDATE())    
-    AND Status in (2, 3)
-	GROUP BY [Item No_]      
 
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Quantity]), 0) F3
-    FROM [ZYGO$Sales Line]    
-    WHERE    
-    [Promised Delivery Date] &lt;= DATEADD(m, 3, GETDATE())    
-	AND [Promised Delivery Date] &gt;= GETDATE()
-    AND Type = 2 
-	AND [Completely Shipped] = 0 
-	GROUP BY [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F3
-    FROM [ZYGO$Service Line]    
-    WHERE 1=1 
-	AND [Planned Delivery Date] &lt;= DATEADD(m, 3, GETDATE())
-    AND [Type] = 1    
-    GROUP BY  [No_]
-
-UNION
-
-	SELECT    
-    No_ ItemNo
-	,COALESCE(SUM([Outstanding Quantity]), 0) F3
-    FROM [ZYGO$Job Journal Line]    
-    WHERE    
-    [Due Date] &lt;= DATEADD(m, 3, GETDATE())    
-    AND [Journal Template Name] = 'INVREQ'
-	GROUP BY [No_] 
-
-UNION
-
-	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Expected Quantity]),0) F3
-    FROM [ZYGO$Planning Component]     
-    WHERE    
-    [Ref_ Order Status] = 1   --'PLANNED'    
-    AND [Due Date] &lt;= DATEADD(m, 3, GETDATE())   
-    GROUP BY [Item No_]
-)
-,s13 AS
-(
-	select 
-
-	ItemNo
-	,SUM(F3) F3 
-
-	from s12
-
-	GROUP BY ItemNo
-)
 ,s103 AS
 (
 SELECT
@@ -703,6 +495,8 @@ i.No_
 ,COALESCE([NonNettable],0) NonNettable
 ,COALESCE(Forecast,0) Forecast
 ,COALESCE(ComponentDemand,0) ComponentDemand
+,i.[Replenishment System]
+,i.[Buyer Planner Code]
 
 FROM [ZYGO$Item] i
 
@@ -719,10 +513,10 @@ LEFT JOIN s3 on s3.[No_] = i.No_
 LEFT JOIN s4 on s4.[No_] = i.No_
 LEFT JOIN s5 on s5.[No_] = i.No_
 LEFT JOIN s6 on s6.[Item No_] = i.No_
-LEFT JOIN s8 on s8.ItemNo = i.No_
-LEFT JOIN s10 on s10.ItemNo = i.No_
-LEFT JOIN s11 ON s11.[Item No_] = i.No_
-LEFT JOIN s13 ON s13.ItemNo = i.No_
+--LEFT JOIN s8 on s8.ItemNo = i.No_
+--LEFT JOIN s10 on s10.ItemNo = i.No_
+--LEFT JOIN s11 ON s11.[Item No_] = i.No_
+--LEFT JOIN s13 ON s13.ItemNo = i.No_--
 LEFT JOIN s14 ON s14.[Item No_] = i.No_
 LEFT JOIN s1a ON s1a.[Item No_] = i.No_
 LEFT JOIN s1b ON s1b.[Item No_] = i.No_
@@ -738,7 +532,8 @@ select
 
 No_ ItemNo
 ,Description
-, [Qty on hand Nettable]
+, 
+[Qty on hand Nettable]
 ,NonNettable [Qty on Hand Non-Nettable]
 ,[Qty on PO]
 ,[Qty on SO]
@@ -749,13 +544,24 @@ No_ ItemNo
 ,([Qty on Production Order] + [Qty on PO]) ScheduledReceipts
 ,([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) GrossRequirements
 ,Forecast
-,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) [Suggested Projected Inventory]
+,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) [Projected Inventory]
+--,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) ) 
+,CASE [Replenishment System]
+	WHEN 0 THEN 'Purchased'
+	WHEN 1 THEN 'Manufactured'
+	ELSE 'Other'
+END [Replenishment System]
+,[Buyer Planner Code]
 
 from sX
 
---WHERE No_ = @ItemNumber
+--order by Forecast desc
+/*
+--WHERE No_ = 
 
---'6311-0100-11'</CommandText>
+--'1189-857-076'
+--'8020-0410-03'
+*/</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -763,13 +569,13 @@ from sX
           <DataField>ItemNo</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="Description">
-          <DataField>Description</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
         <Field Name="Qty_on_hand_Nettable">
           <DataField>Qty on hand Nettable</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Description">
+          <DataField>Description</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Qty_on_Hand_Non_Nettable">
           <DataField>Qty on Hand Non-Nettable</DataField>
@@ -807,13 +613,21 @@ from sX
           <DataField>GrossRequirements</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
+        <Field Name="Projected_Inventory">
+          <DataField>Projected Inventory</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
         <Field Name="Forecast">
           <DataField>Forecast</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Suggested_Projected_Inventory">
-          <DataField>Suggested Projected Inventory</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
+        <Field Name="Replenishment_System">
+          <DataField>Replenishment System</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Buyer_Planner_Code">
+          <DataField>Buyer Planner Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -888,6 +702,12 @@ from sX
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -1436,7 +1256,7 @@ from sX
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Suggested Projected Inventory</Value>
+                                  <Value>Projected Inventory</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1460,6 +1280,84 @@ from sX
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox16">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Replenishment System</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox16</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox18">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Buyer Planner Code</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox18</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1954,14 +1852,14 @@ from sX
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Suggested_Projected_Inventory">
+                        <Textbox Name="Projected_Inventory">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Suggested_Projected_Inventory.Value</Value>
+                                  <Value>=Fields!Projected_Inventory.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;(0)</Format>
@@ -1972,7 +1870,7 @@ from sX
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Suggested_Projected_Inventory</rd:DefaultName>
+                          <rd:DefaultName>Projected_Inventory</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1989,12 +1887,84 @@ from sX
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Replenishment_System">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Replenishment_System.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Replenishment_System</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Buyer_Planner_Code">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Buyer_Planner_Code.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Buyer_Planner_Code</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -2034,7 +2004,7 @@ from sX
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>14in</Width>
+            <Width>17in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2042,7 +2012,7 @@ from sX
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>14in</Width>
+      <Width>17in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
