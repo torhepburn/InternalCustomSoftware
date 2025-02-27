@@ -100,208 +100,8 @@ WITH s1 as
     WHERE [Remaining Quantity] &gt; 0 and [Status] in (2,3)
 	GROUP BY [Item No_]
 )
-,s112 AS
-(
-SELECT
 
-[Item No_]
-,SUM(l.Quantity)*-1 p
 
-FROM [ZYGO$Item Ledger Entry] l
-
-LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
-
-AND [Entry Type] = 1 --Sale
-
-GROUP BY [Item No_]
-),
-s212 AS
-(
-SELECT
-
-[Item No_]
-,SUM(l.Quantity)*-1 p
-
-FROM [ZYGO$Item Ledger Entry] l
-
-LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
-
-AND ([Entry Type] = 5 --Consumption
-
-AND [Order Type] = 1  --Production
-
-AND LEN([Order No_]) &gt; 0)
-
-AND p.Rework = 0  --not rework
-
-GROUP BY [Item No_]
-),
-s312 AS
-(
-	SELECT
-
-[Item No_]
-,SUM(Quantity)*-1 p
-
-FROM [ZYGO$Item Ledger Entry]
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -12, GETDATE())
-
-AND [Entry Type] = 3  --Negative Adjustment
-
-AND
-
-(LEN([Global Dimension 1 Code]) &gt; 0 OR [Document No_] like 'PRIR%')
-
-GROUP BY [Item No_]
-
-), s412 AS
-(
-SELECT
-
-*
-
-FROM s112
-
-UNION ALL
-
-SELECT 
-
-*
-
-FROM s212
-
-UNION ALL
-
-SELECT
-
-*
-
-FROM s312
-)
-,s11 AS
-(
-SELECT
-
-[Item No_]
-,SUM(p) P12
-
-FROM s412
-
-GROUP BY [Item No_]
-)
-
-
-,s103 AS
-(
-SELECT
-
-[Item No_]
-,SUM(l.Quantity)*-1 p
-
-FROM [ZYGO$Item Ledger Entry] l
-
-LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
-
-AND [Entry Type] = 1 --Sale
-
-GROUP BY [Item No_]
-),
-s203 AS
-(
-SELECT
-
-[Item No_]
-,SUM(l.Quantity)*-1 p
-
-FROM [ZYGO$Item Ledger Entry] l
-
-LEFT JOIN [ZYGO$Production Order] p ON l.[Order No_] = p.No_
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
-
-AND ([Entry Type] = 5 --Consumption
-
-AND [Order Type] = 1  --Production
-
-AND LEN([Order No_]) &gt; 0)
-
-AND p.Rework = 0  --not rework
-
-GROUP BY [Item No_]
-),
-s303 AS
-(
-	SELECT
-
-[Item No_]
-,SUM(Quantity)*-1 p
-
-FROM [ZYGO$Item Ledger Entry]
-
-WHERE
-
-[Posting Date] &gt;= DATEADD(m, -3, GETDATE())
-
-AND [Entry Type] = 3  --Negative Adjustment
-
-AND
-
-(LEN([Global Dimension 1 Code]) &gt; 0 OR [Document No_] like 'PRIR%')
-
-GROUP BY [Item No_]
-
-), s403 AS
-(
-SELECT
-
-*
-
-FROM s103
-
-UNION ALL
-
-SELECT 
-
-*
-
-FROM s203
-
-UNION ALL
-
-SELECT
-
-*
-
-FROM s303
-)
-,s14 AS  --P3
-(
-SELECT
-
-[Item No_]
-,SUM(p) P3
-
-FROM s403
-
-GROUP BY [Item No_]
-)
 , sPC as
 (
 	SELECT
@@ -312,190 +112,67 @@ GROUP BY [Item No_]
     AND Status in (2, 3)
 	GROUP BY [Item No_] 
 )
+,sPLc AS
+(
+	select 
+
+[Item No_] 
+
+,SUM([Expected Quantity] * (-1)) [Planned Quantity Change]
+
+	FROM [ZYGO$Planning Component]
+
+	where 1=1
+
+	AND [Worksheet Template Name] = 'PLANNING'
+
+	AND [Worksheet Batch Name] = 'DEFAULT'
+
+	GROUP BY [Item No_]
+
+)
+,
+sRp AS
+(
+		select 
+
+	No_ [Item No.]
+	,SUM([Remaining Quantity]- [Original Quantity]) [Quantity Change]
+	,YEAR([Due Date] ) yDate
+
+	FROM [ZYGO$Requisition Line]
+
+	where 1=1
+
+	AND [Action Message] = 1
+
+	AND [Worksheet Template Name] = 'PLANNING'
+
+	AND [Journal Batch Name] = 'DEFAULT'
+
+	GROUP BY No_, YEAR([Due Date])
+)
 ,sX AS
 (
-
-
 SELECT
 
 i.No_
 ,i.Description
---,COALESCE(i.[Description 2],'') [Description 2]
---,COALESCE(i.[Description 3],'') [Description 3]
---,COALESCE(i.[Description 4],'') [Description 4]
---,COALESCE(i.[Description 5],'') [Description 5]
---,[Revision Level]
---,EAU
---,COALESCE(CONVERT(NUMERIC(10,0),s14.P3),0) P3
---,P6
---,COALESCE(CONVERT(NUMERIC(10,0),s11.P12),0) P12
---,COALESCE(CONVERT(NUMERIC(10,0),s13.F3),0) F3
---,F6
---,COALESCE(CONVERT(NUMERIC(10,0),s8.F9),0) F9
---,COALESCE(CONVERT(NUMERIC(10,0),s10.F12),0) F12
-,CONVERT(NUMERIC(10,2),COALESCE(s1.Nettable, 0.00)) [Qty on hand Nettable]
---,CASE [Replenishment System]
---	WHEN 0 THEN 'Purchased'
---	WHEN 1 THEN 'Manfuactured'
---END 'Replenishment System'
---,COALESCE(v.[No_],'') [Vendor No]
---,COALESCE(v.Name,'') [Vendor Name]
---,CASE  WHEN LEN(i.[Lead Time Calculation]) = 0 THEN '0' 
---    WHEN CHARINDEX(CHAR(3),i.[Lead Time Calculation]) &gt; 0
---         THEN REPLACE(i.[Lead Time Calculation], CHAR(3), '')
---                            WHEN CHARINDEX(CHAR(4),i.[Lead Time Calculation]) &gt; 0 THEN  --week
---     REPLACE(i.[Lead Time Calculation], CHAR(4), '') * 5
---                            WHEN CHARINDEX(CHAR(5),i.[Lead Time Calculation]) &gt; 0 THEN  --month 
---     REPLACE(i.[Lead Time Calculation], CHAR(5), '') * 20       --convert to days 
---                           WHEN CHARINDEX(CHAR(2),i.[Lead Time Calculation]) &gt; 0 THEN -- days 
---     REPLACE(i.[Lead Time Calculation], CHAR(2), '')		
---                        END [Lead Time Calculation]
-      
---, COALESCE(Commodity + '  ' + c.Description,'') [Commodity Description]
---,CASE
---   WHEN LEN([Signal Code]) &gt; 0 THEN [Signal Code]  + '  ' + g.Description 
---   WHEN LEN([Signal Code]) = 0 THEN ''
---END [Signal Code]
---,i.[Global Dimension 2 Code] [Business Segment]
---,CASE
---   WHEN LEN([Product Types]) &gt; 0 THEN [Product Types]  + '  ' + p.Description 
---   WHEN LEN([Product Types]) = 0 THEN ''
--- END [Product Type]
---,CASE
---   WHEN LEN([Selection Code]) &gt; 0 THEN [Selection Code]  + '  ' + s.Description 
---   WHEN LEN([Selection Code]) = 0 THEN ''        /*4*/
---END [Selection Code]
+,CONVERT(NUMERIC(10),COALESCE(s1.Nettable, 0)) [Qty on hand Nettable]
+,CASE [Replenishment System]
+	WHEN 0 THEN 'Purchased'
+	WHEN 1 THEN 'Manfuactured'
+END 'Replenishment System'
 
-,CONVERT(NUMERIC(10,2),COALESCE(s2.[Qty on PO], 0.00)) [Qty on PO]
-,CONVERT(NUMERIC(10,2),COALESCE(s6.[Qty on Production Order], 0.00)) [Qty on Production Order]
-,CONVERT(NUMERIC(10,2),COALESCE(s3.[Qty on SO], 0.00)) [Qty on SO]
-,CONVERT(NUMERIC(10,2),COALESCE(s5.[Qty on Inventory Request], 0.00)) [Qty on Inventory Request]
-,CONVERT(NUMERIC(10,2),COALESCE(s4.[Qty on Service Order], 0.00)) [Qty on Service Order]
---,FORMAT([Standard Cost], 'C', 'en-us') 'Standard Cost'
---,CONVERT(NUMERIC(10,2),COALESCE(s1.Nettable, 0.00) * COALESCE([Standard Cost],0.00)) [Qty on hand nettable x Standard Cost]
---,[Buyer Planner Code]
---,CASE Vetted
---	WHEN 0 THEN 'Vetted'
---	WHEN 1 THEN 'Non-Vetted'
---END Vetted
---,COALESCE(i.[SDS Document No_],'') [SDS Document Number]
---,COALESCE(CASE COALESCE(i.SIM,0) 
---	WHEN 0 THEN ' '
---	WHEN 1 THEN 'A1'
---	WHEN 2 THEN 'A2'
---	WHEN 3 THEN 'A3'
---	WHEN 4 THEN 'B1'
---	WHEN 5 THEN 'B2'
---	WHEN 6 THEN 'B3'
---	WHEN 7 THEN 'C1'
---	WHEN 8 THEN 'C2'
---	WHEN 9 THEN 'C3'
---END,'') SIM
---,[Phys Invt Counting Period Code]
---,[HTS Code]
---,CONVERT(NUMERIC(10,2),[Net Weight]) [Net Weight]
---,CONVERT(NUMERIC(10,2),[Gross Weight]) [Gross Weight]
---,CONVERT(NUMERIC(10,0),COALESCE([Reorder Quantity],0)) [Reorder Quantity]
---,CONVERT(NUMERIC(10,0),COALESCE([Reorder Point],0)) [Reorder Point]
---,CONVERT(NUMERIC(10,0),COALESCE([No_ of Bins],0)) [No of Bins]
---,CASE
---	WHEN [MPS Item] = 0 THEN 'No'
---	WHEN [MPS Item] = 1 THEN 'Yes'
---END [MPS Item]
---,[Safety Stock Quantity]
---,[Stock Location]
---,CASE [Reordering Policy]
---	WHEN 1 THEN 'Fixed Reorder Qty'
---	WHEN 4 THEN 'Lot-for-Lot'
---	ELSE ''
---END [Reordering Policy]
---,CASE [Manufacturing Policy]
---	WHEN 0 THEN 'Make-to-Stock'
---	WHEN 1 THEN 'Make-to-Order'
---	ELSE ''
---END [Manufacturing Policy]
---,[Maximum Inventory]
---,[Minimum Order Quantity]
---,[Maximum Order Quantity]
---,[Order Multiple]
---,[Safety Lead Time]
---,[Inventory Posting Group]
---,[Gen_ Prod_ Posting Group]
---,[Scrap _]
---,CONVERT(NUMERIC(10,0),COALESCE([No_ of Bins],0)) [No of Bins]
---,COALESCE(CONVERT(NUMERIC(12,4),[Profit _]),0) Profit
---,CONVERT(NUMERIC(10,2),[Unit Price],0) [Unit Price]
---,CASE i.[Blocked]
---	WHEN 0 THEN ''
---	WHEN 1 THEN 'Blocked'
---	ELSE ''
---END [Blocked]
---,CASE i.[Block Purchase]
---	WHEN 0 THEN ''
---	WHEN 1 THEN 'Blocked'
---	ELSE ''
---END [Block Purchase]
---,CASE i.[Block Sale]
---	WHEN 0 THEN ''
---	WHEN 1 THEN 'Blocked'
---	ELSE ''
---END [Block Sale]
---,CASE i.[Block Consumption]
---	WHEN 0 THEN ''
---	WHEN 1 THEN 'Blocked'
---	ELSE ''
---END [Block Consumption]
---,[Rolled-up Material Cost]
---,[Item Group Code]
---,ig.Description [Item Group Description]
---,COALESCE(i.[Rolled-up Subcontracted Cost],0) [Rolled-up Subcontracted Cost]
---,CASE
---	WHEN i.[Schedule In] = 0 THEN 'No'
---	WHEN i.[Schedule In] = 1 THEN 'Yes'
---END [Schedule In]
---,CASE
---	WHEN i.[Schedule Out] = 0 THEN 'No'
---	WHEN i.[Schedule Out] = 1 THEN 'Yes'
---END [Schedule Out]
---,CASE
---	WHEN i.[Critical] = 0 THEN 'No'
---	WHEN i.[Critical] = 1 THEN 'Yes'
---END [Critical]
---,CASE
---	WHEN i.[Reference Component] = 0 THEN 'No'
---	WHEN i.[Reference Component] = 1 THEN 'Yes'
---END [Reference Component]
---,CASE i.[CE Approved]
---	WHEN 1 THEN 'Approved'
---	WHEN 0 then 'Not Approved'
---END [CE Approved]
-
---,CASE
---WHEN LEN(
---CASE
---	WHEN CHARINDEX(CHAR(3), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(3),'WD')
---	WHEN CHARINDEX(CHAR(2), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(2),'D')
---	WHEN CHARINDEX(CHAR(5), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(5),'M')
---	ELSE ''
---END) &gt; 6 THEN LEFT(6, CASE
---	WHEN CHARINDEX(CHAR(3), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(3),'WD')
---	WHEN CHARINDEX(CHAR(2), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(2),'D')
---	WHEN CHARINDEX(CHAR(5), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(5),'M')
---	ELSE ''
---END)
---ELSE CASE
---	WHEN CHARINDEX(CHAR(3), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(3),'WD')
---	WHEN CHARINDEX(CHAR(2), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(2),'D')
---	WHEN CHARINDEX(CHAR(5), i.[Lot Accumulation Period])&gt; 0 THEN REPLACE([Lot Accumulation Period],CHAR(5),'M')
---	ELSE ''
---END
---END [Lot Accumulation Period]
---,[Dampener Quantity]
---,[Dampener Days Late]
-,COALESCE([NonNettable],0) NonNettable
-,COALESCE(Forecast,0) Forecast
-,COALESCE(ComponentDemand,0) ComponentDemand
-,i.[Replenishment System]
+,CONVERT(NUMERIC(10),COALESCE(s2.[Qty on PO], 0)) [Qty on PO]
+,CONVERT(NUMERIC(10),COALESCE(s6.[Qty on Production Order], 0)) [Qty on Production Order]
+,CONVERT(NUMERIC(10),COALESCE(s3.[Qty on SO], 0)) [Qty on SO]
+,CONVERT(NUMERIC(10),COALESCE(s5.[Qty on Inventory Request], 0)) [Qty on Inventory Request]
+,CONVERT(NUMERIC(10),COALESCE(s4.[Qty on Service Order], 0)) [Qty on Service Order]
+,CONVERT(NUMERIC(10),COALESCE([NonNettable],0)) NonNettable
+,CONVERT(NUMERIC(10),COALESCE(Forecast,0)) Forecast
+,CONVERT(NUMERIC(10),COALESCE(ComponentDemand,0)) ComponentDemand
+,CONVERT(NUMERIC(10),COALESCE(sPLc.[Planned Quantity Change] + sRp.[Quantity Change],0)) ActionMessageQty
 ,i.[Buyer Planner Code]
 
 FROM [ZYGO$Item] i
@@ -513,15 +190,12 @@ LEFT JOIN s3 on s3.[No_] = i.No_
 LEFT JOIN s4 on s4.[No_] = i.No_
 LEFT JOIN s5 on s5.[No_] = i.No_
 LEFT JOIN s6 on s6.[Item No_] = i.No_
---LEFT JOIN s8 on s8.ItemNo = i.No_
---LEFT JOIN s10 on s10.ItemNo = i.No_
---LEFT JOIN s11 ON s11.[Item No_] = i.No_
---LEFT JOIN s13 ON s13.ItemNo = i.No_--
-LEFT JOIN s14 ON s14.[Item No_] = i.No_
+--LEFT JOIN s14 ON s14.[Item No_] = i.No_
 LEFT JOIN s1a ON s1a.[Item No_] = i.No_
 LEFT JOIN s1b ON s1b.[Item No_] = i.No_
 LEFT JOIN sPC ON sPC.ItemNo = i.No_
-
+LEFT JOIN sPLc ON sPLc.[Item No_] = i.No_
+LEFT JOIN sRp ON sRp.[Item No.] = i.No_
 
 WHERE 1=1
 
@@ -540,27 +214,24 @@ No_ ItemNo
 ,[Qty on Service Order]
 ,[Qty on Inventory Request]
 ,[Qty on Production Order]
-,ComponentDemand
+,ComponentDemand [Qty on Prod Order Component]
+,ActionMessageQty
 ,([Qty on Production Order] + [Qty on PO]) ScheduledReceipts
 ,([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) GrossRequirements
 ,Forecast
-,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) [Projected Inventory]
---,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) ) 
-,CASE [Replenishment System]
-	WHEN 0 THEN 'Purchased'
-	WHEN 1 THEN 'Manufactured'
-	ELSE 'Other'
-END [Replenishment System]
+,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) [Forecasted Projected Inventory]
+,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) ) + ActionMessageQty [Suggested Projected Inventory]
+,[Replenishment System]
 ,[Buyer Planner Code]
 
 from sX
 
---order by Forecast desc
 /*
---WHERE No_ = 
+WHERE No_ = 
 
---'1189-857-076'
+'1189-857-076'
 --'8020-0410-03'
+
 */</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -601,8 +272,12 @@ from sX
           <DataField>Qty on Production Order</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="ComponentDemand">
-          <DataField>ComponentDemand</DataField>
+        <Field Name="Qty_on_Prod_Order_Component">
+          <DataField>Qty on Prod Order Component</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="ActionMessageQty">
+          <DataField>ActionMessageQty</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="ScheduledReceipts">
@@ -613,17 +288,21 @@ from sX
           <DataField>GrossRequirements</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Projected_Inventory">
-          <DataField>Projected Inventory</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
         <Field Name="Forecast">
           <DataField>Forecast</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Forecasted_Projected_Inventory">
+          <DataField>Forecasted Projected Inventory</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Replenishment_System">
           <DataField>Replenishment System</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Suggested_Projected_Inventory">
+          <DataField>Suggested Projected Inventory</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Buyer_Planner_Code">
           <DataField>Buyer Planner Code</DataField>
@@ -707,7 +386,13 @@ from sX
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
                   <Width>2in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -1092,7 +777,7 @@ from sX
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Component Demand</Value>
+                                  <Value>Qty on Prod Ord Component </Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1116,6 +801,45 @@ from sX
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox20">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Action Message Qty</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox20</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1256,7 +980,7 @@ from sX
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Projected Inventory</Value>
+                                  <Value>Forecasted Projected Inventory</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1280,6 +1004,45 @@ from sX
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox17">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Suggested Projected Inventory</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox17</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1704,14 +1467,14 @@ from sX
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="ComponentDemand">
+                        <Textbox Name="Qty_on_Prod_Order_Component">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!ComponentDemand.Value</Value>
+                                  <Value>=Fields!Qty_on_Prod_Order_Component.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;(0)</Format>
@@ -1722,7 +1485,7 @@ from sX
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>ComponentDemand</rd:DefaultName>
+                          <rd:DefaultName>Qty_on_Prod_Order_Component</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1731,6 +1494,41 @@ from sX
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ActionMessageQty">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActionMessageQty.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>ActionMessageQty</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1852,14 +1650,14 @@ from sX
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Projected_Inventory">
+                        <Textbox Name="Forecasted_Projected_Inventory">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Projected_Inventory.Value</Value>
+                                  <Value>=Fields!Forecasted_Projected_Inventory.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;(0)</Format>
@@ -1870,7 +1668,7 @@ from sX
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Projected_Inventory</rd:DefaultName>
+                          <rd:DefaultName>Forecasted_Projected_Inventory</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1879,6 +1677,41 @@ from sX
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Suggested_Projected_Inventory">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Suggested_Projected_Inventory.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Suggested_Projected_Inventory</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1979,6 +1812,8 @@ from sX
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -2004,7 +1839,7 @@ from sX
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>17in</Width>
+            <Width>19in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -2012,7 +1847,7 @@ from sX
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>17in</Width>
+      <Width>19in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
