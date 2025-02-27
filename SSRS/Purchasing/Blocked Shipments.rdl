@@ -61,18 +61,21 @@ End [On Hold]
 	WHEN 'F01' THEN 'Finance Hold - Credit'
 	WHEN 'PHR' THEN 'Photos Required'
 END,'') [On Hold Reason]
+,l.[Planned Shipment Date] sortDate
 
 from [ZYGO$Sales Header] h
 
 INNER JOIN [ZYGO$Sales Line] l on h.No_ = l.[Document No_]
 
-LEFT JOIN [ZYGO$Customer] c on h.[Bill-to Customer No_] = c.No_
+LEFT JOIN [ZYGO$Customer] c1 on h.[Bill-to Customer No_] = c1.No_
 
-LEFT JOIN [ZYGO$Customer] c1 on h.[Sell-to Customer No_] = c1.No_
+LEFT JOIN [ZYGO$Customer] c on h.[Sell-to Customer No_] = c.No_
 
 LEFT JOIN [ZYGO$Item] i on i.No_ = l.No_
 
-where ((c.[Credit Limit (LCY)] = .01 or c1.[Credit Limit (LCY)] = .01
+where 1=1
+
+AND ((c.[Credit Limit (LCY)] = .01 or c1.[Credit Limit (LCY)] = .01
 
 or COALESCE(c.Blocked,0) IN (1,2, 3)
 
@@ -82,80 +85,10 @@ OR LEN(h.[On Hold]) &gt; 0)
 
 AND [Outstanding Quantity] &gt; 0
 
+AND l.[Document Type] = 1 --Order
+
 and l.[Planned Shipment Date] &lt; DATEADD(ww, 6,(GETDATE()))
 
-AND l.[Document Type] = 1  -- Order
-
-UNION ALL
-
-select
-
-Distinct
-
-h.No_ [Sales Order No.]
-,l.[Shortcut Dimension 2 Code] [Business Segment]
-,REPLACE(h.[Assigned User ID], 'AMETEK-AD\','') [Sales Admin]
-,h.[Bill-to Customer No_]
-,c.Name as [Sell-to Name]
-,COALESCE(CASE c.Blocked
-	WHEN 1 THEN 'Ship'
-                   WHEN 2 THEN 'Invoice'
-	WHEN 3 THEN 'All'
-END,'') [Sell-to Blocked]
-,FORMAT(c.[Credit Limit (LCY)], '#0.##') [Sell-to Credit Limit]
-,h.[Bill-to Customer No_]
-,c1.Name [Bill-to Name]
-,COALESCE(CASE c1.Blocked
-	WHEN 1 THEN 'Ship'
-                   WHEN 2 THEN 'Invoice'
-	WHEN 3 THEN 'All'
-END,'') [Bill-to Blocked]
-,FORMAT(c1.[Credit Limit (LCY)], '#0.##') [Bill-to Credit Limit]
-,FORMAT(l.[Planned Delivery Date], 'MM-dd-yyyy') [Planned Delivery Date]
-,CASE 
-	WHEN LEN(h.[On Hold Reason Code]) &gt; 0 THEN 'Yes'
-	ELSE ''
-End [On Hold]
-,COALESCE(CASE [On Hold Reason Code]
-	WHEN '1' THEN 'Customer Requested Hold'
-	WHEN '2' THEN 'Lack of PO'
-	WHEN '3' THEN 'Lack of L/C or License'
-	WHEN '4' THEN 'Change Order Required'
-	WHEN '5' THEN 'No Back Orders Allowed'
-	WHEN '6' THEN 'Sales Administration'
-	WHEN '7' THEN 'Required Bar Code'
-	WHEN '8' THEN 'Required Special Invoice'
-	WHEN '9' THEN 'Customer Material Required'
-	WHEN '10' THEN 'Advance Payment Owed'
-	WHEN '11' THEN 'Customer Visit Required'
-	WHEN 'F01' THEN 'Finance Hold - Credit'
-	WHEN 'PHR' THEN 'Photos Required'
-END,'') [On Hold Reason]
-
-
-from [ZYGO$Service Header] h
-
-INNER JOIN [ZYGO$Service Line] l on h.No_ = l.[Document No_]
-
-LEFT JOIN [ZYGO$Customer] c on h.[Bill-to Customer No_] = c.No_
-
-LEFT JOIN [ZYGO$Customer] c1 on h.[Bill-to Customer No_] = c1.No_
-
-LEFT JOIN [ZYGO$Item] i on i.No_ = l.No_
-
-where ((c.[Credit Limit (LCY)] = .01 or c1.[Credit Limit (LCY)] = .01
-
-or COALESCE(c.Blocked,0) IN (1,2, 3)
-
-or COALESCE(c1.Blocked,0) IN (1,2, 3))
-
-OR LEN(h.[On Hold Reason Code]) &gt; 0)
-
-AND [Outstanding Quantity] &gt; 0
-
-and l.[Planned Delivery Date] &lt; DATEADD(ww, 6,(GETDATE()))
-
-AND l.[Document Type] = 1  -- Order
 )
 ,s2 AS
 (
@@ -172,37 +105,23 @@ INNER JOIN s1 ON s1.[Sales Order No.] = l.[Document No_] AND s1.[Planned Shipmen
 
 AND s1.[Business Segment] = l.[Shortcut Dimension 2 Code]
 
-GROUP BY s1.[Sales Order No.], s1.[Planned Shipment Date], l.[Shortcut Dimension 2 Code]
+WHERE l.[Document Type] = 1 --Order
 
-UNION ALL
-
-SELECT
-
-SUM([Amount Including VAT]) ShipmentTotal
-,s1.[Sales Order No.]
-,s1.[Planned Shipment Date]
-,l.[Shortcut Dimension 2 Code]
-
-FROM [ZYGO$Service Line] l
-
-INNER JOIN s1 ON s1.[Sales Order No.] = l.[Document No_] AND s1.[Planned Shipment Date] = l.[Planned Delivery Date]
-
-AND s1.[Business Segment] = l.[Shortcut Dimension 2 Code]
+AND l.[Outstanding Quantity] &gt; 0
 
 GROUP BY s1.[Sales Order No.], s1.[Planned Shipment Date], l.[Shortcut Dimension 2 Code]
 )
 
-SELECT
+SELECT s1.*
 
-s1.*
-,s2.ShipmentTotal
-
+,COALESCE(s2.ShipmentTotal,0) ShipmentTotal
 
 FROM s1 LEFT JOIN s2 ON s1.[Sales Order No.] = s2.[Sales Order No.] AND s1.[Planned Shipment Date] = s2.[Planned Shipment Date]
 
 AND s1.[Business Segment] = s2.[Shortcut Dimension 2 Code]
 
-order by [Planned Shipment Date]
+order by sortDate
+
 </CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -262,6 +181,10 @@ order by [Planned Shipment Date]
         <Field Name="On_Hold_Reason">
           <DataField>On Hold Reason</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="sortDate">
+          <DataField>sortDate</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="ShipmentTotal">
           <DataField>ShipmentTotal</DataField>
