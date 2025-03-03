@@ -12,7 +12,7 @@ namespace NAV_MRP
 {
     public partial class MRP_PrintedReport : Form
     {
-       private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+        private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
        private string ErrorLog = @"\\midfile01.ametek.com\departments\procurement\purchasing\mrp_requisitions\Archive\MRPerrorLog.txt";
         //private string directory = @"C:\A";
         //private string ErrorLog = @"C:\A\MRPerrorLog.txt";
@@ -1848,7 +1848,7 @@ namespace NAV_MRP
                 File.AppendAllText(ErrorLog, " 1854    " + ex.ToString() + Environment.NewLine);
             }
 
-            /*  colins and back slashes in the date time make the path unreadable    */
+            /*  colons and back slashes in the date time make the path unreadable    */
             string today = DateTime.Now.ToString("MM-dd-yy hh.mm.ss");
 
             string file = string.Empty;

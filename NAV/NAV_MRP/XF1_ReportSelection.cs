@@ -11,9 +11,9 @@ using System.Windows.Forms;
 
 namespace NAV_MRP
 {
-    public partial class F1_ReportSelection : Form
+    public partial class XF1_ReportSelection : Form
     {
-        public F1_ReportSelection()
+        public XF1_ReportSelection()
         {
             InitializeComponent();
         }

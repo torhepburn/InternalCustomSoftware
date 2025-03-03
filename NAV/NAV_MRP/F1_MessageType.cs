@@ -38,7 +38,7 @@ namespace NAV_MRP
 
         private void Nexxt()
         {
-            AutoRun a = new AutoRun();
+            F2_ReportSelection a = new F2_ReportSelection();
             a.ShowDialog();
 
             this.Close();

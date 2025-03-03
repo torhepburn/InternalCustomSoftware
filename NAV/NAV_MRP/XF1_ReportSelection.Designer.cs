@@ -1,6 +1,6 @@
 ﻿namespace NAV_MRP
 {
-    partial class F1_ReportSelection
+    partial class XF1_ReportSelection
     {
         /// <summary>
         /// Required designer variable.

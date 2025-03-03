@@ -1,6 +1,6 @@
 ﻿namespace NAV_MRP
 {
-    partial class AutoRun
+    partial class F2_ReportSelection
     {
         /// <summary>
         /// Required designer variable.
