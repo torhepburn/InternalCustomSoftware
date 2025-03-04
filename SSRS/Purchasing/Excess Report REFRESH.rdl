@@ -25,6 +25,10 @@
 	For Luz Signal Code determines item active 
 
 */
+declare @item varchar(20);
+
+set @item = '1115-800-055';
+
 WITH s1 as
 (	--On Hand Nettable
 	SELECT 
@@ -48,77 +52,110 @@ WITH s1 as
 (	--Forecast Quantity
 	SELECT 
 	[Item No_]
-	,SUM([Forecast Quantity]) Forecast
+	,SUM([Forecast Quantity]) [Qty on Production Forecast]
+	--,[Forecast Quantity] [Qty on Production Forecast]
+	--,YEAR([Forecast Date]) yDate
+		
 	FROM [ZYGO$Production Forecast Entry]
 	WHERE [Production Forecast Name] = 'ZYGO'
+
+	AND YEAR([Forecast Date]) = 2025
+	
 	GROUP BY [Item No_]
+	
 
 )
 , s2 as
 (	--Stock on Purchase Order
 	SELECT
 	I.No_
-    ,COALESCE(SUM(L.[Outstanding Quantity]), '0.00') [Qty on PO ]
+    ,COALESCE(SUM(L.[Outstanding Quantity]), '0') [Qty on PO ]
 	FROM [ZYGO$Purchase Line] L 
     INNER JOIN [ZYGO$Item] I ON L.No_ = I.No_
     WHERE ([Replenishment System] = 0 and [Document Type] = 1
     and [Outstanding Quantity] &gt; 0)
+	AND YEAR([Planned Receipt Date]) = 2025
 	GROUP BY I.No_
+	
 )
+
 , s3 as
 (	--Qty on Sales Orders -- Type 2 = Item	Type 3 = Resource
 	SELECT
 	No_
-    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on SO]
-    FROM [ZYGO$Sales Line]
-    WHERE Type = 2 AND [Completely Shipped] = 0
+	,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on SO]
+	
+	FROM [ZYGO$Sales Line]
+
+	WHERE Type = 2 AND [Completely Shipped] = 0
+		
+	AND YEAR([Shipment Date]) = 2025
+
 	GROUP BY No_
+	
 )
 , s4 as
 (	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
 	SELECT
 	No_
     ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on Service Order]
-    FROM [ZYGO$Service Line] WHERE [Type] = 1
+	
+	FROM [ZYGO$Service Line] WHERE [Type] = 1
+
+	AND YEAR([Planned Delivery Date]) = 2025
     GROUP BY No_
+	
 )
 , s5 as
 (	--Qty on Inventory Request - Jobs
 	SELECT
 	No_
-    ,COALESCE(SUM([Quantity]), 0) [Qty on Inventory Request]
-    FROM [ZYGO$Job Journal Line]
+    ,COALESCE(SUM([Remaining Qty_]), 0) [Qty on Inventory Request]
+	
+	FROM [ZYGO$Job Journal Line]
     WHERE [Journal Template Name] = 'INVREQ'
+	AND [Remaining Qty_] &gt; 0
+	AND YEAR([Due Date]) = 2025
 	GROUP BY No_
+	
 )
 , s6 as
 (	--Qty on Production Order  --Status 2 = Firm Planned Status 3 = Released
 	SELECT
 	[Item No_]
     ,COALESCE(SUM([Remaining Quantity]), 0) [Qty on Production Order]
-    FROM [ZYGO$Prod_ Order Line]
+	
+	FROM [ZYGO$Prod_ Order Line]
     WHERE [Remaining Quantity] &gt; 0 and [Status] in (2,3)
+
+	AND YEAR([Due Date]) = 2025
 	GROUP BY [Item No_]
+	
 )
 
 
 , sPC as
 (
 	SELECT
-	[Item No_] ItemNo
-    ,COALESCE(SUM([Remaining Quantity]), 0) ComponentDemand  
-    FROM [ZYGO$Prod_ Order Component]    
-    WHERE 1=1    
-    AND Status in (2, 3)
-	GROUP BY [Item No_] 
+	[Item No_]
+	 ,COALESCE(SUM([Remaining Quantity]), 0) [Qty on Prod Order Component] 
+	
+
+	FROM [ZYGO$Prod_ Order Component]
+
+	WHERE Status in (2, 3)
+
+	AND YEAR([Due Date]) = 2025
+
+	GROUP BY [Item No_]
+	
 )
 ,sPLc AS
 (
 	select 
 
-[Item No_] 
-
-,SUM([Expected Quantity] * (-1)) [Planned Quantity Change]
+	[Item No_] 
+	,SUM([Expected Quantity]) [Qty on Planning Component]
 
 	FROM [ZYGO$Planning Component]
 
@@ -128,17 +165,20 @@ WITH s1 as
 
 	AND [Worksheet Batch Name] = 'DEFAULT'
 
+	AND YEAR([Due Date]) = 2025
+
 	GROUP BY [Item No_]
+	
 
 )
 ,
 sRp AS
 (
-		select 
+	select 
 
-	No_ [Item No.]
-	,SUM([Remaining Quantity]- [Original Quantity]) [Quantity Change]
-	,YEAR([Due Date] ) yDate
+	 No_ [Item No.]
+	,SUM([Remaining Quantity]- [Original Quantity]) [Action Message Purchase New Qty]
+	
 
 	FROM [ZYGO$Requisition Line]
 
@@ -150,13 +190,16 @@ sRp AS
 
 	AND [Journal Batch Name] = 'DEFAULT'
 
-	GROUP BY No_, YEAR([Due Date])
+	AND YEAR([Due Date]) = 2025
+
+	GROUP BY No_
+	
 )
 ,sX AS
 (
 SELECT
 
-i.No_
+ i.No_
 ,i.Description
 ,CONVERT(NUMERIC(10),COALESCE(s1.Nettable, 0)) [Qty on hand Nettable]
 ,CASE [Replenishment System]
@@ -170,69 +213,73 @@ END 'Replenishment System'
 ,CONVERT(NUMERIC(10),COALESCE(s5.[Qty on Inventory Request], 0)) [Qty on Inventory Request]
 ,CONVERT(NUMERIC(10),COALESCE(s4.[Qty on Service Order], 0)) [Qty on Service Order]
 ,CONVERT(NUMERIC(10),COALESCE([NonNettable],0)) NonNettable
-,CONVERT(NUMERIC(10),COALESCE(Forecast,0)) Forecast
-,CONVERT(NUMERIC(10),COALESCE(ComponentDemand,0)) ComponentDemand
-,CONVERT(NUMERIC(10),COALESCE(sPLc.[Planned Quantity Change] + sRp.[Quantity Change],0)) ActionMessageQty
+,CONVERT(NUMERIC(10),COALESCE([Qty on Production Forecast],0)) [Qty on Production Forecast]
+,CONVERT(NUMERIC(10),COALESCE([Qty on Prod Order Component],0)) [Qty on Prod Order Component]
+,CONVERT(NUMERIC(10),COALESCE([Qty on Planning Component],0)) [Qty on Planning Component]
+
+,CONVERT(NUMERIC(10),COALESCE(sRp.[Action Message Purchase New Qty],0)) ActionMessageQty
 ,i.[Buyer Planner Code]
 
 FROM [ZYGO$Item] i
 
-LEFT JOIN [ZYGO$Commodity] c ON i.[Commodity] = c.Code
-LEFT JOIN [ZYGO$Product Types] p ON i.[Product Types] = p.Code
-LEFT JOIN [ZYGO$Selection Codes] s ON i.[Selection Code] = s.Code
-LEFT JOIN [ZYGO$Signal Code] g ON i.[Signal Code] = g.Code
-LEFT JOIN [ZYGO$Item Group] ig ON i.[Item Group Code] = ig.Code
-LEFT JOIN [ZYGO$Item Vendor] iv ON i.[No_] = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
-LEFT JOIN [ZYGO$Vendor] v on i.[Vendor No_] = v.No_
+--LEFT JOIN [ZYGO$Commodity] c ON i.[Commodity] = c.Code
+--LEFT JOIN [ZYGO$Product Types] p ON i.[Product Types] = p.Code
+--LEFT JOIN [ZYGO$Selection Codes] s ON i.[Selection Code] = s.Code
+--LEFT JOIN [ZYGO$Signal Code] g ON i.[Signal Code] = g.Code
+--LEFT JOIN [ZYGO$Item Group] ig ON i.[Item Group Code] = ig.Code
+--LEFT JOIN [ZYGO$Item Vendor] iv ON i.[No_] = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+--LEFT JOIN [ZYGO$Vendor] v on i.[Vendor No_] = v.No_
 LEFT JOIN s1 on s1.[Item No_] = i.No_
-LEFT JOIN s2 on s2.[No_] = i.No_
-LEFT JOIN s3 on s3.[No_] = i.No_
-LEFT JOIN s4 on s4.[No_] = i.No_
-LEFT JOIN s5 on s5.[No_] = i.No_
-LEFT JOIN s6 on s6.[Item No_] = i.No_
+LEFT JOIN s1b ON s1b.[Item No_] = i.No_
+LEFT JOIN s2 on s2.[No_] = s1b.[Item No_] 
+LEFT JOIN s3 on s3.[No_] = s1b.[Item No_] 
+LEFT JOIN s4 on s4.[No_] = s1b.[Item No_] 
+LEFT JOIN s5 on s5.[No_] = s1b.[Item No_] 
+LEFT JOIN s6 on s6.[Item No_] = s1b.[Item No_] 
 --LEFT JOIN s14 ON s14.[Item No_] = i.No_
 LEFT JOIN s1a ON s1a.[Item No_] = i.No_
-LEFT JOIN s1b ON s1b.[Item No_] = i.No_
-LEFT JOIN sPC ON sPC.ItemNo = i.No_
-LEFT JOIN sPLc ON sPLc.[Item No_] = i.No_
-LEFT JOIN sRp ON sRp.[Item No.] = i.No_
+
+LEFT JOIN sPC ON sPC.[Item No_] = s1b.[Item No_] 
+LEFT JOIN sPLc ON sPLc.[Item No_] = s1b.[Item No_] 
+LEFT JOIN sRp ON sRp.[Item No.] = s1b.[Item No_] 
 
 WHERE 1=1
 
 and [Signal Code] != 'OBS'
 )
 
-select
+select distinct
+
 
 No_ ItemNo
 ,Description
-, 
-[Qty on hand Nettable]
+,[Qty on hand Nettable]
 ,NonNettable [Qty on Hand Non-Nettable]
 ,[Qty on PO]
 ,[Qty on SO]
 ,[Qty on Service Order]
 ,[Qty on Inventory Request]
 ,[Qty on Production Order]
-,ComponentDemand [Qty on Prod Order Component]
+,[Qty on Prod Order Component]
 ,ActionMessageQty
 ,([Qty on Production Order] + [Qty on PO]) ScheduledReceipts
-,([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) GrossRequirements
-,Forecast
-,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) [Forecasted Projected Inventory]
-,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + ComponentDemand ) ) + ActionMessageQty [Suggested Projected Inventory]
+,([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) GrossRequirements
+,[Qty on Production Forecast]
+,[Qty on Planning Component]
+,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) [Projected Inventory]
+,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
+- ([Qty on Production Forecast] - [Qty on SO]) [Forecast Projected Inventory]
+,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
+- ([Qty on Production Forecast] - [Qty on SO]) ) + ActionMessageQty [Suggested Projected Inventory]
 ,[Replenishment System]
 ,[Buyer Planner Code]
 
 from sX
 
-/*
-WHERE No_ = 
 
-'1189-857-076'
---'8020-0410-03'
 
-*/</CommandText>
+
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -288,17 +335,25 @@ WHERE No_ =
           <DataField>GrossRequirements</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Forecast">
-          <DataField>Forecast</DataField>
+        <Field Name="Qty_on_Production_Forecast">
+          <DataField>Qty on Production Forecast</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Forecasted_Projected_Inventory">
-          <DataField>Forecasted Projected Inventory</DataField>
+        <Field Name="Qty_on_Planning_Component">
+          <DataField>Qty on Planning Component</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Projected_Inventory">
+          <DataField>Projected Inventory</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Replenishment_System">
           <DataField>Replenishment System</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Forecast_Projected_Inventory">
+          <DataField>Forecast Projected Inventory</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Suggested_Projected_Inventory">
           <DataField>Suggested Projected Inventory</DataField>
@@ -322,7 +377,7 @@ WHERE No_ =
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>Excess Report REFRESH</Value>
+                    <Value>Excess Report REFRESH 2025</Value>
                     <Style>
                       <FontFamily>Segoe UI Light</FontFamily>
                       <FontSize>24pt</FontSize>
@@ -377,7 +432,7 @@ WHERE No_ =
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.58333in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -389,7 +444,10 @@ WHERE No_ =
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>2in</Width>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -973,14 +1031,14 @@ WHERE No_ =
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox15">
+                        <Textbox Name="Textbox22">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Forecasted Projected Inventory</Value>
+                                  <Value>Projected Inventory</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -990,12 +1048,11 @@ WHERE No_ =
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox15</rd:DefaultName>
+                          <rd:DefaultName>Textbox22</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1003,7 +1060,45 @@ WHERE No_ =
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox19">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Forecast Projected Inventory</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox19</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1613,14 +1708,14 @@ WHERE No_ =
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Forecast">
+                        <Textbox Name="Qty_on_Production_Forecast">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Forecast.Value</Value>
+                                  <Value>=Fields!Qty_on_Production_Forecast.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>0;(0)</Format>
@@ -1631,7 +1726,7 @@ WHERE No_ =
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Forecast</rd:DefaultName>
+                          <rd:DefaultName>Qty_on_Production_Forecast</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1650,17 +1745,16 @@ WHERE No_ =
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Forecasted_Projected_Inventory">
+                        <Textbox Name="Projected_Inventory">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Forecasted_Projected_Inventory.Value</Value>
+                                  <Value>=Fields!Projected_Inventory.Value</Value>
                                   <Style>
                                     <FontFamily />
-                                    <Format>0;(0)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -1668,7 +1762,7 @@ WHERE No_ =
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Forecasted_Projected_Inventory</rd:DefaultName>
+                          <rd:DefaultName>Projected_Inventory</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1676,7 +1770,41 @@ WHERE No_ =
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Forecast_Projected_Inventory">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Forecast_Projected_Inventory.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Forecast_Projected_Inventory</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1814,6 +1942,7 @@ WHERE No_ =
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1839,7 +1968,7 @@ WHERE No_ =
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>19in</Width>
+            <Width>19.58333in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1847,7 +1976,7 @@ WHERE No_ =
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>19in</Width>
+      <Width>20.58333in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
