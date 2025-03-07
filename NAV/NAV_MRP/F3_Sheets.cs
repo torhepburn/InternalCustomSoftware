@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace NAV_MRP
 {
@@ -54,8 +55,8 @@ namespace NAV_MRP
         private string[] aSource = new string[20000];
         private string[] aCurrentRev = new string[20000];
         private string[] aECOstatus = new string[20000];
-        private string[] aDateRevCreated = new string[20000];
-        private string[] aOwner = new string[20000];
+        private string[] aEffectiveDate = new string[20000];
+        private string[] aECOnumber = new string[20000];
         private string[] aAnnualSpend = new string[20000];
         private string[] aNettableStock = new string[20000];
         private string[] aNonNetStock = new string[20000];
@@ -73,11 +74,12 @@ namespace NAV_MRP
         private string[] aLastPurchPrice = new string[20000];
         private string[] aVettedStatus = new string[20000];
         private string[] aAllocations = new string[20000];
-        private string[] aMfrName = new string[20000];
-        private string[] aMfrPartNumber = new string[20000];
-        private string[] aQualification = new string[20000];
-        private string[] aPreferred = new string[20000];
-        private string[] aMfrDescription = new string[20000];
+
+        private string[,] aMfrName = new string[20000,10];
+        private string[,] aMfrPartNumber = new string[20000,10];
+        private string[,] aPreferred = new string[20000,10];
+        private string[,] aMfrDescription = new string[20000,10];
+
         private string[] shortage = new string[20000];
         private string[] shortageProductLine = new string[20000];
         private string[] aDampnerDaysLate = new string[20000];
@@ -124,7 +126,7 @@ namespace NAV_MRP
         private string[,] aReceiptPrice = new string[20000, 5];
         private string[,] aReceiptDeliveredQuantity = new string[20000, 5];
         private string[,] aReceiptNetAmount = new string[20000, 5];
-        private string[,] aItemText = new string[20000, 10];
+        private string[,] aItemText = new string[20000, 15];
         private string[,] aPO = new string[20000, 20];
         private string[,] aPOLine = new string[20000, 20];
         private string[,] aPOLineQty = new string[20000, 20];
@@ -135,6 +137,7 @@ namespace NAV_MRP
 
         private int[] aVendorCount = new int[20000];
         private int[] aMRPCurrentCount = new int[20000];
+        private int[] aMfrCount = new int[20000];
         private int[] aMRPCurrentPagePlus1 = new int[20000];
         private int[] aMRPFutureCount = new int[20000];
         private int[] aMRPFuturePage1 = new int[20000];
@@ -173,8 +176,7 @@ namespace NAV_MRP
         DataTable dtMRPOrdersCurrentPlusPage;
         DataTable dtMRPOrdersFuture;
         DataTable dtReceipts;
-        DataTable dtItem;
-
+        
         DataTable dtItemText;
         DataTable dtPOLines;
         SqlDataReader dr;
@@ -252,112 +254,12 @@ namespace NAV_MRP
                   ",Item"
                    , cnxnAFE);
 
-
-
             try
             {
                 cnxnAFE.Open();
                 drMain = cmd.ExecuteReader();
                 dt1 = new DataTable();
                 dt1.Load(drMain);
-                int check = dt1.Rows.Count; /*  don't need this  */
-
-                drMain = cmd.ExecuteReader();
-
-                while (drMain.Read())
-                {
-                    aS1_ID[i] = drMain.GetInt32(0);
-                    aItemNo[i] = drMain.GetString(1);
-                    abuyerPlanner[i] = drMain.GetString(2);
-                    aLocation[i] = drMain.GetString(3);
-                    aDescription[i] = drMain.GetString(5);
-                    aCopyExact[i] = drMain.GetString(6);
-                    aItemCommodityCode[i] = drMain.GetString(7);
-                    aProductType[i] = drMain.GetString(8);
-                    aSelectionCode[i] = drMain.GetString(9);
-                    aItemGroup[i] = drMain.GetString(10);
-                    aSignalCode[i] = drMain.GetString(11);
-
-                    aLeadTime[i] = drMain.GetInt32(12).ToString() + " Days (" + drMain.GetInt32(13).ToString() + " Weeks)";
-                    aLotAccumulationPeriod[i] = drMain.GetInt32(14).ToString() + " Days";
-
-                    aCurrentRev[i] = drMain.GetString(15);  /* this from item but should be from doc control */
-
-                    aSafetyStock[i] = drMain.GetInt32(17).ToString();
-                    aOrderMethod[i] = drMain.GetString(18);
-                    aQtyMultiplier[i] = drMain.GetInt32(19).ToString();
-                    aMinQty[i] = drMain.GetInt32(20).ToString();
-                    aStdCost[i] = drMain.GetString(21);
-                    aPurchPrice[i] = drMain.GetString(22);
-                    aLastPurchPrice[i] = drMain.GetString(23);
-
-                    aInspection[i] = drMain.GetString(24);
-                                        
-                    aReorderPoint[i] = drMain.GetInt32(26).ToString();
-                    aReorderQty[i] = drMain.GetInt32(27).ToString();
-                    aVettedStatus[i] = drMain.GetInt32(28).ToString();
-                    aSIM[i] = drMain.GetString(29);
-                    aDampnerDaysLate[i] = drMain.GetInt32(30).ToString();
-                    aSDSDocumentNo[i] = drMain.GetString(31);
-                    aP6[i] = drMain.GetInt32(32).ToString();
-                    aF6[i] = drMain.GetInt32(33).ToString();
-                    aEAU[i] = drMain.GetInt32(34).ToString();
-                    aHTS[i] = drMain.GetString(35);
-                    aNetWeight[i] = drMain.GetString(36);
-                    aNonDomesticVendor[i] = drMain.GetString(37);
-
-                    aDampenerPeriod[i] = drMain.GetString(38);
-                    aDampenerQuantity[i] = drMain.GetInt32(39).ToString();
-
-                    aLTAReleaseBucket[i] = drMain.GetInt32(40).ToString();
-                    aSupplierReplenishment[i] = drMain.GetInt32(41).ToString();
-
-                    aAnnualSpend[i] = drMain.GetString(25);
-                    aNettableStock[i] = drMain.GetInt32(45).ToString();
-                    aNonNetStock[i] = drMain.GetInt32(46).ToString();
-                    aOnOrder[i] = drMain.GetInt32(44).ToString();
-                    aBlockedStock[i] = drMain.GetInt32(51).ToString();
-
-                    aFAIonOrder[i] = drMain.GetInt32(47).ToString();
-                    aFAINettable[i] = drMain.GetInt32(48).ToString();
-                    aFAINonNettable[i] = drMain.GetInt32(49).ToString();
-
-                    aAllocations[i] = drMain.GetInt32(50).ToString();
-                    aBlockedStock[i] = drMain.GetInt32(51).ToString();
-
-                    shortage[i] = drMain.GetString(52).Trim();
-                    shortageProductLine[i] = drMain.GetString(53).Trim();
-
-                    aVendorNo[i] = drMain.GetString(54);
-                    aVendorName[i] = drMain.GetString(55);
-                    aVendorAddress[i] = drMain.GetString(56);
-                    aVendorContact[i] = drMain.GetString(57);
-                    aVendorPhone[i] = drMain.GetString(58);
-                    aVendorEmail[i] = drMain.GetString(59);
-                    aVendorFax[i] = drMain.GetString(60);
-                    aVendorTitle[i] = drMain.GetString(61);
-                    aVendorCommodityCode[i] = drMain.GetString(62);
-
-                    aVendorNo2[i] = drMain.GetString(63).Trim();
-                    if (aVendorNo2[i].Length > 0)
-                    {
-                        aVendorCount[i] = 2;
-                    }
-                    else
-                    {
-                        aVendorCount[i] = 1;
-                    }
-                    aVendorName2[i] = drMain.GetString(64);
-                    aVendorAddress2[i] = drMain.GetString(65);
-                    aVendorContact2[i] = drMain.GetString(66);
-                    aVendorPhone2[i] = drMain.GetString(67);
-                    aVendorEmail2[i] = drMain.GetString(68);
-                    aVendorFax2[i] = drMain.GetString(69);
-                    aVendorTitle2[i] = drMain.GetString(70);
-                    aVendorCommodityCode2[i] = drMain.GetString(71);
-
-                    i++;
-                }
             }
             catch (SqlException ex)
             {
@@ -368,555 +270,549 @@ namespace NAV_MRP
                 cnxnAFE.Close();
             }
 
-
-
-            /*
-            *  Doc Control
-            */
-
-            cmd = new SqlCommand(
-                "SELECT * FROM MRP_S2 " +
-                "WHERE Item IN " +
-                "(Select item from MRP_s1 " +
-                "INNER JOIN " + g.ReportFilter + " c ON MRP_s1.Item = c.No_ " +
-                "WHERE 1=1 " +
-
-                g.messageChoice + g.SQLselection +
-
-                " )", cnxnAFE);
-
-
-            try
+            if (dt1.Rows.Count < 1)
             {
-                cnxnAFE.Open();
-                dtDash = new DataTable();
-                dr = cmd.ExecuteReader();
-                dtDash.Load(dr);
+                //MessageBox.Show("No Data");
             }
-            catch (SqlException ex)
+            else
+
             {
-                File.AppendAllText(ErrorLog, " 378 " + ex.ToString() + Environment.NewLine);
-            }
-            finally
-            {
-                cnxnAFE.Close();
-            }
+                try
+                {
+                    cnxnAFE.Open();
+                    
+                    drMain = cmd.ExecuteReader();
+
+                    while (drMain.Read())
+                    {
+                        aS1_ID[i] = drMain.GetInt32(0);
+                        aItemNo[i] = drMain.GetString(1);
+                        abuyerPlanner[i] = drMain.GetString(2);
+                        aLocation[i] = drMain.GetString(3);
+                        aDescription[i] = drMain.GetString(5);
+                        aCopyExact[i] = drMain.GetString(6);
+                        aItemCommodityCode[i] = drMain.GetString(7);
+                        aProductType[i] = drMain.GetString(8);
+                        aSelectionCode[i] = drMain.GetString(9);
+                        aItemGroup[i] = drMain.GetString(10);
+                        aSignalCode[i] = drMain.GetString(11);
+
+                        aLeadTime[i] = drMain.GetInt32(12).ToString() + " Days (" + drMain.GetInt32(13).ToString() + " Weeks)";
+                        aLotAccumulationPeriod[i] = drMain.GetInt32(14).ToString() + " Days";
+
+                        aCurrentRev[i] = drMain.GetString(15);  /* this from item but should be from doc control */
+
+                        aSafetyStock[i] = drMain.GetInt32(17).ToString();
+                        aOrderMethod[i] = drMain.GetString(18);
+                        aQtyMultiplier[i] = drMain.GetInt32(19).ToString();
+                        aMinQty[i] = drMain.GetInt32(20).ToString();
+                        aStdCost[i] = drMain.GetString(21);
+                        aPurchPrice[i] = drMain.GetString(22);
+                        aLastPurchPrice[i] = drMain.GetString(23);
+
+                        aInspection[i] = drMain.GetString(24);
+
+                        aReorderPoint[i] = drMain.GetInt32(26).ToString();
+                        aReorderQty[i] = drMain.GetInt32(27).ToString();
+                        aVettedStatus[i] = drMain.GetInt32(28).ToString();
+                        aSIM[i] = drMain.GetString(29);
+                        aDampnerDaysLate[i] = drMain.GetInt32(30).ToString();
+                        aSDSDocumentNo[i] = drMain.GetString(31);
+                        aP6[i] = drMain.GetInt32(32).ToString();
+                        aF6[i] = drMain.GetInt32(33).ToString();
+                        aEAU[i] = drMain.GetInt32(34).ToString();
+                        aHTS[i] = drMain.GetString(35);
+                        aNetWeight[i] = drMain.GetString(36);
+                        aNonDomesticVendor[i] = drMain.GetString(37);
+
+                        aDampenerPeriod[i] = drMain.GetString(38);
+                        aDampenerQuantity[i] = drMain.GetInt32(39).ToString();
+
+                        aLTAReleaseBucket[i] = drMain.GetInt32(40).ToString();
+                        aSupplierReplenishment[i] = drMain.GetInt32(41).ToString();
+
+                        aAnnualSpend[i] = drMain.GetString(25);
+                        aNettableStock[i] = drMain.GetInt32(45).ToString();
+                        aNonNetStock[i] = drMain.GetInt32(46).ToString();
+                        aOnOrder[i] = drMain.GetInt32(44).ToString();
+                        aBlockedStock[i] = drMain.GetInt32(51).ToString();
+
+                        aFAIonOrder[i] = drMain.GetInt32(47).ToString();
+                        aFAINettable[i] = drMain.GetInt32(48).ToString();
+                        aFAINonNettable[i] = drMain.GetInt32(49).ToString();
+
+                        aAllocations[i] = drMain.GetInt32(50).ToString();
+                        aBlockedStock[i] = drMain.GetInt32(51).ToString();
 
 
-            for (int x = 0; x < i; x++)
-            {
 
-                /* MRP current  */
+                        shortage[i] = drMain.GetString(52).Trim();
+                        shortageProductLine[i] = drMain.GetString(53).Trim();
 
-                cmd = new SqlCommand(
-                    "SELECT * FROM MRP_S4 " +
-                    "WHERE CF = 'Current' " +
+                        aVendorNo[i] = drMain.GetString(54);
+                        aVendorName[i] = drMain.GetString(55);
+                        aVendorAddress[i] = drMain.GetString(56);
+                        aVendorContact[i] = drMain.GetString(57);
+                        aVendorPhone[i] = drMain.GetString(58);
+                        aVendorEmail[i] = drMain.GetString(59);
+                        aVendorFax[i] = drMain.GetString(60);
+                        aVendorTitle[i] = drMain.GetString(61);
+                        aVendorCommodityCode[i] = drMain.GetString(62);
+
+                        aVendorNo2[i] = drMain.GetString(63).Trim();
+                        if (aVendorNo2[i].Length > 0)
+                        {
+                            aVendorCount[i] = 2;
+                        }
+                        else
+                        {
+                            aVendorCount[i] = 1;
+                        }
+                        aVendorName2[i] = drMain.GetString(64);
+                        aVendorAddress2[i] = drMain.GetString(65);
+                        aVendorContact2[i] = drMain.GetString(66);
+                        aVendorPhone2[i] = drMain.GetString(67);
+                        aVendorEmail2[i] = drMain.GetString(68);
+                        aVendorFax2[i] = drMain.GetString(69);
+                        aVendorTitle2[i] = drMain.GetString(70);
+                        aVendorCommodityCode2[i] = drMain.GetString(71);
+
+                        aECOnumber[i] = drMain.GetString(72);
+                        aEffectiveDate[i] = drMain.GetString(73);
+                        aECOstatus[i] = drMain.GetString(74).Trim();
+
+                        i++;
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    File.AppendAllText(ErrorLog, " 351 Initial Selection List  " + ex.ToString() + Environment.NewLine);
+                }
+                finally
+                {
+                    cnxnAFE.Close();
+                }
+
+
+
+               
+
+                for (int x = 0; x < i; x++)
+                {
+                        /*
+                        *  Manufacturer Data
+                        */
+
+                    cmd = new SqlCommand(
+                        "SELECT * FROM MRP_S2 " +
+                        "WHERE s1_id = " + aS1_ID[x] +
+                        "AND Item IN " +
+                        "(Select item from MRP_s1 " +
+                        "INNER JOIN " + g.ReportFilter + " c ON MRP_s1.Item = c.No_ " +
+
+                        g.messageChoice + g.SQLselection +
+
+                        " )", cnxnAFE);
+
+
+                    try
+                    {
+                        cnxnAFE.Open();
+                        dtDash = new DataTable();
+                        dr = cmd.ExecuteReader();
+                        dtDash.Load(dr);
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 378 " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+                    aMfrCount[x] = dtDash.Rows.Count;
+
+                    if (dtDash.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dtDash.Rows.Count; ii++)
+                        {
+                            try
+                            {
+                                aMfrName[x, ii] = dtDash.Rows[ii][1].ToString();
+                                aMfrPartNumber[x, ii] = dtDash.Rows[ii][2].ToString();
+                                aPreferred[x, ii] = dtDash.Rows[ii][3].ToString();
+                                aMfrDescription[x, ii] = dtDash.Rows[ii][4].ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(ErrorLog, " 312 " + ex.ToString() + Environment.NewLine);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        aMfrName[x, 0] = "";
+                        aMfrPartNumber[x, 0] = "";
+                        aPreferred[x, 0] = "";
+                        aMfrDescription[x, 0] = "";
+                    }
+
+                    /* MRP current  */
+
+                    cmd = new SqlCommand(
+                        "SELECT * FROM MRP_S4 " +
+                        "WHERE CF = 'Current' " +
+                        "AND s1_id = " + aS1_ID[x] +
+                        " ORDER BY CONVERT(date, startingdate) ", cnxnAFE);
+
+
+                    try
+                    {
+                        cnxnAFE.Open();
+                        dtMRPOrdersCurrent = new DataTable();
+                        dr = cmd.ExecuteReader();
+                        dtMRPOrdersCurrent.Load(dr);
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 312 " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+                    aMRPCurrentCount[x] = dtMRPOrdersCurrent.Rows.Count;
+
+                    if (dtMRPOrdersCurrent.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dtMRPOrdersCurrent.Rows.Count; ii++)
+                        {
+                            try
+                            {
+                                acOrderDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][2].ToString();
+                                acDeliveryDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][3].ToString();
+                                acOrderQuantity[x, ii] = dtMRPOrdersCurrent.Rows[ii][4].ToString();
+                                acAmountStandard[x, ii] = dtMRPOrdersCurrent.Rows[ii][5].ToString();
+                                acLocation[x, ii] = dtMRPOrdersCurrent.Rows[ii][6].ToString();
+                                acBinCode[x, ii] = dtMRPOrdersCurrent.Rows[ii][7].ToString();
+                                acAction[x, ii] = dtMRPOrdersCurrent.Rows[ii][8].ToString();
+                                if (dtMRPOrdersCurrent.Rows[ii][9].ToString() == "01/01/53")
+                                {
+                                    acOrigDueDate[x, ii] = "";
+                                }
+                                else
+                                {
+                                    acOrigDueDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][9].ToString();
+                                }
+                                acBestDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][10].ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(ErrorLog, " 1681    " + ex.ToString() + Environment.NewLine);
+                            }
+                        }
+                    }
+
+
+                    /*  MRP Future  */
+
+                    cmd = new SqlCommand(
+                    "SELECT * FROM MRP_s4 " +
+                    "WHERE CF = 'Future' " +
                     "AND s1_id = " + aS1_ID[x] +
                     " ORDER BY CONVERT(date, startingdate) ", cnxnAFE);
 
 
-                try
-                {
-                    cnxnAFE.Open();
-                    dtMRPOrdersCurrent = new DataTable();
-                    dr = cmd.ExecuteReader();
-                    dtMRPOrdersCurrent.Load(dr);
-                }
-                catch (SqlException ex)
-                {
-                    File.AppendAllText(ErrorLog, " 312 " + ex.ToString() + Environment.NewLine);
-                }
-                finally
-                {
-                    cnxnAFE.Close();
-                }
-
-                aMRPCurrentCount[x] = dtMRPOrdersCurrent.Rows.Count;
-
-                if (dtMRPOrdersCurrent.Rows.Count > 0)
-                {
-                    for (int ii = 0; ii < dtMRPOrdersCurrent.Rows.Count; ii++)
+                    try
                     {
+                        cnxnAFE.Open();
+                        dtMRPOrdersFuture = new DataTable();
+                        dr = cmd.ExecuteReader();
+                        dtMRPOrdersFuture.Load(dr);
+
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 465  MRP Future " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+                    aMRPFutureCount[x] = dtMRPOrdersFuture.Rows.Count;
+
+                    if (dtMRPOrdersFuture.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dtMRPOrdersFuture.Rows.Count; ii++)
+                        {
+                            try
+                            {
+                                afOrderDate[x, ii] = dtMRPOrdersFuture.Rows[ii][2].ToString();
+                                afDeliveryDate[x, ii] = dtMRPOrdersFuture.Rows[ii][3].ToString();
+                                afOrderQuantity[x, ii] = dtMRPOrdersFuture.Rows[ii][4].ToString();
+                                afAmountStandard[x, ii] = dtMRPOrdersFuture.Rows[ii][5].ToString();
+                                afLocation[x, ii] = dtMRPOrdersFuture.Rows[ii][6].ToString();
+                                afBinCode[x, ii] = dtMRPOrdersFuture.Rows[ii][7].ToString();
+                                afAction[x, ii] = dtMRPOrdersFuture.Rows[ii][8].ToString();
+                                if (dtMRPOrdersFuture.Rows[ii][9].ToString() == "01/01/53")
+                                {
+                                    afOrigDueDate[x, ii] = "";
+                                }
+                                else
+                                {
+                                    afOrigDueDate[x, ii] = dtMRPOrdersFuture.Rows[ii][9].ToString();
+                                }
+                                afBestDate[x, ii] = dtMRPOrdersFuture.Rows[ii][10].ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(ErrorLog, " 499 Future lines  " + ex.ToString() + Environment.NewLine);
+                            }
+                        }
+                    }
+
+
+                    /*
+                     * 
+                     * PO Lines (next 20)
+                     * 
+                     */
+
+                    cmd = new SqlCommand(
+
+                        "SELECT * FROM MRP_Open_PO " +
+                        "WHERE s1_id = " + aS1_ID[x] +
+                        " ORDER BY CONVERT(date,RRD) ", cnxnAFE);
+
+                    try
+                    {
+                        cnxnAFE.Open();
+                        dtPOLines = new DataTable();
+                        dr = cmd.ExecuteReader();
+                        dtPOLines.Load(dr);
+
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 527 PO Lines   " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+                    aPOLineCount[x] = dtPOLines.Rows.Count;
+
+                    if (dtPOLines.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dtPOLines.Rows.Count & ii < 20; ii++)
+                        {
+                            try
+                            {
+                                aPO[x, ii] = dtPOLines.Rows[ii][1].ToString();
+                                aPOLine[x, ii] = dtPOLines.Rows[ii][2].ToString();
+                                aPOLineQty[x, ii] = dtPOLines.Rows[ii][3].ToString();
+                                aPOLineRequestedDate[x, ii] = dtPOLines.Rows[ii][4].ToString();
+                                aPOLinePromisedDate[x, ii] = dtPOLines.Rows[ii][5].ToString();
+                                aPOBest[x, ii] = dtPOLines.Rows[ii][6].ToString();
+                                aPOVendor[x, ii] = dtPOLines.Rows[ii][7].ToString();
+                            }
+
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(ErrorLog, " 553 PO Lines    " + ex.ToString() + Environment.NewLine);
+                            }
+                        }
+                    }
+
+                    /*
+                    *  Last 5 receipts
+                    */
+
+                    cmd = new SqlCommand(
+
+                        "SELECT * from MRP_Item_Receipts " +
+                        "WHERE s1_id =" + aS1_ID[x] +
+                        " ORDER BY CONVERT(date,RDate) DESC "
+                        , cnxnAFE);
+
+                    dtReceipts = new DataTable();
+
+                    try
+                    {
+                        cnxnAFE.Open();
+                        dr = cmd.ExecuteReader();
+                        dtReceipts.Load(dr);
+
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+                    
+                    if (dtReceipts.Rows.Count < 5)
+                    {
+
+                        aReceiptCount[x] = dtReceipts.Rows.Count;
+                    }
+                    else
+                    {
+                        aReceiptCount[x] = 5;
+                    }
+
+                    if (dtReceipts.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dtReceipts.Rows.Count & ii < 5; ii++)
+                        {
+                            try
+                            {
+                                aRecriptDate[x, ii] = dtReceipts.Rows[ii][1].ToString();
+                                aReceiptOrder[x, ii] = dtReceipts.Rows[ii][2].ToString();
+                                aReceiptPosition[x, ii] = dtReceipts.Rows[ii][3].ToString();
+                                aReceiptVendor[x, ii] = dtReceipts.Rows[ii][4].ToString();
+                                aReceiptPrice[x, ii] = dtReceipts.Rows[ii][5].ToString();
+                                aReceiptDeliveredQuantity[x, ii] = dtReceipts.Rows[ii][6].ToString();
+                                aReceiptNetAmount[x, ii] = dtReceipts.Rows[ii][7].ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(ErrorLog, " 1760    " + ex.ToString() + Environment.NewLine);
+                            }
+                        }
+                    }
+
+                    /*   the items with multiple lines of data    */
+
+                    cmd = new SqlCommand(
+
+                        "SELECT * from MRP_TEXT " +
+                        "WHERE s1_id =" + aS1_ID[x] 
+                        //" ORDER BY CONVERT(date,RDate) DESC "
+                        , cnxnAFE);
+
+                    dtItemText = new DataTable();
+
+                    try
+                    {
+                        cnxnAFE.Open();
+                        dr = cmd.ExecuteReader();
+                        dtItemText.Load(dr);
+                    }
+                    catch (SqlException ex)
+                    {
+                        File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
+                    }
+                    finally
+                    {
+                        cnxnAFE.Close();
+                    }
+
+
+                    if (dtItemText.Rows.Count < 1)
+                    {
+                        aItemTextCount[x] = 0;
+                    }
+                    else
+                    {
+                        aItemTextCount[x] = dtItemText.Rows.Count;
+
                         try
                         {
-                            acOrderDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][2].ToString();
-                            acDeliveryDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][3].ToString();
-                            acOrderQuantity[x, ii] = dtMRPOrdersCurrent.Rows[ii][4].ToString();
-                            acAmountStandard[x, ii] = dtMRPOrdersCurrent.Rows[ii][5].ToString();
-                            acLocation[x, ii] = dtMRPOrdersCurrent.Rows[ii][6].ToString();
-                            acBinCode[x, ii] = dtMRPOrdersCurrent.Rows[ii][7].ToString();
-                            acAction[x, ii] = dtMRPOrdersCurrent.Rows[ii][8].ToString();
-                            if (dtMRPOrdersCurrent.Rows[ii][9].ToString() == "01/01/53")
-                            {
-                                acOrigDueDate[x, ii] = "";
+                                cnxnAFE.Open();
+                                dr = cmd.ExecuteReader();
+
+                                while (dr.Read())
+                                {
+                                    for (int ii = 0; ii < dtItemText.Rows.Count; ii++)
+                                    {
+                                        aItemText[x, ii] = dtItemText.Rows[ii][0].ToString();
+
+                                    }
+                                }
                             }
-                            else
+                            catch (SqlException ex)
                             {
-                                acOrigDueDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][9].ToString();
+                                File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
                             }
-                            acBestDate[x, ii] = dtMRPOrdersCurrent.Rows[ii][10].ToString();
-                        }
-                        catch (Exception ex)
-                        {
-                            File.AppendAllText(ErrorLog, " 1681    " + ex.ToString() + Environment.NewLine);
+                            finally
+                            {
+                                cnxnAFE.Close();
+                            }
                         }
                     }
                 }
-
-
-                /*  MRP Future  */
-
-                cmd = new SqlCommand(
-                "SELECT * FROM MRP_s4 " +
-                "WHERE CF = 'Future' " +
-                "AND s1_id = " + aS1_ID[x] +
-                " ORDER BY CONVERT(date, startingdate) ", cnxnAFE);
-
-
-                try
-                {
-                    cnxnAFE.Open();
-                    dtMRPOrdersFuture = new DataTable();
-                    dr = cmd.ExecuteReader();
-                    dtMRPOrdersFuture.Load(dr);
-
-                }
-                catch (SqlException ex)
-                {
-                    File.AppendAllText(ErrorLog, " 465  MRP Future " + ex.ToString() + Environment.NewLine);
-                }
-                finally
-                {
-                    cnxnAFE.Close();
-                }
-
-                aMRPFutureCount[x] = dtMRPOrdersFuture.Rows.Count;
-
-                if (dtMRPOrdersFuture.Rows.Count > 0)
-                {
-                    for (int ii = 0; ii < dtMRPOrdersFuture.Rows.Count; ii++)
-                    {
-                        try
-                        {
-                            afOrderDate[x, ii] = dtMRPOrdersFuture.Rows[ii][2].ToString();
-                            afDeliveryDate[x, ii] = dtMRPOrdersFuture.Rows[ii][3].ToString();
-                            afOrderQuantity[x, ii] = dtMRPOrdersFuture.Rows[ii][4].ToString();
-                            afAmountStandard[x, ii] = dtMRPOrdersFuture.Rows[ii][5].ToString();
-                            afLocation[x, ii] = dtMRPOrdersFuture.Rows[ii][6].ToString();
-                            afBinCode[x, ii] = dtMRPOrdersFuture.Rows[ii][7].ToString();
-                            afAction[x, ii] = dtMRPOrdersFuture.Rows[ii][8].ToString();
-                            if (dtMRPOrdersFuture.Rows[ii][9].ToString() == "01/01/53")
-                            {
-                                afOrigDueDate[x, ii] = "";
-                            }
-                            else
-                            {
-                                afOrigDueDate[x, ii] = dtMRPOrdersFuture.Rows[ii][9].ToString();
-                            }
-                            afBestDate[x, ii] = dtMRPOrdersFuture.Rows[ii][10].ToString();
-                        }
-                        catch (Exception ex)
-                        {
-                            File.AppendAllText(ErrorLog, " 499 Future lines  " + ex.ToString() + Environment.NewLine);
-                        }
-                    }
-                }
-
 
                 /*
-                 * 
-                 * PO Lines (next 20)
-                 * 
-                 */
+               * 
+               * Determine if it will fit on one page
+               * 
+               */
 
-                cmd = new SqlCommand(
-
-                    "SELECT * FROM MRP_Open_PO " +
-                    "WHERE s1_id = " + aS1_ID[x] +
-                    " ORDER BY CONVERT(date,RRD) ", cnxnAFE);
-
-                try
+                for (int xx = 0; xx < i; xx++)
                 {
-                    cnxnAFE.Open();
-                    dtPOLines = new DataTable();
-                    dr = cmd.ExecuteReader();
-                    dtPOLines.Load(dr);
+                    int aa = aMRPCurrentCount[xx];
+                    int ab = aPOLineCount[xx];
+                    int ac = aMRPFutureCount[xx];
+                    int ad = aReceiptCount[xx];
+                    int ae = aItemTextCount[xx];
+                    int part1Lines = 0;
 
-                }
-                catch (SqlException ex)
-                {
-                    File.AppendAllText(ErrorLog, " 527 PO Lines   " + ex.ToString() + Environment.NewLine);
-                }
-                finally
-                {
-                    cnxnAFE.Close();
-                }
-
-                aPOLineCount[x] = dtPOLines.Rows.Count;
-
-                if (dtPOLines.Rows.Count > 0)
-                {
-                    for (int ii = 0; ii < dtPOLines.Rows.Count & ii < 20; ii++)
+                    if (aa >= ab)
                     {
-                        try
-                        {
-                            aPO[x, ii] = dtPOLines.Rows[ii][1].ToString();
-                            aPOLine[x, ii] = dtPOLines.Rows[ii][2].ToString();
-                            aPOLineQty[x, ii] = dtPOLines.Rows[ii][3].ToString();
-                            aPOLineRequestedDate[x, ii] = dtPOLines.Rows[ii][4].ToString();
-                            aPOLinePromisedDate[x, ii] = dtPOLines.Rows[ii][5].ToString();
-                            aPOBest[x, ii] = dtPOLines.Rows[ii][6].ToString();
-                            aPOVendor[x, ii] = dtPOLines.Rows[ii][7].ToString();
-                        }
-
-                        catch (Exception ex)
-                        {
-                            File.AppendAllText(ErrorLog, " 553 PO Lines    " + ex.ToString() + Environment.NewLine);
-                        }
+                        part1Lines = aa;
                     }
-                }
-
-                /*
-                *  Last 5 receipts
-                */
-
-                cmd = new SqlCommand(
-
-                    "SELECT * from MRP_Item_Receipts " +
-                    "WHERE s1_id =" + aS1_ID[x] +
-                    " ORDER BY CONVERT(date,RDate) DESC "
-                    , cnxnAFE);
-
-                dtReceipts = new DataTable();
-
-                try
-                {
-                    cnxnAFE.Open();
-                    dr = cmd.ExecuteReader();
-                    dtReceipts.Load(dr);
-
-                }
-                catch (SqlException ex)
-                {
-                    File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
-                }
-                finally
-                {
-                    cnxnAFE.Close();
-                }
-
-                //if (dtMRPOrdersCurrent.Rows.Count == 0 & dtMRPOrdersFuture.Rows.Count > 0)
-
-
-
-                ////                }
-                //            }
-                if (dtReceipts.Rows.Count < 5)
-                {
-
-                    aReceiptCount[x] = dtReceipts.Rows.Count;
-                }
-                else
-                {
-                    aReceiptCount[x] = 5;
-                }
-
-                if (dtReceipts.Rows.Count > 0)
-                {
-                    for (int ii = 0; ii < dtReceipts.Rows.Count & ii < 5; ii++)
+                    else
                     {
-                        try
-                        {
-                            aRecriptDate[x, ii] = dtReceipts.Rows[ii][1].ToString();
-                            aReceiptOrder[x, ii] = dtReceipts.Rows[ii][2].ToString();
-                            aReceiptPosition[x, ii] = dtReceipts.Rows[ii][3].ToString();
-                            aReceiptVendor[x, ii] = dtReceipts.Rows[ii][4].ToString();
-                            aReceiptPrice[x, ii] = dtReceipts.Rows[ii][5].ToString();
-                            aReceiptDeliveredQuantity[x, ii] = dtReceipts.Rows[ii][6].ToString();
-                            aReceiptNetAmount[x, ii] = dtReceipts.Rows[ii][7].ToString();
-                        }
-                        catch (Exception ex)
-                        {
-                            File.AppendAllText(ErrorLog, " 1760    " + ex.ToString() + Environment.NewLine);
-                        }
+                        part1Lines = ab;
                     }
-                }
 
-            }
-
-
-
-
-
-
-
-
-
-
-            /*  Item Card Text */
-
-            /*
-             *  Get the item text from the text module line but
-             *  if it contains the work embedded, go to the embedded text table
-             *  and get the text
-             *  
-             * */
-
-            //loopCmd = new SqlCommand
-            //   ("SELECT " +
-            //   "[Code 1] " +
-            //   ",Text " +
-            //   "FROM [" + NAVprefix + "Text Module Line] " +
-            //   "WHERE [Code 1] = '" + ItemNo + "' "
-            //   , cnxn);
-
-
-            //try
-            //{
-            //    cnxn.Open();
-            //    dtItemText = new DataTable();
-            //    dr = loopCmd.ExecuteReader();
-            //    dtItemText.Load(dr);
-
-            //}
-            //catch (SqlException ex)
-            //{
-            //    File.AppendAllText(ErrorLog, " 1312 " + ItemNo + "   " + ex.ToString() + Environment.NewLine);
-            //}
-            //finally
-            //{
-            //    cnxn.Close();
-            //}
-
-            //aItemTextCount[i] = dtItemText.Rows.Count;
-
-            //if (dtItemText.Rows.Count > 0)
-            //{
-            //    if (dtItemText.Rows[0][1].ToString().Contains("mbed"))
-            //    {
-            //        loopCmd = new SqlCommand
-            //           ("SELECT " +
-            //           "COUNT(Text) " +
-            //           "FROM NAV_EmbeddedText " +
-            //           "WHERE [NAV_Key_1] = '" + ItemNo + "' " +
-            //           "AND NAV_Table = 27 "
-            //           , cnxnAFE);
-
-            //        int rows = 9999;
-
-            //        try
-            //        {
-            //            cnxnAFE.Open();
-            //            rows = loopCmd.ExecuteNonQuery();
-            //        }
-            //        catch (SqlException ex)
-            //        {
-            //            File.AppendAllText(ErrorLog, " 1342 " + ItemNo + "   " + ex.ToString() + Environment.NewLine);
-            //        }
-            //        finally
-            //        {
-            //            cnxnAFE.Close();
-            //        }
-
-            //        if (rows > 0)
-            //        {
-            //            loopCmd = new SqlCommand
-            //               ("SELECT " +
-            //               "Text " +
-            //               "FROM NAV_EmbeddedText " +
-            //               "WHERE [NAV_Key_1] = '" + ItemNo + "' " +
-            //               "AND NAV_Table = 27 "
-            //               , cnxnAFE);
-
-            //            try
-            //            {
-            //                cnxnAFE.Open();
-            //                dtItemText.Columns[1].MaxLength = -1; /* -1 = no max length   */
-            //                dtItemText.Rows[0][1] = (string)loopCmd.ExecuteScalar();
-            //            }
-            //            catch (SqlException ex)
-            //            {
-            //                File.AppendAllText(ErrorLog, " 1367 " + ItemNo + "   " + ex.ToString() + Environment.NewLine);
-            //            }
-            //            finally
-            //            {
-            //                cnxnAFE.Close();
-            //            }
-            //        }
-            //    }
-            //}
-
-
-
-            
-            //File.AppendAllText(ErrorLog, " 1459 " + ItemNo + "   " + ex.ToString() + Environment.NewLine);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                aVendorNo[i] = " ";
-            //                aVendorName[i] = " ";
-            //                aVendorAddress[i] = " ";
-            //                aVendorContact[i] = " ";
-            //                aVendorPhone[i] = " ";
-            //                aVendorEmail[i] = " ";
-            //                aVendorFax[i] = " ";
-            //                aVendorTitle[i] = " ";
-            //                aVendorCommodityCode[i] = " ";
-            //            }
-
-            //            if (dtItem.Rows.Count > 0)
-            //            {
-            //                try
-            //                {
-
-
-            string here;
-
-
-            //try
-            //{
-            //    //object y = dtItem.Rows[0][7].GetType();
-
-            //}
-            //catch (Exception ex)
-            //{
-            //    File.AppendAllText(ErrorLog, " 1502      " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
-            //}
-
-
-
-            ////         catch (Exception ex)
-            //{
-            //    File.AppendAllText(ErrorLog, " 1555     " + dtItem.Rows[0][7].ToString() + "     " + ex.ToString() + Environment.NewLine);
-            //}
-
-
-
-
-
-            //            if (dtDocCtrl.Rows.Count > 0)
-            //            {
-            //                try
-            //                {
-            //aSource[i] = dtDocCtrl.Rows[0][2].ToString();
-            //aECOstatus[i] = dtDocCtrl.Rows[0][3].ToString();
-            //aDateRevCreated[i] = dtDocCtrl.Rows[0][1].ToString();
-            //aOwner[i] = dtDocCtrl.Rows[0][4].ToString();
-            //                }
-            //                catch (Exception ex)
-            //                {
-            //File.AppendAllText(ErrorLog, " 1619    " + ex.ToString() + Environment.NewLine);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                aSource[i] = " ";
-            //                aECOstatus[i] = " ";
-            //                aDateRevCreated[i] = " ";
-            //                aOwner[i] = " ";
-            //            }
-
-            //            if (dtPINS.Rows.Count > 0)
-            //            {
-            //                try
-            //                {
-            //aMfrName[i] = dtPINS.Rows[0][0].ToString();
-            //aMfrPartNumber[i] = dtPINS.Rows[0][1].ToString();
-            //aQualification[i] = " ";
-            //aPreferred[i] = dtPINS.Rows[0][3].ToString();
-            //aMfrDescription[i] = dtPINS.Rows[0][4].ToString();
-            //                }
-            //                catch (Exception ex)
-            //                {
-            //File.AppendAllText(ErrorLog, " 1641   " + ex.ToString() + Environment.NewLine);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                aMfrName[i] = " ";
-            //                aMfrPartNumber[i] = " ";
-            //                aQualification[i] = " ";
-            //                aPreferred[i] = " ";
-            //                aMfrDescription[i] = " ";
-            //            }
-
-
-
-
-            //            if (dtItemText.Rows.Count > 0)
-            //            {
-            //                for (int ii = 0; ii < dtItemText.Rows.Count; ii++)
-            //                {
-            //try
-            //{
-            //    aItemText[i, ii] = dtItemText.Rows[ii][1].ToString();
-
-            
-
-            /*
-           * 
-           * Determine if it will fit on one page
-           * 
-           */
-
-            for (int xx = 0; xx < i; xx++)
-            {
-                int aa = aMRPCurrentCount[xx];
-                int ab = aPOLineCount[xx];
-                int ac = aMRPFutureCount[xx];
-                int ad = aReceiptCount[xx];
-                //int ae = aItemTextCount[xx];
-                int part1Lines = 0;
-
-                if (aa >= ab)
-                {
-                    part1Lines = aa;
-                }
-                else
-                {
-                    part1Lines = ab;
-                }
-
-                if (aa > 28)
-                {
-                    aMRPCurrentPagePlus1[xx] = aa - 28;
-                    twoPagesRequired[xx] = true;
-                    extraPageCount++;
-                }
-                else
-                {
-                    if (26 - (aMRPCurrentCount[xx] + aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) <= 0)
+                    if (aa > 28)
                     {
+                        aMRPCurrentPagePlus1[xx] = aa - 28;
                         twoPagesRequired[xx] = true;
                         extraPageCount++;
+                    }
+                    else
+                    {
+                        if (26 - (aMRPCurrentCount[xx] + aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) <= 0)
+                        {
+                            twoPagesRequired[xx] = true;
+                            extraPageCount++;
 
-                        if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
-                        {
-                            threePagesRequired[xx] = true;
-                        }
-                        else
-                        {
+                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
+                            {
+                                threePagesRequired[xx] = true;
+                            }
+                            else
+                            {
+                                threePagesRequired[xx] = false;
+                            }
+
+                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
+                            {
+                                fourPagesRequired[xx] = true;
+                            }
+                            else
+                            {
+                                fourPagesRequired[xx] = false;
+                            }
+                            //                }
+                            //                else
+                            //                {
+                            twoPagesRequired[xx] = false;
                             threePagesRequired[xx] = false;
-                        }
-
-                        if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
-                        {
-                            fourPagesRequired[xx] = true;
-                        }
-                        else
-                        {
                             fourPagesRequired[xx] = false;
                         }
-                        //                }
-                        //                else
-                        //                {
-                        twoPagesRequired[xx] = false;
-                        threePagesRequired[xx] = false;
-                        fourPagesRequired[xx] = false;
                     }
                 }
-            }
 
 
 
@@ -927,15 +823,15 @@ namespace NAV_MRP
 
                 string file = string.Empty;
 
-            if (g.messageCancel)
-            {
-                file = "MRP CANCEL " + g.rptName + g.ReportSelection + today + ".pdf";
-            }
-            else
-            {
-                file = "MRP " + g.rptName + g.ReportSelection + today + ".pdf";
-            }
-                
+                if (g.messageCancel)
+                {
+                    file = "MRP CANCEL " + g.rptName + g.ReportSelection + today + ".pdf";
+                }
+                else
+                {
+                    file = "MRP " + g.rptName + g.ReportSelection + today + ".pdf";
+                }
+
 
 
                 PrintDocument pd = new PrintDocument();
@@ -947,20 +843,19 @@ namespace NAV_MRP
 
                 pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
 
-                //try
-                //{
-                pd.Print();
-                //}
-                //catch (Exception ex)
-                //{
-                //    File.AppendAllText(ErrorLog, " 1882    " + ex.ToString() + Environment.NewLine);
-                //}
+                try
+                {
+                    pd.Print();
+                }
+                catch (Exception ex)
+                {
+                    File.AppendAllText(ErrorLog, " 1882    " + ex.ToString() + Environment.NewLine);
+                }
 
                 this.Close();
 
-
-
-        }
+            }
+        //}
 
         
 
@@ -968,7 +863,7 @@ namespace NAV_MRP
 
 
 
-        private void pd_PrintPage(object sender, PrintPageEventArgs ev)
+        private async void pd_PrintPage(object sender, PrintPageEventArgs ev)
         {
             /*
              * 
@@ -981,9 +876,6 @@ namespace NAV_MRP
              * 
              */
 
-           
-
-
                 string date = DateTime.Now.ToString();
 
                 DateTime MRPSunday = DateTime.Now;
@@ -995,7 +887,7 @@ namespace NAV_MRP
                 int linedrop = 100;
                 int POlinedrop = 100;
 
-            int linesPerpage = 30;  //40
+                int linesPerpage = 30;  //40
                                         
                 int pageNo = pagesPrinted + 1;
                 
@@ -1164,6 +1056,7 @@ namespace NAV_MRP
 
                     lineNo++;
                 }
+            await Task.Delay(15000);
         }
         
 
@@ -1247,7 +1140,7 @@ namespace NAV_MRP
                 {
                     Bpen = new Pen(Color.Turquoise);
                 }
-                else if (aLocation[lineNo] == "MID SVC")
+                else if (aLocation[lineNo] == "Middlefield Service")
                 {
                     Bpen = new Pen(Color.Blue);
                 }
@@ -1301,8 +1194,19 @@ namespace NAV_MRP
                 {
                     ev.Graphics.DrawString("Current Rev: ", heading, Brushes.Black, 30, linedrop);
                     ev.Graphics.DrawString(aCurrentRev[lineNo], A9R, Brushes.Black, 110, linedrop);
-                    ev.Graphics.DrawString("Rev Date: ", heading, Brushes.Black, 250, linedrop);
-                    ev.Graphics.DrawString(aDateRevCreated[lineNo], A9R, Brushes.Black, 315, linedrop);
+                    ev.Graphics.DrawString("ECO: ", heading, Brushes.Black, 140, linedrop);
+                    ev.Graphics.DrawString(aECOnumber[lineNo], A9R, Brushes.Black, 180, linedrop);
+                    ev.Graphics.DrawString("Eff Date: ", heading, Brushes.Black, 270, linedrop);
+                    ev.Graphics.DrawString(aEffectiveDate[lineNo], A9R, Brushes.Black, 330, linedrop);
+                    ev.Graphics.DrawString("ECO Status: ", heading, Brushes.Black, 400, linedrop);
+                    if (aECOstatus[lineNo] != "Released")
+                    {
+                        ev.Graphics.DrawString(aECOstatus[lineNo], A9R, Brushes.Red, 480, linedrop);
+                    }
+                    else
+                    {
+                        ev.Graphics.DrawString(aECOstatus[lineNo], A9R, Brushes.Black, 480, linedrop);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1602,10 +1506,14 @@ namespace NAV_MRP
 
                 linedrop = linedrop + 15;
 
-                ev.Graphics.DrawString(aMfrName[lineNo], A9R, Brushes.Black, 25, linedrop);
-                ev.Graphics.DrawString(aMfrPartNumber[lineNo], A9R, Brushes.Black, 275, linedrop);
-                ev.Graphics.DrawString(aPreferred[lineNo], A9R, Brushes.Black, 540, linedrop + 1);
-                ev.Graphics.DrawString(aMfrDescription[lineNo], A9R, Brushes.Black, 625, linedrop);
+                for (int ii = 0; ii < aMfrCount[lineNo]; ii++)
+                {
+                    ev.Graphics.DrawString(aMfrName[lineNo,ii], A9R, Brushes.Black, 25, linedrop);
+                    ev.Graphics.DrawString(aMfrPartNumber[lineNo,ii], A9R, Brushes.Black, 275, linedrop);
+                    ev.Graphics.DrawString(aPreferred[lineNo,ii], A9R, Brushes.Black, 540, linedrop + 1);
+                    ev.Graphics.DrawString(aMfrDescription[lineNo,ii], A9R, Brushes.Black, 625, linedrop);
+                    linedrop = linedrop + 15;
+                }
             }
             catch (Exception ex)
             {
@@ -1691,12 +1599,12 @@ namespace NAV_MRP
                 {
                     for (int ii = 0; ii < 20; ii++)
                     {
-                        ev.Graphics.DrawString(aPO[lineNo, ii], A9R, Brushes.Black, 500, 485 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLine[lineNo, ii], A9R, Brushes.Black, 560, 485 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLineQty[lineNo, ii], A9R, Brushes.Black, 600, 485 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLineRequestedDate[lineNo, ii], A9R, Brushes.Black, 640, 485 + (ii * 20));
-                        ev.Graphics.DrawString(aPOLinePromisedDate[lineNo, ii], A9R, Brushes.Black, 710, 485 + (ii * 20));
-                        ev.Graphics.DrawString(aPOVendor[lineNo, ii], A9R, Brushes.Black, 770, 485 + (ii * 20));
+                        ev.Graphics.DrawString(aPO[lineNo, ii], A9R, Brushes.Black, 500, POlinedrop + (ii * 20));
+                        ev.Graphics.DrawString(aPOLine[lineNo, ii], A9R, Brushes.Black, 560, POlinedrop + (ii * 20));
+                        ev.Graphics.DrawString(aPOLineQty[lineNo, ii], A9R, Brushes.Black, 600, POlinedrop + (ii * 20));
+                        ev.Graphics.DrawString(aPOLineRequestedDate[lineNo, ii], A9R, Brushes.Black, 640, POlinedrop + (ii * 20));
+                        ev.Graphics.DrawString(aPOLinePromisedDate[lineNo, ii], A9R, Brushes.Black, 710, POlinedrop + (ii * 20));
+                        ev.Graphics.DrawString(aPOVendor[lineNo, ii], A9R, Brushes.Black, 770, POlinedrop + (ii * 20));
                     }
                 }
                 catch (Exception ex)

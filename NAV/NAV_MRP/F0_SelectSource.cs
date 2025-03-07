@@ -121,6 +121,16 @@ namespace NAV_MRP
                              //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND CHARINDEX('X', r.No_, 1) <> 1 ";
 
+        public static string gMinMax = "AND (([SelectionCode] = 'MMX' " +
+                             "AND [ReferenceComponent] <> 1) " +
+                             "OR ([ReferenceComponent] = 1 AND ([ItemGroupCode] = 'CNT' OR [SelectionCode] = 'SIC'))) " +
+                             "AND [Vetted] <> '1' " +
+                             "AND [ItemGroupCode] <> 'VMI' " +
+                             "AND [SelectionCode] not like 'K%' " +
+                             "AND [SelectionCode] <> 'LTA' " +
+                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
+                             "AND CHARINDEX('X', Item, 1) <> 1 ";
+
         public static string X = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
                             "AND [Reference Component] <> 1 " +
                             //"AND r.[Starting Date] <= (GETDATE() + 14) " +
@@ -146,6 +156,14 @@ namespace NAV_MRP
                              //"AND r.[Starting Date] <= (GETDATE() + 14) " +
                              "AND [Reference Component] <> 1 " +
                              "AND r.[Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') ";
+        
+        public static string gRichmond = "AND [SelectionCode] <> 'MMX' " +
+                             "AND [SelectionCode] not like 'K%' " +
+                             "AND [Vetted] <> '1' " +
+                             "AND [ItemGroupCode] <> 'VMI'  " +
+                             "AND CHARINDEX('X', Item, 1) <> 1 " +
+                             "AND [ReferenceComponent] <> 1 " +
+                             "AND [Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') ";
 
         public static string XRichmond = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
                             "AND [Reference Component] <> 1 " +
@@ -155,6 +173,13 @@ namespace NAV_MRP
                             "AND i.[Selection Code] <> 'LTA' " +
                             "AND i.[Item Group Code] <> 'VMI'  ";
 
+        public static string gXRichmond = "AND (CHARINDEX('X', r.No_, 1) = 1 OR i.[Vetted] = '1') " +
+                            "AND [Reference Component] <> 1 " +
+                            //"AND r.[Starting Date] <= (GETDATE() + 14) " +
+                            "AND r.[Location Code] IN ('RIC', 'RIC MRB', 'RIC SVC') " +
+                            "AND i.[Selection Code] not like 'K%' " +
+                            "AND i.[Selection Code] <> 'LTA' " +
+                            "AND i.[Item Group Code] <> 'VMI'  ";
 
         public static string sMRP = "SELECT " +
                         "CONVERT(varchar(10),[Starting Date], 1) " +

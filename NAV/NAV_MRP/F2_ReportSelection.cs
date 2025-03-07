@@ -37,7 +37,7 @@ namespace NAV_MRP
                 //g.ReportSelection = " Purchase News ";
                 //MRP_PrintedReport r = new MRP_PrintedReport();
                 r.ShowDialog();
-/*
+                
                 g.SQLselection = g.gMain;
                 g.ReportSelection = " Reschedules ";
                 g.ReportFilter = "MRP_s1o";
@@ -46,13 +46,15 @@ namespace NAV_MRP
                 //g.ReportSelection = " Reschedules ";
                 //MRP_PrintedReport rr = new MRP_PrintedReport();
                 rr.ShowDialog();
-*/
 
-                ///*  MinMAx    */
+                
+                /*  MinMAx    */
 
-                //g.SQLselection = g.MinMax + g.dateAndAction;
+                //g.SQLselection = g.gMinMax;
                 //g.ReportSelection = "MinMax Purchase News ";
-                //MRP_PrintedReport t = new MRP_PrintedReport();
+                //g.ReportFilter = "MRP_s1p";
+                //F3_Sheets t = new F3_Sheets();
+                ////////MRP_PrintedReport t = new MRP_PrintedReport();
                 //t.ShowDialog();
 
                 //g.SQLselection = g.MinMax + g.Reschedule + g.MinMax + g.dateAndAction + ")";
@@ -90,6 +92,12 @@ namespace NAV_MRP
                 //g.ReportSelection = "Richmond Purchase News ";
                 //MRP_PrintedReport v = new MRP_PrintedReport();
                 //v.ShowDialog();
+                //g.SQLselection = g.gRichmond;
+                //g.ReportSelection = "Richmond Purchase News ";
+                //g.ReportFilter = "MRP_s1p";
+                //F3_Sheets v = new F3_Sheets();
+                //v.ShowDialog();
+
 
 
                 //g.SQLselection = g.Richmond + g.Reschedule + g.Richmond + g.dateAndAction + " )";
