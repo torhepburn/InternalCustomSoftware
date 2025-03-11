@@ -29,6 +29,7 @@ declare @item varchar(20);
 
 set @item = '1115-800-055';
 
+
 WITH s1 as
 (	--On Hand Nettable
 	SELECT 
@@ -177,7 +178,7 @@ sRp AS
 	select 
 
 	 No_ [Item No.]
-	,SUM([Remaining Quantity]- [Original Quantity]) [Action Message Purchase New Qty]
+	,SUM([Remaining Quantity]) [Qty on Requisition Line]
 	
 
 	FROM [ZYGO$Requisition Line]
@@ -190,7 +191,7 @@ sRp AS
 
 	AND [Journal Batch Name] = 'DEFAULT'
 
-	AND YEAR([Due Date]) = 2025
+	AND YEAR([Order Date]) = 2025
 
 	GROUP BY No_
 	
@@ -204,7 +205,7 @@ SELECT
 ,CONVERT(NUMERIC(10),COALESCE(s1.Nettable, 0)) [Qty on hand Nettable]
 ,CASE [Replenishment System]
 	WHEN 0 THEN 'Purchased'
-	WHEN 1 THEN 'Manfuactured'
+	WHEN 1 THEN 'Manufactured'
 END 'Replenishment System'
 
 ,CONVERT(NUMERIC(10),COALESCE(s2.[Qty on PO], 0)) [Qty on PO]
@@ -216,19 +217,12 @@ END 'Replenishment System'
 ,CONVERT(NUMERIC(10),COALESCE([Qty on Production Forecast],0)) [Qty on Production Forecast]
 ,CONVERT(NUMERIC(10),COALESCE([Qty on Prod Order Component],0)) [Qty on Prod Order Component]
 ,CONVERT(NUMERIC(10),COALESCE([Qty on Planning Component],0)) [Qty on Planning Component]
-
-,CONVERT(NUMERIC(10),COALESCE(sRp.[Action Message Purchase New Qty],0)) ActionMessageQty
+,CONVERT(NUMERIC(10),COALESCE(sRp.[Qty on Requisition Line],0)) [Qty on Requisition Line]
+,CONVERT(NUMERIC(10),COALESCE(sRp.[Qty on Requisition Line],0) + COALESCE(sPLc.[Qty on Planning Component], 0)) * -1 ActionMessageQty
 ,i.[Buyer Planner Code]
 
 FROM [ZYGO$Item] i
 
---LEFT JOIN [ZYGO$Commodity] c ON i.[Commodity] = c.Code
---LEFT JOIN [ZYGO$Product Types] p ON i.[Product Types] = p.Code
---LEFT JOIN [ZYGO$Selection Codes] s ON i.[Selection Code] = s.Code
---LEFT JOIN [ZYGO$Signal Code] g ON i.[Signal Code] = g.Code
---LEFT JOIN [ZYGO$Item Group] ig ON i.[Item Group Code] = ig.Code
---LEFT JOIN [ZYGO$Item Vendor] iv ON i.[No_] = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
---LEFT JOIN [ZYGO$Vendor] v on i.[Vendor No_] = v.No_
 LEFT JOIN s1 on s1.[Item No_] = i.No_
 LEFT JOIN s1b ON s1b.[Item No_] = i.No_
 LEFT JOIN s2 on s2.[No_] = s1b.[Item No_] 
@@ -236,7 +230,6 @@ LEFT JOIN s3 on s3.[No_] = s1b.[Item No_]
 LEFT JOIN s4 on s4.[No_] = s1b.[Item No_] 
 LEFT JOIN s5 on s5.[No_] = s1b.[Item No_] 
 LEFT JOIN s6 on s6.[Item No_] = s1b.[Item No_] 
---LEFT JOIN s14 ON s14.[Item No_] = i.No_
 LEFT JOIN s1a ON s1a.[Item No_] = i.No_
 
 LEFT JOIN sPC ON sPC.[Item No_] = s1b.[Item No_] 
@@ -247,7 +240,8 @@ WHERE 1=1
 
 and [Signal Code] != 'OBS'
 )
-
+--, sZ AS
+--(
 select distinct
 
 
@@ -261,20 +255,29 @@ No_ ItemNo
 ,[Qty on Inventory Request]
 ,[Qty on Production Order]
 ,[Qty on Prod Order Component]
+,[Qty on Production Forecast]
+,[Qty on Requisition Line]
+,[Qty on Planning Component]
 ,ActionMessageQty
 ,([Qty on Production Order] + [Qty on PO]) ScheduledReceipts
 ,([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) GrossRequirements
-,[Qty on Production Forecast]
-,[Qty on Planning Component]
+
 ,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) [Projected Inventory]
 ,([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
 - ([Qty on Production Forecast] - [Qty on SO]) [Forecast Projected Inventory]
-,(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
-- ([Qty on Production Forecast] - [Qty on SO]) ) + ActionMessageQty [Suggested Projected Inventory]
+,CASE [Replenishment System]
+	WHEN 'Manufactured' THEN
+(([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
+- ([Qty on Production Forecast] - [Qty on SO]) ) - ActionMessageQty
+	WHEN 'Purchased' THEN (([Qty on hand Nettable] + [Qty on Production Order] + [Qty on PO]) - ([Qty on SO] + [Qty on Service Order] + [Qty on Inventory Request] + [Qty on Prod Order Component] ) /* projected inventory */
+- ([Qty on Production Forecast] - [Qty on SO]) ) + ActionMessageQty
+END [Suggested Projected Inventory]
 ,[Replenishment System]
 ,[Buyer Planner Code]
 
 from sX
+
+
 
 
 
@@ -325,6 +328,10 @@ from sX
         </Field>
         <Field Name="ActionMessageQty">
           <DataField>ActionMessageQty</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Qty_on_Requisition_Line">
+          <DataField>Qty on Requisition Line</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="ScheduledReceipts">
@@ -426,6 +433,15 @@ from sX
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
+                  <Width>0.97917in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.83333in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
@@ -433,9 +449,6 @@ from sX
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.58333in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -869,6 +882,123 @@ from sX
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Textbox15">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Qty on Production Forecast</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox23">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Qty on Requisition Line</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox23</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox25">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Qty on Planning Component</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox25</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="Textbox20">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -972,47 +1102,6 @@ from sX
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox13</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox14">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Forecast</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox14</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1599,6 +1688,111 @@ from sX
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Qty_on_Production_Forecast1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Qty_on_Production_Forecast.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Qty_on_Production_Forecast1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Qty_on_Requisition_Line">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Qty_on_Requisition_Line.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Qty_on_Requisition_Line</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Qty_on_Planning_Component">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Qty_on_Planning_Component.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Qty_on_Planning_Component</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="ActionMessageQty">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1690,43 +1884,6 @@ from sX
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>GrossRequirements</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Qty_on_Production_Forecast">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Qty_on_Production_Forecast.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>0;(0)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Qty_on_Production_Forecast</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1943,6 +2100,8 @@ from sX
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1968,7 +2127,7 @@ from sX
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>19.58333in</Width>
+            <Width>21.39583in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1976,7 +2135,7 @@ from sX
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>20.58333in</Width>
+      <Width>25.16667in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
