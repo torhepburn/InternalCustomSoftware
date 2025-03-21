@@ -74,7 +74,11 @@ GROUP BY [Item No_]
 
 	from [ZYGO$Requisition Line] l
 
-	WHERE [Action Message] = 1
+	WHERE [Worksheet Template Name] = 'PLANNING'
+
+	AND [Journal Batch Name] = 'DEFAULT'
+	
+	AND [Action Message] = 1
 
 	GROUP BY No_
 )
@@ -112,6 +116,30 @@ GROUP BY [Item No_]
 
 	GROUP BY [Item No_]
 )
+, s4c as
+(	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on Service Order]
+	
+	FROM [ZYGO$Service Line] WHERE [Type] = 1
+		
+    GROUP BY No_
+	
+)
+, s4d as
+(	--Qty on Inventory Request - Jobs
+	SELECT
+	No_
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on Inventory Request]
+	
+	FROM [ZYGO$Job Journal Line]
+    WHERE [Journal Template Name] = 'INVREQ'
+	AND [Outstanding Quantity] &gt; 0
+	
+	GROUP BY No_
+	
+)
 ,sOHn as
 (	--On Hand Nettable
 	SELECT 
@@ -131,6 +159,7 @@ GROUP BY [Item No_]
 	WHERE [Non-Nettable] = 1
 	GROUP BY [Item No_]
 )
+
 ,s5 AS
 (
 
@@ -139,6 +168,8 @@ select
 s1.[Item No_]
 ,COALESCE(s1.ForecastQ,0) [Forecast Qty]
 ,COALESCE(s2.SOq,0) [Sales Order Qty]
+,COALESCE(s4c.[Qty on Service Order],0) [Qty on Service Order]
+,COALESCE(s4d.[Qty on Inventory Request],0) [Qty on inventory Request]
 ,COALESCE(s3.WOq,0) [WO Qty]
 ,COALESCE(s4a.[Qty on Prod Order Component],0) [WO Component Qty]
 ,COALESCE(s4.MRPq,0) MRPnewQ
@@ -156,22 +187,25 @@ LEFT JOIN sOHn ON s1.[Item No_] = sOHn.[Item No_]
 LEFT JOIN sOHnn ON s1.[Item No_] = sOHnn.[Item No_]
 LEFT JOIN s4a ON s1.[Item No_] = s4a.[Item No_]
 LEFT JOIN s4b ON s1.[Item No_] = s4b.[Item No_]
+LEFT JOIN s4c ON s1.[Item No_] = s4c.[No_]
+LEFT JOIN s4d ON s1.[Item No_] = s4d.[No_]
 
 )
 
 select 
 
 s5.*
-,s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty] Demand
+,s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty] + [Qty on Service Order] + [Qty on inventory Request] Demand
 ,s5.[WO Qty] + (s5.MRPnewQ - s5.PlnCompQty) + s5.Nettable 'Supply (includes inv)'
 ,s5.Nettable + s5.NonNettable TotalInv
 ,CASE
-	WHEN  (s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty]) &gt; (s5.[WO Qty] + (s5.MRPnewQ - s5.PlnCompQty) + s5.Nettable) THEN 'Short'
-	WHEN  (s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty]) &lt; (s5.[WO Qty] + (s5.MRPnewQ - s5.PlnCompQty) + s5.Nettable) THEN 'Excess'
+	WHEN  (s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty]  + [Qty on Service Order] + [Qty on inventory Request] ) &gt; (s5.[WO Qty] + (s5.MRPnewQ - s5.PlnCompQty) + s5.Nettable) THEN 'Short'
+	WHEN  (s5.[Sales Order Qty] + s5.[Forecast Qty] + s5.[WO Component Qty]  + [Qty on Service Order] + [Qty on inventory Request] ) &lt; (s5.[WO Qty] + (s5.MRPnewQ - s5.PlnCompQty) + s5.Nettable) THEN 'Excess'
 	ELSE 'BALANCED'
 END InventorySituation
 
-FROM s5</CommandText>
+FROM s5
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -187,8 +221,16 @@ FROM s5</CommandText>
           <DataField>Sales Order Qty</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
+        <Field Name="Qty_on_Service_Order">
+          <DataField>Qty on Service Order</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
         <Field Name="WO_Qty">
           <DataField>WO Qty</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Qty_on_inventory_Request">
+          <DataField>Qty on inventory Request</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="WO_Component_Qty">
@@ -269,6 +311,12 @@ FROM s5</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -510,6 +558,84 @@ FROM s5</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox13">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Qty on Service Order</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox18">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Qty on inventory Request</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox18</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1071,6 +1197,78 @@ FROM s5</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Qty_on_Service_Order">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Qty_on_Service_Order.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>0;(0)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Qty_on_Service_Order</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Qty_on_inventory_Request">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Qty_on_inventory_Request.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>0;(0)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Qty_on_inventory_Request</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="MRPnewQ">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1425,6 +1623,8 @@ FROM s5</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1450,7 +1650,7 @@ FROM s5</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>14in</Width>
+            <Width>16in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1458,7 +1658,7 @@ FROM s5</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>15in</Width>
+      <Width>16in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
