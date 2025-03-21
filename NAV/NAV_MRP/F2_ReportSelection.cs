@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace NAV_MRP
 {
@@ -23,122 +18,120 @@ namespace NAV_MRP
             this.Text = "MRP Data Sheets Running";
         }
 
-        private void AutoRun_Activated(object sender, EventArgs e)
+        private async void AutoRun_Activated(object sender, EventArgs e)
         {
-            if (run is false)
-            {
-                /*      Main report     */
 
-                g.SQLselection = g.gMain;
-                g.ReportSelection = " Purchase News ";
-                g.ReportFilter = "MRP_s1p";
-                F3_Sheets r = new F3_Sheets();
-                //g.SQLselection = g.Main + g.dateAndAction;
-                //g.ReportSelection = " Purchase News ";
-                //MRP_PrintedReport r = new MRP_PrintedReport();
-                r.ShowDialog();
-                
-                g.SQLselection = g.gMain;
-                g.ReportSelection = " Reschedules ";
-                g.ReportFilter = "MRP_s1o";
-                F3_Sheets rr = new F3_Sheets();
-                //g.SQLselection = g.Main + g.Reschedule + g.Main + g.dateAndAction + " )";
-                //g.ReportSelection = " Reschedules ";
-                //MRP_PrintedReport rr = new MRP_PrintedReport();
-                rr.ShowDialog();
-
-                
-                /*  MinMAx    */
-
-                //g.SQLselection = g.gMinMax;
-                //g.ReportSelection = "MinMax Purchase News ";
-                //g.ReportFilter = "MRP_s1p";
-                //F3_Sheets t = new F3_Sheets();
-                ////////MRP_PrintedReport t = new MRP_PrintedReport();
-                //t.ShowDialog();
-
-                //g.SQLselection = g.MinMax + g.Reschedule + g.MinMax + g.dateAndAction + ")";
-                //g.ReportSelection = "MinMax Reschedules ";
-                //MRP_PrintedReport tt = new MRP_PrintedReport();
-                //tt.ShowDialog();
-
-                ///*  X    */
-
-                //g.SQLselection = g.X + g.dateAndAction;
-                //g.ReportSelection = "X Purchase News ";
-                //MRP_PrintedReport u = new MRP_PrintedReport();
-                //u.ShowDialog();
-
-                //g.SQLselection = g.X + g.Reschedule + g.X + g.dateAndAction + " )";
-                //g.ReportSelection = "X Reschedules ";
-                //MRP_PrintedReport uu = new MRP_PrintedReport();
-                //uu.ShowDialog();
-
-                ///*  Irvine    */
-
-                //g.SQLselection = g.Irvine + g.dateAndAction;
-                //g.ReportSelection = "Irvine Purchase News ";
-                //MRP_PrintedReport s = new MRP_PrintedReport();
-                //s.ShowDialog();
-
-                //g.SQLselection = g.Irvine + g.Reschedule + g.Irvine + g.dateAndAction + " )";
-                //g.ReportSelection = "Irvine Reschedules ";
-                //MRP_PrintedReport ss = new MRP_PrintedReport();
-                //ss.ShowDialog();
-
-                ///*  Richmond    */
-
-                //g.SQLselection = g.Richmond + g.dateAndAction;
-                //g.ReportSelection = "Richmond Purchase News ";
-                //MRP_PrintedReport v = new MRP_PrintedReport();
-                //v.ShowDialog();
-                //g.SQLselection = g.gRichmond;
-                //g.ReportSelection = "Richmond Purchase News ";
-                //g.ReportFilter = "MRP_s1p";
-                //F3_Sheets v = new F3_Sheets();
-                //v.ShowDialog();
-
-
-
-                //g.SQLselection = g.Richmond + g.Reschedule + g.Richmond + g.dateAndAction + " )";
-                //g.ReportSelection = "Richmond Reschedules ";
-                //MRP_PrintedReport vv = new MRP_PrintedReport();
-                //vv.ShowDialog();
-
-                //g.SQLselection = g.XRichmond + g.dateAndAction;
-                //g.ReportSelection = "Richmond X Purchase News ";
-                //MRP_PrintedReport vx = new MRP_PrintedReport();
-                //vx.ShowDialog();
-
-
-                //g.SQLselection = g.XRichmond + g.Reschedule + g.Richmond + g.dateAndAction + " )";
-                //g.ReportSelection = "Richmond X Reschedules ";
-                //MRP_PrintedReport vvx = new MRP_PrintedReport();
-                //vvx.ShowDialog();
-
-                ///*  MRP KBP    */
-                //g.ReportSelection = "KBP Purchase News ";
-                //g.SQLselection = g.KBP + g.dateAndAction;
-                //MRP_PrintedReport k = new MRP_PrintedReport();
-                //k.ShowDialog();
-
-
-                //g.ReportSelection = "KBP Reschedules ";
-                //g.SQLselection = g.KBP + g.Reschedule + g.KBP + g.dateAndAction + " )";
-                //MRP_PrintedReport kk = new MRP_PrintedReport();
-                //kk.ShowDialog();
-
-
-                ///*  LTA    */
-                //g.ReportSelection = "LTA ";
-                //g.SQLselection = g.LTA;
-                //LTA l = new LTA();
-                //l.ShowDialog();
-
-                //run = true;
-
-                this.Close();
-            }
+            
         }
+
+        
+        private void MainRescheduledSheets()
+        {
+            g.SQLselection = g.gMain;
+            g.ReportSelection = " Reschedules ";
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets rr = new F3_Sheets();
+            rr.ShowDialog();
+
+            //await Task.Delay(1000);
+        }
+
+        private void KBP()
+        {
+            ///*  MRP KBP    */
+            g.ReportSelection = "KBP Purchase News ";
+            g.SQLselection = g.gKBP;
+            g.ReportFilter = "MRP_s1p";
+            F3_Sheets k = new F3_Sheets();
+            k.ShowDialog();
+
+
+            g.ReportSelection = "KBP Reschedules ";
+            g.SQLselection = g.gKBP;
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets kk = new F3_Sheets();
+            kk.ShowDialog();
+        }
+
+        private async Task reports()
+        {
+            /*      Main report     */
+
+            g.SQLselection = g.gMain;
+            g.ReportSelection = " Purchase News ";
+            g.ReportFilter = "MRP_s1p";
+            F3_Sheets r = new F3_Sheets();
+            r.ShowDialog();
+
+
+            /*  MinMAx    */
+
+            g.SQLselection = g.gMinMax;
+            g.ReportSelection = "MinMax Purchase News ";
+            g.ReportFilter = "MRP_s1p";
+            F3_Sheets t = new F3_Sheets();
+            t.ShowDialog();
+
+            g.SQLselection = g.gMinMax;
+            g.ReportSelection = "MinMax Reschedules ";
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets tt = new F3_Sheets();
+            tt.ShowDialog();
+
+
+            ///*  X    */
+
+            g.SQLselection = g.gX;
+            g.ReportSelection = "X Purchase News ";
+            F3_Sheets u = new F3_Sheets();
+            u.ShowDialog();
+
+            g.SQLselection = g.gX;
+            g.ReportSelection = "X Reschedules ";
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets uu = new F3_Sheets();
+            uu.ShowDialog();
+
+
+            ///*  Richmond    */
+
+            g.SQLselection = g.gRichmond;
+            g.ReportSelection = "Richmond Purchase News ";
+            g.ReportFilter = "MRP_s1p";
+            F3_Sheets v = new F3_Sheets();
+            v.ShowDialog();
+
+            g.SQLselection = g.gRichmond;
+            g.ReportSelection = "Richmond Reschedules ";
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets vv = new F3_Sheets();
+            vv.ShowDialog();
+
+            g.SQLselection = g.gXRichmond;
+            g.ReportSelection = "Richmond X Purchase News ";
+            g.ReportFilter = "MRP_s1p";
+            F3_Sheets vx = new F3_Sheets();
+            vx.ShowDialog();
+
+            g.SQLselection = g.gXRichmond;
+            g.ReportSelection = "Richmond X Reschedules ";
+            g.ReportFilter = "MRP_s1o";
+            F3_Sheets vvx = new F3_Sheets();
+            vvx.ShowDialog();
+
+
+            ///*  LTA    */
+
+            g.ReportSelection = "LTA ";
+            g.SQLselection = g.LTA;
+            g.ReportFilter = "MRP_s1p";
+            LTA l = new LTA();
+            l.ShowDialog();
+
+            await Task.Delay(1000);
+        }
+
     }
+
+
 }

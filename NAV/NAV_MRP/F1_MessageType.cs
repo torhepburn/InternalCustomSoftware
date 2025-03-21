@@ -33,12 +33,17 @@ namespace NAV_MRP
         {
             g.messageCancel = true;
             g.messageChoice = " ";
-            Nexxt();
+            g.ReportSelection = " ";
+            F3_Sheets f3_Sheets = new F3_Sheets();
+            f3_Sheets.ShowDialog();
+
+                this.Close();
         }
 
         private void Nexxt()
         {
-            F2_ReportSelection a = new F2_ReportSelection();
+            //F2_ReportSelection a = new F2_ReportSelection();
+            F2N a = new F2N();
             a.ShowDialog();
 
             this.Close();

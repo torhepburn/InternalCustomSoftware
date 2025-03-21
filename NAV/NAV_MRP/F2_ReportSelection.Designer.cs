@@ -28,17 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
+            
+            // F2_ReportSelection
             // 
-            // AutoRun
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(200)))), ((int)(((byte)(0)))));
-            this.ClientSize = new System.Drawing.Size(409, 166);
+            this.ClientSize = new System.Drawing.Size(307, 135);
             this.ForeColor = System.Drawing.SystemColors.Control;
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "AutoRun";
+            this.Name = "F2_ReportSelection";
             this.Text = "AutoRun";
             this.Activated += new System.EventHandler(this.AutoRun_Activated);
             this.Load += new System.EventHandler(this.AutoRun_Load);
@@ -47,5 +45,7 @@
         }
 
         #endregion
+
+        
     }
 }

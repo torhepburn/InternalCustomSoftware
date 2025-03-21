@@ -16,10 +16,10 @@ namespace NAV_MRP
 {
     public partial class F3_Sheets : Form
     {
-        //private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
-        //private string ErrorLog = @"\\midfile01.ametek.com\departments\procurement\purchasing\mrp_requisitions\Archive\MRPerrorLog.txt";
-        private string directory = @"C:\A";
-        private string ErrorLog = @"C:\A\MRPerrorLog.txt";
+        private string directory = "\\\\MIDFILE01.ametek.com\\departments\\procurement\\purchasing\\mrp_requisitions\\MRP NAV";
+        private string ErrorLog = @"\\midfile01.ametek.com\departments\procurement\purchasing\mrp_requisitions\Archive\MRPerrorLog.txt";
+        //private string directory = @"C:\A";
+        //private string ErrorLog = @"C:\A\MRPerrorLog.txt";
 
         private string[] aItemNo = new string[20000];
         private string[] abuyerPlanner = new string[20000];
@@ -75,10 +75,10 @@ namespace NAV_MRP
         private string[] aVettedStatus = new string[20000];
         private string[] aAllocations = new string[20000];
 
-        private string[,] aMfrName = new string[20000,10];
-        private string[,] aMfrPartNumber = new string[20000,10];
-        private string[,] aPreferred = new string[20000,10];
-        private string[,] aMfrDescription = new string[20000,10];
+        private string[,] aMfrName = new string[20000, 10];
+        private string[,] aMfrPartNumber = new string[20000, 10];
+        private string[,] aPreferred = new string[20000, 10];
+        private string[,] aMfrDescription = new string[20000, 10];
 
         private string[] shortage = new string[20000];
         private string[] shortageProductLine = new string[20000];
@@ -176,19 +176,19 @@ namespace NAV_MRP
         DataTable dtMRPOrdersCurrentPlusPage;
         DataTable dtMRPOrdersFuture;
         DataTable dtReceipts;
-        
+
         DataTable dtItemText;
         DataTable dtPOLines;
         SqlDataReader dr;
         SqlDataReader drMain;
-
+        SqlCommand cmd;
 
         public F3_Sheets()
         {
             InitializeComponent();
         }
 
-        private void F3_Sheets_Load(object sender, EventArgs e)
+        private async void F3_Sheets_Load(object sender, EventArgs e)
         {
 
             /*  Use Replace //MessageBox.Show  MessageBox.Show to be able to see errors.
@@ -230,21 +230,32 @@ namespace NAV_MRP
              *  Type = 2 = Item
              */
 
-            if (g.messageChoice == " not ")
+            if (g.messageChoice == " not " | (g.messageChoice == " AND MessageGroup = 'NotCancelOnly' "))
             {
                 g.messageChoice = " AND MessageGroup = 'NotCancelOnly' ";
+
+                cmd = new SqlCommand(
+                "SELECT * FROM MRP_S1 " +
+                "INNER JOIN " + g.ReportFilter + " c ON MRP_s1.Item = c.No_ " +
+                "WHERE 1=1 " +
+
+                g.messageChoice +
+
+                g.SQLselection +
+
+                  "ORDER BY " +
+                  "[Buyer Planner Code] " +
+                  ",[Vendor No_] " +
+                  ",Item"
+                   , cnxnAFE);
             }
             else
             {
                 g.messageChoice = " AND MessageGroup = 'CancelOnly' ";
-            }
 
-            SqlCommand cmd = new SqlCommand(
+                cmd = new SqlCommand(
                 "SELECT * FROM MRP_S1 " +
-                "INNER JOIN " + g.ReportFilter +" c ON MRP_s1.Item = c.No_ " +
                 "WHERE 1=1 " +
-
-                g.SQLselection +
 
                 g.messageChoice +
 
@@ -253,6 +264,9 @@ namespace NAV_MRP
                   ",[Vendor No_] " +
                   ",Item"
                    , cnxnAFE);
+            }
+
+            
 
             try
             {
@@ -272,15 +286,22 @@ namespace NAV_MRP
 
             if (dt1.Rows.Count < 1)
             {
+                string xtoday = DateTime.Now.ToString("MM-dd-yy hh.mm.ss");
+
+                string xfile = string.Empty;
+
+                xfile = "No Data MRP " + g.rptName + g.ReportSelection + xtoday + ".txt";
+
+                File.WriteAllText(directory + @"\" + xfile, "");
                 //MessageBox.Show("No Data");
+
             }
             else
-
             {
                 try
                 {
                     cnxnAFE.Open();
-                    
+
                     drMain = cmd.ExecuteReader();
 
                     while (drMain.Read())
@@ -394,14 +415,11 @@ namespace NAV_MRP
                 }
 
 
-
-               
-
                 for (int x = 0; x < i; x++)
                 {
-                        /*
-                        *  Manufacturer Data
-                        */
+                    /*
+                    *  Manufacturer Data
+                    */
 
                     cmd = new SqlCommand(
                         "SELECT * FROM MRP_S2 " +
@@ -657,7 +675,7 @@ namespace NAV_MRP
                         cnxnAFE.Close();
                     }
 
-                    
+
                     if (dtReceipts.Rows.Count < 5)
                     {
 
@@ -694,7 +712,7 @@ namespace NAV_MRP
                     cmd = new SqlCommand(
 
                         "SELECT * from MRP_TEXT " +
-                        "WHERE s1_id =" + aS1_ID[x] 
+                        "WHERE s1_id =" + aS1_ID[x]
                         //" ORDER BY CONVERT(date,RDate) DESC "
                         , cnxnAFE);
 
@@ -726,29 +744,29 @@ namespace NAV_MRP
 
                         try
                         {
-                                cnxnAFE.Open();
-                                dr = cmd.ExecuteReader();
+                            cnxnAFE.Open();
+                            dr = cmd.ExecuteReader();
 
-                                while (dr.Read())
+                            while (dr.Read())
+                            {
+                                for (int ii = 0; ii < dtItemText.Rows.Count; ii++)
                                 {
-                                    for (int ii = 0; ii < dtItemText.Rows.Count; ii++)
-                                    {
-                                        aItemText[x, ii] = dtItemText.Rows[ii][0].ToString();
+                                    aItemText[x, ii] = dtItemText.Rows[ii][0].ToString();
 
-                                    }
                                 }
                             }
-                            catch (SqlException ex)
-                            {
-                                File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
-                            }
-                            finally
-                            {
-                                cnxnAFE.Close();
-                            }
+                        }
+                        catch (SqlException ex)
+                        {
+                            File.AppendAllText(ErrorLog, " 1224   " + ex.ToString() + Environment.NewLine);
+                        }
+                        finally
+                        {
+                            cnxnAFE.Close();
                         }
                     }
                 }
+
 
                 /*
                * 
@@ -763,6 +781,8 @@ namespace NAV_MRP
                     int ac = aMRPFutureCount[xx];
                     int ad = aReceiptCount[xx];
                     int ae = aItemTextCount[xx];
+                    int am = aMfrCount[xx];
+                    int av = aVendorCount[xx];
                     int part1Lines = 0;
 
                     if (aa >= ab)
@@ -774,20 +794,20 @@ namespace NAV_MRP
                         part1Lines = ab;
                     }
 
-                    if (aa > 28)
+                    if ((aa + (av*4) + am) > 26)
                     {
-                        aMRPCurrentPagePlus1[xx] = aa - 28;
+                        aMRPCurrentPagePlus1[xx] = (aa + (av * 4) + am) - 26;
                         twoPagesRequired[xx] = true;
                         extraPageCount++;
                     }
                     else
                     {
-                        if (26 - (aMRPCurrentCount[xx] + aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) <= 0)
+                        if (30 - (aMRPCurrentCount[xx] + aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx] + aMfrCount[xx] + (aVendorCount[xx] * 4)) <= 0)
                         {
                             twoPagesRequired[xx] = true;
                             extraPageCount++;
 
-                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
+                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx] + aMfrCount[xx] + (aVendorCount[xx] * 4)) > 30)
                             {
                                 threePagesRequired[xx] = true;
                             }
@@ -796,7 +816,7 @@ namespace NAV_MRP
                                 threePagesRequired[xx] = false;
                             }
 
-                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 40)
+                            if ((aMRPFutureCount[xx] + aReceiptCount[xx] + aItemTextCount[xx]) > 35)
                             {
                                 fourPagesRequired[xx] = true;
                             }
@@ -807,14 +827,12 @@ namespace NAV_MRP
                             //                }
                             //                else
                             //                {
-                            twoPagesRequired[xx] = false;
-                            threePagesRequired[xx] = false;
-                            fourPagesRequired[xx] = false;
+                            //twoPagesRequired[xx] = false;
+                            //threePagesRequired[xx] = false;
+                            //fourPagesRequired[xx] = false;
                         }
                     }
                 }
-
-
 
 
 
@@ -834,36 +852,34 @@ namespace NAV_MRP
 
 
 
-                PrintDocument pd = new PrintDocument();
-                pd.DefaultPageSettings.PrinterSettings.PrinterName = "Microsoft Print to PDF";
-                pd.PrinterSettings.PrintToFile = true;
-                pd.PrinterSettings.PrintFileName = Path.Combine(directory, file);
-                StandardPrintController pc = new StandardPrintController();
-                pd.PrintController = pc;
+                PrintDocument Pd = new PrintDocument();
+                Pd.DefaultPageSettings.PrinterSettings.PrinterName = "Microsoft Print to PDF";
+                Pd.PrinterSettings.PrintToFile = true;
+                Pd.PrinterSettings.PrintFileName = Path.Combine(directory, file);
+                StandardPrintController Pc = new StandardPrintController();
+                Pd.PrintController = Pc;
 
-                pd.PrintPage += new PrintPageEventHandler(pd_PrintPage);
+                Pd.PrintPage += new PrintPageEventHandler(Pd_PrintPage);
+
+                
 
                 try
                 {
-                    pd.Print();
+                    //await 
+                        Pd.Print();
                 }
                 catch (Exception ex)
                 {
                     File.AppendAllText(ErrorLog, " 1882    " + ex.ToString() + Environment.NewLine);
                 }
 
-                this.Close();
-
+                
             }
-        //}
-
-        
-
+            this.Close();
+        }
 
 
-
-
-        private async void pd_PrintPage(object sender, PrintPageEventArgs ev)
+        private async void Pd_PrintPage(object sender, PrintPageEventArgs ev)
         {
             /*
              * 
@@ -876,72 +892,74 @@ namespace NAV_MRP
              * 
              */
 
-                string date = DateTime.Now.ToString();
+            
 
-                DateTime MRPSunday = DateTime.Now;
-                while (MRPSunday.DayOfWeek != DayOfWeek.Sunday)
-                    MRPSunday = MRPSunday.AddDays(-1);
+            string date = DateTime.Now.ToString();
 
-                string reportSunday = MRPSunday.ToShortDateString();
+            DateTime MRPSunday = DateTime.Now;
+            while (MRPSunday.DayOfWeek != DayOfWeek.Sunday)
+                MRPSunday = MRPSunday.AddDays(-1);
 
-                int linedrop = 100;
-                int POlinedrop = 100;
+            string reportSunday = MRPSunday.ToShortDateString();
 
-                int linesPerpage = 30;  //40
-                                        
-                int pageNo = pagesPrinted + 1;
-                
-                double NumPages = Convert.ToDouble(i);
-                NumPages = NumPages + Convert.ToDouble(extraPageCount);
+            int linedrop = 100;
+            int POlinedrop = 100;
 
-                Pen pen = new Pen(Color.Red);
-                Pen Gpen = new Pen(Color.Green);
-                Pen Bpen = new Pen(Color.Turquoise);
-                Pen Ypen = new Pen(Color.Orange);
-                Ypen.Width = 25;
-                Gpen.Width = 3;
-                pen.Width = 1;
-                Font A9R = new Font("arial", 9, FontStyle.Regular);
-                Font title = new Font("arial", 16, FontStyle.Bold);
-                Font heading = new Font("arial", 9, FontStyle.Bold);
-                Font B12 = new Font("arial", 12, FontStyle.Bold);
-                Font U9 = new Font("arial", 9, FontStyle.Underline);
-                StringFormat alignR = new StringFormat();
-                alignR.Alignment = StringAlignment.Far;
-                int n = 0;
+            int linesPerpage = 30;  //40
 
-                //  the print location is X, Y
+            int pageNo = pagesPrinted + 1;
 
-                if (shortage[lineNo].Length > 0)
-                {
-                    ev.Graphics.DrawLine(Ypen, 25, 10, 800, 10);
-                    ev.Graphics.DrawString("SHORTAGE ID = " + shortage[lineNo], A9R, Brushes.Black, 250, 10);
-                    ev.Graphics.DrawString("SHORTAGE Product Line = " + shortageProductLine[lineNo], A9R, Brushes.Black, 450, 10);
-                }
-                                
-                if (twoPagesRequired[lineNo])
-                {
-                    ev.Graphics.DrawString("Two Pages Required for " + aItemNo[lineNo], A9R, Brushes.Black, 25, 50);
-                }
+            double NumPages = Convert.ToDouble(i);
+            NumPages = NumPages + Convert.ToDouble(extraPageCount);
 
-                ev.Graphics.DrawString(g.rptName + " Data as of: " + date, A9R, Brushes.Black, 25, 25);
-                ev.Graphics.DrawString(abuyerPlanner[lineNo], heading, Brushes.Black, 350, 25);
-                ev.Graphics.DrawString("MRP Report: " + g.ReportSelection, A9R, Brushes.Black, 600, 25);
-                //ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
-                ev.Graphics.DrawString("Page  " + pageNo + " of " + NumPages, A9R, Brushes.Black, 600, 50);
+            Pen pen = new Pen(Color.Red);
+            Pen Gpen = new Pen(Color.Green);
+            Pen Bpen = new Pen(Color.Turquoise);
+            Pen Ypen = new Pen(Color.Orange);
+            Ypen.Width = 25;
+            Gpen.Width = 3;
+            pen.Width = 1;
+            Font A9R = new Font("arial", 9, FontStyle.Regular);
+            Font title = new Font("arial", 16, FontStyle.Bold);
+            Font heading = new Font("arial", 9, FontStyle.Bold);
+            Font B12 = new Font("arial", 12, FontStyle.Bold);
+            Font U9 = new Font("arial", 9, FontStyle.Underline);
+            StringFormat alignR = new StringFormat();
+            alignR.Alignment = StringAlignment.Far;
+            int n = 0;
 
-                if (aVettedStatus[lineNo] == "1")
-                {
-                    ev.Graphics.DrawString("*************** ......NON-VETTED...... ***************", B12, Brushes.Purple, 225, 50);
-                }
-               
-                ev.Graphics.DrawLine(pen, 25, 70, 800, 70);
+            //  the print location is X, Y
 
-                if (!partOnePrinted[lineNo])
-                {
-                    print_PartOne(ev, linedrop, POlinedrop);
-                    partOnePrinted[lineNo] = true;
-                }
+            if (shortage[lineNo].Length > 0)
+            {
+                ev.Graphics.DrawLine(Ypen, 25, 10, 800, 10);
+                ev.Graphics.DrawString("SHORTAGE ID = " + shortage[lineNo], A9R, Brushes.Black, 250, 10);
+                ev.Graphics.DrawString("SHORTAGE Product Line = " + shortageProductLine[lineNo], A9R, Brushes.Black, 450, 10);
+            }
+
+            if (twoPagesRequired[lineNo])
+            {
+                ev.Graphics.DrawString("Two Pages Required for " + aItemNo[lineNo], A9R, Brushes.Black, 25, 50);
+            }
+
+            ev.Graphics.DrawString(g.rptName + " Data as of: " + date, A9R, Brushes.Black, 25, 25);
+            ev.Graphics.DrawString(abuyerPlanner[lineNo], heading, Brushes.Black, 350, 25);
+            ev.Graphics.DrawString("MRP Report: " + g.ReportSelection, A9R, Brushes.Black, 600, 25);
+            //ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
+            ev.Graphics.DrawString("Page  " + pageNo + " of " + NumPages, A9R, Brushes.Black, 600, 50);
+
+            if (aVettedStatus[lineNo] == "1")
+            {
+                ev.Graphics.DrawString("*************** ......NON-VETTED...... ***************", B12, Brushes.Purple, 225, 50);
+            }
+
+            ev.Graphics.DrawLine(pen, 25, 70, 800, 70);
+
+            if (!partOnePrinted[lineNo])
+            {
+                print_PartOne(ev, linedrop, POlinedrop);
+                partOnePrinted[lineNo] = true;
+            }
 
             /*  part one printed - part two not printed - two pages not required    */
 
@@ -998,70 +1016,73 @@ namespace NAV_MRP
 
             //}
 
-           
+
 
             /*  for two page parts  */
 
             if (twoPagesRequired[lineNo])
+            {
+                if (pageOnePrinted[lineNo] && !partTwoPrinted[lineNo])
                 {
-                    if (pageOnePrinted[lineNo] && !partTwoPrinted[lineNo])
+                    if (aMRPCurrentPagePlus1[lineNo] < 1)
                     {
-                        if (aMRPCurrentPagePlus1[lineNo] < 1)
-                        {
-                            print_PartTwo(ev, linedrop);
-                            partTwoPrinted[lineNo] = true;
-                        }
-                        else
-                        {
-                            printCurrentOverflow(ev);
-                            //print_PartTwo(ev, linedrop);
-                            partTwoPrinted[lineNo] = true;
-                        }
-                    }
-
-                    if (partOnePrinted[lineNo] && !partTwoPrinted[lineNo])
-                    {
-                        ev.HasMorePages = true;
-                        pageOnePrinted[lineNo] = true;
-                        pagesPrinted++;
-
-                    }
-
-                    if (partOnePrinted[lineNo] && partTwoPrinted[lineNo])
-                    {
-                        lineNo++;
-
-                        if (i > lineNo)
-                        {
-                            ev.HasMorePages = true;
-                            pagesPrinted++;
-                        }
-                    }
-                }
-                else
-                {
-                    if ((i - 1) > lineNo)
-                    {
-                        ev.HasMorePages = true;
-                        pageOnePrinted[lineNo] = true;
-                        pagesPrinted++;
+                        print_PartTwo(ev, linedrop);
+                        partTwoPrinted[lineNo] = true;
                     }
                     else
                     {
-                        ev.HasMorePages = false;
-                        linedrop = 160;
-                        pagesPrinted = 0;
-                        lineNo = 0;
+                        printCurrentOverflow(ev);
+                        //print_PartTwo(ev, linedrop);
+                        partTwoPrinted[lineNo] = true;
                     }
-
-                    lineNo++;
                 }
-            await Task.Delay(15000);
+
+                if (partOnePrinted[lineNo] && !partTwoPrinted[lineNo])
+                {
+                    ev.HasMorePages = true;
+                    pageOnePrinted[lineNo] = true;
+                    pagesPrinted++;
+
+                }
+
+                if (partOnePrinted[lineNo] && partTwoPrinted[lineNo])
+                {
+                    lineNo++;
+
+                    if (i > lineNo)
+                    {
+                        ev.HasMorePages = true;
+                        pagesPrinted++;
+                    }
+                }
+            }
+            else
+            {
+                if ((i - 1) > lineNo)
+                {
+                    ev.HasMorePages = true;
+                    pageOnePrinted[lineNo] = true;
+                    pagesPrinted++;
+                }
+                else
+                {
+                    ev.HasMorePages = false;
+                    linedrop = 160;
+                    pagesPrinted = 0;
+                    lineNo = 0;
+                }
+
+                lineNo++;
+            }
+
+            
+
+            await Task.Delay(1000);
         }
-        
 
 
-        private void print_PartOne(PrintPageEventArgs ev, int linedrop, int POlinedrop)
+
+        private async void print_PartOne(PrintPageEventArgs ev, int linedrop, int POlinedrop)
         {
             Pen pen = new Pen(Color.Red);
             Pen Gpen = new Pen(Color.Green);
@@ -1163,7 +1184,7 @@ namespace NAV_MRP
 
                 Bpen.Width = 10;
 
-                
+
                 ev.Graphics.DrawLine(Bpen, 770, linedrop, 770, linedrop + 55);
                 ev.Graphics.DrawLine(Bpen, 570, linedrop + 5, 770, linedrop + 5);
                 ev.Graphics.DrawLine(Bpen, 570, linedrop + 50, 770, linedrop + 50);
@@ -1268,7 +1289,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString(aReorderPoint[lineNo], A9R, Brushes.Black, box, alignR);
 
                 /******************************************************************************/
-                
+
                 linedrop = linedrop + 15;
 
                 ev.Graphics.DrawString("Item Group:", heading, Brushes.Black, 25, linedrop);
@@ -1411,13 +1432,13 @@ namespace NAV_MRP
                     Bpen = new Pen(Color.Black);
                 }
 
-                ev.Graphics.DrawString("FAI On Order: ", heading, Brushes.Black, 450, linedrop);
+                ev.Graphics.DrawString("FAI On Order: ", heading, Brushes.Black, 505, linedrop);
 
-                ev.Graphics.DrawString(aFAIonOrder[lineNo], A9R, Brushes.Black, 540, linedrop);
+                ev.Graphics.DrawString(aFAIonOrder[lineNo], A9R, Brushes.Black, 595, linedrop);
 
-                ev.Graphics.DrawString("FAI Nettable: ", heading, Brushes.Black, 590, linedrop);
+                ev.Graphics.DrawString("FAI Nettable: ", heading, Brushes.Black, 645, linedrop);
 
-                ev.Graphics.DrawString(aFAINettable[lineNo], A9R, Brushes.Black, 710, linedrop);
+                ev.Graphics.DrawString(aFAINettable[lineNo], A9R, Brushes.Black, 765, linedrop);
 
                 Bpen = new Pen(Color.Black);
 
@@ -1451,9 +1472,9 @@ namespace NAV_MRP
                     Bpen = new Pen(Color.Black);
                 }
 
-                ev.Graphics.DrawString("FAI Non-Nettable: ", heading, Brushes.Black, 590, linedrop);
+                ev.Graphics.DrawString("FAI Non-Nettable: ", heading, Brushes.Black, 645, linedrop);
 
-                ev.Graphics.DrawString(aFAINonNettable[lineNo], A9R, Brushes.Black, 710, linedrop);
+                ev.Graphics.DrawString(aFAINonNettable[lineNo], A9R, Brushes.Black, 765, linedrop);
 
                 Bpen = new Pen(Color.Black);
 
@@ -1472,15 +1493,15 @@ namespace NAV_MRP
 
                 Bpen.Width = 4;
 
-                ev.Graphics.DrawLine(Bpen, 438, linedrop - 17, 747, linedrop - 17);
-                ev.Graphics.DrawLine(Bpen, 438, linedrop + 17, 747, linedrop + 17);
-                ev.Graphics.DrawLine(Bpen, 440, linedrop - 17, 440, linedrop + 17);
-                ev.Graphics.DrawLine(Bpen, 745, linedrop - 17, 745, linedrop +017);
+                ev.Graphics.DrawLine(Bpen, 493, linedrop - 17, 802, linedrop - 17);
+                ev.Graphics.DrawLine(Bpen, 493, linedrop + 17, 802, linedrop + 17);
+                ev.Graphics.DrawLine(Bpen, 495, linedrop - 17, 495, linedrop + 17);
+                ev.Graphics.DrawLine(Bpen, 800, linedrop - 17, 800, linedrop + 017);
 
 
                 Bpen = new Pen(Color.Black);
 
-                
+
             }
             catch (Exception ex)
             {
@@ -1508,10 +1529,10 @@ namespace NAV_MRP
 
                 for (int ii = 0; ii < aMfrCount[lineNo]; ii++)
                 {
-                    ev.Graphics.DrawString(aMfrName[lineNo,ii], A9R, Brushes.Black, 25, linedrop);
-                    ev.Graphics.DrawString(aMfrPartNumber[lineNo,ii], A9R, Brushes.Black, 275, linedrop);
-                    ev.Graphics.DrawString(aPreferred[lineNo,ii], A9R, Brushes.Black, 540, linedrop + 1);
-                    ev.Graphics.DrawString(aMfrDescription[lineNo,ii], A9R, Brushes.Black, 625, linedrop);
+                    ev.Graphics.DrawString(aMfrName[lineNo, ii], A9R, Brushes.Black, 25, linedrop);
+                    ev.Graphics.DrawString(aMfrPartNumber[lineNo, ii], A9R, Brushes.Black, 275, linedrop);
+                    ev.Graphics.DrawString(aPreferred[lineNo, ii], A9R, Brushes.Black, 540, linedrop + 1);
+                    ev.Graphics.DrawString(aMfrDescription[lineNo, ii], A9R, Brushes.Black, 625, linedrop);
                     linedrop = linedrop + 15;
                 }
             }
@@ -1594,7 +1615,7 @@ namespace NAV_MRP
                 * 
                 * */
 
-                
+
                 try
                 {
                     for (int ii = 0; ii < 20; ii++)
@@ -1627,9 +1648,9 @@ namespace NAV_MRP
 
             }
 
-
+            await Task.Delay(1000);
         }
-        private void print_PartTwo(PrintPageEventArgs ev, int linedrop)
+        private async void print_PartTwo(PrintPageEventArgs ev, int linedrop)
         {
             Pen pen = new Pen(Color.Red);
             Pen Gpen = new Pen(Color.Green);
@@ -1768,7 +1789,7 @@ namespace NAV_MRP
 
             //ev.Graphics.DrawString("Date PO Placed:  _______________     PO Number _______________", A9R, Brushes.Black, 50, 1000);
 
-
+            await Task.Delay(1000);
         }
 
         private void printCurrentOverflow(PrintPageEventArgs ev)
