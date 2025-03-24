@@ -37,7 +37,7 @@ namespace NAV_MRP
 
         private async Task KBP()
         {
-            ///*  MRP KBP    */
+            /*  MRP KBP    */
             g.ReportSelection = "KBP Purchase News ";
             g.SQLselection = g.gKBP;
             g.ReportFilter = "MRP_s1p";
@@ -78,10 +78,11 @@ namespace NAV_MRP
             tt.ShowDialog();
 
 
-            ///*  X    */
+            /*  X    */
 
             g.SQLselection = g.gX;
             g.ReportSelection = "X Purchase News ";
+            g.ReportFilter = "MRP_s1p";
             F3_Sheets u = new F3_Sheets();
             u.ShowDialog();
 
