@@ -22,6 +22,7 @@ namespace NAV_MRP
             await Task.Run(() => { _ = MainRescheduledSheets(); });
             await Task.Run(() => { _ = KBP(); });
             await Task.Run(() => { _ = reports(); });
+            await Task.Run(() => { _ = MoveFiles(); });
 
             this.Close();
         }
@@ -131,5 +132,38 @@ namespace NAV_MRP
             await Task.Delay(1000);
         }
 
+        private async Task MoveFiles()
+        {
+        
+            string sourcePath = @"\\MIDFILE01\Departments\Procurement\Purchasing\SQL Reports";
+
+            string FolderName = DateTime.Now.ToShortDateString().Replace("/", "-");
+
+            string targetPath = sourcePath + @"\" + FolderName;
+
+            System.IO.Directory.CreateDirectory(targetPath);
+
+            if (System.IO.Directory.Exists(sourcePath))
+            {
+                string[] files = System.IO.Directory.GetFiles(sourcePath);
+
+                // Copy the files and overwrite destination files if they already exist.
+                foreach (string s in files)
+                {
+                    // Use static Path methods to extract only the file name from the path.
+                    string fileName = System.IO.Path.GetFileName(s);
+                    string destFile = System.IO.Path.Combine(targetPath, fileName);
+                    System.IO.File.Move(s, destFile);
+                }
+            }
+            else
+            {
+
+            }
+
+            //this.Close();
+        }
     }
+
+    
 }
