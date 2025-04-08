@@ -13,29 +13,47 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAV</DataSourceName>
-        <CommandText>SELECT
+        <CommandText>
+
+
+SELECT
 
 ph.[Purchaser Code] [Buyer]
 ,ph.[Pay-to Name] [Vendor]
 ,pl.[Document No_]
 ,ph.[Order Date]
-,ph.[Vendor Date Sent]
-,ph.[Vendor Date Acknowledged]
+,CASE 
+	WHEN  ph.[Vendor Date Sent] &gt; CAST('01-01-1753' as date) THEN CONVERT(char(10),CAST(ph.[Vendor Date Sent] as date),1)
+	ELSE '' 
+	END [Vendor Date Sent] 
+,CASE 
+	WHEN  ph.[Vendor Date Acknowledged] &gt; CAST('01-01-1753' as date) THEN CONVERT(char(10),CAST(ph.[Vendor Date Acknowledged] as date),1)
+	ELSE '' 
+	END [Vendor Date Acknowledged] 
 ,pl.[PO Line No_]
 ,pl.No_ ItemNumber
 ,pl.[Revision Level]
 ,pl.Description
-,pl.[Location Code]
+,pl.[Location Code] 
 ,pl.Quantity
 ,pl.[Qty_ Received (Base)] [Delivered_Quantity]
 ,pl.[Outstanding Quantity] [Open_Quantity]
-,pl.[Requested Receipt Date]
-,pl.[Promised Receipt Date]
-,pl.[Expected Receipt Date]
+,CASE 
+	WHEN  pl.[Requested Receipt Date] &gt; CAST('01-01-1753' as date) THEN CONVERT(char(10),CAST(pl.[Requested Receipt Date] as date),1)
+	ELSE '' 
+	END [Requested Receipt Date]
+,CASE 
+	WHEN  pl.[Promised Receipt Date] &gt; CAST('01-01-1753' as date) THEN CONVERT(char(10),CAST(pl.[Promised Receipt Date] as date),1)
+	ELSE '' 
+	END [Promised Receipt Date]
+,CASE 
+	WHEN  pl.[Expected Receipt Date] &gt; CAST('01-01-1753' as date) THEN CONVERT(char(10),CAST(pl.[Expected Receipt Date] as date),1)
+	ELSE '' 
+	END [Expected Receipt Date]
 ,pl.[Prod_ Order No_]
 ,pl.FAI
 ,pl.[FAST No_]
-,pl.[Inspection Code]
+,pl.[Inspection Code] + ' - ' + ic.Description [Inspection Code]
 ,i.Commodity [Commodity Code]
 ,pl.[Bin Code]
 ,ph.[Pay-to Vendor No_] [Vendor No]
@@ -47,6 +65,8 @@ INNER JOIN [ZYGO$Purchase Header] ph on pl.[Document No_] = ph.No_
 
 LEFT JOIN ZYGO$Item i ON pl.No_ = i.No_
 
+LEFT JOIN [ZYGO$Inspection Codes] ic ON ic.Code = pl.[Inspection Code]
+ 
 WHERE 1=1
 
 AND pl.[Outstanding Quantity] &gt; 0
@@ -80,11 +100,11 @@ ph.[Purchaser Code]
         </Field>
         <Field Name="Vendor_Date_Sent">
           <DataField>Vendor Date Sent</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Vendor_Date_Acknowledged">
           <DataField>Vendor Date Acknowledged</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="PO_Line_No_">
           <DataField>PO Line No_</DataField>
@@ -120,15 +140,15 @@ ph.[Purchaser Code]
         </Field>
         <Field Name="Requested_Receipt_Date">
           <DataField>Requested Receipt Date</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Promised_Receipt_Date">
           <DataField>Promised Receipt Date</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Expected_Receipt_Date">
           <DataField>Expected Receipt Date</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Prod__Order_No_">
           <DataField>Prod_ Order No_</DataField>
