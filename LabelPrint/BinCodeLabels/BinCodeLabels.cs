@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
 
 namespace BinCodeLabels
 {
@@ -213,7 +214,16 @@ namespace BinCodeLabels
             cpUnmanagedBytes = Marshal.AllocCoTaskMem(cnLength);
             Marshal.Copy(byteArray, 0, cpUnmanagedBytes, cnLength);
 
-            RawPrinterHelper.SendBytesToPrinter("ZDesigner GK420t", cpUnmanagedBytes, cnLength);
+            try
+            {
+                RawPrinterHelper.SendBytesToPrinter(@"\\CT-MID-PS01\ZEBRASN17", cpUnmanagedBytes, cnLength);
+                //RawPrinterHelper.SendBytesToPrinter("ZDesigner ZD421-203dpi ZPL", cpUnmanagedBytes, cnLength);
+            }
+            catch 
+            { 
+            
+            }
+
             //RawPrinterHelper.SendBytesToPrinter(g.printer, cpUnmanagedBytes, cnLength);
             Marshal.FreeCoTaskMem(cpUnmanagedBytes);
 
