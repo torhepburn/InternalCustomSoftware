@@ -1423,7 +1423,7 @@ namespace NAV_MRP
                 ev.Graphics.DrawString("SDS Doc No: ", heading, Brushes.Black, 260, linedrop);
                 ev.Graphics.DrawString(aSDSDocumentNo[lineNo], A9R, Brushes.Black, 340, linedrop);
 
-                if (aFAIonOrder[lineNo] != "0.00" | aFAINettable[lineNo] != "0.00" | aFAINonNettable[lineNo] != "0.00")
+                if (aFAIonOrder[lineNo] != "0" | aFAINettable[lineNo] != "0" | aFAINonNettable[lineNo] != "0")
                 {
                     Bpen = new Pen(Color.Red);
                 }

@@ -95,7 +95,7 @@ namespace NAV_MRP
         public static string gMain =
                              "AND [SelectionCode] <> 'MMX  Min/Max' " +
                              "AND [SelectionCode] not like 'K%' " +
-                             "AND [SelectionCode] <> 'LTA' " +
+                             "AND [SelectionCode] NOT LIKE 'LTA%' " +
                              "AND [Vetted] <> '1' " +
                              "AND [ItemGroupCode] <> 'VMI'  " +
                              "AND CHARINDEX('X', Item, 1) <> 1 " +

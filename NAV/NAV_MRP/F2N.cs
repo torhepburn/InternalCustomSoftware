@@ -135,7 +135,7 @@ namespace NAV_MRP
         private async Task MoveFiles()
         {
         
-            string sourcePath = @"\\MIDFILE01\Departments\Procurement\Purchasing\SQL Reports";
+            string sourcePath = @"\\MIDFILE01.ametek.com\Departments\Procurement\Purchasing\SQL Reports";
 
             string FolderName = DateTime.Now.ToShortDateString().Replace("/", "-");
 
