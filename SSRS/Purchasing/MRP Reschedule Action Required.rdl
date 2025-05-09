@@ -41,10 +41,14 @@ END [Promised Receipt Date],CONVERT(varchar(10),[Due Date], 1) [MRP Pull-in Date
 ,l.No_ [Part Number]
 ,l.Description
 ,FORMAT([Remaining Quantity],'N0', 'en-us') [Order Quantity]
-,CASE COALESCE(pl.[Best Delivery],0) 
+,CASE COALESCE(pl.[Best Delivery In],0) 
                            WHEN 0 THEN '' 
                            WHEN 1 THEN 'YES' 
-                        END Best
+                        END [BestIn]
+,CASE COALESCE(pl.[Best Delivery Out],0) 
+                           WHEN 0 THEN '' 
+                           WHEN 1 THEN 'YES' 
+                        END BestOut
 
 
 FROM [ZYGO$Requisition Line] l
@@ -53,9 +57,7 @@ LEFT JOIN ZYGO$Item i on l.No_ = i.No_
 
 LEFT JOIN [ZYGO$Purchase Line] pl 
 
-ON l.[Ref_ Order No_] = pl.[Document No_]
-
-AND l.[Ref_ Line No_] = pl.[Line No_]
+ON l.[Ref_ Order No_] = pl.[Document No_] AND l.[Ref_ Line No_] = pl.[Line No_]
 
 LEFT JOIN ZYGO$Vendor v on pl.[Buy-from Vendor No_] = v.No_
 
@@ -71,7 +73,8 @@ AND [Worksheet Template Name] = 'PLANNING'
 
 AND [Journal Batch Name] = 'DEFAULT'
 
-AND [Remaining Quantity] &gt; 0</CommandText>
+AND [Remaining Quantity] &gt; 0
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -131,8 +134,12 @@ AND [Remaining Quantity] &gt; 0</CommandText>
           <DataField>Order Quantity</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="Best">
-          <DataField>Best</DataField>
+        <Field Name="BestIn">
+          <DataField>BestIn</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BestOut">
+          <DataField>BestOut</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -159,6 +166,9 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>2.63542in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -695,7 +705,7 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Best Delivery</Value>
+                                  <Value>Best In</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -708,6 +718,43 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Best Out</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox5</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1232,14 +1279,14 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Best">
+                        <Textbox Name="BestIn">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Best.Value</Value>
+                                  <Value>=Fields!BestIn.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1251,7 +1298,44 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Best</rd:DefaultName>
+                          <rd:DefaultName>BestIn</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="BestOut">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!BestOut.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>BestOut</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1325,6 +1409,7 @@ AND [Remaining Quantity] &gt; 0</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -1350,7 +1435,7 @@ AND [Remaining Quantity] &gt; 0</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>19.0625in</Width>
+            <Width>20.0625in</Width>
             <Style />
           </Tablix>
         </ReportItems>
