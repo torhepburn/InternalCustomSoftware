@@ -29,25 +29,12 @@ namespace LicenseGenerator
             SqlConnection cnxn = new SqlConnection(g.db);
             cnxn.Open();
 
-            string SQLlicenseDetail =
-            "select " +
-            " [Dongle ID] " +
-            ", Application " +
-            ",[Start Date] " +
-            ",[Expiration Date] " +
-            ", License " +
-            "from " +
-            "DongleFullDetails " +
-            "WHERE [Dongle ID] = @DongleID " +
-            "AND ProductLine = @ProductLine ";
-
-
         /*  First get the primary application data so that it is always on the first line     */
 
-        SqlCommand cmd = new SqlCommand(SQLlicenseDetail + 
-                    "AND application like 'Metro%' ORDER by application DESC", cnxn);
-                cmd.Parameters.Add("@DongleID", SqlDbType.NVarChar).Value = g.DongleID;
-                cmd.Parameters.Add("@ProductLine", SqlDbType.NVarChar).Value = g.productLine;
+            SqlCommand cmd = new SqlCommand("LicenseDetailx1",cnxn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add("@DongleID", SqlDbType.NVarChar).Value = g.DongleID;
+            cmd.Parameters.Add("@ProductLine", SqlDbType.NVarChar).Value = g.productLine;
 
 
                 table = new DataTable();
@@ -55,12 +42,12 @@ namespace LicenseGenerator
                 da.SelectCommand = cmd;
                 da.Fill(table);
 
-                /*  Then get the secondary application data    */
+            /*  Then get the secondary application data    */
 
-                cmd = new SqlCommand(SQLlicenseDetail +
-                    "AND application not like 'Metro%' ORDER by application DESC", cnxn);
-                cmd.Parameters.Add("@DongleID", SqlDbType.NVarChar).Value = g.DongleID;
-                cmd.Parameters.Add("@ProductLine", SqlDbType.NVarChar).Value = g.productLine;
+            cmd = new SqlCommand("LicenseDetailx2",cnxn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add("@DongleID", SqlDbType.NVarChar).Value = g.DongleID;
+            cmd.Parameters.Add("@ProductLine", SqlDbType.NVarChar).Value = g.productLine;
 
                 dt2 = new DataTable();
                 da = new SqlDataAdapter();
@@ -165,18 +152,18 @@ namespace LicenseGenerator
                 pen.Width = 2;
                 ev.Graphics.DrawLine(pen, 50, 140, 750, 140);
 
-                ev.Graphics.DrawString("App", heading, Brushes.Black, 75, 150);
-                ev.Graphics.DrawString("Start", heading, Brushes.Black, 270, 150);
-                ev.Graphics.DrawString("Expire", heading, Brushes.Black, 400, 150);
-                ev.Graphics.DrawString("License", heading, Brushes.Black, 525, 150);
+                ev.Graphics.DrawString("Option", heading, Brushes.Black, 75, 150);
+                ev.Graphics.DrawString("Start Date", heading, Brushes.Black, 270, 150);
+                ev.Graphics.DrawString("End Date", heading, Brushes.Black, 400, 150);
+                ev.Graphics.DrawString("License Key", heading, Brushes.Black, 525, 150);
 
                 while (count < linesPerpage && lineNo < i)
                 {
 
-                    ev.Graphics.DrawString(table.Rows[lineNo][1].ToString(), arial, Brushes.Black, 75, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][2].ToString(), arial, Brushes.Black, 270, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][3].ToString(), arial, Brushes.Black, 400, linedrop);
-                    ev.Graphics.DrawString(table.Rows[lineNo][4].ToString(), arial, Brushes.Black, 525, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][2].ToString(), arial, Brushes.Black, 75, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][3].ToString(), arial, Brushes.Black, 270, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][4].ToString(), arial, Brushes.Black, 400, linedrop);
+                    ev.Graphics.DrawString(table.Rows[lineNo][5].ToString(), arial, Brushes.Black, 525, linedrop);
 
                     lineNo++;
                     count++;
