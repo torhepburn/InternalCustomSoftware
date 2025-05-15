@@ -97,6 +97,7 @@ namespace NAV_MRP
         private string[] aFAIonOrder = new string[20000];
         private string[] aFAINettable = new string[20000];
         private string[] aFAINonNettable = new string[20000];
+        private string[] aAging = new string[20000];
         private int[] aS1_ID = new int[20000];
 
         private string[,] acOrderDate = new string[10000, 100];
@@ -401,6 +402,8 @@ namespace NAV_MRP
                         aECOnumber[i] = drMain.GetString(72);
                         aEffectiveDate[i] = drMain.GetString(73);
                         aECOstatus[i] = drMain.GetString(74).Trim();
+
+                        aAging[i] = drMain.GetString(75).Trim();
 
                         i++;
                     }
@@ -945,6 +948,12 @@ namespace NAV_MRP
             ev.Graphics.DrawString(g.rptName + " Data as of: " + date, A9R, Brushes.Black, 25, 25);
             ev.Graphics.DrawString(abuyerPlanner[lineNo], heading, Brushes.Black, 350, 25);
             ev.Graphics.DrawString("MRP Report: " + g.ReportSelection, A9R, Brushes.Black, 600, 25);
+
+            if (aAging[lineNo].Length > 0)
+            {
+                ev.Graphics.DrawString("Aging: " + aAging[lineNo], heading, Brushes.Black, 330, 50);
+            }
+
             //ev.Graphics.DrawString("MRP Date: " + reportSunday, A9R, Brushes.Black, 600, 25);
             ev.Graphics.DrawString("Page  " + pageNo + " of " + NumPages, A9R, Brushes.Black, 600, 50);
 
