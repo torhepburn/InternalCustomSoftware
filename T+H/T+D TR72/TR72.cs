@@ -13,7 +13,7 @@ namespace T_D_TR72
         private static Timer timer;
         static Process p = new Process();
         static int H;
-        static string site = "10.213.71.95";
+        static string site = "10.213.71.60";
         static string log;
         static int i;
         
@@ -22,7 +22,7 @@ namespace T_D_TR72
             timer = new Timer((1000) * (60) * (.5));
             timer.Enabled = true;
             timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
-            timer.Interval = (1000) * (60) * (5);
+            timer.Interval = (1000) * (60) * (.5);
 
             Console.WriteLine(site);
             Console.ReadLine();
@@ -74,7 +74,7 @@ namespace T_D_TR72
 
                 try
                 {
-                    SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11; " +
+                    SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11.ametek.com; " +
                         "user = readWrite; password = Read+Write!; database = TnH;" +
                         "Connect Timeout = 30;");
                     SqlCommand cmd = new SqlCommand("Insert into TnHdata " +
@@ -126,7 +126,7 @@ namespace T_D_TR72
             {
                 log = DateTime.UtcNow.AddHours(-7).ToString();
             }
-            else if ((site.Substring(0, 9) == "10.213.97") | (site.Substring(0, 10) == "10.213.131"))
+            else if ((site.Substring(0, 9) == "10.213.126") | (site.Substring(0, 10) == "10.213.131"))
             {
                 log = p.ExitTime.AddHours(-3).ToString();
             }
