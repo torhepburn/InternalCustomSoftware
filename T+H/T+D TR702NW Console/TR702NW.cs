@@ -12,7 +12,7 @@ namespace T_D_TR702NW_Console
     class TR702NW
     {
         private static Timer timer;
-        static string site = "10.213.131.7";
+        static string site = "10.213.71.92";
         static DateTime log;
         private static string data;
         private static string humidity;
