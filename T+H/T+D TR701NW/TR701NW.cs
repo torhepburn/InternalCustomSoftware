@@ -72,7 +72,7 @@ namespace T_D_TR701NW
             //}
             try
             {
-                SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11; " +
+                SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11.ametek.com; " +
                     "user = readWrite; password = Read+Write!; database = TnH;");
                 SqlCommand cmd = new SqlCommand("Insert into TnHdata " +
                     " (log, address, tempF, rh) values ('" +
