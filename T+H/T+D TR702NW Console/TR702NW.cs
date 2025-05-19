@@ -12,7 +12,7 @@ namespace T_D_TR702NW_Console
     class TR702NW
     {
         private static Timer timer;
-        static string site = "10.213.71.61";
+        static string site = "10.213.131.7";
         static DateTime log;
         private static string data;
         private static string humidity;
@@ -54,7 +54,7 @@ namespace T_D_TR702NW_Console
 
             try
             {
-                SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11; " +
+                SqlConnection cnxn = new SqlConnection("server = CT-MID-SQL11.ametek.com; " +
                     "user = readWrite; password = Read+Write!; database = TnH;");
                 SqlCommand cmd = new SqlCommand("Insert into TnHdata " +
                     " (log, address, tempf, rh) values ('" +
