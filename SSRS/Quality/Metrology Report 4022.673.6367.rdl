@@ -6,7 +6,7 @@
     <DataSource Name="DataSource1">
       <ConnectionProperties>
         <DataProvider>SQL</DataProvider>
-        <ConnectString>Data Source=ct-mid-sql11.ametek.com;Initial Catalog=AccessFrontEnds</ConnectString>
+        <ConnectString>Data Source=ct-mid-db01.ametek.com;Initial Catalog=Dashboard</ConnectString>
       </ConnectionProperties>
       <rd:SecurityType>DataBase</rd:SecurityType>
       <rd:DataSourceID>1cfdf112-a0b9-4a75-b5a0-2ae1b562c17d</rd:DataSourceID>
@@ -16,60 +16,39 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>DataSource1</DataSourceName>
-        <CommandText>SELECT
+        <CommandText>SELECT 
 
-m.MetrologyID
-,m.Description
-,dd.MetrologyDataID
-,COALESCE(dd.DateEntered,'') DateEntered
-,COALESCE(
-	CASE dd.PassFail
-		WHEN 0 THEN ''
-		WHEN 1 THEN 'Pass'
-	END,'') PassFail
-,pf.ItemNumber
-,pf.Name Criteria
-,pf.LowerBoundary
-,COALESCE(dd.Data,'') Data
-,pf.UpperBoundary
-,pf.Units
-,COALESCE(dd.Comments,'') Comments
-,COALESCE(CASE m.[Status]
-	WHEN -1 THEN 'Pending'
-	WHEN 0 THEN 'Rejected'
-	WHEN 1 THEN 'Approved'
-END,'') [Status]
-,dd.SerialNumber
-,COALESCE(r.Name,'') WhoEntered
+[MetrologyDescription]
+,[ItemNumber]
+ ,[SerialNumber]
+ ,[DateEntered]
+ ,[Name] [Criteria]
+ ,SimplePassFail PassFail
+ ,[Units]
+ ,[LowerBoundary]
+  ,[Data]
+  ,[UpperBoundary]
+  ,Comments
+  ,EnteredBy
+  ,[MetrologyDataStatus] [Status]
+,MetrologyDataID
 
+      
+  FROM [Dashboard].[dbo].[VIEW_MetrologyMeasurementsDetails]
 
-FROM [MIDDB01.zygo.com].Dashboard.dbo.Metrology m
+  WHERE DocumentNumber = '4022.673.6367'
 
-LEFT JOIN [MIDDB01.ZYGO.COM].[Dashboard].[dbo].[MetrologyPassFail] pf
-
-  ON pf.MetrologyID = m.MetrologyID
-
-LEFT JOIN [MIDDB01.ZYGO.COM].[Dashboard].[dbo].[Metrology Data Details] dd
-
-ON dd.MetrologyPassFailID = pf.MetrologyPassFailID
-
-LEFT JOIN [MIDDB01.ZYGO.COM].[Dashboard].[dbo].[Requisitioner] r ON dd.Operator = r.ID
-
-WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
+  ORDER BY MetrologyDataID</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
-        <Field Name="MetrologyID">
-          <DataField>MetrologyID</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="Description">
-          <DataField>Description</DataField>
+        <Field Name="MetrologyDescription">
+          <DataField>MetrologyDescription</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="MetrologyDataID">
-          <DataField>MetrologyDataID</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
+        <Field Name="SerialNumber">
+          <DataField>SerialNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="ItemNumber">
           <DataField>ItemNumber</DataField>
@@ -87,13 +66,13 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
           <DataField>PassFail</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="LowerBoundary">
-          <DataField>LowerBoundary</DataField>
-          <rd:TypeName>System.Double</rd:TypeName>
-        </Field>
         <Field Name="Units">
           <DataField>Units</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="LowerBoundary">
+          <DataField>LowerBoundary</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
         </Field>
         <Field Name="Data">
           <DataField>Data</DataField>
@@ -107,17 +86,17 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
           <DataField>Comments</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="WhoEntered">
-          <DataField>WhoEntered</DataField>
+        <Field Name="EnteredBy">
+          <DataField>EnteredBy</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Status">
           <DataField>Status</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="SerialNumber">
-          <DataField>SerialNumber</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
+        <Field Name="MetrologyDataID">
+          <DataField>MetrologyDataID</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -759,14 +738,14 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Description">
+                        <Textbox Name="MetrologyDescription">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Description.Value</Value>
+                                  <Value>=Fields!MetrologyDescription.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -778,7 +757,7 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Description</rd:DefaultName>
+                          <rd:DefaultName>MetrologyDescription</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1161,14 +1140,14 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="WhoEntered">
+                        <Textbox Name="EnteredBy">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!WhoEntered.Value</Value>
+                                  <Value>=Fields!EnteredBy.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1178,7 +1157,7 @@ WHERE m.DocumentNumber = '4022.673.6367'</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>WhoEntered</rd:DefaultName>
+                          <rd:DefaultName>EnteredBy</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
