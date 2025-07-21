@@ -13,18 +13,35 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAV</DataSourceName>
+        <QueryParameters>
+          <QueryParameter Name="@planner">
+            <Value>=Parameters!planner.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="@start">
+            <Value>=Parameters!StartingDate.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@end">
+            <Value>=Parameters!EndingDate.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+          <QueryParameter Name="@workorder">
+            <Value>=Parameters!WO.Value</Value>
+            <rd:UserDefined>true</rd:UserDefined>
+          </QueryParameter>
+        </QueryParameters>
         <CommandText>WITH s1 AS	/*first labor posting		*/
 (
 select 
 
 [Document No_]
-,CONVERT(varchar,MIN([Posting Date]),1) firstLaborPosting
+,MIN([Posting Date]) FirstLaborPosting
 
 FROM [ZYGO$Capacity Ledger Entry]
 
 WHERE [Setup Time] &gt; 0
 
-AND [Global Dimension 2 Code] IN ('PO VALUE STREAM','LFO VALUE STREAM')
+--AND [Global Dimension 2 Code] IN ('PO VALUE STREAM','LFO VALUE STREAM')
 
 GROUP BY [Document No_]
 )
@@ -33,7 +50,7 @@ GROUP BY [Document No_]
 select 
 
 [Document No_]
-,CONVERT(varchar,(MIN([Posting Date])),1) firstMaterialIssue
+,MIN([Posting Date]) FirstMaterialIssue
 
 
 FROM [ZYGO$Item Ledger Entry]
@@ -42,7 +59,7 @@ where [Entry Type] = 5   /*	consumption	*/
 
 AND [Order Type] = 1	/*	production	*/
 
-AND [Global Dimension 2 Code] IN ('PO VALUE STREAM','LFO VALUE STREAM')
+--AND [Global Dimension 2 Code] IN ('PO VALUE STREAM','LFO VALUE STREAM')
 
 GROUP BY [Document No_]
 )
@@ -51,7 +68,7 @@ GROUP BY [Document No_]
 select 
 
 s1.*
-,COALESCE(s2.firstMaterialIssue,'') FirstMaterialIssue
+,COALESCE(s2.FirstMaterialIssue,'') FirstMaterialIssue
 
 from s1 left join s2 on s1.[Document No_] = s2.[Document No_]
 )
@@ -71,7 +88,15 @@ from s3
 
 INNER JOIN [ZYGO$Production Order] p ON s3.[Document No_] = p.No_
 
-WHERE p.Status = 4</CommandText>
+WHERE p.Status = 4
+
+AND ([Buyer Planner Code] in (UPPER(@planner)) or @planner is null)
+
+AND ([Document No_] in (@workorder) or @workorder is null)
+
+AND( (FirstLaborPosting &gt; @start and FirstLaborPosting &lt; @end)
+
+AND (FirstMaterialIssue &gt; @start and FirstMaterialIssue &lt; @end))</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -79,13 +104,13 @@ WHERE p.Status = 4</CommandText>
           <DataField>Document No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="firstLaborPosting">
-          <DataField>firstLaborPosting</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
+        <Field Name="FirstLaborPosting">
+          <DataField>FirstLaborPosting</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="FirstMaterialIssue">
           <DataField>FirstMaterialIssue</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
+          <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="Source_No_">
           <DataField>Source No_</DataField>
@@ -151,10 +176,10 @@ WHERE p.Status = 4</CommandText>
                   <Width>2in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>2.10417in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1in</Width>
+                  <Width>1.58333in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -542,14 +567,14 @@ WHERE p.Status = 4</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="firstLaborPosting">
+                        <Textbox Name="FirstLaborPosting">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!firstLaborPosting.Value</Value>
+                                  <Value>=Fields!FirstLaborPosting.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -559,7 +584,7 @@ WHERE p.Status = 4</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>firstLaborPosting</rd:DefaultName>
+                          <rd:DefaultName>FirstLaborPosting</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -723,7 +748,7 @@ WHERE p.Status = 4</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>8.375in</Width>
+            <Width>10.0625in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -731,7 +756,7 @@ WHERE p.Status = 4</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>8.375in</Width>
+      <Width>10.0625in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -741,10 +766,52 @@ WHERE p.Status = 4</CommandText>
       </Page>
     </ReportSection>
   </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="StartingDate">
+      <DataType>DateTime</DataType>
+      <Prompt>Starting Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="planner">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Planner</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="EndingDate">
+      <DataType>DateTime</DataType>
+      <Prompt>Ending Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="WO">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Prompt>Work Order Number</Prompt>
+    </ReportParameter>
+  </ReportParameters>
   <ReportParametersLayout>
     <GridLayoutDefinition>
       <NumberOfColumns>4</NumberOfColumns>
       <NumberOfRows>2</NumberOfRows>
+      <CellDefinitions>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>StartingDate</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>EndingDate</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>planner</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>1</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>WO</ParameterName>
+        </CellDefinition>
+      </CellDefinitions>
     </GridLayoutDefinition>
   </ReportParametersLayout>
   <Language>en-US</Language>
