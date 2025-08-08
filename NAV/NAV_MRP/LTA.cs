@@ -202,9 +202,9 @@ namespace NAV_MRP
              *Connection used to get the Dashboard data
              */
 
-            SqlConnection cnxnDash = new SqlConnection("server=MIDDB01.zygo.com; password=views; " +
+            SqlConnection cnxnDash = new SqlConnection("server=CT-MID-DB01.ametek.com; password=!ThisIsTheSuperSecretPassw0rd!!; " +
 
-                "user=views; database=Dashboard;");
+                "user=DashboardUser; database=Dashboard;");
 
             /*
              *Connection used to get the old MK data

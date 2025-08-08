@@ -19,6 +19,7 @@ namespace NAV_MRP
 
         private async void F2N_Load(object sender, EventArgs e)
         {
+            await Task.Run(() => { _ = pLTA(); });
             await Task.Run(() => { _ = MainRescheduledSheets(); });
             await Task.Run(() => { _ = KBP(); });
             await Task.Run(() => { _ = reports(); });
@@ -121,6 +122,13 @@ namespace NAV_MRP
             vvx.ShowDialog();
 
 
+            
+
+            await Task.Delay(1000);
+        }
+
+        private async Task pLTA()
+        {
             ///*  LTA    */
 
             g.ReportSelection = "LTA ";
@@ -128,8 +136,6 @@ namespace NAV_MRP
             g.ReportFilter = "MRP_s1p";
             LTA l = new LTA();
             l.ShowDialog();
-
-            await Task.Delay(1000);
         }
 
         private async Task MoveFiles()
