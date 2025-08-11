@@ -13,7 +13,10 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAV</DataSourceName>
-        <CommandText>SELECT
+        <CommandText>
+
+
+SELECT
 
 vl.Quantity ServiceLineQuantity
 ,vil.Quantity ServiceInvoiceQuantity
@@ -36,6 +39,34 @@ WHERE vil.Quantity &lt;&gt; vl.Quantity
 AND vil.Type = 1
 
 AND vil.[Posting Date] &gt; DATEADD(mm, -1, GETDATE())
+
+UNION ALL
+
+SELECT
+
+sl.Quantity SalesLineQuantity
+,sil.Quantity SalesInvoiceQuantity
+,sil.No_
+,sil.Description
+,'' [Service Item No_]
+,sl.[Document No_] [Sales Order No_]
+,sil.[Posting Date]
+
+from [ZYGO$Sales Invoice Line] sil
+
+INNER JOIN [ZYGO$Sales Invoice Header] sih ON sih.No_ = sil.[Document No_]
+
+INNER JOIN [ZYGO$Sales Line] sl ON sl.[Document No_] = sih.[Order No_]
+
+AND sl.No_ = sil.No_
+
+WHERE sil.Quantity &lt;&gt; sl.Quantity
+
+AND sil.Type = 1
+
+AND sil.[Posting Date] &gt; DATEADD(mm, -1, GETDATE())
+
+AND sl.[SO Line No_] &lt; 500
 
 Order by [Posting Date] DESC</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
@@ -83,7 +114,7 @@ Order by [Posting Date] DESC</CommandText>
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>Service Invoice Quantity Discrepancies</Value>
+                    <Value>Sales and Service Invoice Quantity Discrepancies</Value>
                     <Style>
                       <FontFamily>Segoe UI Light</FontFamily>
                       <FontSize>24pt</FontSize>
