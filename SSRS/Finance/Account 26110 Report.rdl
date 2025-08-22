@@ -21,40 +21,159 @@
             <Value>=Parameters!end.Value</Value>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>select distinct
+        <CommandText>WITH s1 AS
+(
+	select
 
-gl.[Posting Date] [G_L Posting Date]
-,gl.[G_L Account No_]
-,gl.[Document No_]
-,gl.Description
-,pil.[Buy-from Vendor No_] as [Vendor No]
-,COALESCE(v.Name,'') as [Vendor Name]
-,gl.[Entry No_]
-,gl.[Journal Batch Name]
-,gl.[External Document No_]
-,gl.Amount
-,gl.[Debit Amount]
-,gl.[Credit Amount]
-,COALESCE(v.[Payment Terms Code],'') [Payment Terms Code]
-,pih.[Document Date] [Invoice Date]
+	gl.[Posting Date] [G_L Posting Date]
+	,gl.[G_L Account No_]
+	,gl.[Document No_]
+	,gl.Description
+	--,pil.[Buy-from Vendor No_] as [Vendor No]
+	--,COALESCE(v.Name,'') as [Vendor Name]
+	,gl.[Entry No_]
+	,gl.[Journal Batch Name]
+	,gl.[External Document No_]
+	,gl.Amount
+	,gl.[Debit Amount]
+	,gl.[Credit Amount]
+	--,COALESCE(v.[Payment Terms Code],'') [Payment Terms Code]
+	--,pih.[Document Date] [Invoice Date]
 
-from   [ZYGO$G_L Entry] gl
+	from   [ZYGO$G_L Entry] gl
 
-LEFT JOIN [ZYGO$Purch_ Inv_ Line] pil ON pil.[Document No_] = RIGHT(gl.Description, 6) --AND gl. Amount = pil.Amount
+	--LEFT JOIN [ZYGO$Purch_ Inv_ Line] pil ON pil.[Document No_] = RIGHT(gl.Description, 6) --AND gl. Amount = pil.Amount
 
-INNER JOIN [ZYGO$Purch_ Inv_ Header] pih ON pil.[Document No_] = pih.No_
+	--INNER JOIN [ZYGO$Purch_ Inv_ Header] pih ON pil.[Document No_] = pih.No_
 
-left join ZYGO$Vendor v on pil.[Buy-from Vendor No_]= v.No_
+	--left join ZYGO$Vendor v on pil.[Buy-from Vendor No_]= v.No_
 
-where  [G_L Account No_] = '26110'
+	where  [G_L Account No_] = '26110'
 
-AND [Journal Batch Name] IN ('AMETEK BL', 'AMETEK WTA', 'AMETEK WTB')
+	AND [Journal Batch Name] IN ('AMETEK BL', 'AMETEK WTA', 'AMETEK WTB')
+
+	AND gl.[Posting Date] BETWEEN @start and @end
+)
+,s2i AS
+(
+	select 
+	
+	 [Document No_]
+	,pih.[Document Date]
+	,pih.[Buy-from Vendor No_] VendorNo
+	,pih.[Buy-from Vendor Name] VendorName
+	,SUM(Amount) pAmount
+
+	from [ZYGO$Purch_ Inv_ Line] pil
+
+	INNER JOIN [ZYGO$Purch_ Inv_ Header] pih ON pil.[Document No_] = pih.No_
+
+	WHERE [Document No_] IN
+	(
+	SELECT RIGHT(Description,6) DocumentNo
+	
+	FROM s1
+
+	WHERE Description LIKE '%Invoice%'
+
+	GROUP BY RIGHT(Description,6)
+	)
+
+	GROUP BY 
+	[Document No_]
+	, pih.[Document Date]
+	,pih.[Buy-from Vendor No_]
+	,pih.[Buy-from Vendor Name]
+)
+,s2cr AS
+(
+	select 
+	
+	[Document No_]
+	,pch.[Document Date]
+	,pch.[Buy-from Vendor No_] VendorNo
+	,pch.[Buy-from Vendor Name] VendorName
+	,SUM(Amount) pAmount
+
+	from [ZYGO$Purch_ Cr_ Memo Line] pcl
+
+	INNER JOIN [ZYGO$Purch_ Cr_ Memo Hdr_] pch ON pcl.[Document No_] = pch.No_
+
+	WHERE [Document No_] IN
+	(
+	SELECT RIGHT(Description,6) DocumentNo
+	
+	FROM s1
+
+	WHERE Description LIKE '%Credit Memo%'
+
+	GROUP BY RIGHT(Description,6)
+	)
+
+	GROUP BY 
+	
+	[Document No_]
+	,pch.[Document Date]
+	,pch.[Buy-from Vendor No_]
+	,pch.[Buy-from Vendor Name]
+)
+,s3i AS
+(
+	select
+
+	s1.*
+	,s2i.VendorNo
+	,s2i.VendorName
+	,s2i.[Document Date]
+
+	FROM s1
+
+	RIGHT JOIN s2i ON RIGHT(s1.Description,6) = s2i.[Document No_]
+)
+,s3cr AS
+(
+	select
+
+	s1.*
+	,s2cr.VendorNo
+	,s2cr.VendorName
+	,s2cr.[Document Date]
+
+	FROM s1
+
+	RIGHT JOIN s2cr ON RIGHT(s1.Description,6) = s2cr.[Document No_]
+)
+,s4 AS
+(
+	select
+
+	*
+
+	from s3cr
+
+	UNION ALL
+
+	select
+
+	*
+
+	from s3i
+)
+,s5 AS
+(
+	select
+
+	s4.*
+	,v.[Payment Terms Code]
+
+	FROM s4 LEFT JOIN ZYGO$Vendor v ON s4.VendorNo = v.No_
+)
+
+select * from s5
 
 
 
-AND gl.[Posting Date] BETWEEN @start and @end
-
-ORDER BY gl.[Posting Date]</CommandText>
+[Posting Date]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -72,14 +191,6 @@ ORDER BY gl.[Posting Date]</CommandText>
         </Field>
         <Field Name="Description">
           <DataField>Description</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Vendor_No">
-          <DataField>Vendor No</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Vendor_Name">
-          <DataField>Vendor Name</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Entry_No_">
@@ -102,17 +213,25 @@ ORDER BY gl.[Posting Date]</CommandText>
           <DataField>Debit Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
+        <Field Name="VendorNo">
+          <DataField>VendorNo</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
         <Field Name="Credit_Amount">
           <DataField>Credit Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
+        <Field Name="VendorName">
+          <DataField>VendorName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Document_Date">
+          <DataField>Document Date</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
         <Field Name="Payment_Terms_Code">
           <DataField>Payment Terms Code</DataField>
           <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Invoice_Date">
-          <DataField>Invoice Date</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -899,14 +1018,14 @@ ORDER BY gl.[Posting Date]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Vendor_No">
+                        <Textbox Name="VendorNo">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Vendor_No.Value</Value>
+                                  <Value>=Fields!VendorNo.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -916,7 +1035,7 @@ ORDER BY gl.[Posting Date]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Vendor_No</rd:DefaultName>
+                          <rd:DefaultName>VendorNo</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -935,14 +1054,14 @@ ORDER BY gl.[Posting Date]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Vendor_Name">
+                        <Textbox Name="VendorName">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Vendor_Name.Value</Value>
+                                  <Value>=Fields!VendorName.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -952,7 +1071,7 @@ ORDER BY gl.[Posting Date]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Vendor_Name</rd:DefaultName>
+                          <rd:DefaultName>VendorName</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1228,14 +1347,14 @@ ORDER BY gl.[Posting Date]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Invoice_Date">
+                        <Textbox Name="Document_Date">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Invoice_Date.Value</Value>
+                                  <Value>=Fields!Document_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>MM/dd/yy</Format>
@@ -1246,7 +1365,7 @@ ORDER BY gl.[Posting Date]</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Invoice_Date</rd:DefaultName>
+                          <rd:DefaultName>Document_Date</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
