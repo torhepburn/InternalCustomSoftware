@@ -41,7 +41,7 @@ namespace WindowsFormApps
         public static string ProductGroup;
         public static string dbNAV = "server = PA-HOR-AS408; Database = ZYGO-NAV-PROD; " +
                             "user = navdb_read; password = 2018#ameteK;";
-        public static string dbDash = "server = MIDDB01.zygo.com; Database = Dashboard; " +
+        public static string dbDash = "server = CT-MID-DB01.ametek.com; Database = Dashboard; " +
                     "user = views; password = views;";
         
     }

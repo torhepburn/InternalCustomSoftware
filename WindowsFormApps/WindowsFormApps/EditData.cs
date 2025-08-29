@@ -43,8 +43,8 @@ namespace WindowsFormApps
                 // valid connection string for a Northwind SQL Server sample
                 // database accessible to your system.
                 String connectionString =
-                    "server = MIDDB01.zygo.com; Database = Dashboard;" +
-                            "user = sa; password = serverpwd;";
+                    "server = CT-MID-DB01.ametek.com; Database = Dashboard;" +
+                            "user = sa; password = serverpwd2024!;";
 
                 // Create a new data adapter based on the specified query.
                 dataAdapter = new SqlDataAdapter(selectCommand, connectionString);
