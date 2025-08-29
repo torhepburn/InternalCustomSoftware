@@ -100,7 +100,7 @@ namespace SiliconExpertBOMList
         public static string ProductGroup;
         public static string db = "server = CT-MID-SQL11; Database = AccessFrontEnds; " +
                             "user = readWrite; password = Read+Write!;";
-        public static string dbDash = "server = MIDDB01.zygo.com; Database = Dashboard; " +
+        public static string dbDash = "server = CT-MID-DB01.ametek.com; Database = Dashboard; " +
                     "user = views; password = views;";
         
     }
