@@ -21,23 +21,24 @@
             <Value>=Parameters!end.Value</Value>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>WITH s1 AS
-(
-select
+        <CommandText>select
 
-[Posting Date]
+gl.[Posting Date]
 ,CASE [Document Type]
 	WHEN 2 THEN 'Invoice'
 	WHEN 3 THEN 'Credit Memo'
 END [Document Type]
-, [Document No_]
+,gl.[Document No_]
 ,[External Document No_]
 , [Source No_] as [Vendor No]
 ,v.Name as [Vendor Name]
 ,[User ID]
-,Amount GL_Amount
+,gl.Amount
 ,[Source Code]
 ,[G_L Account No_]
+,gl.[Global Dimension 1 Code] [Cost Center]
+
+
 
 from   [ZYGO$G_L Entry] gl
 
@@ -55,23 +56,11 @@ where  [G_L Account No_] IN
 
 AND [Document Type] in (2,3)
 
-AND [Posting Date] BETWEEN @start AND @end
-)
+AND gl.[Posting Date] BETWEEN @start AND @end
 
-select
+AND gl.Amount &lt;&gt; 0
 
-s1.* 
-,pil.[Shortcut Dimension 1 Code] [Cost Center]
-,pil.Amount Invoice_Line_Amount
-
-
-from s1
-
-INNER JOIN [ZYGO$Purch_ Inv_ Line] pil ON s1.[Document No_] = pil.[Document No_]
-
-WHERE pil.Amount &lt;&gt; 0
-
-ORDER BY s1.[Document No_]</CommandText>
+ORDER BY [Document No_]</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -103,8 +92,8 @@ ORDER BY s1.[Document No_]</CommandText>
           <DataField>User ID</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="GL_Amount">
-          <DataField>GL_Amount</DataField>
+        <Field Name="Amount">
+          <DataField>Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Source_Code">
@@ -118,10 +107,6 @@ ORDER BY s1.[Document No_]</CommandText>
         <Field Name="Cost_Center">
           <DataField>Cost Center</DataField>
           <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="Invoice_Line_Amount">
-          <DataField>Invoice_Line_Amount</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -187,9 +172,6 @@ ORDER BY s1.[Document No_]</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.42708in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
@@ -625,47 +607,6 @@ ORDER BY s1.[Document No_]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox13">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Invoice Line Amount</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox13</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
                 <TablixRow>
@@ -938,14 +879,14 @@ ORDER BY s1.[Document No_]</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="GL_Amount">
+                        <Textbox Name="Amount">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!GL_Amount.Value</Value>
+                                  <Value>=Fields!Amount.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'0.00;('$'0.00)</Format>
@@ -958,7 +899,7 @@ ORDER BY s1.[Document No_]</CommandText>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>GL_Amount</rd:DefaultName>
+                          <rd:DefaultName>Amount</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1090,53 +1031,12 @@ ORDER BY s1.[Document No_]</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Invoice_Line_Amount">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Invoice_Line_Amount.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'0.00;('$'0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Invoice_Line_Amount</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
-                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1173,7 +1073,7 @@ ORDER BY s1.[Document No_]</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>14.42708in</Width>
+            <Width>13.42708in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
