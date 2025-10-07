@@ -69,11 +69,11 @@ namespace PrinterManager
         {
             SQL = g.queryBase +
                 " AND Application != 'PM' " +
-                "AND PCID LIKE '%" + tbSearch.Text + "%' " +
+                "AND (PCID LIKE '%" + tbSearch.Text + "%' " +
                 "OR UserName LIKE '%" + tbSearch.Text + "%' " +
                 "OR Application LIKE '%" + tbSearch.Text + "%' " +
                 "OR PermissionValue LIKE '%" + tbSearch.Text + "%' " +
-                "OR Location LIKE '%" + tbSearch.Text + "%' " +
+                "OR Location LIKE '%" + tbSearch.Text + "%') " +
                 "ORDER BY Application, PCID ";
 
             GetData();
