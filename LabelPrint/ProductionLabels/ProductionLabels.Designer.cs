@@ -34,6 +34,7 @@
             this.DGV = new System.Windows.Forms.DataGridView();
             this.cbAll = new System.Windows.Forms.CheckBox();
             this.bPrintSelectedLine = new System.Windows.Forms.Button();
+            this.cbReference = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.DGV)).BeginInit();
             this.SuspendLayout();
             // 
@@ -101,12 +102,26 @@
             this.bPrintSelectedLine.Visible = false;
             this.bPrintSelectedLine.Click += new System.EventHandler(this.bPrintSelectedLine_Click);
             // 
+            // cbReference
+            // 
+            this.cbReference.AutoSize = true;
+            this.cbReference.Checked = true;
+            this.cbReference.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbReference.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
+            this.cbReference.Location = new System.Drawing.Point(60, 120);
+            this.cbReference.Name = "cbReference";
+            this.cbReference.Size = new System.Drawing.Size(272, 28);
+            this.cbReference.TabIndex = 15;
+            this.cbReference.Text = "Print Reference Components";
+            this.cbReference.UseVisualStyleBackColor = true;
+            // 
             // ProductionLabels
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(100)))), ((int)(((byte)(220)))));
             this.ClientSize = new System.Drawing.Size(417, 435);
+            this.Controls.Add(this.cbReference);
             this.Controls.Add(this.bPrintSelectedLine);
             this.Controls.Add(this.cbAll);
             this.Controls.Add(this.DGV);
@@ -132,6 +147,7 @@
         private System.Windows.Forms.DataGridView DGV;
         private System.Windows.Forms.CheckBox cbAll;
         private System.Windows.Forms.Button bPrintSelectedLine;
+        private System.Windows.Forms.CheckBox cbReference;
     }
 }
 

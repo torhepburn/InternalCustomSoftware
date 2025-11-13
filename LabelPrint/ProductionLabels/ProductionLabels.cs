@@ -36,6 +36,7 @@ namespace ProductionLabels
         private string parent = string.Empty;
         private string printer = string.Empty;
         private string lineNo;
+        private string reference;
 
         SqlConnection cnxn;
         SqlConnection cnxnInsideLoop;
@@ -125,7 +126,16 @@ namespace ProductionLabels
             {
                 Bprint.Visible = false;
             }
-            
+
+            if (cbReference.Checked == false)
+            {
+                reference = "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') ";
+            }
+            else
+            {
+                reference = "WHERE (Substring(c.[Description],1, 1) != '&') ";
+            }
+
             /*  This is the selection query for the label 
              *  
              *  It is defined here but not used until the 300s 
@@ -146,7 +156,7 @@ namespace ProductionLabels
                     "[ZYGO$Prod_ Order Component] c " +
                     "INNER JOIN [ZYGO$Item] i " + 
                     "ON c.[Item No_] = i.No_ " +
-                    "WHERE (Substring(c.[Description],1, 1) != '#' AND Substring(c.[Description],1, 1) != '&') " +
+                    reference +
                     "AND [Prod_ Order No_] = '" + tbProductionOrder.Text + "' ";
 
             prodorderChoices(); 
@@ -444,7 +454,7 @@ namespace ProductionLabels
                         str += "A50,80,0,3,1,1,N,\"SUB:" + drMulti.GetString(0).ToString() + "\"\n";
                         str += "A50,140,0,3,1,1,N,\"Line No:" + drMulti.GetString(2).ToString() + "\"\n";
                         str += "P" + labelQuantity + "\n";
-                        RawPrinterHelper.SendStringToPrinter(printer, str);
+                        //RawPrinterHelper.SendStringToPrinter(printer, str);
 
                         cnxnInsideLoop = new SqlConnection(dbNAV);
 
@@ -681,7 +691,7 @@ namespace ProductionLabels
             str += "A350,165,0,2,1,1,N,\"QTY: " + quantityPerLabel + "\"\n";
             str += "P" + labelQuantity + "\n";
 
-            RawPrinterHelper.SendStringToPrinter(printer, str);
+            //RawPrinterHelper.SendStringToPrinter(printer, str);
 
             quantityPerLabel = string.Empty;
             labelQuantity = string.Empty;
@@ -854,8 +864,34 @@ namespace ProductionLabels
                 cnxn1.Close();
                 cmd3.Parameters.Clear();
             }
+            else 
+            {
+                DialogResult result1 = MessageBox.Show("Do you want to bulk pack this item ?  " + item_code + "", "",
+                       MessageBoxButtons.YesNo);
 
-             if (bulkpack is true)
+                if (result1 == DialogResult.Yes)
+                {
+                    bulkpack = true;
+                }
+                else
+                {
+                    bulkpack = false;
+                }
+
+                SqlParameter pDescription = new SqlParameter("@description", SqlDbType.VarChar);
+                pDescription.Value = description;
+
+                cmd3 = new SqlCommand("UPDATE Labels.Items_Bulk_Packed " +
+                    "SET BULK_PACK = '" + bulkpack + "' WHERE item_code = '" +
+                    item_code + "'", cnxn1);
+                cnxn1.Open();
+
+                
+                cmd3.ExecuteNonQuery();
+                cnxn1.Close();
+            }
+
+            if (bulkpack is true)
             {
                 labelQuantity = "1";
                 quantityPerLabel = intQuantity;
