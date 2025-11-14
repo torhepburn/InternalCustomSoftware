@@ -42,7 +42,7 @@ namespace LicenseGenerator
             cnxn = new SqlConnection(g.db);
 
             SqlCommand cmd = new SqlCommand(
-                "select top 10 application, application flist from applications where productline = '" + g.productLine + "' " +
+                "select application, application flist from applications where productline = '" + g.productLine + "' " +
                 "and activedemo = '" + g.activeDemo + "' " + appSort1 +
                 "order by dbo.sc_sortableversionstring(application) desc ", cnxn);
 
