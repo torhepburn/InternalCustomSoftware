@@ -1,0 +1,3031 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+  <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="NAV">
+      <DataSourceReference>NAV</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>cdcbe259-fdf1-40e8-b0c7-cabe77ee9249</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>/*	This report is based on the Item Master Data Cross-Check matrix of 10/04/2023
+
+	The data is arranged in similar modules which can also be run separately - all code is stored in 
+	\\ct-mid-fs11.ametek.com\Tor-Data\SQL Selection Statements\NAV\SSRS\Item Data Errors
+
+	all modules have 41 and 51 sections which are identical except for the filters.
+
+	The individual modules are different from the combined report in that the final compilation is as the end of the module.
+
+	use control G to move around code
+	line 18		/*	PHANTOM section	*/
+	line 231	/*	Manufactured Kanban Section	 */
+	line 411	/*	Purchased Kanban section   */
+	line 606	/*	Purchased Other Section	 */
+	line 808	/*	Manufactured Other Section	*/
+	line 998	/*	VMI Section  */
+	line 1232	/*	SIC Section	*/
+	line 1561	/*	MinMax Section	*/
+	line 1769	/*	Blocked Section	 */ as these are short they go to module Blocked Errors
+	line 1970	/*	OBS Section  */
+
+	Quantities on BOM reports have separate code.
+
+*/
+
+/*	PHANTOM section	*/
+
+WITH PHs1 as
+(	--On Hand Nettable
+	SELECT 
+	[Item No_]
+	,SUM(Quantity) Nettable
+	FROM [ZYGO$Item Ledger Entry]
+	WHERE [Non-Nettable] = 0
+	GROUP BY [Item No_]
+
+)
+,PHs7 as   /*	Selection Code check from routing no	*/
+(
+	SELECT
+
+	No_
+	,CASE [Selection Code]
+		WHEN 'PHT' THEN ''
+		ELSE 
+			CASE
+				WHEN [Selection Code] = 'ENG' THEN ''
+				ELSE 'Selection Code not PHT'
+			END
+	END 'SelCodeErr'
+
+	FROM ZYGO$Item
+
+	WHERE
+
+	[Routing No_] = 'PHANTOM'
+
+	AND [Signal Code] != 'OBS'
+
+)
+,PHs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) NOT IN ('&amp;','#', '%') THEN ''
+	ELSE 'Should not have Special Characters;'
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]
+,CASE COALESCE(PHs2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero;'
+END [ERR3]*/
+,CASE [Routing No_]
+	WHEN 'PHANTOM' THEN ''
+	ELSE 'Routing # Not PHANTOM; '
+END [ERR4]/*
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]*/
+,CASE
+	WHEN COALESCE(PHs1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]
+,CASE [Selection Code]
+	WHEN 'PHT' THEN ''
+	ELSE 'Sel Code not PHT; '
+END [ERR7]/*
+,CASE
+	WHEN LEFT(v.Name ,6) = 'iPOWER' THEN ''
+	ELSE'Vendor Name not iPower;'
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured;'
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]/*
+ ,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]
+,CASE
+	WHEN COALESCE(s3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity;'
+END [ERR14]
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity not &gt; Zero;'
+	ELSE ''
+END [ERR16]
+/*  waiting on Luz on 17 for default or all bin codes  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN ''
+	ELSE 'Supplier Replenishment not Zero;'
+END [ERR18]
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] */
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN PHs1 ON i.No_ = PHs1.[Item No_]
+
+WHERE
+
+[Selection Code] = 'PHT'
+
+AND [Signal Code] != 'OBS'
+
+AND COALESCE(PHs1.Nettable,0) != 0
+
+)
+,PHs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	+ [ERR4]
+	--+ [ERR5]
+	+ [ERR6]
+	+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	--+ [ERR11]
+	--+ [ERR12]
+	--+ [ERR13]
+	--+ [ERR14]
+	--+ [ERR15]
+	--+ [ERR16]
+	----+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	--+ [ERR25]
+	--+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM PHs41
+)
+
+	/*	Manufactured Kanban Section	 */
+
+,MKBs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) IN ('%') THEN ''
+	ELSE 'Description not %; '
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]
+,CASE COALESCE(MKBs2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero; '
+END [ERR3]
+,CASE 
+	WHEN LEN([Routing No_]) &gt; 0 THEN ''
+	ELSE 'Routing # Missing; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]*/
+,CASE 
+	WHEN [Selection Code] IN ('KBM','KBF') THEN ''
+	ELSE 'Sel Code not KBM or KBF; '
+END [ERR7]/*
+,CASE
+	WHEN LEFT(v.Name ,6) = 'iPOWER' THEN ''
+	ELSE'Vendor Name not iPower;'
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured; '
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]/*
+ ,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]
+,CASE
+	WHEN COALESCE(s3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]*/
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity; '
+END [ERR14]/*
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]*/
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity Zero; '
+	ELSE ''
+END [ERR16]
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment Zero; '
+	ELSE ''
+END [ERR18]/*
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]*/
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI; '
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item; '
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS; '
+	END
+END [ERR27]
+
+
+FROM ZYGO$Item i
+
+WHERE
+
+[Selection Code] IN ('KBM','KBF')
+
+AND [Signal Code] != 'OBS'
+)
+,MKBs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	--+ [ERR11]
+	--+ [ERR12]
+	+ [ERR13]
+	+ [ERR14]
+	--+ [ERR15]
+	+ [ERR16]
+	--+ [ERR17]
+	+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	+ [ERR25]
+	+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM MKBs41
+)
+
+/*	Purchased Kanban section   */
+
+,PKBs3L AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+,PKBs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) IN ('%') THEN ''
+	ELSE 'Description not %; '
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]
+,CASE COALESCE(PKBs2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero;'
+END [ERR3]
+,CASE 
+	WHEN LEN([Routing No_]) &gt; 0 THEN ''
+	ELSE 'Routing # Missing; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]*/
+,CASE 
+	WHEN [Selection Code] IN ('KBP') THEN ''
+	ELSE 'Sel Code not KBP; '
+END [ERR7]
+,CASE
+	WHEN LEN(v.Name) &gt; 1  THEN ''
+	ELSE'Vendor Name Missing; '
+END [ERR8]
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Purchased;'/*
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured;'*/
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]
+ ,CASE Vetted
+	WHEN 0 THEN
+	 CASE LEN(PKBiv.[Lead Time Calculation])
+		WHEN 0 THEN ''
+		ELSE	
+			CASE
+				WHEN SUBSTRING(PKBiv.[Lead Time Calculation],0, (LEN(PKBiv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Zero;'
+				ELSE ''
+			END
+		END
+	ELSE ''
+END [ERR11]
+,CASE
+	WHEN COALESCE(PKBs3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity;'
+END [ERR14]/*
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]*/
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity Zero;'
+	ELSE ''
+END [ERR16]
+/*  17 only for SIC  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment Zero; '
+	ELSE ''
+END [ERR18]/*
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]*/
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] PKBiv ON PKBiv.[Item No_] = i.No_ and PKBiv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN PKBs3L ON PKBs3L.No_ = i.No_
+
+WHERE
+
+[Selection Code] IN ('KBP')
+
+AND [Signal Code] != 'OBS'
+)
+,PKBs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	+ [ERR7]
+	+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	--+ [ERR11]
+	--+ [ERR12]
+	+ [ERR13]
+	+ [ERR14]
+	--+ [ERR15]
+	+ [ERR16]
+	--+ [ERR17]
+	+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	+ [ERR25]
+	+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM PKBs41
+)
+
+	/*	Purchased Other Section	 */
+
+,PURs3L AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+,PURs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) NOT IN ('&amp;','#', '%') THEN ''
+	--ELSE 'Description not %; '
+	ELSE 'Should not have Special Characters;'
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]
+,CASE COALESCE(PURs2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero;'
+END [ERR3]
+,CASE 
+	WHEN LEN([Routing No_]) &gt; 0 THEN ''
+	ELSE 'Routing # Missing; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]*/
+,CASE 
+	WHEN [Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA') THEN ''
+	ELSE 'WRONG Sel Code; '
+END [ERR7]/*
+,CASE
+	WHEN LEN(v.Name) &gt; 1  THEN ''
+	ELSE'Vendor Name Missing; '
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Purchased;'/*
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured;'*/
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]
+,CASE Vetted
+	WHEN 0 THEN
+	 CASE LEN(iv.[Lead Time Calculation])
+		WHEN 0 THEN ''
+		ELSE	
+			CASE
+				WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Zero;'
+				ELSE ''
+			END
+		END
+	ELSE ''
+END [ERR11]
+,CASE
+	WHEN COALESCE(PURs3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]/*
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]*/
+,CASE 	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN [Reordering Policy] IN (1,4) THEN ''
+	ELSE 'Reorder Policy Not FOQ or LFL; '
+END [ERR14]
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point Zero;'
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity Zero;'
+	ELSE ''
+END [ERR16]
+/*  waiting on Luz on 17 for default or all bin codes  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment should not be Zero; '
+	ELSE ''
+END [ERR18]/*
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] */
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN PURs3L ON PURs3L.No_ = i.No_
+
+WHERE
+
+[Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA','VMI','CFM') 
+
+AND [Signal Code] != 'OBS'
+
+AND [Replenishment System] = 0
+
+)
+,PURs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	+ [ERR11]
+	+ [ERR12]
+	--+ [ERR13]
+	+ [ERR14]
+	--+ [ERR15]
+	--+ [ERR16]
+	--+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	--+ [ERR25]
+	--+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM PURs41
+)
+
+	/*	Manufactured Other Section	*/
+	   	
+,MANs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) NOT IN ('&amp;','#', '%') THEN ''
+	--ELSE 'Description not %; '
+	ELSE 'Should not have Special Characters;'
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]
+,CASE COALESCE(MANs2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero;'
+END [ERR3]
+,CASE 
+	WHEN LEN([Routing No_]) &gt; 0 THEN ''
+	ELSE 'Routing # Missing; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]*/
+,CASE 
+	WHEN [Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA') THEN ''
+	ELSE 'WRONG Sel Code; '
+END [ERR7]/*
+,CASE
+	WHEN LEN(v.Name) &gt; 1  THEN ''
+	ELSE'Vendor Name Missing; '
+END [ERR8]*/
+,CASE [Replenishment System]
+	--WHEN 0 THEN ''  --0'Purchased';1=Manufactured
+	--ELSE 'Replen System not Purchased;'
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured;'
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]/*
+ ,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]
+,CASE
+	WHEN COALESCE(s3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]*/
+,CASE 	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN [Reordering Policy] IN (1,4) THEN ''
+	ELSE 'Reorder Policy Not FOQ or LFL; '
+END [ERR14]/*
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity not &gt; Zero;'
+	ELSE ''
+END [ERR16]
+/*  waiting on Luz on 17 for default or all bin codes  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment should not be Zero; '
+	ELSE ''
+END [ERR18]/*
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped */
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]*/
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+WHERE
+
+[Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA','VMI','CFM') 
+
+AND LEN([Selection Code]) &gt; 0
+
+AND [Signal Code] != 'OBS'
+
+AND [Replenishment System] = 1
+)
+,MANs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	--+ [ERR11]
+	--+ [ERR12]
+	--+ [ERR13]
+	+ [ERR14]
+	--+ [ERR15]
+	--+ [ERR16]
+	--+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	--+ [ERR25]
+	--+ [ERR26]
+	--+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM MANs41
+
+)
+
+	/*	VMI Section  */
+
+,VMIs3 AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+
+
+,VMIs1 as
+(	--On Hand Nettable
+	SELECT 
+	[Item No_]
+	,SUM(Quantity) Nettable
+	FROM [ZYGO$Item Ledger Entry]
+	WHERE [Non-Nettable] = 0
+	GROUP BY [Item No_]
+)
+, VMIs2 as
+(	--Stock on Purchase Order
+	SELECT
+	I.No_
+    ,COALESCE(SUM(L.[Outstanding Quantity]), '0.00') [Qty on PO ]
+	FROM [ZYGO$Purchase Line] L 
+    INNER JOIN [ZYGO$Item] I ON L.No_ = I.No_
+    WHERE ([Replenishment System] = 0 and [Document Type] = 1
+    and [Outstanding Quantity] &gt; 0)
+	GROUP BY I.No_
+)
+,VMIs41 AS
+(
+select
+
+[Selection Code]
+, i.No_
+,Description
+,CASE
+	WHEN LEFT(i.Description,1) = '#' THEN ''
+	ELSE 'Description missing #'
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]*
+,CASE COALESCE(s2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM not Zero; '
+END [ERR3]
+,CASE [Routing No_]
+	WHEN 'PHANTOM' THEN ''
+	ELSE 'Routing # Not PHANTOM; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]*/
+,CASE COALESCE(Nettable,0)
+	WHEN 0 THEN ''
+	ELSE 'On Hand not Zero; '
+END [ERR6]/*
+,CASE [Selection Code]
+	WHEN 'PHT' THEN ''
+	ELSE 'Sel Code not PHT; '
+END [ERR7]*/
+,CASE
+	WHEN LEFT(v.Name ,8) = 'FASTENAL' THEN ''
+	ELSE'Vendor Name not Fastenal;'
+END [ERR8]
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --'Purchased'
+	ELSE 'Replen System not Purchased;'  --'Manufactured'
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]/*
+
+,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]*/
+,CASE
+	WHEN COALESCE(VMIs3.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]/*
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]*/
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 4 THEN ''
+	ELSE 'Reorder Policy Not Lot-for-lot;'
+END [ERR14]/*
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity not &gt; Zero;'
+	ELSE ''
+END [ERR16]
+
+--17 SIC only
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN ''
+	ELSE 'Supplier Replenishment not Zero;'
+END [ERR18]*/
+
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'VMI' THEN ''
+	ELSE 'Item Group Code not VMI;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped */
+
+,CASE COALESCE(VMIs2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]/*
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]*/
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]
+
+from ZYGO$Item i 
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN VMIs1 ON VMIs1.[Item No_] = i.No_
+
+LEFT JOIN VMIs2 ON VMIs2.No_ = i.No_
+
+LEFT JOIN VMIs3 ON VMIs3.No_ = i.No_
+
+where 
+
+[Selection Code] = 'VMI'
+
+AND [Signal Code] != 'OBS'
+
+)
+,VMIs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	+ [ERR6]
+	--+ [ERR7]
+	+ [ERR8]
+	+ [ERR9]
+	--+ [ERR10]
+	--+ [ERR11]
+	+ [ERR12]
+	--+ [ERR13]
+	--+ [ERR14]
+	--+ [ERR15]
+	--+ [ERR16]
+	--+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	+ [ERR20]
+	--+ [ERR21]
+	+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	+ [ERR25]
+	+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM VMIs41
+
+)
+
+	/*	SIC Section	*/
+
+,SICs3L AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+, SICs23 as
+(	--Qty on Sales Orders -- Type 2 = Item	Type 3 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on SO]
+    FROM [ZYGO$Sales Line]
+    WHERE Type = 2 AND [Completely Shipped] = 0
+	GROUP BY No_
+)
+, SICs24 as
+(	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Service Order]
+    FROM [ZYGO$Service Line] WHERE [Type] = 1
+    GROUP BY No_
+)
+, SICs25 as
+(	--Qty on Inventory Request - Jobs
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Inventory Request]
+    FROM [ZYGO$Job Journal Line]
+    WHERE [Journal Template Name] = 'INVREQ'
+	GROUP BY No_
+)
+, SICs26 as
+(	--Qty on Production Component
+	SELECT
+	[Item No_]
+    ,COALESCE(SUM([Remaining Quantity]), 0) [Qty on Production Component]
+    FROM [ZYGO$Prod_ Order Component]
+    WHERE Status in (2,3)
+	GROUP BY [Item No_]
+	HAVING  COALESCE(SUM([Remaining Quantity]), 0) &gt; 0
+)
+,SICs27 AS
+(	
+	SELECT
+
+	No_
+	,[Qty on SO]
+
+	FROM SICs23
+
+	UNION ALL
+
+	SELECT
+
+	No_
+	,[Qty on Service Order]
+
+	FROM SICs24
+	
+	UNION ALL
+
+	SELECT
+
+	No_
+	,[Qty on Inventory Request]
+
+	FROM SICs25
+
+	UNION ALL
+
+	SELECT
+
+	[Item No_]
+	,[Qty on Production Component]
+
+	FROM SICs26
+)
+,SICs28 AS
+(
+	SELECT
+
+	No_
+	,SUM([Qty on SO]) Allocated
+
+	FROM SICs27
+
+	WHERE LEN(No_) &gt; 0
+
+	GROUP BY No_
+)
+,SICs38 AS
+(
+	select
+
+	[Item No_]
+	,SUM([Remaining Quantity]) [Component Remaining Quantity &gt; 0]
+
+	from [ZYGO$Prod_ Order Component]
+
+	WHERE Status IN (3,4)
+
+	GROUP BY [Item No_]
+
+	HAVING SUM([Remaining Quantity]) &gt; 0
+)
+,SICs39 AS
+(
+	SELECT
+
+	[Item No_]
+	,'Default Bin Code not set; ' Error
+
+	FROM [ZYGO$Bin Content]
+
+	WHERE [Item No_] IN (SELECT No_ FROM ZYGO$Item where [Selection Code] = 'SIC' and [Signal Code] != 'OBS')
+
+	AND [Location Code] = 'MID'
+
+	AND [Default] = 0
+
+	UNION ALL
+
+	SELECT
+
+	[Item No_]
+	,'Default Bin Code not 020; ' Error
+
+	FROM [ZYGO$Bin Content]
+
+	WHERE [Item No_] IN (SELECT No_ FROM ZYGO$Item where [Selection Code] = 'SIC' and [Signal Code] != 'OBS')
+
+	AND [Location Code] = 'MID'
+
+	AND LEFT([Bin Code],3) != '020'
+
+	AND [Default] = 1
+	
+)
+,SICs41 AS
+(
+select
+
+i.[Selection Code]
+, i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) = '&amp;' THEN ''
+	ELSE 'Description missing &amp;; '
+END [ERR1]/*
+,CASE COALESCE(SICs3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero; '
+END [ERR2]
+,CASE COALESCE(Nettable,0)
+	WHEN 0 THEN ''
+	ELSE 'On Hand not 0;'
+END [ERR6]*/
+,CASE [Selection Code]
+	WHEN 'SIC' THEN ''
+	ELSE 'Sel Code not SIC; '
+END [ERR7]/*
+,CASE
+	WHEN LEFT(v.Name ,6) = 'iPOWER' THEN ''
+	ELSE'Vendor Name not iPower;'
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --0='Purchased'; 1=Manufactured
+	ELSE 'Replen System not Purchased; '  
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]
+,CASE Vetted
+	WHEN 0 THEN
+	 CASE LEN(iv.[Lead Time Calculation])
+		WHEN 0 THEN ''
+		ELSE	
+			CASE
+				WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Zero;'
+				ELSE ''
+			END
+		END
+	ELSE ''
+END [ERR11]
+,CASE
+	WHEN COALESCE(SICs3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime; '
+END [ERR12]
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero; '
+END [ERR13]
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity; '
+END [ERR14]
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point Zero; '
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity Zero; '
+	ELSE ''
+END [ERR16]
+,CASE COALESCE(SICs39.[Error],'')
+	WHEN '' THEN ''
+	ELSE [Error]
+END [ERR17]
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN ''
+	ELSE 'Supplier Replenishment not Zero; '
+END [ERR18]
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT; '
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component; '
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(SICs38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity not Zero; '
+END [ERR23]
+,CASE
+	WHEN COALESCE(SICs28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero; '
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI; '
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item; '
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS; '
+	END
+END [ERR27]
+
+from ZYGO$Item i 
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN SICs3L ON SICs3L.No_ = i.No_
+
+LEFT JOIN SICs28 ON SICs28.No_ = i.No_
+
+LEFT JOIN SICs38 ON SICs38.[Item No_] = i.No_
+
+LEFT JOIN SICs39 ON SICs39.[Item No_] = i.No_
+
+where 
+
+i.[Selection Code] = 'SIC'
+
+AND i.[Signal Code] != 'OBS'
+
+)
+,SICs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	--+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	--+ [ERR10]
+	+ [ERR11]
+	--+ [ERR12]
+	--+ [ERR13]
+	+ [ERR14]
+	+ [ERR15]
+	+ [ERR16]
+	+ [ERR17]
+	+ [ERR18]
+	+ [ERR19]
+	+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	+ [ERR24]
+	+ [ERR25]
+	+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM SICs41
+)
+
+	/*	MinMax Section	*/
+
+,MMXs3L AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+,MMXs38 AS
+(
+	select
+
+	[Item No_]
+	,SUM([Remaining Quantity]) [Component Remaining Quantity &gt; 0]
+
+	from [ZYGO$Prod_ Order Component]
+
+	WHERE Status IN (3,4)
+
+	GROUP BY [Item No_]
+
+	HAVING SUM([Remaining Quantity]) &gt; 0
+)
+,MMXs41 AS
+(
+select
+
+i.[Selection Code]
+, i.No_
+,i.Description/*
+,CASE
+	WHEN LEFT(i.Description,1) = '&amp;' THEN ''
+	ELSE 'Description missing &amp;; '
+END [ERR1]
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero; '
+END [ERR2]
+,CASE COALESCE(Nettable,0)
+	WHEN 0 THEN ''
+	ELSE 'On Hand not 0;'
+END [ERR6]*/
+,CASE [Selection Code]
+	WHEN 'MMX' THEN ''
+	ELSE 'Sel Code not MMX; '
+END [ERR7]/*
+,CASE
+	WHEN LEFT(v.Name ,6) = 'iPOWER' THEN ''
+	ELSE'Vendor Name not iPower;'
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --0='Purchased'; 1=Manufactured
+	ELSE 'Replen System not Purchased; '  
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]
+,CASE Vetted
+	WHEN 0 THEN
+	 CASE LEN(iv.[Lead Time Calculation])
+		WHEN 0 THEN ''
+		ELSE	
+			CASE
+				WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Zero;'
+				ELSE ''
+			END
+		END
+	ELSE ''
+END [ERR11]
+,CASE
+	WHEN COALESCE(MMXs3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime; '
+END [ERR12]
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero; '
+END [ERR13]
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity; '
+END [ERR14]
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero; '
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity not &gt; Zero; '
+	ELSE ''
+END [ERR16]/*
+/*  waiting on Luz on 17 for default or all bin codes  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment should not be Zero; '
+	ELSE ''
+END [ERR18]
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT; '
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component; '
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0; '
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero; '
+END [ERR24]*/
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI; '
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item; '
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS; '
+	END
+END [ERR27]
+
+from ZYGO$Item i 
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN MMXs3L ON MMXs3L.No_ = i.No_
+
+LEFT JOIN MMXs38 ON MMXs38.[Item No_] = i.No_
+
+where 
+
+i.[Selection Code] = 'MMX'
+
+AND i.[Signal Code] != 'OBS'
+
+)
+,MMXs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	--, [ERR1]
+	--+ [ERR2]
+	--+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	, [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	+ [ERR11]
+	+ [ERR12]
+	+ [ERR13]
+	+ [ERR14]
+	+ [ERR15]
+	+ [ERR16]
+	--+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	+ [ERR25]
+	+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM MMXs41
+
+)
+
+	/*	Blocked Section	 */
+
+,so1 AS
+(
+	Select
+
+	[Selection Code]
+	 ,No_
+	,Description
+	,CASE [Blocked]
+		WHEN 1 THEN ''
+		ELSE 'Blocked not set; '
+	END [ERR1]
+	,CASE [Block Purchase]
+		WHEN 1 THEN ''
+		ELSE 'Block Purchase not set; '
+	END [ERR2]
+	,CASE [Block Sale]
+		WHEN 1 THEN ''
+		ELSE 'Block Sales not set; '
+	END [ERR3]
+	,CASE [Block Consumption]
+		WHEN 1 THEN ''
+		ELSE 'Block Consumption not set; '
+	END [ERR4]
+
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'S01'
+)
+,so1A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	+ [ERR2]
+	+ [ERR3]
+	+ [ERR4]
+	[Errors]
+
+	FROM so1
+)
+,so2 AS
+(
+	Select
+
+	[Selection Code]
+	 ,No_
+	,Description
+	,CASE [Blocked]
+		WHEN 1 THEN ''
+		ELSE 'Blocked not set; '
+	END [ERR1]
+	,CASE [Block Consumption]
+		WHEN 1 THEN ''
+		ELSE 'Block Consumption not set; '
+	END [ERR2]
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'SO2'
+)
+,so2A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	+ [ERR2]
+	
+	[Errors]
+
+	FROM so2
+)
+,so3 AS
+(
+	Select
+
+	[Selection Code] 
+	,No_
+	,Description
+	,CASE [Block Sale]
+		WHEN 1 THEN ''
+		ELSE 'Block Sale not set; '
+	END [ERR1]
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'SO3'
+)
+,so3A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1] [Errors]
+
+	FROM so3
+)
+,so4 AS
+(
+	Select
+
+	 [Selection Code] 
+	,No_
+	,Description
+	,CASE [Block Sale]
+		WHEN 1 THEN ''
+		ELSE 'Block Sale not set; '
+	END [ERR1]
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'SO4'
+)
+,so4A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1] [Errors]
+
+	FROM so4
+)
+, so5 AS
+(
+	Select
+
+	 [Selection Code] 
+	,No_
+	,Description
+	,CASE [Block Purchase]
+		WHEN 1 THEN ''
+		ELSE 'Block Purchase not set; '
+	END [ERR1]
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'SO5'
+)
+,so5A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1] [Errors]
+
+	FROM so5
+)
+,so6 AS
+(
+	Select
+
+	 [Selection Code] 
+	,No_
+	,Description
+	,CASE [Block Sale]
+		WHEN 1 THEN ''
+		ELSE 'Block Sale not set; '
+	END [ERR1]
+
+	FROM ZYGO$Item
+
+	WHERE 
+
+	[Signal Code] = 'SO6'
+)
+,so6A AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1] [Errors]
+
+	FROM so6
+)
+
+	/*	OBS Section  */
+
+,OBSs2 as
+(	--Stock on Purchase Order
+	SELECT
+	I.No_
+    ,COALESCE(SUM(L.[Outstanding Quantity]), '0.00') [Qty on PO]
+	FROM [ZYGO$Purchase Line] L 
+    INNER JOIN [ZYGO$Item] I ON L.No_ = I.No_
+    WHERE ([Replenishment System] = 0 and [Document Type] = 1
+    and [Outstanding Quantity] &gt; 0)
+	GROUP BY I.No_
+)
+, OBSs3 as
+(	--Qty on Sales Orders -- Type 2 = Item	Type 3 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on SO]
+    FROM [ZYGO$Sales Line]
+    WHERE Type = 2 AND [Completely Shipped] = 0
+	GROUP BY No_
+)
+, OBSs4 as
+(	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Service Order]
+    FROM [ZYGO$Service Line] WHERE [Type] = 1
+    GROUP BY No_
+)
+, OBSs5 as
+(	--Qty on Inventory Request - Jobs
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Inventory Request]
+    FROM [ZYGO$Job Journal Line]
+    WHERE [Journal Template Name] = 'INVREQ'
+	GROUP BY No_
+)
+, OBSs6 as
+(	--Qty on Production Order  --Status 2 = Firm Planned Status 3 = Released
+	SELECT
+	[Item No_]
+    ,COALESCE(SUM([Remaining Quantity]), 0) [Qty on Production Order]
+    FROM [ZYGO$Prod_ Order Line]
+    WHERE [Remaining Quantity] &gt; 0 and [Status] in (2,3)
+	GROUP BY [Item No_]
+)
+,OBSs1 AS
+(
+	SELECT
+
+	No_
+	,[Qty on PO] [Qty On Order]
+	
+	FROM OBSs2
+
+	UNION ALL
+
+	SELECT
+
+	[Item No_]
+	,[Qty on Production Order] [Qty On Order]
+	
+	FROM OBSs6
+)
+, OBSs7 AS		/*	on order	*/
+(
+	select
+
+	No_
+	,SUM([Qty On Order]) [Qty on Order]
+
+	from OBSs1
+
+	GROUP BY No_
+)
+,OBSs8 AS		/*	component remaining quantity  */
+(
+	select
+
+	[Item No_] 
+	,SUM([Remaining Quantity]) [Component Remaining Quantity]
+
+	from [ZYGO$Prod_ Order Component]
+
+	WHERE Status IN (3,4)
+
+	GROUP BY [Item No_]
+
+	HAVING SUM([Remaining Quantity]) &gt; 0
+)/*
+,s9 AS
+(
+	Select
+
+	 i.No_
+	 ,i.Description
+	,[Signal Code]
+	,CASE [Blocked]
+		WHEN 1 THEN ''
+		ELSE 'Not Blocked;'
+	END [OBS ERR1]
+	,CASE [Safety Stock Quantity]
+		WHEN 0 THEN ''
+		ELSe 'Safety Stock not Zero;'
+	END [ERR13]/*
+	,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+		WHEN 1 THEN ''
+		ELSE 'Reorder Policy Not Fixed Re-order Quantity;'
+	END [ERR14]*/
+	,CASE [Reorder Point]
+		WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+		ELSE ''
+	END [ERR15]
+	,CASE [Reorder Quantity]
+		WHEN 0 THEN 'Reorder Quantity not &gt; Zero;'
+		ELSE ''
+	END [ERR16]
+	
+	,CASE COALESCE(OpenOrd,0)
+		WHEN 0 THEN ''
+		ELSE 'Open Ord Qty &lt;&gt; 0;'
+	END [OBS ERR5]
+	,CASE COALESCE([Component Remaining Quantity],0)
+		WHEN 0 THEN ''
+		ELSE  'Unissued Component Quantity &gt; 0'
+	END [OBS ERR6]
+	
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN s7 ON i.No_ = s7.No_
+
+	LEFT JOIN s8 ON i.No_ = s8.[Item No_]
+
+	WHERE 
+
+	[Signal Code] = 'OBS'
+)
+,s10 AS
+(
+SELECT
+
+[Signal Code]
+,No_
+,Description
+--, [OBS ERR1] + [OBS ERR2] + [OBS ERR3] + [OBS ERR4] + [OBS ERR5] + [OBS ERR6] [OBS Errors]
+
+FROM s9
+)*/
+,OBSs41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description/*
+,CASE
+	WHEN LEFT(i.Description,1) NOT IN ('&amp;','#', '%') THEN ''
+	ELSE 'Should not have Special Characters; '
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]*/
+,CASE COALESCE(s2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM not Zero; '
+END [ERR3]
+,CASE [Routing No_]
+	WHEN 'PHANTOM' THEN ''
+	ELSE 'Routing # Not PHANTOM; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]
+,CASE [Selection Code]
+	WHEN 'PHT' THEN ''
+	ELSE 'Sel Code not PHT; '
+END [ERR7]/*
+,CASE
+	WHEN LEFT(v.Name ,6) = 'iPOWER' THEN ''
+	ELSE'Vendor Name not iPower;'
+END [ERR8]*/
+,CASE [Replenishment System]
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured; '
+END [ERR9]*/
+,CASE [Signal Code]
+	WHEN 'OBS' THEN ''
+	ELSE 'Should be OBS; '
+END [ERR10]/*
+ ,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]
+,CASE
+	WHEN COALESCE(s3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]*/
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]/*
+,CASE [Reordering Policy]	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN 1 THEN ''
+	ELSE 'Reorder Policy Not Fixed Re-order Quantity;'
+END [ERR14]*/
+,CASE [Reorder Point]
+	WHEN 0 THEN ''
+	ELSE 'Reorder Point not Zero; '
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN ''
+	ELSE 'Reorder Quantity not Zero; '
+END [ERR16]/*
+
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN ''
+	ELSE 'Supplier Replenishment not Zero;'
+END [ERR18]
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+*/
+/* 21 is skipped */
+,CASE COALESCE(OBSs7.[Qty on Order],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]
+
+,CASE COALESCE(OBSs8.[Component Remaining Quantity],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]/*
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] 
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS; '
+	END
+END [ERR27]*/
+,CASE [Blocked]
+	WHEN 0 THEN 'Not Blocked'
+	WHEN 1 THEN ''
+END [ERR29]
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN OBSs1 ON i.No_ = OBSs1.[No_]
+
+LEFT JOIN OBSs7 ON i.No_ = OBSs7.No_
+
+LEFT JOIN OBSs8 ON i.No_ = OBSs8.[Item No_]
+
+WHERE
+
+[Signal Code] = 'OBS'
+
+--AND COALESCE(s1.Nettable,0) != 0
+
+)
+,OBSs51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, --need comma here if no ERR1
+	--, [ERR1]
+	--+ [ERR2]
+	/*+ [ERR3]
+	+ [ERR4]
+	+ [ERR5]
+	+ [ERR6]
+	+ [ERR7]
+	--+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]*/
+	--+ [ERR11]
+	--+ [ERR12]
+	+ [ERR13]
+	--+ [ERR14]
+	+ [ERR15]
+	+ [ERR16]
+	----+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	--+ [ERR25]
+	--+ [ERR26]
+	--+ [ERR27]
+	+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+	
+	FROM OBSs41
+
+)
+, rpt as
+(
+
+SELECT
+
+'PHANTOM' [Error Class]
+,* 
+
+FROM PHs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'Kanban' [Error Class]
+,* 
+ 
+FROM MKBs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'Kanban' [Error Class]
+,*  
+
+FROM PKBs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'PURCH' [Error Class]
+,* 
+ 
+
+FROM PURs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+
+SELECT
+
+'MANUF' [Error Class]
+,* 
+
+FROM MANs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'VMI' [Error Class]
+,*  
+
+FROM VMIs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT distinct
+
+'SIC' [Error Class]
+,*  
+
+FROM SICs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'MMX' [Error Class]
+,*  
+
+FROM MMXs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so1A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so2A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so3A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so4A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so5A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'BLOCK' [Error Class]
+,*  
+
+FROM so6A
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+UNION ALL
+
+SELECT
+
+'OBS' [Error Class]
+,*  
+
+FROM OBSs51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+)
+
+select 
+
+/*	add case for lead time error class	*/
+
+CASE
+	WHEN Errors like '%Lead%' THEN 'LEAD TIME'
+	ELSE [Error Class]
+END [Error Class]
+,No_
+,Description
+,Errors
+,[Selection Code]
+
+FROM rpt
+
+WHERE [Error Class] != 'OBS'
+
+AND [Errors] != 'Qty on BOM not Zero;'
+
+--AND Errors != 'Not Blocked'</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="Error_Class">
+          <DataField>Error Class</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="No_">
+          <DataField>No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Description">
+          <DataField>Description</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Errors">
+          <DataField>Errors</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Selection_Code">
+          <DataField>Selection Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.42708in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>4.1875in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.22in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Error Class</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox3">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>No </Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Description</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Errors</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Selection Code</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.21in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Error_Class">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Error_Class.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Error_Class</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!No_.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Description">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Description.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Description</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Errors">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Errors.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Errors</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Selection_Code">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Selection_Code.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Selection_Code</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet1</DataSetName>
+            <Top>0.43in</Top>
+            <Height>0.43in</Height>
+            <Width>9.61458in</Width>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>0.86in</Height>
+        <Style />
+      </Body>
+      <Width>9.61458in</Width>
+      <Page>
+        <LeftMargin>1in</LeftMargin>
+        <RightMargin>1in</RightMargin>
+        <TopMargin>1in</TopMargin>
+        <BottomMargin>1in</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>4</NumberOfColumns>
+      <NumberOfRows>2</NumberOfRows>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Language>en-US</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>c94e1c44-87a5-47c6-9bb0-1af2f3b1fe34</rd:ReportID>
+</Report>
