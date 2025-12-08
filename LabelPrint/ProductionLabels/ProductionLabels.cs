@@ -28,7 +28,7 @@ namespace ProductionLabels
         private bool multiLevel = false;
         private string iDescription;
         private string dbMID = "user=readWrite; password=Read+Write!; " +
-                    "server=CT-MID-SQL11; database=AccessFrontEnds;";
+                    "server=CT-MID-SQL11.ametek.com; database=AccessFrontEnds;";
         public static string dbNAV = "server = pa-hor-as408.ametek.com; password = 2018#ameteK; " +
                             "user = navdb_read; database = ZYGO-NAV-PROD;";
         private string NAVprefix = "ZYGO$";
@@ -454,7 +454,7 @@ namespace ProductionLabels
                         str += "A50,80,0,3,1,1,N,\"SUB:" + drMulti.GetString(0).ToString() + "\"\n";
                         str += "A50,140,0,3,1,1,N,\"Line No:" + drMulti.GetString(2).ToString() + "\"\n";
                         str += "P" + labelQuantity + "\n";
-                        //RawPrinterHelper.SendStringToPrinter(printer, str);
+                        RawPrinterHelper.SendStringToPrinter(printer, str);
 
                         cnxnInsideLoop = new SqlConnection(dbNAV);
 
@@ -587,7 +587,6 @@ namespace ProductionLabels
             tbProductionOrder.AppendText("PD");
         }
 
-
         private void QtyGreaterThan1()
         {
             while (dr.Read())
@@ -659,7 +658,7 @@ namespace ProductionLabels
             str = string.Empty;
            
            
-            //string printer = "ZDesigner GK420d";
+            //string printer = "ZDesigner ZD421-203dpi ZPL";
 
             str = "\nN\nq609Q203,20\n";
             str += SendImageToPrinter(20, 10, bzp);
@@ -691,7 +690,7 @@ namespace ProductionLabels
             str += "A350,165,0,2,1,1,N,\"QTY: " + quantityPerLabel + "\"\n";
             str += "P" + labelQuantity + "\n";
 
-            //RawPrinterHelper.SendStringToPrinter(printer, str);
+            RawPrinterHelper.SendStringToPrinter(printer, str);
 
             quantityPerLabel = string.Empty;
             labelQuantity = string.Empty;
@@ -831,12 +830,18 @@ namespace ProductionLabels
             string intQuantity = Math.Round(quantity, 0).ToString();
 
             SqlConnection cnxn1 = new SqlConnection(dbMID);
-            
+
             SqlCommand cmd3 = new SqlCommand("SELECT bulk_pack FROM Labels.ITEMS_BULK_PACKED " +
                 "WHERE item_code = '" + item_code + "'", cnxn1);
+            //SqlCommand cmd3 = new SqlCommand("SELECT bulk_pack FROM Labels.ITEMS_BULK_PACKED " +
+            //    "WHERE item_code = '6067-1453-01'", cnxn1);
+
             cnxn1.Open();
+
             object bulkpack = cmd3.ExecuteScalar();
+
             cnxn1.Close();
+
             if (bulkpack == null)
             {
                 DialogResult result1 = MessageBox.Show("Do you want to bulk pack this item ?  "+ item_code + "", "",
@@ -864,9 +869,9 @@ namespace ProductionLabels
                 cnxn1.Close();
                 cmd3.Parameters.Clear();
             }
-            else 
+            else if (bulkpack is false)
             {
-                DialogResult result1 = MessageBox.Show("Do you want to bulk pack this item ?  " + item_code + "", "",
+                 DialogResult result1 = MessageBox.Show("Do you want to bulk pack this item ?  " + item_code + "", "",
                        MessageBoxButtons.YesNo);
 
                 if (result1 == DialogResult.Yes)
@@ -878,15 +883,11 @@ namespace ProductionLabels
                     bulkpack = false;
                 }
 
-                SqlParameter pDescription = new SqlParameter("@description", SqlDbType.VarChar);
-                pDescription.Value = description;
-
                 cmd3 = new SqlCommand("UPDATE Labels.Items_Bulk_Packed " +
                     "SET BULK_PACK = '" + bulkpack + "' WHERE item_code = '" +
                     item_code + "'", cnxn1);
                 cnxn1.Open();
 
-                
                 cmd3.ExecuteNonQuery();
                 cnxn1.Close();
             }
