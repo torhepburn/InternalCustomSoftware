@@ -301,8 +301,7 @@ namespace LicenseGenerator
             {
                 if (g.productLine == "MTP")
                 {
-                    //ZygoLicense = MTP.GenerateMetroproLicenseKey(
-                    ZygoLicense = MX.GenerateMetroproLicenseKey(
+                    ZygoLicense = MTP.GenerateMetroproLicenseKey(
                     tbDongle.Text.Trim(),
                     cbApplication.Text.Trim(),
                     dtpStart.Value.Date.ToString("MMM-dd-yyyy"),
