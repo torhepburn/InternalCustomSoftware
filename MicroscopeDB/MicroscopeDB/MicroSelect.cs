@@ -161,14 +161,22 @@ namespace MicroscopeDB
 
                 //string h = System.Text.RegularExpressions.Regex.Escape(lines[1].ToString());
 
-                //int count = lines[1].Count(f => f == ',');  /* this is LINQ */
+                int count1 = lines[0].Count(f => f == ',');  /* this is LINQ  -  count commas in header line*/ 
+
+                int count2 = lines[1].Count(f => f == ',');  /* this is LINQ - count commas in data line */
+
+                if (count1 != count2)
+                {
+                    MessageBox.Show("Customer name might have a comma and is preventing data import.  Replace the comma with a period and try again.");
+                    return;
+                }
 
                 //if (g.ProductLine.Substring(0,1) =="N" & count > 78)
                 //{
                 //    /*Do substring based on \, - fourth then next , and check for \ if not then next ,\ replace , in group */
                 //    string stop;
                 //}
-                
+
                 data = lines[1].Split(',' );
 
                 for (int i = 0; i < data.Length; i++)
