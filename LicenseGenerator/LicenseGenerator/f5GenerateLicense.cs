@@ -1,13 +1,14 @@
+using MetroproXLicenseDLL;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
-using System.Data.SqlClient;
-using MetroproXLicenseDLL;
 
 
 namespace LicenseGenerator
@@ -24,6 +25,9 @@ namespace LicenseGenerator
         SqlConnection cnxn;
         SqlDataReader dr;
         MetroproXLicense MX = new MetroproXLicense();
+        //private StringBuilder errorMessage;
+        //private StringBuilder licenseKey;
+        
 
         public f5GenerateLicense()
         {
@@ -301,11 +305,23 @@ namespace LicenseGenerator
             {
                 if (g.productLine == "MTP")
                 {
-                    ZygoLicense = MTP.GenerateMetroproLicenseKey(
+                    //ZygoLicense = MTP.GenerateMetroproLicenseKey(
+                    //tbDongle.Text.Trim(),
+                    //cbApplication.Text.Trim(),
+                    //dtpStart.Value.Date.ToString("MMM-dd-yyyy"),
+                    //endDate.ToString("MMM-dd-yyyy"));
+                    var licenseKey = new StringBuilder(20);
+                    var errorMessage = new StringBuilder(257);
+
+                    bool ok = MTP.GenerateMetroProLicenseKey(
                     tbDongle.Text.Trim(),
                     cbApplication.Text.Trim(),
                     dtpStart.Value.Date.ToString("MMM-dd-yyyy"),
-                    endDate.ToString("MMM-dd-yyyy"));
+                    endDate.ToString("MMM-dd-yyyy"),
+                    licenseKey,
+                    errorMessage
+                    );
+                    ZygoLicense = licenseKey.ToString();
                 }
 
                 if (g.productLine == "MX")
@@ -483,6 +499,7 @@ namespace LicenseGenerator
 
     public static class MTP
     {
+        /*
         [DllImport("MetroproLicense.dll", CharSet = CharSet.Ansi)]
         [return: MarshalAs(UnmanagedType.BStr)]
 
@@ -501,5 +518,148 @@ namespace LicenseGenerator
                 start.ToString("MM/dd/yyyy").ToUpper(),
                 end.ToString("MM/dd/yyyy").ToUpper());
         }
+        */
+        [DllImport(
+            "MetroProLicenseGeneratorDLL.dll",
+            CallingConvention = CallingConvention.Cdecl,
+            CharSet = CharSet.Ansi
+        )]
+        [return: MarshalAs(UnmanagedType.I1)] // C/C++ bool is 1 byte in MSVC
+
+        public static extern bool GenerateMetroProLicenseKey(
+            string machineIdName,
+            string optionName,
+            string startDate,
+            string endDate,
+            StringBuilder licenseKey,
+            StringBuilder errorMessage
+        );
+
     }
+
+    internal static class NativeMethods
+    {
+        //[DllImport("MetroProLicenseGeneratorDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int Get_MAX_MACHINE_ID_NAME_LEN();
+
+        //[DllImport("MetroProLicenseGeneratorDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int Get_MAX_OPTION_NAME_LEN();
+
+        //[DllImport("MetroProLicenseGeneratorDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int Get_MAX_LICENSE_DATE_LEN();
+
+        //[DllImport("MetroProLicenseGeneratorDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int Get_MAX_LICENSE_KEY_LEN();
+
+        //[DllImport("MetroProLicenseGeneratorDLL.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int Get_MAX_ERROR_MESSAGE_LEN();
+
+        //[DllImport(
+        //    "MetroProLicenseGeneratorDLL.dll",
+        //    CallingConvention = CallingConvention.Cdecl,
+        //    CharSet = CharSet.Ansi
+        //)]
+        //public static extern string GenerateMetroproLicenseKey(
+            //[MarshalAs(UnmanagedType.LPStr)] string MachnineIDName
+            //[MarshalAs(UnmanagedType.LPStr)] string OptionName
+            //[MarshalAs(UnmanagedType.LPStr)] string StartDate
+            //[MarshalAs(UnmanagedType.LPStr)] string EndDate
+
+        //public static string GenerateMetroProLicenseKey(
+        //    string hardwareId, string optionName, DateTime start, DateTime end)
+        //{
+        //    return GenerateMetroProLicenseKey(
+        //        string machineIdName,
+        //    string optionName,
+        //    string startDate,
+        //    string endDate);
+                
+        //}
+        
+        ////[return: MarshalAs(UnmanagedType.I1)] // C/C++ bool is 1 byte in MSVC
+        //public static extern bool GenerateMetroProLicenseKey(
+        //    string machineIdName,
+        //    string optionName,
+        //    string startDate,
+        //    string endDate,
+        //    StringBuilder licenseKey,
+        //    StringBuilder errorMessage
+        //);
+    }
+    
+    //internal class Program1
+    //{
+    //    static int MAX_MACHINE_ID_NAME_LEN;
+    //    static int MAX_OPTION_NAME_LEN;
+    //    static int MAX_LICENSE_DATE_LEN;
+    //    static int MAX_LICENSE_KEY_LEN;
+    //    static int MAX_ERROR_MESSAGE_LEN;
+    //    static int Main(string[] args)
+    //    {
+    //        int exitCode = 0;
+    //        try
+    //        {
+    //            /*MAX_MACHINE_ID_NAME_LEN = NativeMethods.Get_MAX_MACHINE_ID_NAME_LEN();
+    //            MAX_OPTION_NAME_LEN = NativeMethods.Get_MAX_OPTION_NAME_LEN();
+    //            MAX_LICENSE_DATE_LEN = NativeMethods.Get_MAX_LICENSE_DATE_LEN();
+    //            MAX_LICENSE_KEY_LEN = NativeMethods.Get_MAX_LICENSE_KEY_LEN();
+    //            MAX_ERROR_MESSAGE_LEN = NativeMethods.Get_MAX_ERROR_MESSAGE_LEN();*/
+
+    //            MAX_MACHINE_ID_NAME_LEN = 10;
+    //            MAX_OPTION_NAME_LEN = 11;
+    //            MAX_LICENSE_DATE_LEN = 11;
+    //            MAX_LICENSE_KEY_LEN = 19;
+    //            MAX_ERROR_MESSAGE_LEN = 256;
+
+
+    //            //const string machineIdName = "6680S02722";
+    //            //const string optionName = "MetroPro9.1";
+    //            //const string startDate = "JAN-01-2015";
+    //            //const string endDate = "JAN-01-2035";
+    //            //const string expectedLicenseKey = "0130-3668-3130-2604";
+
+    //            var licenseKey = new StringBuilder(MAX_LICENSE_KEY_LEN + 1);
+    //            var errorMessage = new StringBuilder(MAX_ERROR_MESSAGE_LEN + 1);
+                
+    //            bool ok = NativeMethods.GenerateMetroProLicenseKey(
+    //                machineIdName,
+    //                optionName,
+    //                startDate,
+    //                endDate,
+    //                licenseKey,
+    //                errorMessage
+    //            );
+    //            if (ok)
+    //            {
+    //                string format = $"{{0,-{MAX_MACHINE_ID_NAME_LEN}}} {{1,-{MAX_OPTION_NAME_LEN}}} {{2,-{MAX_LICENSE_DATE_LEN}}} {{3,-{MAX_LICENSE_DATE_LEN}}} {{4,-{MAX_LICENSE_KEY_LEN}}}";
+    //                Console.WriteLine(format, machineIdName, optionName, startDate, endDate, licenseKey);
+    //                if (licenseKey.ToString() == expectedLicenseKey)
+    //                {
+    //                    Console.WriteLine("License generation succeeded and the license key matches the expected value.");
+    //                }
+    //                else
+    //                {
+    //                    Console.WriteLine($"License generation succeeded but the license key does NOT match the expected value {expectedLicenseKey}.");
+    //                    exitCode = 1;
+    //                }
+
+    //            }
+    //            else
+    //            {
+    //                Console.Error.WriteLine($"License generation failed: {errorMessage}");
+    //                exitCode = 1;
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            Console.Error.WriteLine($"Fatal error: {ex.Message}");
+    //            exitCode = 1;
+    //        }
+
+    //        Console.WriteLine("Press any key to exit...");
+    //        Console.ReadKey(intercept: true); // waits for a key, does not echo it
+
+    //        return exitCode;
+    //    }
+    //}
 }
