@@ -1,0 +1,801 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+  <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="NAV">
+      <DataSourceReference>NAV</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>718e1659-16f8-4923-ad6c-f2db4997aac4</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Query>
+        <DataSourceName>NAV</DataSourceName>
+        <CommandText>WITH s1a AS		/*	Certified BOM components - non-reference - neither component nor parent OBS	*/
+	(
+	SELECT DISTINCT 
+	
+	v.[Production BOM No_]
+	,l.No_
+	,i.Description
+	,l.Quantity
+	, i.[Selection Code]
+	,v.Status
+	,i.[Signal Code]
+
+	FROM [ZYGO$Production BOM Version] v
+
+	INNER JOIN [ZYGO$Production BOM Line] l ON v.[Production BOM No_] = l.[Production BOM No_]
+
+	AND v.[Version Code] = l.[Version Code]
+
+	INNER JOIN ZYGO$Item i ON l.No_ = i.No_
+
+	INNER JOIN ZYGO$Item ii ON v.[Production BOM No_] = ii.No_
+
+	WHERE v.Status = 1
+
+	AND i.[Selection Code] != 'SIC'
+
+	AND i.[Signal Code] != 'OBS'
+
+	AND ii.[Signal Code] != 'OBS'
+
+	AND l.Quantity = 0
+
+	AND i.[Reference Component] != 1
+	)
+	,s2a AS /*	non-Reference component quantities which should not be zero  */
+	(
+	select
+
+	No_
+	,Description
+	,SUM(Quantity) NotZero
+	
+	from s1a
+	GROUP BY No_, Description
+	)
+,s3L AS	/*	leadtime	*/
+(
+	SELECT
+
+	 i.No_
+	 ,'Leadtime different Item Card/Item Vendor' [LT Error]
+	
+	FROM ZYGO$Item i
+
+	LEFT JOIN [ZYGO$Item Vendor] iv ON i.No_ = iv.[Item No_] AND i.[Vendor No_] = iv.[Vendor No_]
+
+	LEFT JOIN ZYGO$Vendor v ON iv.[Vendor No_] = v.No_
+
+	WHERE i.[Lead Time Calculation] &lt;&gt; iv.[Lead Time Calculation]
+)
+
+
+,s1 as
+(	--On Hand Nettable
+	SELECT 
+	[Item No_]
+	,SUM(Quantity) Nettable
+	FROM [ZYGO$Item Ledger Entry]
+	WHERE [Non-Nettable] = 0
+	GROUP BY [Item No_]
+
+)
+, s2 as
+(	--Stock on Purchase Order
+	SELECT
+	I.No_
+    ,COALESCE(SUM(L.[Outstanding Quantity]), '0.00') [Qty on PO ]
+	FROM [ZYGO$Purchase Line] L 
+    INNER JOIN [ZYGO$Item] I ON L.No_ = I.No_
+    WHERE ([Replenishment System] = 0 and [Document Type] = 1
+    and [Outstanding Quantity] &gt; 0)
+	GROUP BY I.No_
+)
+, s3 as
+(	--Qty on Sales Orders -- Type 2 = Item	Type 3 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Outstanding Quantity]), 0) [Qty on SO]
+    FROM [ZYGO$Sales Line]
+    WHERE Type = 2 AND [Completely Shipped] = 0
+	GROUP BY No_
+)
+, s4 as
+(	--Qty on Service Orders  Type 1 = Item Type 2 = Resource
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Service Order]
+    FROM [ZYGO$Service Line] WHERE [Type] = 1
+    GROUP BY No_
+)
+, s5 as
+(	--Qty on Inventory Request - Jobs
+	SELECT
+	No_
+    ,COALESCE(SUM([Quantity]), 0) [Qty on Inventory Request]
+    FROM [ZYGO$Job Journal Line]
+    WHERE [Journal Template Name] = 'INVREQ'
+	GROUP BY No_
+)
+, s6 as
+(	--Qty on Production Order  --Status 2 = Firm Planned Status 3 = Released
+	SELECT
+	[Item No_]
+    ,COALESCE(SUM([Remaining Quantity]), 0) [Qty on Production Order]
+    FROM [ZYGO$Prod_ Order Line]
+    WHERE [Remaining Quantity] &gt; 0 and [Status] in (2,3)
+	GROUP BY [Item No_]
+)
+,s7 as   /*	Selection Code check from routing no	*/
+(
+	SELECT
+
+	No_
+	,CASE [Selection Code]
+		WHEN 'PHT' THEN ''
+		ELSE 
+			CASE
+				WHEN [Selection Code] = 'ENG' THEN ''
+				ELSE 'Selection Code not PHT'
+			END
+	END 'SelCodeErr'
+
+	FROM ZYGO$Item
+
+	WHERE
+
+	[Routing No_] = 'PHANTOM'
+
+	AND [Signal Code] != 'OBS'
+
+)
+,s41 AS
+(
+SELECT
+
+i.[Selection Code]
+,i.No_
+,i.Description
+,CASE
+	WHEN LEFT(i.Description,1) NOT IN ('&amp;','#', '%') THEN ''
+	--ELSE 'Description not %; '
+	ELSE 'Should not have Special Characters;'
+END [ERR1]/*
+,CASE COALESCE(s3.NotZero,'0.0') 
+	WHEN '0.0' THEN ''
+	ELSE 'Qty on BOM not Zero;'
+END [ERR2]*/
+,CASE COALESCE(s2a.NotZero,'1.0') 
+	WHEN '1.0' THEN ''
+	ELSE 'Qty on BOM Zero;'
+END [ERR3]/*
+,CASE 
+	WHEN LEN([Routing No_]) &gt; 0 THEN ''
+	ELSE 'Routing # Missing; '
+END [ERR4]
+,CASE 
+	WHEN LEN([Production BOM No_]) &gt; 0  THEN ''
+	ELSE  'Prod BOM # Missing; '
+END [ERR5]
+,CASE
+	WHEN COALESCE(s1.Nettable,0) = 0 THEN ''
+	ELSE 'Qty On Hand not Zero; '
+END [ERR6]*/
+,CASE 
+	WHEN [Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA') THEN ''
+	ELSE 'WRONG Sel Code; '
+END [ERR7]
+,CASE
+	WHEN LEN(v.Name) &gt; 1  THEN ''
+	ELSE'Vendor Name Missing; '
+END [ERR8]
+,CASE [Replenishment System]
+	WHEN 0 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Purchased;'/*
+	WHEN 1 THEN ''  --0'Purchased';1=Manufactured
+	ELSE 'Replen System not Manufactured;'*/
+END [ERR9]
+,CASE [Signal Code]
+	WHEN 'OBS' THEN 'Should not be OBS; '
+	ELSE ''
+END [ERR10]
+ ,CASE LEN(iv.[Lead Time Calculation])
+	WHEN 0 THEN ''
+	ELSE	
+		CASE
+			WHEN SUBSTRING(iv.[Lead Time Calculation],0, (LEN(iv.[Lead Time Calculation])-1)) = 0 THEN 'Lead Time Not &gt; Zero;'
+			ELSE ''
+		END
+END [ERR11]
+,CASE
+	WHEN COALESCE(s3L.[LT Error],'') = '' THEN ''
+	ELSE 'Same Vendor Item Card Leadtime not = Item Vendor Leadtime;'
+END [ERR12]/*
+,CASE [Safety Stock Quantity]
+	WHEN 0 THEN ''
+	ELSe 'Safety Stock not Zero;'
+END [ERR13]*/
+,CASE 	/* choice of 1 - fixed or 4 - lot for lot  */
+	WHEN [Reordering Policy] IN (1,4) THEN ''
+	ELSE 'Reorder Policy Not FOQ or LFL; '
+END [ERR14]
+,CASE [Reorder Point]
+	WHEN 0 THEN 'Reorder Point not &gt; Zero;'
+	ELSE ''
+END [ERR15]
+,CASE [Reorder Quantity]
+	WHEN 0 THEN 'Reorder Quantity not &gt; Zero;'
+	ELSE ''
+END [ERR16]
+/*  waiting on Luz on 17 for default or all bin codes  */
+
+,CASE [Supplier Replenishment]
+	WHEN 0 THEN 'Supplier Replenishment should not be Zero; '
+	ELSE ''
+END [ERR18]/*
+,CASE [Item Group Code]	/*	varies per error set	*/
+	WHEN 'CNT' THEN ''
+	ELSE 'Item Group Code not CNT;'
+END [ERR19]
+,CASE [Reference Component]
+	WHEN 1 THEN ''
+	ELSE 'Not Coded as Reference Component;'
+END [ERR20]
+
+/* 21 is skipped *//*
+,CASE COALESCE(s2.[Qty on PO ],0)
+	WHEN 0 THEN ''
+	ELSE 'Qty on Order not 0;'
+END [ERR22]*/
+
+,CASE COALESCE(s38.[Component Remaining Quantity &gt; 0],0)
+	WHEN 0 THEN ''
+	ELSE 'Unissued Component Quantity &gt; 0;'
+END [ERR23]
+,CASE
+	WHEN COALESCE(s28.Allocated,0) = 0 THEN ''
+	ELSE 'Allocated Qty Not Zero;'
+END [ERR24]
+,CASE
+	WHEN RIGHT(i.No_,3) = 'FAI' THEN 'Should not be FAI'
+	ELSE ''
+END [ERR25]
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else 'Should not be Non-vetted Item;'
+END [ERR26] */
+,CASE Vetted 
+	WHEN 0 THEN ''
+	Else
+	CASE [MPS Item]
+		WHEN 0 THEN ''
+		ELSE 'Should not be MPS;'
+	END
+END [ERR27]
+
+
+FROM ZYGO$Item i
+
+LEFT JOIN s1 ON i.No_ = s1.[Item No_]
+
+LEFT JOIN s2a ON i.No_ = s2a.No_
+
+LEFT JOIN ZYGO$Vendor v ON i.[Vendor No_] = v.No_
+
+LEFT JOIN [ZYGO$Item Vendor] iv ON iv.[Item No_] = i.No_ and iv.[Vendor No_] = i.[Vendor No_]
+
+LEFT JOIN s3L ON s3L.No_ = i.No_
+
+WHERE
+
+[Selection Code] NOT IN ('KBP','KBM','KBF','PHT','IPW','SIC','MMX','LTA','VMI','CFM') 
+
+AND LEN([Selection Code]) &gt; 0
+
+AND [Signal Code] != 'OBS'
+
+AND [Replenishment System] = 0
+
+--AND COALESCE(s1.Nettable,0) != 0
+
+)
+,s51 AS
+(
+	SELECT 
+
+	[Selection Code]
+	,No_
+	,Description
+	, [ERR1]
+	--+ [ERR2]
+	+ [ERR3]
+	--+ [ERR4]
+	--+ [ERR5]
+	--+ [ERR6]
+	+ [ERR7]
+	+ [ERR8]
+	+ [ERR9]
+	+ [ERR10]
+	+ [ERR11]
+	+ [ERR12]
+	--+ [ERR13]
+	+ [ERR14]
+	--+ [ERR15]
+	--+ [ERR16]
+	--+ [ERR17]
+	--+ [ERR18]
+	--+ [ERR19]
+	--+ [ERR20]
+	--+ [ERR21]
+	--+ [ERR22]
+	--+ [ERR23]
+	--+ [ERR24]
+	--+ [ERR25]
+	--+ [ERR26]
+	+ [ERR27]
+	--+ [ERR29]
+	--+ [ERR30]
+	--+ [ERR31]
+	--+ [ERR32] 
+	[Errors]
+
+	FROM s41
+
+)
+
+SELECT
+
+* 
+
+FROM s51
+
+WHERE LEN([Errors]) &gt; 0
+
+AND LEFT(No_,1) != 'X'
+
+
+--select * from s41</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="Selection_Code">
+          <DataField>Selection Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="No_">
+          <DataField>No_</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Description">
+          <DataField>Description</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Errors">
+          <DataField>Errors</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="textbox1">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>PURCH Error Report</Value>
+                    <Style>
+                      <FontFamily>Segoe UI Light</FontFamily>
+                      <FontSize>24pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>textbox1</rd:DefaultName>
+            <Height>0.43in</Height>
+            <Width>5in</Width>
+            <Style>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Tablix Name="table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.84375in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.82292in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.22in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Selection Code</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox3">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>No </Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Description</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Errors</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.21in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Selection_Code">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Selection_Code.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Selection_Code</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!No_.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Description">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Description.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Description</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Errors">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Errors.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Errors</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet1</DataSetName>
+            <Top>0.43in</Top>
+            <Height>0.43in</Height>
+            <Width>7.66667in</Width>
+            <ZIndex>1</ZIndex>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>0.86in</Height>
+        <Style />
+      </Body>
+      <Width>7.66667in</Width>
+      <Page>
+        <LeftMargin>1in</LeftMargin>
+        <RightMargin>1in</RightMargin>
+        <TopMargin>1in</TopMargin>
+        <BottomMargin>1in</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>4</NumberOfColumns>
+      <NumberOfRows>2</NumberOfRows>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Language>en-US</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>4fefe157-2688-4d6f-aa3a-6644d981861c</rd:ReportID>
+</Report>

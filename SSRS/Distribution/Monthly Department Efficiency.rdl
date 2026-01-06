@@ -1,0 +1,1555 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+  <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="AFE">
+      <DataSourceReference>AFE</DataSourceReference>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>b46a5a17-f0cc-421c-9ec2-396627bf23ac</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet1">
+      <Query>
+        <DataSourceName>AFE</DataSourceName>
+        <CommandText>/*	start with released and completed work orders started two years ago	*/
+
+with s1 AS /*	released production from NAV	*/
+(
+	SELECT
+	
+	[Prod_ Order No_] OrderNo
+	,[Operation No_] Operation
+	,l.Description
+	,[Prod_ Order No_] + [Operation No_] oLink
+	,l.[Work Center No_]
+	,m.CostCenter
+	,[Run Time]
+	,[Ending Date-Time] NAVplannedEndDate
+	,CASE Status
+		WHEN 3 THEN 'Released'
+		WHEN 4 THEN 'Completed'
+		ELSE ''
+	END NAVstatus
+
+	FROM NAVprodOrdRoutingLine l LEFT JOIN
+
+	NAV_WorkCenterCostCenterMapping m ON l.[Work Center No_] = m.WorkCenter
+
+	WHERE 1=1  
+
+	AND (Status = 4 AND [Starting Date-Time] &gt; DATEADD(yy, -2,GETDATE())
+
+	OR (Status = 3 and 
+	
+	([Starting Date-Time] &lt; DATEADD(mm,2,GETDATE())
+	
+	AND [Starting Date-Time] &gt; DATEADD(yy, -2,GETDATE()))
+	
+	)
+))	
+
+, s2A AS  /*	Dashboard start scans of released production operations	*/
+(
+	SELECT
+	
+	   Item
+	  ,[OrderNo]
+      ,[Operation]
+      ,COALESCE(MIN([StartTime]) ,'') DashboardStartDate
+	  ,[OrderNo] + [Operation] oLink
+	  
+  FROM [MIDDB01.zygo.com].Dashboard.[dbo].[TimecardNAVProdHours]
+
+  where EndTime &gt; DATEADD(mm, -12,GETDATE())
+
+  GROUP BY 
+
+       [OrderNo]
+      ,[Operation]
+      ,[Item]
+)
+, s2complete AS  /*	Dashboard end scans of released production operation complete	*/
+(
+	SELECT 
+	   Item
+	  ,[OrderNo]
+      ,[Operation]
+      ,COALESCE(MAX([EndTime]) ,'') DashboardCompletionDate
+	  ,[OrderNo] + [Operation] oLink
+	  ,MAX(Complete) DashboardStatus
+	  
+  FROM [MIDDB01.zygo.com].Dashboard.[dbo].[TimecardNAVProdHours]
+
+  where EndTime &gt; DATEADD(mm, -12,GETDATE())
+
+  AND Complete = 1
+
+  GROUP BY 
+
+       [OrderNo]
+      ,[Operation]
+      ,[Item]
+)
+,s2D AS
+(
+	SELECT 
+	   Item
+	  ,[OrderNo]
+      ,[Operation]
+      ,SUM(ApportionTime) DashboardTime
+	  ,[OrderNo] + [Operation] oLink
+	  
+  FROM [MIDDB01.zygo.com].Dashboard.[dbo].[TimecardNAVProdHours]
+
+  where EndTime &gt; DATEADD(mm, -12,GETDATE())
+
+  GROUP BY 
+
+       [OrderNo]
+      ,[Operation]
+      ,[Item]
+)
+,s2 AS
+(
+	select
+	
+	c.Item
+	,c.OrderNo
+	,c.Operation
+	,s2D.DashboardTime
+	,c.DashboardCompletionDate
+	,c.oLink
+	
+	from s2D
+
+	INNER JOIN s2complete c ON s2D.oLink = c.oLink
+
+)
+
+,s3 AS	/*	efficiency base	  */
+(
+	select
+
+	 s1.OrderNo
+	,s1.Operation
+	,s1.[Work Center No_]
+	,s1.CostCenter
+	,CASE
+		WHEN s2.[DashboardTime] &gt; 0 THEN (s1.[Run Time]/s2.DashboardTime)
+	ELSE 0
+	END Efficiency
+	,CAST(s2.DashboardCompletionDate as date) [Date]
+	
+	from s2
+
+	INNER JOIN s1 ON s2.oLink = s1.oLink
+
+
+)
+
+, s5 AS
+(
+		SELECT 
+
+	CASE [Work Center No_]
+		WHEN 'R94' THEN 'Shasta'
+		WHEN 'R93' THEN 'Shasta'
+		WHEN 'R92' THEN 'Shasta'
+		WHEN 'R919' THEN 'EPO-ASM'
+		WHEN 'R918' THEN 'EPO-ASM'
+		WHEN 'R917' THEN 'EPO-ASM'
+		WHEN 'R916' THEN 'EPO-ASM'
+		WHEN 'R915' THEN 'EPO-ASM'
+		WHEN 'R914' THEN 'EPO-ASM'
+		WHEN 'R913' THEN 'EPO-ASM'
+		WHEN 'R912' THEN 'EPO-ASM'
+		WHEN 'R911' THEN 'EPO-ASM'
+		WHEN 'R91' THEN 'EPO-ASM'
+		WHEN 'R909' THEN 'EPO-ASM'
+		WHEN 'R908' THEN 'EPO-ASM'
+		WHEN 'R907' THEN 'EPO-ASM'
+		WHEN 'R906' THEN 'EPO-ASM'
+		WHEN 'R905' THEN 'EPO-ASM'
+		WHEN 'R904' THEN 'EPO-ASM'
+		WHEN 'R903' THEN 'EPO-ASM'
+		WHEN 'R901' THEN 'EPO-ASM'
+		WHEN 'R900' THEN 'EPO-ASM'
+		WHEN 'R90' THEN 'EPO-ASM'
+		WHEN 'R89' THEN 'Shasta'
+		WHEN 'R87' THEN 'Shasta'
+		WHEN 'R86' THEN 'Shasta'
+		WHEN 'R84' THEN 'Shasta'
+		WHEN 'R83' THEN 'Shasta'
+		WHEN 'R820' THEN 'Shasta'
+		WHEN 'R82' THEN 'Shasta'
+		WHEN 'R819' THEN 'Shasta'
+		WHEN 'R818' THEN 'Shasta'
+		WHEN 'R817' THEN 'Shasta'
+		WHEN 'R816' THEN 'Shasta'
+		WHEN 'R815' THEN 'Shasta'
+		WHEN 'R814' THEN 'Shasta'
+		WHEN 'R813' THEN 'Shasta'
+		WHEN 'R812' THEN 'Shasta'
+		WHEN 'R811' THEN 'Shasta'
+		WHEN 'R810' THEN 'Shasta'
+		WHEN 'R809' THEN 'Shasta'
+		WHEN 'R808' THEN 'Shasta'
+		WHEN 'R807' THEN 'Shasta'
+		WHEN 'R806' THEN 'Shasta'
+		WHEN 'R805' THEN 'Shasta'
+		WHEN 'R804' THEN 'Shasta'
+		WHEN 'R803' THEN 'Shasta'
+		WHEN 'R802' THEN 'Shasta'
+		WHEN 'R801' THEN 'Shasta'
+		WHEN 'R800' THEN 'Shasta'
+		WHEN 'R70' THEN 'EPO QC'
+		WHEN 'R56' THEN 'EPO Workcell'
+		WHEN 'R55' THEN 'EPO Workcell'
+		WHEN 'R54' THEN 'EPO Workcell'
+		WHEN 'R53' THEN 'EPO Workcell'
+		WHEN 'R52' THEN 'EPO Workcell'
+		WHEN 'R516' THEN 'EPO Workcell'
+		WHEN 'R515' THEN 'EPO Metrology'
+		WHEN 'R514' THEN 'EPO Metrology'
+		WHEN 'R513' THEN 'EPO Workcell'
+		WHEN 'R512' THEN 'EPO Workcell'
+		WHEN 'R511' THEN 'EPO Workcell'
+		WHEN 'R510' THEN 'EPO Workcell'
+		WHEN 'R51' THEN 'EPO Workcell'
+		WHEN 'R509' THEN 'EPO Workcell'
+		WHEN 'R508' THEN 'EPO Workcell'
+		WHEN 'R507' THEN 'EPO Workcell'
+		WHEN 'R506' THEN 'EPO Workcell'
+		WHEN 'R505' THEN 'EPO Workcell'
+		WHEN 'R504' THEN 'EPO Workcell'
+		WHEN 'R503' THEN 'EPO Workcell'
+		WHEN 'R502' THEN 'EPO Workcell'
+		WHEN 'R501' THEN 'EPO Workcell'
+		WHEN 'R500' THEN 'EPO Workcell'
+		WHEN 'R50' THEN 'EPO Workcell'
+		WHEN 'R44' THEN 'EPO Workcell'
+		WHEN 'R43' THEN 'EPO Workcell'
+		WHEN 'R421' THEN 'EPO CNC'
+		WHEN 'R420' THEN 'EPO CNC'
+		WHEN 'R42' THEN 'EPO CNC'
+		WHEN 'R419' THEN 'EPO CNC'
+		WHEN 'R418' THEN 'EPO CNC'
+		WHEN 'R417' THEN 'EPO CNC'
+		WHEN 'R416' THEN 'EPO CNC'
+		WHEN 'R415' THEN 'EPO CNC'
+		WHEN 'R414' THEN 'EPO CNC'
+		WHEN 'R413' THEN 'EPO CNC'
+		WHEN 'R412' THEN 'EPO CNC'
+		WHEN 'R411' THEN 'EPO CNC'
+		WHEN 'R410' THEN 'EPO CNC'
+		WHEN 'R41' THEN 'EPO CNC'
+		WHEN 'R409' THEN 'EPO CNC'
+		WHEN 'R408' THEN 'EPO CNC'
+		WHEN 'R407' THEN 'EPO CNC'
+		WHEN 'R406' THEN 'EPO CNC'
+		WHEN 'R405' THEN 'EPO CNC'
+		WHEN 'R404' THEN 'EPO CNC'
+		WHEN 'R403' THEN 'EPO CNC'
+		WHEN 'R402' THEN 'EPO CNC'
+		WHEN 'R401' THEN 'EPO CNC'
+		WHEN 'R400' THEN 'EPO CNC'
+		WHEN 'R40' THEN 'EPO CNC'
+		WHEN 'R36' THEN 'EPO Shape'
+		WHEN 'R35' THEN 'EPO Shape'
+		WHEN 'R33' THEN 'EPO Shape'
+		WHEN 'R32' THEN 'EPO Shape'
+		WHEN 'R31' THEN 'EPO Shape'
+		WHEN 'R308' THEN 'EPO Shape'
+		WHEN 'R307' THEN 'EPO Shape'
+		WHEN 'R306' THEN 'EPO Shape'
+		WHEN 'R304' THEN 'EPO Shape'
+		WHEN 'R303' THEN 'EPO Shape'
+		WHEN 'R302' THEN 'EPO Shape'
+		WHEN 'R301' THEN 'EPO Shape'
+		WHEN 'R300' THEN 'EPO Shape'
+		WHEN 'R30' THEN 'EPO Shape'
+		WHEN 'R24' THEN 'EPO Polish'
+		WHEN 'R234' THEN 'EPO Polish'
+		WHEN 'R233' THEN 'EPO Polish'
+		WHEN 'R232' THEN 'EPO Polish'
+		WHEN 'R231' THEN 'EPO Polish'
+		WHEN 'R230' THEN 'EPO Polish'
+		WHEN 'R23' THEN 'EPO Polish'
+		WHEN 'R229' THEN 'EPO Polish'
+		WHEN 'R228' THEN 'EPO Polish'
+		WHEN 'R227' THEN 'EPO Polish'
+		WHEN 'R226' THEN 'EPO Polish'
+		WHEN 'R225' THEN 'EPO Polish'
+		WHEN 'R224' THEN 'EPO Polish'
+		WHEN 'R223' THEN 'EPO Polish'
+		WHEN 'R222' THEN 'EPO Polish'
+		WHEN 'R221' THEN 'EPO Polish'
+		WHEN 'R220' THEN 'EPO Polish'
+		WHEN 'R22' THEN 'EPO Polish'
+		WHEN 'R219' THEN 'EPO Polish'
+		WHEN 'R218' THEN 'EPO Polish'
+		WHEN 'R217' THEN 'EPO Polish'
+		WHEN 'R216' THEN 'EPO Polish'
+		WHEN 'R215' THEN 'EPO Polish'
+		WHEN 'R214' THEN 'EPO Polish'
+		WHEN 'R213' THEN 'EPO Polish'
+		WHEN 'R212' THEN 'EPO Polish'
+		WHEN 'R211' THEN 'EPO Polish'
+		WHEN 'R210' THEN 'EPO Polish'
+		WHEN 'R21' THEN 'EPO Polish'
+		WHEN 'R209' THEN 'EPO Polish'
+		WHEN 'R208' THEN 'EPO Polish'
+		WHEN 'R207' THEN 'EPO Polish'
+		WHEN 'R206' THEN 'EPO Polish'
+		WHEN 'R205' THEN 'EPO Polish'
+		WHEN 'R204' THEN 'EPO Polish'
+		WHEN 'R203' THEN 'EPO Polish'
+		WHEN 'R202' THEN 'EPO Polish'
+		WHEN 'R201' THEN 'EPO Polish'
+		WHEN 'R20' THEN 'EPO Polish'
+		WHEN 'R160' THEN 'EPO Metrology'
+		WHEN 'R159' THEN 'CCOS'
+		WHEN 'R158' THEN 'EPO Metrology'
+		WHEN 'R157' THEN 'EPO Metrology'
+		WHEN 'R156' THEN 'EPO Metrology'
+		WHEN 'R155' THEN 'EPO Metrology'
+		WHEN 'R154' THEN 'EPO Metrology'
+		WHEN 'R153' THEN 'EPO Metrology'
+		WHEN 'R152' THEN 'EPO Metrology'
+		WHEN 'R151' THEN 'EPO Metrology'
+		WHEN 'R150' THEN 'EPO Metrology'
+		WHEN 'R149' THEN 'EPO Metrology'
+		WHEN 'R148' THEN 'EPO Metrology'
+		WHEN 'R146' THEN 'EPO Metrology'
+		WHEN 'R145' THEN 'EPO Metrology'
+		WHEN 'R144' THEN 'EPO Metrology'
+		WHEN 'R143' THEN 'EPO Metrology'
+		WHEN 'R142' THEN 'EPO Metrology'
+		WHEN 'R141' THEN 'EPO Metrology'
+		WHEN 'R140' THEN 'EPO Metrology'
+		WHEN 'R139' THEN 'EPO Metrology'
+		WHEN 'R138' THEN 'EPO Metrology'
+		WHEN 'R137' THEN 'EPO Metrology'
+		WHEN 'R136' THEN 'EPO Metrology'
+		WHEN 'R135' THEN 'EPO Metrology'
+		WHEN 'R134' THEN 'EPO Metrology'
+		WHEN 'R131' THEN 'EPO Metrology'
+		WHEN 'R130' THEN 'EPO Metrology'
+		WHEN 'R129' THEN 'EPO Metrology'
+		WHEN 'R128' THEN 'EPO Metrology'
+		WHEN 'R127' THEN 'EPO Metrology'
+		WHEN 'R126' THEN 'EPO Metrology'
+		WHEN 'R125' THEN 'EPO Metrology'
+		WHEN 'R124' THEN 'EPO Metrology'
+		WHEN 'R122' THEN 'EPO IBF'
+		WHEN 'R121' THEN 'EPO IBF'
+		WHEN 'R120' THEN 'EPO IBF'
+		WHEN 'R119' THEN 'EPO IBF'
+		WHEN 'R118' THEN 'EPO IBF'
+		WHEN 'R116' THEN 'CCOS'
+		WHEN 'R115' THEN 'EPO Metrology'
+		WHEN 'R113' THEN 'CCOS'
+		WHEN 'R112' THEN 'CCOS'
+		WHEN 'R111' THEN 'CCOS'
+		WHEN 'R110' THEN 'CCOS'
+		WHEN 'R11' THEN 'CCOS'
+		WHEN 'R109' THEN 'CCOS'
+		WHEN 'R108' THEN 'CCOS'
+		WHEN 'R107' THEN 'CCOS'
+		WHEN 'R106' THEN 'CCOS'
+		WHEN 'R105' THEN 'CCOS'
+		WHEN 'R104' THEN 'CCOS'
+		WHEN 'R103' THEN 'CCOS'
+		WHEN 'R102' THEN 'CCOS'
+		WHEN 'R101' THEN 'CCOS'
+		WHEN 'R100' THEN 'CCOS'
+		WHEN 'R10' THEN 'EPO Metrology'
+		WHEN 'R09' THEN 'EPO Metrology'
+		WHEN 'R08' THEN 'EPO Metrology'
+		WHEN 'R07' THEN 'EPO IBF'
+		WHEN 'R05' THEN 'CCOS'
+		WHEN 'R04' THEN 'EPO Metrology'
+		WHEN 'R03' THEN 'EPO Metrology'
+		WHEN 'R02' THEN 'EPO IBF'
+		WHEN 'R00' THEN 'CCOS'
+		WHEN '780E' THEN 'RHM'
+		WHEN '780' THEN 'RHM'
+		WHEN '760J' THEN 'GPI'
+		WHEN '760H' THEN 'GPI'
+		WHEN '760G' THEN 'GPI'
+		WHEN '760F' THEN 'GPI'
+		WHEN '760E' THEN 'GPI'
+		WHEN '760D' THEN 'GPI'
+		WHEN '760C' THEN 'GPI'
+		WHEN '760B' THEN 'GPI'
+		WHEN '760' THEN 'GPI'
+		WHEN '780' THEN 'RHM'
+		WHEN '770' THEN 'OMAC'
+		WHEN '765' THEN 'GPI'
+		WHEN '760' THEN 'GPI'
+		WHEN '756' THEN 'GPI'
+		WHEN '755' THEN 'Profiler'
+		WHEN '750' THEN 'Profiler'
+		WHEN '730' THEN 'CMS'
+		WHEN '718' THEN 'OMAC'
+		WHEN '717' THEN 'OMAC'
+		WHEN '716' THEN 'OMAC'
+		WHEN '713' THEN 'PPS'
+		WHEN '712' THEN 'PPS'
+		WHEN '711' THEN 'PPS'
+		WHEN '710' THEN 'PPS'
+		WHEN '597' THEN 'QA'
+		WHEN '596' THEN 'QA'
+		WHEN '592' THEN 'QA'
+		WHEN '497' THEN 'Coating'
+		WHEN '496' THEN 'Coating'
+		WHEN '495' THEN 'Coating'
+		WHEN '494' THEN 'Coating'
+		WHEN '493' THEN 'Coating'
+		WHEN '492' THEN 'Coating'
+		WHEN '491' THEN 'Coating'
+		WHEN '489' THEN 'Coating'
+		WHEN '488' THEN 'Coating'
+		WHEN '487' THEN 'Coating'
+		WHEN '486' THEN 'Coating'
+		WHEN '485' THEN 'Coating'
+		WHEN '484' THEN 'Coating'
+		WHEN '483' THEN 'Coating'
+		WHEN '481' THEN 'Coating'
+		WHEN '480' THEN 'Coating'
+		WHEN '472' THEN 'Polishing'
+		WHEN '471' THEN 'PO Metrology'
+		WHEN '465' THEN 'Polishing'
+		WHEN '462' THEN 'Polishing'
+		WHEN '461' THEN 'Polishing'
+		WHEN '460' THEN 'Polishing'
+		WHEN '459' THEN 'PO Metrology'
+		WHEN '458' THEN 'PO Metrology'
+		WHEN '457' THEN 'PO Metrology'
+		WHEN '456' THEN 'PO Metrology'
+		WHEN '455' THEN 'PO Metrology'
+		WHEN '454' THEN 'PO Metrology'
+		WHEN '453' THEN 'PO Metrology'
+		WHEN '452' THEN 'PO Metrology'
+		WHEN '451' THEN 'PO Metrology'
+		WHEN '450' THEN 'PO Metrology'
+		WHEN '449' THEN 'PO Metrology'
+		WHEN '448' THEN 'PO Metrology'
+		WHEN '447' THEN 'PO Metrology'
+		WHEN '446' THEN 'PO Metrology'
+		WHEN '445' THEN 'Polishing'
+		WHEN '440' THEN 'Polishing'
+		WHEN '435' THEN 'Polishing'
+		WHEN '434' THEN 'Polishing'
+		WHEN '433' THEN 'Polishing'
+		WHEN '432' THEN 'Polishing'
+		WHEN '431' THEN 'Grind'
+		WHEN '430' THEN 'Polishing'
+		WHEN '386' THEN 'Inspection'
+		WHEN '385' THEN 'Inspection'
+		WHEN '319' THEN 'Spherical'
+		WHEN '318' THEN 'Spherical'
+		WHEN '317' THEN 'Spherical'
+		WHEN '316' THEN 'Spherical'
+		WHEN '314' THEN 'Spherical'
+		WHEN '313' THEN 'Spherical'
+		WHEN '311' THEN 'Spherical'
+		WHEN '310' THEN 'Spherical'
+		WHEN '309' THEN 'Spherical'
+		WHEN '307' THEN 'Spherical'
+		WHEN '306' THEN 'Spherical'
+		WHEN '304' THEN 'Spherical'
+		WHEN '303' THEN 'Spherical'
+		WHEN '302' THEN 'Spherical'
+		WHEN '301' THEN 'Spherical'
+		WHEN '294' THEN 'Spherical'
+		WHEN '293' THEN 'Spherical'
+		WHEN '290' THEN 'Spherical'
+		WHEN '285' THEN 'LFO Metrology'
+		WHEN '284' THEN 'LFO Metrology'
+		WHEN '283' THEN 'Polishing'
+		WHEN '282' THEN 'Polishing'
+		WHEN '281' THEN 'Polishing'
+		WHEN '280' THEN 'LFO Inspect'
+		WHEN '278' THEN 'Polishing'
+		WHEN '277' THEN 'LFO Polish/Bevel'
+		WHEN '276' THEN 'LFO Polish/Bevel'
+		WHEN '273' THEN 'Generate'
+		WHEN '271' THEN 'Generate'
+		WHEN '270' THEN 'CNC'
+		WHEN '247' THEN 'LFO Metrology'
+		WHEN '246' THEN 'LFO Polish/Bevel'
+		WHEN '245' THEN 'LFO Metrology'
+		WHEN '244' THEN 'MRF'
+		WHEN '243' THEN 'MRF'
+		WHEN '242' THEN 'MRF'
+		WHEN '241' THEN 'MRF'
+		WHEN '240' THEN 'MRF'
+		WHEN '238' THEN 'MRF'
+		WHEN '236' THEN 'LFO Polish/Bevel'
+		WHEN '234' THEN 'LFO Polish/Bevel'
+		WHEN '233' THEN 'LFO Polish/Bevel'
+		WHEN '232' THEN 'LFO Inspect'
+		WHEN '231' THEN 'LFO Polish/Bevel'
+		WHEN '230' THEN 'LFO Polish/Bevel'
+		WHEN '229' THEN 'LFO Polish/Bevel'
+		WHEN '228' THEN 'LFO Polish/Bevel'
+		WHEN '227' THEN 'LFO Polish/Bevel'
+		WHEN '226' THEN 'Generate'
+		WHEN '225' THEN 'Inspection'
+		WHEN '224' THEN 'LFO Polish/Bevel'
+		WHEN '220' THEN 'Grind'
+		WHEN '219' THEN 'Grind'
+		WHEN '218' THEN 'Generate'
+		WHEN '217' THEN 'Generate'
+		WHEN '216' THEN 'Generate'
+		WHEN '215' THEN 'Generate'
+		WHEN '214' THEN 'Generate'
+		WHEN '213' THEN 'Grind'
+		WHEN '212' THEN 'Grind'
+		WHEN '210' THEN 'Grind'
+		WHEN '209' THEN 'Generate'
+		WHEN '207' THEN 'Generate'
+		WHEN '202' THEN 'CNC'
+		WHEN '199' THEN 'Grind'
+		WHEN '198' THEN 'Grind'
+		WHEN '196' THEN 'Grind'
+		WHEN '195' THEN 'Grind'
+		WHEN '194' THEN 'Grind'
+		WHEN '170' THEN 'CNC'
+		WHEN '169' THEN 'CNC'
+		WHEN '168' THEN 'CNC'
+		WHEN '167' THEN 'CNC'
+		WHEN '166' THEN 'CNC'
+		WHEN '165' THEN 'CNC'
+		WHEN '164' THEN 'CNC'
+		WHEN '163' THEN 'CNC'
+		WHEN '162' THEN 'CNC'
+		WHEN '161' THEN 'CNC'
+		WHEN '159' THEN 'CNC'
+		WHEN '158' THEN 'CNC'
+		WHEN '135' THEN 'Block Bevel'
+		WHEN '134' THEN 'Block Bevel'
+		WHEN '133' THEN 'Block Bevel'
+		WHEN '132' THEN 'Block Bevel'
+		WHEN '131' THEN 'Block Bevel'
+		WHEN '130' THEN 'Block Bevel'
+		WHEN '129' THEN 'Block Bevel'
+		WHEN '128' THEN 'Block Bevel'
+		WHEN '127' THEN 'Block Bevel'
+		WHEN '122' THEN 'PPS'
+		WHEN '107' THEN 'PPS'
+		WHEN '104' THEN 'PPS'
+		WHEN '101' THEN 'Inspection'
+		WHEN '81' THEN 'PPS'
+		ELSE ''
+	END Department
+	,AVg(Efficiency) Efficiency
+	,MONTH([Date]) [Month]
+	,YEAR([Date]) [Year]
+
+	FROM s3
+
+	WHERE [Date] &lt; CAST(DATEADD(dd, -1,GetDate()) as date)
+
+	GROUP BY
+
+	CASE [Work Center No_]
+			WHEN 'R94' THEN 'Shasta'
+			WHEN 'R93' THEN 'Shasta'
+			WHEN 'R92' THEN 'Shasta'
+			WHEN 'R919' THEN 'EPO-ASM'
+			WHEN 'R918' THEN 'EPO-ASM'
+			WHEN 'R917' THEN 'EPO-ASM'
+			WHEN 'R916' THEN 'EPO-ASM'
+			WHEN 'R915' THEN 'EPO-ASM'
+			WHEN 'R914' THEN 'EPO-ASM'
+			WHEN 'R913' THEN 'EPO-ASM'
+			WHEN 'R912' THEN 'EPO-ASM'
+			WHEN 'R911' THEN 'EPO-ASM'
+			WHEN 'R91' THEN 'EPO-ASM'
+			WHEN 'R909' THEN 'EPO-ASM'
+			WHEN 'R908' THEN 'EPO-ASM'
+			WHEN 'R907' THEN 'EPO-ASM'
+			WHEN 'R906' THEN 'EPO-ASM'
+			WHEN 'R905' THEN 'EPO-ASM'
+			WHEN 'R904' THEN 'EPO-ASM'
+			WHEN 'R903' THEN 'EPO-ASM'
+			WHEN 'R901' THEN 'EPO-ASM'
+			WHEN 'R900' THEN 'EPO-ASM'
+			WHEN 'R90' THEN 'EPO-ASM'
+			WHEN 'R89' THEN 'Shasta'
+			WHEN 'R87' THEN 'Shasta'
+			WHEN 'R86' THEN 'Shasta'
+			WHEN 'R84' THEN 'Shasta'
+			WHEN 'R83' THEN 'Shasta'
+			WHEN 'R820' THEN 'Shasta'
+			WHEN 'R82' THEN 'Shasta'
+			WHEN 'R819' THEN 'Shasta'
+			WHEN 'R818' THEN 'Shasta'
+			WHEN 'R817' THEN 'Shasta'
+			WHEN 'R816' THEN 'Shasta'
+			WHEN 'R815' THEN 'Shasta'
+			WHEN 'R814' THEN 'Shasta'
+			WHEN 'R813' THEN 'Shasta'
+			WHEN 'R812' THEN 'Shasta'
+			WHEN 'R811' THEN 'Shasta'
+			WHEN 'R810' THEN 'Shasta'
+			WHEN 'R809' THEN 'Shasta'
+			WHEN 'R808' THEN 'Shasta'
+			WHEN 'R807' THEN 'Shasta'
+			WHEN 'R806' THEN 'Shasta'
+			WHEN 'R805' THEN 'Shasta'
+			WHEN 'R804' THEN 'Shasta'
+			WHEN 'R803' THEN 'Shasta'
+			WHEN 'R802' THEN 'Shasta'
+			WHEN 'R801' THEN 'Shasta'
+			WHEN 'R800' THEN 'Shasta'
+			WHEN 'R70' THEN 'EPO QC'
+			WHEN 'R56' THEN 'EPO Workcell'
+			WHEN 'R55' THEN 'EPO Workcell'
+			WHEN 'R54' THEN 'EPO Workcell'
+			WHEN 'R53' THEN 'EPO Workcell'
+			WHEN 'R52' THEN 'EPO Workcell'
+			WHEN 'R516' THEN 'EPO Workcell'
+			WHEN 'R515' THEN 'EPO Metrology'
+			WHEN 'R514' THEN 'EPO Metrology'
+			WHEN 'R513' THEN 'EPO Workcell'
+			WHEN 'R512' THEN 'EPO Workcell'
+			WHEN 'R511' THEN 'EPO Workcell'
+			WHEN 'R510' THEN 'EPO Workcell'
+			WHEN 'R51' THEN 'EPO Workcell'
+			WHEN 'R509' THEN 'EPO Workcell'
+			WHEN 'R508' THEN 'EPO Workcell'
+			WHEN 'R507' THEN 'EPO Workcell'
+			WHEN 'R506' THEN 'EPO Workcell'
+			WHEN 'R505' THEN 'EPO Workcell'
+			WHEN 'R504' THEN 'EPO Workcell'
+			WHEN 'R503' THEN 'EPO Workcell'
+			WHEN 'R502' THEN 'EPO Workcell'
+			WHEN 'R501' THEN 'EPO Workcell'
+			WHEN 'R500' THEN 'EPO Workcell'
+			WHEN 'R50' THEN 'EPO Workcell'
+			WHEN 'R44' THEN 'EPO Workcell'
+			WHEN 'R43' THEN 'EPO Workcell'
+			WHEN 'R421' THEN 'EPO CNC'
+			WHEN 'R420' THEN 'EPO CNC'
+			WHEN 'R42' THEN 'EPO CNC'
+			WHEN 'R419' THEN 'EPO CNC'
+			WHEN 'R418' THEN 'EPO CNC'
+			WHEN 'R417' THEN 'EPO CNC'
+			WHEN 'R416' THEN 'EPO CNC'
+			WHEN 'R415' THEN 'EPO CNC'
+			WHEN 'R414' THEN 'EPO CNC'
+			WHEN 'R413' THEN 'EPO CNC'
+			WHEN 'R412' THEN 'EPO CNC'
+			WHEN 'R411' THEN 'EPO CNC'
+			WHEN 'R410' THEN 'EPO CNC'
+			WHEN 'R41' THEN 'EPO CNC'
+			WHEN 'R409' THEN 'EPO CNC'
+			WHEN 'R408' THEN 'EPO CNC'
+			WHEN 'R407' THEN 'EPO CNC'
+			WHEN 'R406' THEN 'EPO CNC'
+			WHEN 'R405' THEN 'EPO CNC'
+			WHEN 'R404' THEN 'EPO CNC'
+			WHEN 'R403' THEN 'EPO CNC'
+			WHEN 'R402' THEN 'EPO CNC'
+			WHEN 'R401' THEN 'EPO CNC'
+			WHEN 'R400' THEN 'EPO CNC'
+			WHEN 'R40' THEN 'EPO CNC'
+			WHEN 'R36' THEN 'EPO Shape'
+			WHEN 'R35' THEN 'EPO Shape'
+			WHEN 'R33' THEN 'EPO Shape'
+			WHEN 'R32' THEN 'EPO Shape'
+			WHEN 'R31' THEN 'EPO Shape'
+			WHEN 'R308' THEN 'EPO Shape'
+			WHEN 'R307' THEN 'EPO Shape'
+			WHEN 'R306' THEN 'EPO Shape'
+			WHEN 'R304' THEN 'EPO Shape'
+			WHEN 'R303' THEN 'EPO Shape'
+			WHEN 'R302' THEN 'EPO Shape'
+			WHEN 'R301' THEN 'EPO Shape'
+			WHEN 'R300' THEN 'EPO Shape'
+			WHEN 'R30' THEN 'EPO Shape'
+			WHEN 'R24' THEN 'EPO Polish'
+			WHEN 'R234' THEN 'EPO Polish'
+			WHEN 'R233' THEN 'EPO Polish'
+			WHEN 'R232' THEN 'EPO Polish'
+			WHEN 'R231' THEN 'EPO Polish'
+			WHEN 'R230' THEN 'EPO Polish'
+			WHEN 'R23' THEN 'EPO Polish'
+			WHEN 'R229' THEN 'EPO Polish'
+			WHEN 'R228' THEN 'EPO Polish'
+			WHEN 'R227' THEN 'EPO Polish'
+			WHEN 'R226' THEN 'EPO Polish'
+			WHEN 'R225' THEN 'EPO Polish'
+			WHEN 'R224' THEN 'EPO Polish'
+			WHEN 'R223' THEN 'EPO Polish'
+			WHEN 'R222' THEN 'EPO Polish'
+			WHEN 'R221' THEN 'EPO Polish'
+			WHEN 'R220' THEN 'EPO Polish'
+			WHEN 'R22' THEN 'EPO Polish'
+			WHEN 'R219' THEN 'EPO Polish'
+			WHEN 'R218' THEN 'EPO Polish'
+			WHEN 'R217' THEN 'EPO Polish'
+			WHEN 'R216' THEN 'EPO Polish'
+			WHEN 'R215' THEN 'EPO Polish'
+			WHEN 'R214' THEN 'EPO Polish'
+			WHEN 'R213' THEN 'EPO Polish'
+			WHEN 'R212' THEN 'EPO Polish'
+			WHEN 'R211' THEN 'EPO Polish'
+			WHEN 'R210' THEN 'EPO Polish'
+			WHEN 'R21' THEN 'EPO Polish'
+			WHEN 'R209' THEN 'EPO Polish'
+			WHEN 'R208' THEN 'EPO Polish'
+			WHEN 'R207' THEN 'EPO Polish'
+			WHEN 'R206' THEN 'EPO Polish'
+			WHEN 'R205' THEN 'EPO Polish'
+			WHEN 'R204' THEN 'EPO Polish'
+			WHEN 'R203' THEN 'EPO Polish'
+			WHEN 'R202' THEN 'EPO Polish'
+			WHEN 'R201' THEN 'EPO Polish'
+			WHEN 'R20' THEN 'EPO Polish'
+			WHEN 'R160' THEN 'EPO Metrology'
+			WHEN 'R159' THEN 'CCOS'
+			WHEN 'R158' THEN 'EPO Metrology'
+			WHEN 'R157' THEN 'EPO Metrology'
+			WHEN 'R156' THEN 'EPO Metrology'
+			WHEN 'R155' THEN 'EPO Metrology'
+			WHEN 'R154' THEN 'EPO Metrology'
+			WHEN 'R153' THEN 'EPO Metrology'
+			WHEN 'R152' THEN 'EPO Metrology'
+			WHEN 'R151' THEN 'EPO Metrology'
+			WHEN 'R150' THEN 'EPO Metrology'
+			WHEN 'R149' THEN 'EPO Metrology'
+			WHEN 'R148' THEN 'EPO Metrology'
+			WHEN 'R146' THEN 'EPO Metrology'
+			WHEN 'R145' THEN 'EPO Metrology'
+			WHEN 'R144' THEN 'EPO Metrology'
+			WHEN 'R143' THEN 'EPO Metrology'
+			WHEN 'R142' THEN 'EPO Metrology'
+			WHEN 'R141' THEN 'EPO Metrology'
+			WHEN 'R140' THEN 'EPO Metrology'
+			WHEN 'R139' THEN 'EPO Metrology'
+			WHEN 'R138' THEN 'EPO Metrology'
+			WHEN 'R137' THEN 'EPO Metrology'
+			WHEN 'R136' THEN 'EPO Metrology'
+			WHEN 'R135' THEN 'EPO Metrology'
+			WHEN 'R134' THEN 'EPO Metrology'
+			WHEN 'R131' THEN 'EPO Metrology'
+			WHEN 'R130' THEN 'EPO Metrology'
+			WHEN 'R129' THEN 'EPO Metrology'
+			WHEN 'R128' THEN 'EPO Metrology'
+			WHEN 'R127' THEN 'EPO Metrology'
+			WHEN 'R126' THEN 'EPO Metrology'
+			WHEN 'R125' THEN 'EPO Metrology'
+			WHEN 'R124' THEN 'EPO Metrology'
+			WHEN 'R122' THEN 'EPO IBF'
+			WHEN 'R121' THEN 'EPO IBF'
+			WHEN 'R120' THEN 'EPO IBF'
+			WHEN 'R119' THEN 'EPO IBF'
+			WHEN 'R118' THEN 'EPO IBF'
+			WHEN 'R116' THEN 'CCOS'
+			WHEN 'R115' THEN 'EPO Metrology'
+			WHEN 'R113' THEN 'CCOS'
+			WHEN 'R112' THEN 'CCOS'
+			WHEN 'R111' THEN 'CCOS'
+			WHEN 'R110' THEN 'CCOS'
+			WHEN 'R11' THEN 'CCOS'
+			WHEN 'R109' THEN 'CCOS'
+			WHEN 'R108' THEN 'CCOS'
+			WHEN 'R107' THEN 'CCOS'
+			WHEN 'R106' THEN 'CCOS'
+			WHEN 'R105' THEN 'CCOS'
+			WHEN 'R104' THEN 'CCOS'
+			WHEN 'R103' THEN 'CCOS'
+			WHEN 'R102' THEN 'CCOS'
+			WHEN 'R101' THEN 'CCOS'
+			WHEN 'R100' THEN 'CCOS'
+			WHEN 'R10' THEN 'EPO Metrology'
+			WHEN 'R09' THEN 'EPO Metrology'
+			WHEN 'R08' THEN 'EPO Metrology'
+			WHEN 'R07' THEN 'EPO IBF'
+			WHEN 'R05' THEN 'CCOS'
+			WHEN 'R04' THEN 'EPO Metrology'
+			WHEN 'R03' THEN 'EPO Metrology'
+			WHEN 'R02' THEN 'EPO IBF'
+			WHEN 'R00' THEN 'CCOS'
+			WHEN '780E' THEN 'RHM'
+			WHEN '780' THEN 'RHM'
+			WHEN '760J' THEN 'GPI'
+			WHEN '760H' THEN 'GPI'
+			WHEN '760G' THEN 'GPI'
+			WHEN '760F' THEN 'GPI'
+			WHEN '760E' THEN 'GPI'
+			WHEN '760D' THEN 'GPI'
+			WHEN '760C' THEN 'GPI'
+			WHEN '760B' THEN 'GPI'
+			WHEN '760' THEN 'GPI'
+			WHEN '780' THEN 'RHM'
+			WHEN '770' THEN 'OMAC'
+			WHEN '765' THEN 'GPI'
+			WHEN '760' THEN 'GPI'
+			WHEN '756' THEN 'GPI'
+			WHEN '755' THEN 'Profiler'
+			WHEN '750' THEN 'Profiler'
+			WHEN '730' THEN 'CMS'
+			WHEN '718' THEN 'OMAC'
+			WHEN '717' THEN 'OMAC'
+			WHEN '716' THEN 'OMAC'
+			WHEN '713' THEN 'PPS'
+			WHEN '712' THEN 'PPS'
+			WHEN '711' THEN 'PPS'
+			WHEN '710' THEN 'PPS'
+			WHEN '597' THEN 'QA'
+			WHEN '596' THEN 'QA'
+			WHEN '592' THEN 'QA'
+			WHEN '497' THEN 'Coating'
+			WHEN '496' THEN 'Coating'
+			WHEN '495' THEN 'Coating'
+			WHEN '494' THEN 'Coating'
+			WHEN '493' THEN 'Coating'
+			WHEN '492' THEN 'Coating'
+			WHEN '491' THEN 'Coating'
+			WHEN '489' THEN 'Coating'
+			WHEN '488' THEN 'Coating'
+			WHEN '487' THEN 'Coating'
+			WHEN '486' THEN 'Coating'
+			WHEN '485' THEN 'Coating'
+			WHEN '484' THEN 'Coating'
+			WHEN '483' THEN 'Coating'
+			WHEN '481' THEN 'Coating'
+			WHEN '480' THEN 'Coating'
+			WHEN '472' THEN 'Polishing'
+			WHEN '471' THEN 'PO Metrology'
+			WHEN '465' THEN 'Polishing'
+			WHEN '462' THEN 'Polishing'
+			WHEN '461' THEN 'Polishing'
+			WHEN '460' THEN 'Polishing'
+			WHEN '459' THEN 'PO Metrology'
+			WHEN '458' THEN 'PO Metrology'
+			WHEN '457' THEN 'PO Metrology'
+			WHEN '456' THEN 'PO Metrology'
+			WHEN '455' THEN 'PO Metrology'
+			WHEN '454' THEN 'PO Metrology'
+			WHEN '453' THEN 'PO Metrology'
+			WHEN '452' THEN 'PO Metrology'
+			WHEN '451' THEN 'PO Metrology'
+			WHEN '450' THEN 'PO Metrology'
+			WHEN '449' THEN 'PO Metrology'
+			WHEN '448' THEN 'PO Metrology'
+			WHEN '447' THEN 'PO Metrology'
+			WHEN '446' THEN 'PO Metrology'
+			WHEN '445' THEN 'Polishing'
+			WHEN '440' THEN 'Polishing'
+			WHEN '435' THEN 'Polishing'
+			WHEN '434' THEN 'Polishing'
+			WHEN '433' THEN 'Polishing'
+			WHEN '432' THEN 'Polishing'
+			WHEN '431' THEN 'Grind'
+			WHEN '430' THEN 'Polishing'
+			WHEN '386' THEN 'Inspection'
+			WHEN '385' THEN 'Inspection'
+			WHEN '319' THEN 'Spherical'
+			WHEN '318' THEN 'Spherical'
+			WHEN '317' THEN 'Spherical'
+			WHEN '316' THEN 'Spherical'
+			WHEN '314' THEN 'Spherical'
+			WHEN '313' THEN 'Spherical'
+			WHEN '311' THEN 'Spherical'
+			WHEN '310' THEN 'Spherical'
+			WHEN '309' THEN 'Spherical'
+			WHEN '307' THEN 'Spherical'
+			WHEN '306' THEN 'Spherical'
+			WHEN '304' THEN 'Spherical'
+			WHEN '303' THEN 'Spherical'
+			WHEN '302' THEN 'Spherical'
+			WHEN '301' THEN 'Spherical'
+			WHEN '294' THEN 'Spherical'
+			WHEN '293' THEN 'Spherical'
+			WHEN '290' THEN 'Spherical'
+			WHEN '285' THEN 'LFO Metrology'
+			WHEN '284' THEN 'LFO Metrology'
+			WHEN '283' THEN 'Polishing'
+			WHEN '282' THEN 'Polishing'
+			WHEN '281' THEN 'Polishing'
+			WHEN '280' THEN 'LFO Inspect'
+			WHEN '278' THEN 'Polishing'
+			WHEN '277' THEN 'LFO Polish/Bevel'
+			WHEN '276' THEN 'LFO Polish/Bevel'
+			WHEN '273' THEN 'Generate'
+			WHEN '271' THEN 'Generate'
+			WHEN '270' THEN 'CNC'
+			WHEN '247' THEN 'LFO Metrology'
+			WHEN '246' THEN 'LFO Polish/Bevel'
+			WHEN '245' THEN 'LFO Metrology'
+			WHEN '244' THEN 'MRF'
+			WHEN '243' THEN 'MRF'
+			WHEN '242' THEN 'MRF'
+			WHEN '241' THEN 'MRF'
+			WHEN '240' THEN 'MRF'
+			WHEN '238' THEN 'MRF'
+			WHEN '236' THEN 'LFO Polish/Bevel'
+			WHEN '234' THEN 'LFO Polish/Bevel'
+			WHEN '233' THEN 'LFO Polish/Bevel'
+			WHEN '232' THEN 'LFO Inspect'
+			WHEN '231' THEN 'LFO Polish/Bevel'
+			WHEN '230' THEN 'LFO Polish/Bevel'
+			WHEN '229' THEN 'LFO Polish/Bevel'
+			WHEN '228' THEN 'LFO Polish/Bevel'
+			WHEN '227' THEN 'LFO Polish/Bevel'
+			WHEN '226' THEN 'Generate'
+			WHEN '225' THEN 'Inspection'
+			WHEN '224' THEN 'LFO Polish/Bevel'
+			WHEN '220' THEN 'Grind'
+			WHEN '219' THEN 'Grind'
+			WHEN '218' THEN 'Generate'
+			WHEN '217' THEN 'Generate'
+			WHEN '216' THEN 'Generate'
+			WHEN '215' THEN 'Generate'
+			WHEN '214' THEN 'Generate'
+			WHEN '213' THEN 'Grind'
+			WHEN '212' THEN 'Grind'
+			WHEN '210' THEN 'Grind'
+			WHEN '209' THEN 'Generate'
+			WHEN '207' THEN 'Generate'
+			WHEN '202' THEN 'CNC'
+			WHEN '199' THEN 'Grind'
+			WHEN '198' THEN 'Grind'
+			WHEN '196' THEN 'Grind'
+			WHEN '195' THEN 'Grind'
+			WHEN '194' THEN 'Grind'
+			WHEN '170' THEN 'CNC'
+			WHEN '169' THEN 'CNC'
+			WHEN '168' THEN 'CNC'
+			WHEN '167' THEN 'CNC'
+			WHEN '166' THEN 'CNC'
+			WHEN '165' THEN 'CNC'
+			WHEN '164' THEN 'CNC'
+			WHEN '163' THEN 'CNC'
+			WHEN '162' THEN 'CNC'
+			WHEN '161' THEN 'CNC'
+			WHEN '159' THEN 'CNC'
+			WHEN '158' THEN 'CNC'
+			WHEN '135' THEN 'Block Bevel'
+			WHEN '134' THEN 'Block Bevel'
+			WHEN '133' THEN 'Block Bevel'
+			WHEN '132' THEN 'Block Bevel'
+			WHEN '131' THEN 'Block Bevel'
+			WHEN '130' THEN 'Block Bevel'
+			WHEN '129' THEN 'Block Bevel'
+			WHEN '128' THEN 'Block Bevel'
+			WHEN '127' THEN 'Block Bevel'
+			WHEN '122' THEN 'PPS'
+			WHEN '107' THEN 'PPS'
+			WHEN '104' THEN 'PPS'
+			WHEN '101' THEN 'Inspection'
+			WHEN '81' THEN 'PPS'
+		ELSE ''
+	END
+	,MONTH([Date]) 
+	,YEAR([Date]) 
+)
+,s5vs AS
+
+( SELECT
+
+	COALESCE(CASE Department
+		WHEN 'Block Bevel' THEN 'Jim Fecteau'
+		WHEN 'CCOS' THEN 'Rocco Biasca'
+		WHEN 'CMS' THEN 'Milton Ives'
+		WHEN 'CNC' THEN 'Jim Fecteau'
+		WHEN 'Coating' THEN 'Sandeep Kohli'
+		WHEN 'EPO CNC' THEN 'Rocco Biasca'
+		WHEN 'EPO IBF' THEN 'Rocco Biasca'
+		WHEN 'EPO Metrology' THEN 'Rocco Biasca'
+		WHEN 'EPO Polish' THEN 'Rocco Biasca'
+		WHEN 'EPO QC' THEN 'Rocco Biasca'
+		WHEN 'EPO Shape' THEN 'Rocco Biasca'
+		WHEN 'EPO Workcell' THEN 'Rocco Biasca'
+		WHEN 'EPO-ASM' THEN 'Rocco Biasca'
+		WHEN 'Generate' THEN 'Jim Fecteau'
+		WHEN 'GPI' THEN 'Matt Didato'
+		WHEN 'Grind' THEN 'Jim Fecteau'
+		WHEN 'Inspection' THEN 'Dan Milardo'
+		WHEN 'LFO Inspect' THEN 'Dan Milardo'
+		WHEN 'LFO Metrology' THEN 'Dan Milardo'
+		WHEN 'LFO Polish/Bevel' THEN 'Dan Milardo'
+		WHEN 'MRF' THEN 'Jim Fecteau'
+		WHEN 'OMAC' THEN 'Ryan Ahlquist'
+		WHEN 'PO Metrology' THEN 'Dan Milardo'
+		WHEN 'Polishing' THEN 'Dan Milardo'
+		WHEN 'PPS' THEN 'Ryan Ahlquist'
+		WHEN 'Profiler' THEN 'Ryan Ahlquist'
+		WHEN 'Spherical' THEN 'Matt Didato'
+	END,'') VSManager
+	,s5.Department
+	,s5.Efficiency
+	,s5.[Month]
+	,s5.[Year]
+
+FROM s5
+)
+,s5_VSmanagerMonth AS
+(
+	select
+	
+	VSManager
+	,AVG(Efficiency) Efficiency
+	,[Month]
+	,[Year]
+	
+	from s5vs
+
+	GROUP BY 
+
+	VSManager
+	,[Month]
+	,[Year]
+	
+)
+
+
+	
+	select * from s5vs
+
+	order by
+
+	[Year]
+	,[Month]
+	,Department</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="VSManager">
+          <DataField>VSManager</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Department">
+          <DataField>Department</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Efficiency">
+          <DataField>Efficiency</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="Month">
+          <DataField>Month</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Year">
+          <DataField>Year</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="textbox1">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Monthly Department Efficiency</Value>
+                    <Style>
+                      <FontFamily>Segoe UI Light</FontFamily>
+                      <FontSize>24pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>textbox1</rd:DefaultName>
+            <Height>0.43in</Height>
+            <Width>5in</Width>
+            <Style>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Tablix Name="table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.22in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>VSManager</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox3">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Department</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Efficiency</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Month</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Year</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.21in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="VSManager">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!VSManager.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>VSManager</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Department">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Department.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Department</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Efficiency">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Efficiency.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>0.00%</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Efficiency</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Month">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Month.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Month</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Year">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Year.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Year</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet1</DataSetName>
+            <Top>0.43in</Top>
+            <Height>0.43in</Height>
+            <Width>5in</Width>
+            <ZIndex>1</ZIndex>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>0.86in</Height>
+        <Style />
+      </Body>
+      <Width>5in</Width>
+      <Page>
+        <LeftMargin>1in</LeftMargin>
+        <RightMargin>1in</RightMargin>
+        <TopMargin>1in</TopMargin>
+        <BottomMargin>1in</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>4</NumberOfColumns>
+      <NumberOfRows>2</NumberOfRows>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Language>en-US</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>5f26d645-ff37-4e5f-8072-fe163988a901</rd:ReportID>
+</Report>
