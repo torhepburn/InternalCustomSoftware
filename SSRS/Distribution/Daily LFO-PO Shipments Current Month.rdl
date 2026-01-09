@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.1.11312.151</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.1.11312.151</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-01-09T14:49:41.9057300Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -22,27 +33,7 @@ sil.[Shortcut Dimension 2 Code] BusinessSegment
 ,sil.No_
 ,sil.Description
 ,sil.Quantity
---,MONTH(sil.[Posting Date])
---,CAST(YEAR(sil.[Posting Date]) as nchar(4)) +
---CASE MONTH(sil.[Posting Date]) 
---	WHEN 1 THEN '01'
---	WHEN 2 THEN '02'
---	WHEN 3 THEN '03'
---	WHEN 4 THEN '04'
---	WHEN 5 THEN '05'
---	WHEN 6 THEN '06'
---	WHEN 7 THEN '07'
---	WHEN 8 THEN '08'
---	WHEN 9 THEN '09'
---	WHEN 10 THEN '10'
---	WHEN 11 THEN '11'
---	WHEN 12 THEN '12'
---	ELSE ''
---END [Shipment Date]
 ,sil.[Posting Date] [Shipment Date]
-
-
---,COUNT(sil.Quantity) QtyShipped
 
 from [ZYGO$Sales Invoice Line] sil
 
@@ -50,7 +41,10 @@ INNER JOIN [ZYGO$Sales Invoice Header] sih ON sil.[Document No_] = sih.No_
 
 WHERE Quantity &gt; 0  AND sil.No_ NOT IN ('FREIGHT', 'FREIGHT EXPORT', 'FREIGHT INT''L')
 
-AND MONTH(sil.[Posting Date]) &gt; MONTH(DATEADD(mm,-1,GETDATE()))
+AND MONTH(sil.[Posting Date]) &gt; CASE 
+									WHEN MONTH(DATEADD(mm,-1,GETDATE())) = 12 THEN 0
+									ELSE MONTH(DATEADD(mm,-1,GETDATE()))
+								END
 
 AND YEAR(sil.[Posting Date]) &gt; YEAR(DATEADD(yy,-1,GETDATE()))
 
