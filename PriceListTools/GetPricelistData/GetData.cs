@@ -79,7 +79,7 @@ namespace GetPricelistData
                 " INNER JOIN[ZYGO$Price List Data] d ON i.[Price List Code] = d.[Price List Code] " +
                 " WHERE [Signal Code] not like 'OBS%' " +
                 " AND LEN(i.[Price List Code]) > 0 " +
-                " AND sp1.[Sales Code] IN('DOM', 'EXP', 'INT','EUR','ZCV','ZJV', 'ZKK', 'DIS') " +
+                " AND sp1.[Sales Code] IN('DOM', 'EXP', 'INT','EUR','ZCV','ZJV', 'ZKK', 'DIS', 'ZAF') " +
                 " AND(sp1.[Ending Date] >= '" + effectiveDate + "' OR sp1.[Ending Date] IS NULL) " +
                 " AND sp1.[Starting Date] <= '" + effectiveDate + "' " +
                 " UNION ALL " +
