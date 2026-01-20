@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.1.11312.151</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.1.11312.151</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-01-20T18:21:59.6406011Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -30,7 +41,7 @@
 	END Replenishment
 	FROM ZYGO$Item
 
-	where [Description 3] = 'SVC FORECAST'
+	where [Description 3] = 'SVC FORECAST'  --order by No_
 )
 ,s2 AS
 (
@@ -134,7 +145,31 @@
 	AND [Journal Template Name] = 'INVREQ'
 	GROUP BY [No_]
 )
+,s10 AS
+(
+	select
+	
+	distinct 
+	
+	[Item No_] 
+	,s1.*
+	,[Forecast Quantity]
+	,[Forecast Date]
+	
+	from [ZYGO$Production Forecast Entry] pfe
 
+	INNER JOIN s1 ON pfe.[Item No_] = s1.No_
+
+	where 1=1 --pfe.[Item No_] = '6500-0928-01'
+
+	AND [Item No_] Not IN (Select [Item No_] from [ZYGO$Prod_ Order Line])
+
+	AND	[Item No_] Not IN (Select [Item No_] FROM [ZYGO$Prod_ Order Component])
+
+	AND	[Item No_] Not IN (Select [Item No_] FROM [ZYGO$Item Ledger Entry])
+
+	AND [Forecast Date] &gt; GETDATE()
+)
 
 SELECT 
 
@@ -156,7 +191,6 @@ END,0) [On  Order]
 ,[Forecast Quantity]
 ,[Forecast Date]
 
-
 FROM [ZYGO$Production Forecast Entry] pfe
 
 INNER JOIN s1 ON s1.No_ = pfe.[Item No_]
@@ -176,8 +210,32 @@ LEFT JOIN s9 ON s1.No_ = s9.[No_]
 
 WHERE [Forecast Date] &gt; GETDATE()
 
+UNION ALL
+
+SELECT 
+
+s10.[Item No_]
+,s10.Description
+,0
+,0
+,s10.Replenishment
+,0
+,0
+,0
+,0
+,0
+,s10.[Buyer Planner Code]
+,s10.[Standard Cost]
+,[Forecast Quantity]
+,[Forecast Date]
+
+
+FROM s10
+
 order by pfe.[Item No_]
 
+
+--select * from s10 order by [Item No_]
 --select * from s2 INNER JOIN s3 ON s2.[Item No_] = s3.[Item No_]
 
 --ORDER BY s2.[Item No_]</CommandText>
@@ -1479,7 +1537,7 @@ order by pfe.[Item No_]
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>16.08333in</Width>
+            <Width>16.08334in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1487,7 +1545,7 @@ order by pfe.[Item No_]
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>16.08333in</Width>
+      <Width>16.08334in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
