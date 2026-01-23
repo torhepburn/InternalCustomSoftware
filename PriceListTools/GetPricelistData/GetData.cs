@@ -91,7 +91,7 @@ namespace GetPricelistData
                 ",999 " +
                 ",[Unit Price] " +
                 ",'Service Contracts' " +
-                ",GETDATE() " +
+                ", '" + effectiveDate + "' " +
                 " from ZYGO$Resource " +
                 "WHERE(LEFT(No_, 2) IN('FL', 'VE', 'DY', 'MS', 'VF', 'IR', 'ZE', 'NE', 'NV', 'NX', 'IH', 'Z-', 'PM') " +
                 "AND No_ NOT LIKE 'IRVINE%' " +
@@ -109,7 +109,7 @@ namespace GetPricelistData
                 ",999 " +
                 ",[Unit Price] " +
                 ",'Service Items' " +
-                ",GETDATE() " +
+                ", '" + effectiveDate + "' " +
                 "from ZYGO$Resource " +
                 "WHERE (LEFT(No_, 2) IN('FL', 'VE', 'DY', 'MS', 'VF', 'IR', 'ZE', 'NE', 'NV', 'NX', 'IH', 'Z-', 'PM') " +
                 "AND No_ NOT LIKE 'IRVINE%' " +
