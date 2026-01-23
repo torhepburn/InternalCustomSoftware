@@ -70,6 +70,7 @@
             bPrint.TabIndex = 3;
             bPrint.Text = "PRINT";
             bPrint.UseVisualStyleBackColor = false;
+            bPrint.Click += this.BPrint_Click;
             // 
             // SalesProductionLabels
             // 
@@ -84,7 +85,7 @@
             Name = "SalesProductionLabels";
             RightToLeftLayout = true;
             Text = "Sales Production Labels";
-            Load += this.SalesProductionLabels_Load;
+            Load += SalesProductionLabels_Load;
             ((System.ComponentModel.ISupportInitialize)DGV).EndInit();
             ResumeLayout(false);
             PerformLayout();
