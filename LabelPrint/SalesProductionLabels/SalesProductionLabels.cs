@@ -47,7 +47,7 @@ namespace SalesProductionLabels
 
         private void SalesProductionLabels_Load(object sender, EventArgs e)
         {
-            //this.SuspendLayout();
+            this.Text = "Sales Production Labels   v" + Application.ProductVersion;
         }
 
         private void BPrint_Click(object sender, EventArgs e)  //Print button
@@ -80,7 +80,8 @@ namespace SalesProductionLabels
                     "AND [SO Line No_] < 400 " +
                     "and b.[Default] = 1 " +
                     "AND b.[Bin Code] NOT LIKE '%MRB%' " +
-                    "ORDER BY CAST([SO Line No_] as int) ";
+                    "ORDER BY b.[Bin Code], l.No_ ";
+                    //"ORDER BY CAST([SO Line No_] as int) ";
 
             SqlConnection cnxn = new SqlConnection(dbNAV);
 
