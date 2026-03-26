@@ -14,7 +14,7 @@
     @*SHORTAGE TOP TABLE*@
     <Table dt="@ShortageDT" TableStyle="table-shortage" prodLine="@item.prodLine"></Table>
 
-    @*<button @onclick="UpdateShortage">update</button>*@
+    
     <div style="display:flex">
         @*All editing fields go in this model*@
         <div style="width:100%">
@@ -37,7 +37,11 @@
                         <input class="checkbox" type="checkbox" id="revenue" @bind="@item.impactsRevenue" />
                     </div>
 
+                
+
                 </div>
+
+                
                 @*STATUS*@
                 <div style="display:flex;flex-direction:column;margin-left:10px">
                     <label style="background-color:yellow;border:solid 1px">Status: @item.lateFlagStatus</label>
@@ -53,16 +57,27 @@
                         <option value="FAST">FAST</option>
                         <option value="MOVED">MOVED</option>
                     </select>
-                    @*HOT*@
-                    <div class="checkbox-wrapper-59" style="display:flex">
-                        <label>Hot: </label>
-                        <input class="checkbox" type="checkbox" id="hot" @bind="@item.hot" />
+                    <br />
+                 
+                    
+                
+                    @*PRIORITY*@
+                    <div style="display:flex;flex-direction:column;margin-left:10px">
+                        <label style="background-color:orangered;border:solid 1px">Priority: @item.priority</label>
+                        <select id="priority" @bind="@item.priority">
+                            <option value="">No Priority</option>
+                            <option value="P1: Immediate Risk (0-2 Weeks)">P1: Immediate Risk (0-2 Weeks)</option>
+                            <option value="P2: Upcoming Risk (3-4 Weeks)">P2: Upcoming Risk (3-4 Weeks)</option>
+                            <option value="P3: Future Risk (5-8 Weeks)">P3: Future Risk (5-8 Weeks)</option>
+                        </select>
+
                     </div>
-                    @*ACTION RQD/FLAG FIELD*@
-                    <div style="display:flex">
-                        <label>Action Rqd:</label>
-                        <input class="checkbox" type="checkbox" id="actRqrd" @bind="@item.flagField" />
+                    <div class="checkbox-wrapper-59" style="display:flex; margin-left:25px; margin-top:15px;">
+                        <label>Add to War Room: </label>
+
+                        <input class="checkbox" type="checkbox" id="revenue" @bind="@item.add2WarRoomList" />
                     </div>
+
                 </div>
                 @*REASON*@
                 <div style="display:flex;flex-direction:column;margin-left:10px;margin-right:10px">
@@ -72,7 +87,6 @@
                         <option value="Inside Lead Time">Inside Lead Time</option>
                         <option value="Pull In">Pull In</option>
                         <option value="Late PO">Late PO</option>
-                        <option value="Confirm Delivery">Confirm Delivery</option>
                         <option value="Purchasing Delay">Purchasing Delay</option>
                         <option value="Tariff Approval Delay">Tariff Approval Delay</option>
                         <option value="Engineering">Engineering</option>
@@ -85,6 +99,8 @@
                         <option value="Logistic Delay">Logistic Delay</option>
                         <option value="Unpaid Invoices">Unpaid Invoices</option>
                     </select>
+
+                    
                     @*FEDEX/UPS*@
                     <div style="display:flex;padding-top:5px">
                         <button @onclick="FedEx" class="button-85" style="border-color:palegreen">FedEx</button>
@@ -402,8 +418,7 @@
 
         //First handle saving edits and reloading comments
         SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
-        "HOT = @HOT " +
-        ",ItemStatus = @ItemStatus " +
+        " ItemStatus = @ItemStatus " +
         ",Reason = @Reason " +
         ",FlagField = @FlagField " +
         ",ShipmentTrackingNumber = @ShipmentTrackingNumber " +
@@ -417,14 +432,16 @@
         ",Buyer = @Buyer " +
         ",Supplier = @Vendor " +
         ",ImpactsRevenue = @ImpactsRevenue " +
+        ",[Priority] = @priority " +
+        ",Add2WarRoomList = @add2WarRoomList " +
         "WHERE ID = @ID", cnxn);
 
-        cmd.Parameters.Add(new SqlParameter("@HOT", item.hot ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ItemStatus", (item.status == null)
         ? DBNull.Value : item.status));
         cmd.Parameters.Add(new SqlParameter("@Reason", (item.reason == null)
         ? DBNull.Value : item.reason));
         cmd.Parameters.Add(new SqlParameter("@FlagField", (item.flagField) ? -1 : 0));
+        cmd.Parameters.Add(new SqlParameter("@add2WarRoomList", (item.add2WarRoomList) ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ShipmentTrackingNumber", (item.trackingNo == null)
         ? DBNull.Value : item.trackingNo));
         cmd.Parameters.Add(new SqlParameter("@IQCCompleteDate", (item.iqcCompleteDate == null)
@@ -446,7 +463,19 @@
         cmd.Parameters.Add(new SqlParameter("@ID", item.ID));
         cmd.Parameters.Add(new SqlParameter("@Vendor", (item.vendor == null)
         ? DBNull.Value : item.vendor));
+        cmd.Parameters.Add(new SqlParameter("@priority", (item.priority == null)
+        ? DBNull.Value : item.priority));
         cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", item.impactsRevenue));
+
+        // cmd.Parameters.Add(new SqlParameter("@onWarRoomList", item.onWarRoomList));
+        // if (item.priority == "P1: Immediate Risk (0-2 Weeks)")
+        // {
+        //     onWarRoomList.Value = 1;
+        // }
+        // else
+        // {
+        //     pOnWarRoomList.Value = 0;
+        // }
 
         cnxn.Open();
         try
@@ -634,33 +663,35 @@
         pShortageID.Value = shortageID;
         SqlCommand cmd = new SqlCommand(
             "select " +
-            "[PRODUCTLINE]" +
+            "[PRODUCTLINE]" +           //0
             ",[GROUP]" +
             ",[STKOUT]" +
             ",[QtyNeeded]" +
-            ",[ItemCode]" +
-            ",[Custom Item]" +
+            ",[ItemCode]" +     
+            ",[Custom Item]" +           //5
             ",[Description]" +
             ",[PROJECT]" +
             ",[PROJECTDESC]" +
             ",[PO]" +
-            ",[ProdOrder]" +
+            ",[ProdOrder]" +            //10
             ",[SalesOrder]" +
             ",[SOLineNo]" +
             ",[SODate]" +
             ",[ShipDate]" +
-            ",[PlannerRequiredDate]" +
+            ",[PlannerRequiredDate]" +  //15
             ",[Comments]" +
             ",[Buyer]" +
-            ",[HOT]" +
             ",[Reason]" +
             ",[ItemStatus]" +
-            ",[CurrDueDate]" +
+            ",[CurrDueDate]" +          //20
             ",[IQCCompleteDate]" +
             ",[ShipmentTrackingNumber]" +
             ",[FlagField]" +
             ",[Supplier]" +
-            ",ImpactsRevenue " +
+            ",ImpactsRevenue " +        //25
+            ",Priority " +              //26
+            ",Add2WarRoomList " +
+
             fromSQL + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
 
@@ -685,27 +716,28 @@
                     item.shipDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14);
                     item.reqDate = reader.GetDateTime(15);
                     item.buyer = reader.GetString(17);
-                    item.hot = (reader.GetInt32(18) == -1);
-                    item.reason = reader.IsDBNull(19) ? null : reader.GetString(19).Trim();
-                    item.status = reader.IsDBNull(20) ? null : reader.GetString(20);
-                    item.promisedReceiptDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    item.reason = reader.IsDBNull(18) ? null : reader.GetString(18).Trim();
+                    item.status = reader.IsDBNull(19) ? null : reader.GetString(19);
+                    item.promisedReceiptDate = reader.IsDBNull(20) ? null : reader.GetDateTime(20);
                     OrigCurrDueDate = item.promisedReceiptDate;
-                    item.iqcCompleteDate = reader.IsDBNull(22) ? null : reader.GetDateTime(22);
-                    item.trackingNo = reader.IsDBNull(23) ? null : reader.GetString(23);
-                    item.flagField = (reader.GetInt32(24) == -1);
+                    item.iqcCompleteDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    item.trackingNo = reader.IsDBNull(22) ? null : reader.GetString(22);
+                    item.flagField = (reader.GetInt32(23) == -1);
+                    item.vendor = reader.IsDBNull(24) ? null : reader.GetString(24).Trim();
+                    item.impactsRevenue = reader.GetBoolean(25);
+                    item.priority = reader.IsDBNull(26) ? null : reader.GetString(26).Trim();
+                    item.add2WarRoomList = reader.GetBoolean(27);
+
                     /*  due to the conditional FromSql lateflagstatus is always the last field*/
                     if (!isArchived)
                     {
-                        item.lateFlagStatus = reader.IsDBNull(27) ? "" : reader.GetString(27);
+                        item.lateFlagStatus = reader.IsDBNull(28) ? "" : reader.GetString(28);
                     }
                     else
                     {
-                        item.lateFlagStatus = "Archived by " + reader.GetString(26) + " on " + reader.GetDateTime(26).ToString().Replace("12:00:00 AM", "");
+                        item.lateFlagStatus = "Archived by " + reader.GetString(28) + " on " + reader.GetDateTime(29).ToString().Replace("12:00:00 AM", "");
                         BackgroundColor = "lightgrey";
                     }
-                    item.vendor = reader.IsDBNull(25) ? null : reader.GetString(25).Trim();
-                    item.impactsRevenue = reader.GetBoolean(26);
-
                 }
             }
             else

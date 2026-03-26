@@ -5,17 +5,30 @@ namespace Shortages.Pages
     public class Shortage
     {
         public string? ID { get; set; }
+        
         [Required(ErrorMessage = "*")]
         public string? prodLine { get; set; }
+
         public string? group { get; set; }
         public bool stockOut { get; set; }
+
+        /* this is for adding or removing from the war room list  */
+        public bool add2WarRoomList { get; set; }
+
+        /*  this is for keeping track of what is on the war room list for the review  */
+        public bool onWarRoomList { get; set; }
+
         [Required(ErrorMessage = "*")]
         public int? quantityReq { get; set; }
+        
         [Required(ErrorMessage = "*")]
         public string? code { get; set; }
+
         public bool customItem { get; set; }
+
         [Required(ErrorMessage = "*")]
         public string? description { get; set; }
+
         public string? project { get; set; }
         public string? projectDesc { get; set; }
         
@@ -36,11 +49,18 @@ namespace Shortages.Pages
         public DateTime? promisedReceiptDate { get; set; }
 
         public string? comments { get; set; }
-        
-        public bool hot { get; set; }
+
+        [Required(ErrorMessage = "*")]
         public string? reason { get;set; }
+        
         public string? status { get; set; }
+
         public string? lateFlagStatus { get; set; }
+
+        [Required(ErrorMessage = "*")]
+        public string? priority { get; set; }
+        
+
         public string? trackingNo { get; set; }
         public bool flagField { get; set; }
         public bool impactsRevenue { get; set; }

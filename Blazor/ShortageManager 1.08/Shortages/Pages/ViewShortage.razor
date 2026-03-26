@@ -54,16 +54,24 @@
                         <option value="FAST">FAST</option>
                         <option value="MOVED">MOVED</option>
                     </select>
-                    @*HOT*@
-                    <div class="checkbox-wrapper-59" style="display:flex">
-                        <label>Hot: </label>
-                        <input class="checkbox" type="checkbox" id="hot" @bind="@itemsList[shortNum].hot" />
+                    <br />
+                    @*PRIORITY*@
+                    <div style="display:flex;flex-direction:column;margin-left:10px">
+                        <label style="background-color:orangered;border:solid 1px">Priority: @itemsList[shortNum].priority</label>
+                        <select id="priority" @bind="@itemsList[shortNum].priority">
+                            <option value="">No Priority</option>
+                            <option value="P1: Immediate Risk (0-2 Weeks)">P1: Immediate Risk (0-2 Weeks)</option>
+                            <option value="P2: Upcoming Risk (3-4 Weeks)">P2: Upcoming Risk (3-4 Weeks)</option>
+                            <option value="P3: Future Risk (5-8 Weeks)">P3: Future Risk (5-8 Weeks)</option>
+                        </select>
+                        
                     </div>
-                    @*ACTION RQD/FLAG FIELD*@
-                    <div style="display:flex">
-                        <label>Action Rqd:</label>
-                        <input class="checkbox" type="checkbox" id="actRqrd" @bind="@itemsList[shortNum].flagField"/>
+                    <div class="checkbox-wrapper-59" style="display:flex; margin-left:25px; margin-top:15px;">
+                        <label>Add to War Room: </label>
+                        
+                        <input class="checkbox" type="checkbox" id="revenue" @bind="@itemsList[shortNum].add2WarRoomList" />
                     </div>
+                    
                 </div>
                 @*REASON*@
                 <div style="display:flex;flex-direction:column;margin-left:10px;margin-right:10px">
@@ -73,7 +81,6 @@
                         <option value="Inside Lead Time">Inside Lead Time</option>
                         <option value="Pull In">Pull In</option>
                         <option value="Late PO">Late PO</option>
-                        <option value="Confirm Delivery">Confirm Delivery</option>
                         <option value="Purchasing Delay">Purchasing Delay</option>
                         <option value="Tariff Approval Delay">Tariff Approval Delay</option>
                         <option value="Engineering">Engineering</option>
@@ -212,6 +219,7 @@
 </div>
 
 @code {
+
     public PopUp pop = new PopUp();
 
     //IMPORTANT KEEP TRACK OF CURRENT SHORTAGE
@@ -316,8 +324,7 @@
 
         //First handle saving edits and reloading comments
         SqlCommand cmd = new SqlCommand("UPDATE Shortage_List SET " +
-        "HOT = @HOT " +
-        ",ItemStatus = @ItemStatus " +
+        " ItemStatus = @ItemStatus " +
         ",Reason = @Reason " +
         ",FlagField = @FlagField" +
         ",ShipmentTrackingNumber = @ShipmentTrackingNumber " +
@@ -330,14 +337,16 @@
         ",SOLineNo = @SOLineNo " +
         ",Buyer = @Buyer " +
         ",ImpactsRevenue = @ImpactsRevenue " +
+        ",[Priority] = @priority " +
+        ",Add2WarRoomList = @add2WarRoomList " +
         "WHERE ID = @ID", cnxn);
 
-        cmd.Parameters.Add(new SqlParameter("@HOT", itemsList[shortNum].hot ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ItemStatus", (itemsList[shortNum].status == null) 
         ? DBNull.Value : itemsList[shortNum].status));
         cmd.Parameters.Add(new SqlParameter("@Reason", (itemsList[shortNum].reason == null) 
         ? DBNull.Value : itemsList[shortNum].reason));
         cmd.Parameters.Add(new SqlParameter("@FlagField", (itemsList[shortNum].flagField) ? -1 : 0));
+        cmd.Parameters.Add(new SqlParameter("@add2WarRoomList", (itemsList[shortNum].add2WarRoomList) ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ShipmentTrackingNumber", (itemsList[shortNum].trackingNo == null)
         ? DBNull.Value : itemsList[shortNum].trackingNo));
         cmd.Parameters.Add(new SqlParameter("@IQCCompleteDate", (itemsList[shortNum].iqcCompleteDate == null)
@@ -354,6 +363,8 @@
         ? new DateTime(1990, 01, 01) : itemsList[shortNum].salesOrderDate));
         cmd.Parameters.Add(new SqlParameter("@SOLineNo", (itemsList[shortNum].SOLineNum == null)
         ? DBNull.Value : itemsList[shortNum].SOLineNum));
+        cmd.Parameters.Add(new SqlParameter("@priority", (itemsList[shortNum].priority == null)
+        ? DBNull.Value : itemsList[shortNum].priority));
         cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", itemsList[shortNum].impactsRevenue));
         cmd.Parameters.Add(new SqlParameter("@Buyer", itemsList[shortNum].buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
@@ -715,7 +726,7 @@
                          "WHERE ";
 
         string order = "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
-        "buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+        "buyer, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
 
         string SQL1 = string.Empty;
 
@@ -725,7 +736,7 @@
             SQL1 = SQL +
                 "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " +
                 "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
-                "buyer, instrumentoptic desc, hot, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+                "buyer, instrumentoptic desc, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
         }
         else if (Views.currentProdLine == "OPT" || Views.currentProdLine == "WAR")
         {
@@ -797,7 +808,6 @@
             ",[PlannerRequiredDate]" +
             ",[Comments]" +
             ",[Buyer]" +
-            ",[HOT]" +
             ",[Reason]" +
             ",[ItemStatus]" +
             ",[CurrDueDate]" +
@@ -807,7 +817,8 @@
             ",LateFlag " +
             ",[Supplier]" +
             ",ImpactsRevenue " +
-
+            ",Priority " +
+            ",Add2WarRoomList " +
             "FROM Shortage_List l " +
             "INNER JOIN Shortage_ActiveFlags f " +
             "ON l.id = f.id " +
@@ -835,17 +846,18 @@
                     itemsList[i].shipDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14);
                     itemsList[i].reqDate = reader.GetDateTime(15);
                     itemsList[i].buyer = reader.GetString(17);
-                    itemsList[i].hot = (reader.GetInt32(18) == -1);
-                    itemsList[i].reason = reader.IsDBNull(19) ? null : reader.GetString(19).Trim();
-                    itemsList[i].status = reader.IsDBNull(20) ? null : reader.GetString(20);
-                    itemsList[i].promisedReceiptDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    itemsList[i].reason = reader.IsDBNull(18) ? null : reader.GetString(18).Trim();
+                    itemsList[i].status = reader.IsDBNull(19) ? null : reader.GetString(19);
+                    itemsList[i].promisedReceiptDate = reader.IsDBNull(20) ? null : reader.GetDateTime(20);
                     OrigCurrDueDates.Add(itemsList[i].promisedReceiptDate);
-                    itemsList[i].iqcCompleteDate = reader.IsDBNull(22) ? null : reader.GetDateTime(22);
-                    itemsList[i].trackingNo = reader.IsDBNull(23) ? null : reader.GetString(23);
-                    itemsList[i].flagField = (reader.GetInt32(24) == -1);
-                    itemsList[i].lateFlagStatus = reader.IsDBNull(25) ? "" : reader.GetString(25);
-                    itemsList[i].vendor =  reader.IsDBNull(26) ? "" :reader.GetString(26);
-                    itemsList[i].impactsRevenue = reader.IsDBNull(27) ? false : reader.GetBoolean(27);
+                    itemsList[i].iqcCompleteDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
+                    itemsList[i].trackingNo = reader.IsDBNull(22) ? null : reader.GetString(22);
+                    itemsList[i].flagField = (reader.GetInt32(23) == -1);
+                    itemsList[i].lateFlagStatus = reader.IsDBNull(24) ? "" : reader.GetString(24);
+                    itemsList[i].vendor =  reader.IsDBNull(25) ? "" :reader.GetString(25);
+                    itemsList[i].impactsRevenue = reader.IsDBNull(26) ? false : reader.GetBoolean(26);
+                    itemsList[i].priority = reader.IsDBNull(27) ? "" : reader.GetString(27);
+                    itemsList[i].add2WarRoomList = reader.IsDBNull(28) ? false : reader.GetBoolean(28);
                 }
             }
             else
