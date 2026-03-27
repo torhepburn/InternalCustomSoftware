@@ -434,6 +434,7 @@
         ",ImpactsRevenue = @ImpactsRevenue " +
         ",[Priority] = @priority " +
         ",Add2WarRoomList = @add2WarRoomList " +
+        ",instrumentOptic = @instrumentOptic " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@ItemStatus", (item.status == null)
@@ -466,6 +467,7 @@
         cmd.Parameters.Add(new SqlParameter("@priority", (item.priority == null)
         ? DBNull.Value : item.priority));
         cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", item.impactsRevenue));
+        cmd.Parameters.Add(new SqlParameter("@instrumentOptic", item.instrumentOptic));
 
         // cmd.Parameters.Add(new SqlParameter("@onWarRoomList", item.onWarRoomList));
         // if (item.priority == "P1: Immediate Risk (0-2 Weeks)")
@@ -691,6 +693,7 @@
             ",ImpactsRevenue " +        //25
             ",Priority " +              //26
             ",Add2WarRoomList " +
+            ",instrumentOptic " +       //28
 
             fromSQL + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
@@ -727,15 +730,16 @@
                     item.impactsRevenue = reader.GetBoolean(25);
                     item.priority = reader.IsDBNull(26) ? null : reader.GetString(26).Trim();
                     item.add2WarRoomList = reader.GetBoolean(27);
+                    item.instrumentOptic = reader.GetBoolean(28);
 
                     /*  due to the conditional FromSql lateflagstatus is always the last field*/
                     if (!isArchived)
                     {
-                        item.lateFlagStatus = reader.IsDBNull(28) ? "" : reader.GetString(28);
+                        item.lateFlagStatus = reader.IsDBNull(29) ? "" : reader.GetString(29);
                     }
                     else
                     {
-                        item.lateFlagStatus = "Archived by " + reader.GetString(28) + " on " + reader.GetDateTime(29).ToString().Replace("12:00:00 AM", "");
+                        item.lateFlagStatus = "Archived by " + reader.GetString(29) + " on " + reader.GetDateTime(30).ToString().Replace("12:00:00 AM", "");
                         BackgroundColor = "lightgrey";
                     }
                 }
@@ -768,7 +772,10 @@
         cmd = new SqlCommand(
             "select " +
             "[ID]" +
-            ",[Group]" +
+            ",CASE instrumentOptic " +
+            " WHEN 1 THEN 'Yes' " +
+            " ELSE 'No' " +
+            "END " +
             ",[StkOut] " +
             ",[QtyNeeded]" +
             ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +

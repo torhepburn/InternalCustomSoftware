@@ -3,11 +3,11 @@
 @inject ViewShortageService Views
 @inject AuthenticationStateProvider auth;
 @inject IJSRuntime JSRuntime
-<style>
+@* <style>
     body{
         background-color: @BackgroundColor;
     }
-</style>
+</style> *@
 
 <body>
     @*SHORTAGE TOP TABLE*@
@@ -222,9 +222,11 @@
 
     public PopUp pop = new PopUp();
 
-    //IMPORTANT KEEP TRACK OF CURRENT SHORTAGE
     List<Shortage> itemsList = new List<Shortage>();
+    /*  IMPORTANT use shortNum to KEEP TRACK OF CURRENT SHORTAGE    */
     public int shortNum = 0; //CURRENT VIEWED SHORTAGE
+
+
     List<DateTime?> OrigCurrDueDates = new List<DateTime?>();
 
     //ALL DATATABLES SAVED IN LISTS
@@ -339,6 +341,7 @@
         ",ImpactsRevenue = @ImpactsRevenue " +
         ",[Priority] = @priority " +
         ",Add2WarRoomList = @add2WarRoomList " +
+        ",instrumentOptic = @instrumentOptic " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@ItemStatus", (itemsList[shortNum].status == null) 
@@ -366,6 +369,7 @@
         cmd.Parameters.Add(new SqlParameter("@priority", (itemsList[shortNum].priority == null)
         ? DBNull.Value : itemsList[shortNum].priority));
         cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", itemsList[shortNum].impactsRevenue));
+        cmd.Parameters.Add(new SqlParameter("@instrumentOptic", itemsList[shortNum].instrumentOptic));
         cmd.Parameters.Add(new SqlParameter("@Buyer", itemsList[shortNum].buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
 
@@ -433,14 +437,14 @@
             {
                 shortNum -= 1;
             }
-            if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS" ))
-            {
-                BackgroundColor = "lightcyan";
-            }
-            else
-            {
-                BackgroundColor = "white";
-            }
+            // if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS" ))
+            // {
+            //     BackgroundColor = "lightcyan";
+            // }
+            // else
+            // {
+            //     BackgroundColor = "white";
+            // }
             StateHasChanged();
         }
 
@@ -488,14 +492,14 @@
             {
                 shortNum += 1;
             }
-            if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS"))
-            {
-                BackgroundColor = "lightcyan";
-            }
-            else
-            {
-                BackgroundColor = "white";
-            }
+            // if ((itemsList[shortNum].group == "SER's") || (itemsList[shortNum].group == "SERS"))
+            // {
+            //     BackgroundColor = "lightcyan";
+            // }
+            // else
+            // {
+            //     BackgroundColor = "white";
+            // }
             StateHasChanged();
         }
     }
@@ -577,22 +581,22 @@
         SqlConnection cnxn = new SqlConnection(Databases.db);
         SqlParameter pShortageID = new SqlParameter("@ID", itemsList[shortNum].ID);
         SqlCommand cmd = new SqlCommand("select " +
-                                                "[ID]," +
-                                                "[GROUP]," +
-                                                "[STKOUT]," +
-                                                "[QtyNeeded]," +
-                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
-                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
-                                                "[Custom Item]," +
-                                                "[PO]," +
-                                                "[QTY], " +
-                                                "[WarBoardDate]," +
-                                                "[whoAdded]," +
-                                                "[Project]," +
-                                                "[PROJECTDESC]," +
-                                                "[Supplier]," +
-                                                "[Buyer]," +
-                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                                "[ID]" +
+                                                ",InstrumentOptic" +
+                                                ",[STKOUT]" +
+                                                ",[QtyNeeded]" +
+                                                ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+                                                ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+                                                ",[Custom Item]" +
+                                                ",[PO]" +
+                                                ",[QTY] " +
+                                                ",[WarBoardDate]" +
+                                                ",[whoAdded]" +
+                                                ",[Project]" +
+                                                ",[PROJECTDESC]" +
+                                                ",[Supplier]" +
+                                                ",[Buyer]" + 
+                                                ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
                                         "FROM Shortage_List " +
                                         "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
@@ -726,27 +730,32 @@
                          "WHERE ";
 
         string order = "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
-        "buyer, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+        "buyer, sortgroup, lateflagsort, itemstatussort, productline, itemcode, l.id";
 
         string SQL1 = string.Empty;
 
 
-        if (Views.currentProdLine == "INST")
+        if (Views.currentProdLine == "LAS" || Views.currentProdLine == "PROFILER" || Views.currentProdLine == "CMS")
         {
             SQL1 = SQL +
-                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " +
+                "prodline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " +
                 "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
-                "buyer, instrumentoptic desc, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id";
+                "buyer, instrumentoptic desc, sortgroup, lateflagsort, itemstatussort, productline, itemcode, l.id";
         }
-        else if (Views.currentProdLine == "OPT" || Views.currentProdLine == "WAR")
+        else if (Views.currentProdLine == "OPT" )
         {
             SQL1 = SQL +
-                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
+                "prodline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
+        }
+        else if (Views.currentProdLine == "WAR")
+        {
+            SQL1 = SQL +
+                " OnWarRoomList = 1 AND ActionFlag = -1 " + order;
         }
         else
         {
             SQL1 = SQL +
-                "productline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
+                "prodline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " + order;
         }
 
 
@@ -790,8 +799,8 @@
         pShortageID.Value = shortageID;
         SqlCommand cmd = new SqlCommand("SELECT " +
 
-            "[PRODUCTLINE]" +
-            ",[GROUP]" +
+            "[PRODLINE]" +
+            ",InstrumentOptic" +
             ",[STKOUT]" +
             ",[QtyNeeded]" +
             ",[ItemCode]" +
@@ -837,7 +846,7 @@
                 {
                     itemsList[i].ID = shortageID;
                     itemsList[i].prodLine = reader.GetString(0);
-                    itemsList[i].group = reader.IsDBNull(1) ? null : reader.GetString(1);
+                    itemsList[i].instrumentOptic = reader.IsDBNull(1) ? false : reader.GetBoolean(1);
                     itemsList[i].code = reader.GetString(4);
                     itemsList[i].productionOrder = reader.IsDBNull(10) ? null : reader.GetString(10);
                     itemsList[i].salesOrder = reader.IsDBNull(11) ? null : reader.GetString(11);
@@ -892,22 +901,22 @@
         pShortageID = new SqlParameter("@ID", SqlDbType.VarChar);
         pShortageID.Value = shortageID;
         cmd = new SqlCommand("select " +
-                                                "[ID]," +
-                                                "[GROUP]," +
-                                                "[STKOUT]," +
-                                                "[QtyNeeded]," +
-                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
-                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
-                                                "[Custom Item]," +
-                                                "[PO]," +
-                                                "[QTY], " +
-                                                "[WarBoardDate]," +
-                                                "[whoAdded]," +
-                                                "[Project]," +
-                                                "[PROJECTDESC]," +
-                                                "[Supplier]," +
-                                                "[Buyer]," +
-                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                                "[ID]" +
+                                                ",InstrumentOptic" +
+                                                ",[STKOUT]" +
+                                                ",[QtyNeeded]" +
+                                                ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+                                                ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+                                                ",[Custom Item]" +
+                                                ",[PO]" +
+                                                ",[QTY] " +
+                                                ",[WarBoardDate]" +
+                                                ",[whoAdded]" +
+                                                ",[Project]" +
+                                                ",[PROJECTDESC]" +
+                                                ",[Supplier]" +
+                                                ",[Buyer]" +
+                                                ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
                                         "FROM Shortage_List " +
                                         "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);

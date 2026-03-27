@@ -18,6 +18,8 @@ namespace Shortages.Pages
         /*  this is for keeping track of what is on the war room list for the review  */
         public bool onWarRoomList { get; set; }
 
+        public bool warRoomReport { get; set; }
+
         [Required(ErrorMessage = "*")]
         public int? quantityReq { get; set; }
         
@@ -64,6 +66,7 @@ namespace Shortages.Pages
         public string? trackingNo { get; set; }
         public bool flagField { get; set; }
         public bool impactsRevenue { get; set; }
+        public bool instrumentOptic { get; set; }
 
     }
 
