@@ -13,7 +13,7 @@ namespace Shortages.Pages
         public bool stockOut { get; set; }
 
         /* this is for adding or removing from the war room list  */
-        public bool add2WarRoomList { get; set; }
+        //public bool add2WarRoomList { get; set; }
 
         /*  this is for keeping track of what is on the war room list for the review  */
         public bool onWarRoomList { get; set; }

@@ -72,11 +72,11 @@
                         </select>
 
                     </div>
-                    <div class="checkbox-wrapper-59" style="display:flex; margin-left:25px; margin-top:15px;">
+                    @* <div class="checkbox-wrapper-59" style="display:flex; margin-left:25px; margin-top:15px;">
                         <label>Add to War Room: </label>
 
                         <input class="checkbox" type="checkbox" id="revenue" @bind="@item.add2WarRoomList" />
-                    </div>
+                    </div> *@
 
                 </div>
                 @*REASON*@
@@ -433,8 +433,8 @@
         ",Supplier = @Vendor " +
         ",ImpactsRevenue = @ImpactsRevenue " +
         ",[Priority] = @priority " +
-        ",Add2WarRoomList = @add2WarRoomList " +
         ",instrumentOptic = @instrumentOptic " +
+        ",onWarRoomList = @onWarRoomList " +
         "WHERE ID = @ID", cnxn);
 
         cmd.Parameters.Add(new SqlParameter("@ItemStatus", (item.status == null)
@@ -442,7 +442,6 @@
         cmd.Parameters.Add(new SqlParameter("@Reason", (item.reason == null)
         ? DBNull.Value : item.reason));
         cmd.Parameters.Add(new SqlParameter("@FlagField", (item.flagField) ? -1 : 0));
-        cmd.Parameters.Add(new SqlParameter("@add2WarRoomList", (item.add2WarRoomList) ? -1 : 0));
         cmd.Parameters.Add(new SqlParameter("@ShipmentTrackingNumber", (item.trackingNo == null)
         ? DBNull.Value : item.trackingNo));
         cmd.Parameters.Add(new SqlParameter("@IQCCompleteDate", (item.iqcCompleteDate == null)
@@ -469,15 +468,21 @@
         cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", item.impactsRevenue));
         cmd.Parameters.Add(new SqlParameter("@instrumentOptic", item.instrumentOptic));
 
-        // cmd.Parameters.Add(new SqlParameter("@onWarRoomList", item.onWarRoomList));
-        // if (item.priority == "P1: Immediate Risk (0-2 Weeks)")
-        // {
-        //     onWarRoomList.Value = 1;
-        // }
-        // else
-        // {
-        //     pOnWarRoomList.Value = 0;
-        // }
+        SqlParameter pOnWarRoomList = new SqlParameter("@onWarRoomList", SqlDbType.Bit);
+        if (item.priority.Trim() == "P1: Immediate Risk (0-2 Weeks)")
+        {
+            pOnWarRoomList.Value = 1;
+        }
+        else if (item.priority.Trim() == "P2: Upcoming Risk (3-4 Weeks)")
+        {
+            pOnWarRoomList.Value = 1;
+        }
+        else
+        {
+            pOnWarRoomList.Value = 0;
+        }
+
+        cmd.Parameters.Add(pOnWarRoomList);
 
         cnxn.Open();
         try
@@ -587,22 +592,22 @@
         SqlConnection cnxn = new SqlConnection(Databases.db);
         SqlParameter pShortageID = new SqlParameter("@ID", item.ID);
         SqlCommand cmd = new SqlCommand("select " +
-                                                "[ID]," +
-                                                "[GROUP]," +
-                                                "[STKOUT]," +
-                                                "[QtyNeeded]," +
-                                                "CONVERT(varchar,DateAddedToList,1) AS [List Date]," +
-                                                "DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]," +
-                                                "[Custom Item]," +
-                                                "[PO]," +
-                                                "[QTY], " +
-                                                "[WarBoardDate]," +
-                                                "[whoAdded]," +
-                                                "[Project]," +
-                                                "[PROJECTDESC]," +
-                                                "[Supplier]," +
-                                                "[Buyer]," +
-                                                "CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                                "[ID]" +
+                                                ",InstrumentOptic" +
+                                                ",[STKOUT]" +
+                                                ",[QtyNeeded]" +
+                                                ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+                                                ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+                                                ",[Custom Item]" +
+                                                ",[PO]" +
+                                                ",[QTY] " +
+                                                ",[WarBoardDate]" +
+                                                ",[whoAdded]" +
+                                                ",[Project]" +
+                                                ",[PROJECTDESC]" +
+                                                ",[Supplier]" +
+                                                ",[Buyer]" +
+                                                ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
                                         "FROM Shortage_List " +
                                         "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
@@ -666,7 +671,7 @@
         SqlCommand cmd = new SqlCommand(
             "select " +
             "[PRODUCTLINE]" +           //0
-            ",[GROUP]" +
+            ",InstrumentOptic" +
             ",[STKOUT]" +
             ",[QtyNeeded]" +
             ",[ItemCode]" +     
@@ -692,8 +697,7 @@
             ",[Supplier]" +
             ",ImpactsRevenue " +        //25
             ",Priority " +              //26
-            ",Add2WarRoomList " +
-            ",instrumentOptic " +       //28
+            ",OnWarRoomList " +       //28
 
             fromSQL + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
@@ -710,7 +714,7 @@
                 {
                     item.ID = shortageID;
                     item.prodLine = reader.GetString(0);
-                    item.group = reader.IsDBNull(1) ? null : reader.GetString(1);
+                    item.instrumentOptic = reader.GetBoolean(1);
                     item.code = reader.GetString(4);
                     item.productionOrder = reader.IsDBNull(10) ? null : reader.GetString(10);
                     item.salesOrder = reader.IsDBNull(11) ? null : reader.GetString(11);
@@ -729,8 +733,8 @@
                     item.vendor = reader.IsDBNull(24) ? null : reader.GetString(24).Trim();
                     item.impactsRevenue = reader.GetBoolean(25);
                     item.priority = reader.IsDBNull(26) ? null : reader.GetString(26).Trim();
-                    item.add2WarRoomList = reader.GetBoolean(27);
-                    item.instrumentOptic = reader.GetBoolean(28);
+                    // item.add2WarRoomList = reader.GetBoolean(27);
+                    item.onWarRoomList = reader.GetBoolean(27);
 
                     /*  due to the conditional FromSql lateflagstatus is always the last field*/
                     if (!isArchived)
@@ -775,7 +779,7 @@
             ",CASE instrumentOptic " +
             " WHEN 1 THEN 'Yes' " +
             " ELSE 'No' " +
-            "END " +
+            "END InstrumentOptic" +
             ",[StkOut] " +
             ",[QtyNeeded]" +
             ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
@@ -790,6 +794,7 @@
             ",[Supplier] Vendor " +
             ",[Buyer] " +
             ",CONVERT(varchar,[Orig_ Requested Receipt Date], 1) [Orig_ Requested Receipt Date] " +
+            ",OnWarRoomList " +
             "FROM Shortage_List " +
             "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
