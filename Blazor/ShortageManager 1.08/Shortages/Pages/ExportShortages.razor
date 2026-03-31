@@ -21,31 +21,8 @@
 </div>
 
 
-<h1>Export Stockroom Shortages</h1>
+<h1>Export Shortages</h1>
 
-<EditForm Model="item" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <table>
-        <tbody>
-            <tr>
-                <td align="right">
-                    Stockroom Associate :
-                    @*  <InputText id="n10" placeholder="Skt Rm Assoc #" @bind-Value="g.storekeeper" /> *@
-                    <InputSelect id="s4" class="form-control" style="width:80%" @bind-Value="g.storekeeper">
-                        <option value=""</Option>
-                        @foreach (System.Data.DataRow r in dtStorekeeper.Rows)
-                        {
-                            <option value="@r[0].ToString()">@r[0].ToString()</option>
-                        }
-                    </InputSelect>
-                </td>
-            </tr>
-
-        </tbody>
-    </table>
-
-</EditForm>
 
 <div style="display:flex;justify-content:center">
     <button class="button-58" style="margin-right:40px" @onclick="HandleValidSubmit">Export Data</button>
@@ -74,61 +51,62 @@
 
     protected override void OnInitialized()
     {
-        dtStorekeeper = new DataTable();
+        // cnxn = new SqlConnection(Databases.db);
 
-        cnxn = new SqlConnection(g.db);
+        // cmd = new("select " +
+        //           //"CN " +
+        //           " mail " +
+        //           "FROM EmployeesAmetekAD " +
+        //           "WHERE BU = 'ct-mid' " +
+        //           "AND Manager LIKE '%Fornal%' " +
+        //           "order by SN "
+        //           , cnxn);
 
-        cmd = new("select " +
-                  //"CN " +
-                  " mail " +
-                  "FROM EmployeesAmetekAD " +
-                  "WHERE BU = 'ct-mid' " +
-                  "AND Manager LIKE '%Fornal%' " +
-                  "order by SN "
-                  , cnxn);
+        // try
+        // {
+        //     cnxn.Open();
+        //     dr = cmd.ExecuteReader();
+        //     dtStorekeeper.Load(dr);
+        // }
+        // catch (SqlException ex)
+        // {
+        //     // pop.Title = "Error";
+        //     // pop.Message = ex.ToString();
+        //     // pop.ShowPopup();
+        // }
+        // finally
+        // {
+        //     cnxn.Close();
 
-        try
-        {
-            cnxn.Open();
-            dr = cmd.ExecuteReader();
-            dtStorekeeper.Load(dr);
-        }
-        catch (SqlException ex)
-        {
-            // pop.Title = "Error";
-            // pop.Message = ex.ToString();
-            // pop.ShowPopup();
-        }
-        finally
-        {
-            cnxn.Close();
-
-        }
+        // }
 
     }
 
     protected void HandleValidSubmit()
     {
-
-
         dt = new DataTable();
 
-        cnxn = new SqlConnection(g.db);
+        cnxn = new SqlConnection(Databases.db);
 
-        if (g.exportFile != "Qualifier")
-        {
-            cmd = new(g.SQLs1 +
-
-                    " WHERE Archived = " + g.archive +
-                    " AND StockroomAssociate = '" + g.storekeeper + "' " +
-                    " ORDER BY s.[EnteredOn], [WO], [WOline], ComponentLine", cnxn);
-        }
-        else
-        {
-            cmd = new(g.SQLsQ +
-                   "WHERE Archived = 0 " +
-                   "ORDER BY s.[EnteredOn], [WO], [WOline], ComponentLine", cnxn);
-        }
+        cmd = new SqlCommand(
+            "SELECT " +
+            "ItemCode " +
+            ",Description " +
+            ",[Supplier]" +
+            ",Priority" +
+            ",Reason" +
+            ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+            ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+            ",[PO]" +
+            ",[QTY] " +
+            ",[whoAdded]" +
+            ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+            ",OnWarRoomList " +
+            "FROM Shortage_List " +
+            "WHERE DateArchived is null " +
+            "ORDER BY Priority DESC"
+            , cnxn);
+      
 
         try
         {
@@ -147,7 +125,7 @@
         }
         try
         {
-            string filepathServer = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\StockroomShortages" + g.exportFile + " " + g.storekeeper + ".csv";
+            string filepathServer = @"\\CT-MID-DFS01\Manufacturing\SoftwareDistribution\ShortageList.csv";
             File.Delete(filepathServer);
             var lines = new List<string>();
 

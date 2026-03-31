@@ -511,7 +511,7 @@
 
         }
         UpdatePromised();
-        await ReloadBuyer();
+        //await ReloadBuyer();
 
         StateHasChanged();
     }
@@ -592,22 +592,22 @@
         SqlConnection cnxn = new SqlConnection(Databases.db);
         SqlParameter pShortageID = new SqlParameter("@ID", item.ID);
         SqlCommand cmd = new SqlCommand("select " +
-                                                "[ID]" +
-                                                ",InstrumentOptic" +
-                                                ",[STKOUT]" +
-                                                ",[QtyNeeded]" +
-                                                ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
-                                                ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
-                                                ",[Custom Item]" +
-                                                ",[PO]" +
-                                                ",[QTY] " +
-                                                ",[WarBoardDate]" +
-                                                ",[whoAdded]" +
-                                                ",[Project]" +
-                                                ",[PROJECTDESC]" +
-                                                ",[Supplier]" +
-                                                ",[Buyer]" +
-                                                ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                        "[ID]" +
+                                        ",InstrumentOptic" +
+                                        ",[STKOUT]" +
+                                        ",[QtyNeeded]" +
+                                        ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+                                        ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+                                        ",[Custom Item]" +
+                                        ",[PO]" +
+                                        ",[QTY] " +
+                                        ",[whoAdded]" +
+                                        ",[Project]" +
+                                        ",[PROJECTDESC]" +
+                                        ",[Supplier]" +
+                                        ",[Buyer]" +
+                                        ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+                                        ",OnWarRoomList" +
                                         "FROM Shortage_List " +
                                         "WHERE [ID] = " + pShortageID, cnxn);
         cmd.Parameters.Add(pShortageID);
@@ -670,7 +670,7 @@
         pShortageID.Value = shortageID;
         SqlCommand cmd = new SqlCommand(
             "select " +
-            "[PRODUCTLINE]" +           //0
+            "[PRODLINE]" +           //0
             ",InstrumentOptic" +
             ",[STKOUT]" +
             ",[QtyNeeded]" +
@@ -733,17 +733,16 @@
                     item.vendor = reader.IsDBNull(24) ? null : reader.GetString(24).Trim();
                     item.impactsRevenue = reader.GetBoolean(25);
                     item.priority = reader.IsDBNull(26) ? null : reader.GetString(26).Trim();
-                    // item.add2WarRoomList = reader.GetBoolean(27);
                     item.onWarRoomList = reader.GetBoolean(27);
 
                     /*  due to the conditional FromSql lateflagstatus is always the last field*/
                     if (!isArchived)
                     {
-                        item.lateFlagStatus = reader.IsDBNull(29) ? "" : reader.GetString(29);
+                        item.lateFlagStatus = reader.IsDBNull(28) ? "" : reader.GetString(28);
                     }
                     else
                     {
-                        item.lateFlagStatus = "Archived by " + reader.GetString(29) + " on " + reader.GetDateTime(30).ToString().Replace("12:00:00 AM", "");
+                        item.lateFlagStatus = "Archived by " + reader.GetString(28) + " on " + reader.GetDateTime(29).ToString().Replace("12:00:00 AM", "");
                         BackgroundColor = "lightgrey";
                     }
                 }
@@ -787,7 +786,6 @@
             ",[Custom Item] " +
             ",[PO] " +
             ",[QTY] " +
-            ",[WarBoardDate] " +
             ",[whoAdded] [Who Added] " +
             ",[Project] " +
             ",[ProjectDesc] " +
