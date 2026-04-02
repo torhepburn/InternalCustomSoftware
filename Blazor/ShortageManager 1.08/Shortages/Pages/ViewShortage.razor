@@ -21,7 +21,7 @@
                 <div>
                     @*NEXT/PREV*@
                     <button class="button-85" disabled="@(isLoading ? true : null)" @onclick="@Previous">PREV</button>
-                    <button class="button-85" disabled="@(isLoading ? true : null)" @onclick="@Next">NEXT</button>
+                    <button class="button-85" disabled="@(isLoading ? true : null)" @onclick="@Next">NEXT if no error then just slow</button>
                     <br />
                     <label style="font-weight:700;color:grey;padding-left:45px">@((shortNum + 1).ToString()) OF @ProdLineNumShortages</label>
                     <br />
@@ -34,10 +34,7 @@
                     {
                         <button class="button-save" disabled="@(isLoading ? true : null)" type="submit" @onclick="Archive">Archive</button>
                     }
-                    <div class="checkbox-wrapper-59" style="display:flex">
-                        <label>Current Month Revenue Impact: </label>
-                        <input class="checkbox" type="checkbox" id="revenue" @bind="@itemsList[shortNum].impactsRevenue" />
-                    </div>
+                    
                 </div>
                 @*STATUS*@
                 <div style="display:flex;flex-direction:column;margin-left:10px">
@@ -57,7 +54,7 @@
                     <br />
                     @*PRIORITY*@
                     <div style="display:flex;flex-direction:column;margin-left:10px">
-                        <label style="background-color:orangered;border:solid 1px">Priority: @itemsList[shortNum].priority</label>
+                        <label style="border:solid 4px; border-color:red">Priority: @itemsList[shortNum].priority</label>
                         <select id="priority" @bind="@itemsList[shortNum].priority">
                             <option value="">No Priority</option>
                             <option value="P1: Immediate Risk (0-2 Weeks)">P1: Immediate Risk (0-2 Weeks)</option>
@@ -67,11 +64,6 @@
                         </select>
                         
                     </div>
-                    @* <div class="checkbox-wrapper-59" style="display:flex; margin-left:25px; margin-top:15px;">
-                        <label>Add to War Room: </label>
-                        
-                        <input class="checkbox" type="checkbox" id="revenue" @bind="@itemsList[shortNum].add2WarRoomList" />
-                    </div> *@
                     
                 </div>
                 @*REASON*@
@@ -339,9 +331,7 @@
         ",SODate = @SODate " +
         ",SOLineNo = @SOLineNo " +
         ",Buyer = @Buyer " +
-        ",ImpactsRevenue = @ImpactsRevenue " +
         ",[Priority] = @priority " +
-        ",instrumentOptic = @instrumentOptic " +
         ",onWarRoomList = @onWarRoomList " +
         "WHERE ID = @ID", cnxn);
 
@@ -368,8 +358,6 @@
         ? DBNull.Value : itemsList[shortNum].SOLineNum));
         cmd.Parameters.Add(new SqlParameter("@priority", (itemsList[shortNum].priority == null)
         ? DBNull.Value : itemsList[shortNum].priority));
-        cmd.Parameters.Add(new SqlParameter("@ImpactsRevenue", itemsList[shortNum].impactsRevenue));
-        cmd.Parameters.Add(new SqlParameter("@instrumentOptic", itemsList[shortNum].instrumentOptic));
         cmd.Parameters.Add(new SqlParameter("@Buyer", itemsList[shortNum].buyer));
         cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
 
@@ -407,7 +395,7 @@
         }
 
         UpdatePromised();
-        await Task.Delay(2000);
+        await Task.Delay(1000);
         //ReloadBuyer();
         
     }
@@ -459,7 +447,7 @@
         {
             isLoading = true;
             StateHasChanged();
-            await Task.Delay(1000);
+            await Task.Delay(2000);
             isLoading = false;
             StateHasChanged();
         }
@@ -484,6 +472,7 @@
     public async void Next() //Cycle forward in meeting
     {
         UpdateShortage();
+        
         //First handle saving edits and reloading comments
         if (newComment != "")
         {
@@ -505,7 +494,7 @@
         {
             isLoading = true;
             StateHasChanged();
-            await Task.Delay(1000);
+            await Task.Delay(2000);
             isLoading = false;
             StateHasChanged();
         }
@@ -760,7 +749,7 @@
             SQL1 = SQL +
                 "prodline = '" + Views.currentProdLine + "' AND ActionFlag = -1 " +
                 "ORDER BY (CASE WHEN ItemStatus = 'IQC' THEN 1 ELSE 0 END), " +
-                "buyer, instrumentoptic desc, sortgroup, lateflagsort, itemstatussort, prodline, itemcode, l.id";
+                "buyer, sortgroup, lateflagsort, itemstatussort, prodline, itemcode, l.id";
         }
         else if (Views.currentProdLine == "OPT" )
         {
@@ -816,35 +805,32 @@
         pShortageID.Value = shortageID;
         SqlCommand cmd = new SqlCommand("SELECT " +
 
-            "TRIM([PRODLINE])" +
-            ",InstrumentOptic" +
-            ",[STKOUT]" +
+            "TRIM([PRODLINE])" +    //0
             ",[QtyNeeded]" +
             ",[ItemCode]" +
             ",[Custom Item]" +
             ",[Description]" +
-            ",[PROJECT]" +
+            ",[PROJECT]" +          //5
             ",[PROJECTDESC]" +
             ",[PO]" +
             ",[ProdOrder]" +
             ",[SalesOrder]" +
-            ",[SOLineNo]" +
+            ",[SOLineNo]" +         //10
             ",[SODate]" +
             ",[ShipDate]" +
             ",[PlannerRequiredDate]" +
             ",[Comments]" +
-            ",[Buyer]" +
+            ",[Buyer]" +            //15
             ",[Reason]" +
             ",[ItemStatus]" +
             ",[CurrDueDate]" +
             ",[IQCCompleteDate]" +
-            ",[ShipmentTrackingNumber]" +
+            ",[ShipmentTrackingNumber]" +   //20
             ",[FlagField]" +
             ",LateFlag " +
             ",[Supplier]" +
-            ",ImpactsRevenue " +
             ",Priority " +
-            ",OnWarRoomList " +
+            ",OnWarRoomList " +         //25
             "FROM Shortage_List l " +
             "INNER JOIN Shortage_ActiveFlags f " +
             "ON l.id = f.id " +
@@ -863,27 +849,25 @@
                 {
                     itemsList[i].ID = shortageID;
                     itemsList[i].prodLine = reader.GetString(0);
-                    itemsList[i].instrumentOptic = reader.IsDBNull(1) ? false : reader.GetBoolean(1);
-                    itemsList[i].code = reader.GetString(4);
-                    itemsList[i].productionOrder = reader.IsDBNull(10) ? null : reader.GetString(10);
-                    itemsList[i].salesOrder = reader.IsDBNull(11) ? null : reader.GetString(11);
-                    itemsList[i].SOLineNum = reader.IsDBNull(12) ? null : int.Parse(reader.GetString(12));
-                    itemsList[i].salesOrderDate = reader.IsDBNull(13) ? null : reader.GetDateTime(13);
-                    itemsList[i].shipDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14);
-                    itemsList[i].reqDate = reader.GetDateTime(15);
-                    itemsList[i].buyer = reader.GetString(17);
-                    itemsList[i].reason = reader.IsDBNull(18) ? null : reader.GetString(18).Trim();
-                    itemsList[i].status = reader.IsDBNull(19) ? null : reader.GetString(19);
-                    itemsList[i].promisedReceiptDate = reader.IsDBNull(20) ? null : reader.GetDateTime(20);
+                    itemsList[i].code = reader.IsDBNull(2) ? null : reader.GetString(2);  // reader.GetString(3);
+                    itemsList[i].productionOrder = reader.IsDBNull(8) ? null : reader.GetString(8);
+                    itemsList[i].salesOrder = reader.IsDBNull(9) ? null : reader.GetString(9);
+                    itemsList[i].SOLineNum = reader.IsDBNull(10) ? null : int.Parse(reader.GetString(10));
+                    itemsList[i].salesOrderDate = reader.IsDBNull(11) ? null : reader.GetDateTime(11);
+                    itemsList[i].shipDate = reader.IsDBNull(12) ? null : reader.GetDateTime(12);
+                    itemsList[i].reqDate = reader.GetDateTime(13);
+                    itemsList[i].buyer = reader.GetString(15);
+                    itemsList[i].reason = reader.IsDBNull(16) ? null : reader.GetString(16).Trim();
+                    itemsList[i].status = reader.IsDBNull(17) ? null : reader.GetString(17);
+                    itemsList[i].promisedReceiptDate = reader.IsDBNull(18) ? null : reader.GetDateTime(18);
                     OrigCurrDueDates.Add(itemsList[i].promisedReceiptDate);
-                    itemsList[i].iqcCompleteDate = reader.IsDBNull(21) ? null : reader.GetDateTime(21);
-                    itemsList[i].trackingNo = reader.IsDBNull(22) ? null : reader.GetString(22);
-                    itemsList[i].flagField = (reader.GetInt32(23) == -1);
-                    itemsList[i].lateFlagStatus = reader.IsDBNull(24) ? "" : reader.GetString(24);
-                    itemsList[i].vendor =  reader.IsDBNull(25) ? "" :reader.GetString(25);
-                    itemsList[i].impactsRevenue = reader.IsDBNull(26) ? false : reader.GetBoolean(26);
-                    itemsList[i].priority = reader.IsDBNull(27) ? "" : reader.GetString(27);
-                    itemsList[i].onWarRoomList = reader.IsDBNull(28) ? false : reader.GetBoolean(28);
+                    itemsList[i].iqcCompleteDate = reader.IsDBNull(19) ? null : reader.GetDateTime(19);
+                    itemsList[i].trackingNo = reader.IsDBNull(20) ? null : reader.GetString(20);
+                    itemsList[i].flagField = (reader.GetInt32(21) == -1);
+                    itemsList[i].lateFlagStatus = reader.IsDBNull(22) ? "" : reader.GetString(22);
+                    itemsList[i].vendor =  reader.IsDBNull(23) ? "" :reader.GetString(23);
+                    itemsList[i].priority = reader.IsDBNull(24) ? "" : reader.GetString(24);
+                    itemsList[i].onWarRoomList = reader.IsDBNull(25) ? false : reader.GetBoolean(25);
                 }
             }
             else
@@ -919,8 +903,6 @@
         pShortageID.Value = shortageID;
         cmd = new SqlCommand("select " +
                             " [ID]" +
-                            ",InstrumentOptic" +
-                            ",[STKOUT]" +
                             ",[QtyNeeded]" +
                             ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
                             ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
@@ -1055,7 +1037,12 @@
                     " select DISTINCT p.[Document No_][PO #] " +
                     ", p.[PO Line No_] LN " +
                     ", CONVERT (Varchar(8), p.[Requested Receipt Date], 1) [RQST RCPT DT] " +
-                    ", CONVERT (Varchar(8),p.[Promised Receipt Date], 1) [PROM RCPT DT] " +
+                    ", CASE " +
+                    "     WHEN [Promised Receipt Date] = '1753-01-01 00:00:00.000' " +
+                    "          THEN '' " +
+                    "     ELSE " +
+                    "         CONVERT (Varchar(8),p.[Promised Receipt Date], 1) " +
+                    "   END [PROM RCPT DT] " +
                     ", CONVERT (Varchar(8),p.[Expected Receipt Date], 1) [EXPECT DT]" +
                     ", FORMAT(p.Quantity, '##0') [ORD QTY] " +
                     ", FORMAT(p.[Quantity Received], '##0') [DEL QTY] " +
@@ -1073,7 +1060,12 @@
                     ", s.Contact SALES_REFERENCE " +
                     ", s.[Phone No_] TELEPHONE " +
                     ", s.[E-Mail] EMAIL " +
-                    ", p.[Promised Receipt Date] " +
+                    " , CASE " +
+                    "     WHEN [Orig_ Promised Receipt Date] = '1753-01-01 00:00:00.000' " +
+                    "          THEN '' " +
+                    "     ELSE " +
+                    "         CONVERT (Varchar(8),p.[Orig_ Promised Receipt Date], 1) " +
+                    "   END [ORIG PROM RCPT DT] " +
                     " FROM[" + Databases.NAVprefix + "Purchase Line] p " +
                     " LEFT JOIN S2 on S2.ORDER_NO = p.[Document No_] and  S2.POSITION = p.[PO Line No_]" +
                     " LEFT JOIN[" + Databases.NAVprefix + "Vendor] s ON p.[Buy-from Vendor No_] = s.No_ " +
