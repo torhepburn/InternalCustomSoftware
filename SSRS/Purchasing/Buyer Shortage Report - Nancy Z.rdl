@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.3.11512.155</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.3.11512.155</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-04-03T13:55:26.0622020Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -16,69 +27,23 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>DataSource1</DataSourceName>
-        <CommandText>
-with s1 as
-(
-select  shortageid, mAX(commentid) CID from shortagelistcomments  group by shortageid 
-),
-s2 as
-(
-select  shortageid, mAX(commentid) CID from shortagelistcomments where commentid not in (select CID from s1)  group by shortageid 
-),
-s3 as
-(
-select s1.shortageid, RTRIM(comment) + ' : ' + SUBSTRING(Enteredby, 1, 2) + ' : ' + 
-		CONVERT(nchar(5),EnteredOn,  1) + ' :: ' comments from s1 inner join shortagelistcomments c on s1.cid = c.CommentID
-),
-s4 as
-(
-select s2.shortageid, RTRIM(comment) + ' : ' + SUBSTRING(Enteredby, 1, 2) + ' : ' + 
-		CONVERT(nchar(5),EnteredOn,  1) comments from s2 inner join shortagelistcomments c on s2.cid = c.CommentID
-),
-s5 as
-(
-select s3.ShortageID, s3.comments + ' ' 
-+ CASE 
-	WHEN s4.comments is not null THEN s4.comments
-	WHEN s4.comments is null THEN ' '
-END comments
-from s3 left join s4 on s3.ShortageID = s4.ShortageID
-)
-
-select  
-l.ID 
-,LateFlag 
-,[Inspection Code] 
-,[ItemCode] 
-,[Description] 
-,s5.[Comments] 
-,[QtyNeeded] [Need Qty] 
-,[Qty] [PO Qty] 
-,SUBSTRING(PO, 0,10) PO 
-,SUBSTRING(Supplier, 0, 12) Supplier 
-,[DateAddedtoList] [List Date] 
-,[Orig_ Requested Receipt Date] [Orig Rqst Rcpt Date]
-,[Req Date] [[Rqd Date]
-,[CurrDueDate] [Curr Due Date]
-,[IQCCompleteDate] [IQC Comp Date]
-, Buyer
-,[GROUP] 
-,Project
-,ItemStatus
-,ProductLine
-from [Shortage_List] l 
-inner join ShortageList_ActiveFlags f
-on l.id = f.id
-left join s5 on l.id =  s5.shortageid
-WHERE buyer = 'NANCY Z'
-AND COALESCE(itemStatus,'') not in ('IQC', 'MOVED')
-order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [group], itemcode, l.id</CommandText>
+        <QueryParameters>
+          <QueryParameter Name="@buyer">
+            <Value>NANCY Z</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <CommandType>StoredProcedure</CommandType>
+        <CommandText>buyerShortageReport</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
         <Field Name="ID">
           <DataField>ID</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Priority">
+          <DataField>Priority</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="LateFlag">
           <DataField>LateFlag</DataField>
@@ -140,10 +105,6 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
           <DataField>Buyer</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="GROUP">
-          <DataField>GROUP</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
         <Field Name="Project">
           <DataField>Project</DataField>
           <rd:TypeName>System.String</rd:TypeName>
@@ -152,8 +113,8 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
           <DataField>ItemStatus</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="ProductLine">
-          <DataField>ProductLine</DataField>
+        <Field Name="ProdLine">
+          <DataField>ProdLine</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -196,6 +157,9 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
               <TablixColumns>
                 <TablixColumn>
                   <Width>0.70833in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>0.66667in</Width>
@@ -286,6 +250,45 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox16">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Priority</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox16</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1000,6 +1003,43 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
+                        <Textbox Name="Priority">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Priority.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Priority</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
                         <Textbox Name="LateFlag">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1599,14 +1639,14 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="ProductLine">
+                        <Textbox Name="ProdLine">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!ProductLine.Value</Value>
+                                  <Value>=Fields!ProdLine.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1616,7 +1656,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>ProductLine</rd:DefaultName>
+                          <rd:DefaultName>ProdLine</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1639,6 +1679,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1682,7 +1723,7 @@ order by buyer, hot, sortgroup, lateflagsort, itemstatussort, productline, [grou
             <DataSetName>DataSet1</DataSetName>
             <Top>0.42in</Top>
             <Height>0.43in</Height>
-            <Width>17.475in</Width>
+            <Width>18.475in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
