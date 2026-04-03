@@ -41,6 +41,7 @@
             this.bViewSpreadsheet = new System.Windows.Forms.Button();
             this.rbZeGageProHR = new System.Windows.Forms.RadioButton();
             this.rbZeGagePro = new System.Windows.Forms.RadioButton();
+            this.rbZeFlat = new System.Windows.Forms.RadioButton();
             this.SuspendLayout();
             // 
             // rbNexView
@@ -199,12 +200,25 @@
             this.rbZeGagePro.Text = "ZeGage Pro";
             this.rbZeGagePro.UseVisualStyleBackColor = true;
             // 
+            // rbZeFlat
+            // 
+            this.rbZeFlat.AutoSize = true;
+            this.rbZeFlat.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.rbZeFlat.Location = new System.Drawing.Point(188, 182);
+            this.rbZeFlat.Name = "rbZeFlat";
+            this.rbZeFlat.Size = new System.Drawing.Size(73, 24);
+            this.rbZeFlat.TabIndex = 13;
+            this.rbZeFlat.TabStop = true;
+            this.rbZeFlat.Text = "ZeFlat";
+            this.rbZeFlat.UseVisualStyleBackColor = true;
+            // 
             // MicroSelect
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(240)))));
             this.ClientSize = new System.Drawing.Size(379, 456);
+            this.Controls.Add(this.rbZeFlat);
             this.Controls.Add(this.rbZeGageProHR);
             this.Controls.Add(this.rbZeGagePro);
             this.Controls.Add(this.bViewSpreadsheet);
@@ -243,6 +257,7 @@
         private System.Windows.Forms.Button bViewSpreadsheet;
         private System.Windows.Forms.RadioButton rbZeGageProHR;
         private System.Windows.Forms.RadioButton rbZeGagePro;
+        private System.Windows.Forms.RadioButton rbZeFlat;
     }
 }
 

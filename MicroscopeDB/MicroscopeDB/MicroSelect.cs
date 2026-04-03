@@ -134,6 +134,11 @@ namespace MicroscopeDB
             {
                 g.ProductLine = "ZeGage Pro HR";
             }
+            else if (rbZeFlat.Checked)
+            {
+                g.ProductLine = "ZeFlat";
+            }
+
 
             if (g.ProductLine != "ZeGage" & g.ProductLine != "ZeGagePlus")
             {
@@ -209,7 +214,7 @@ namespace MicroscopeDB
                  * 
                  */
 
-                if (g.ProductLine.Substring(0,6) == "ZeGage")
+                if (g.ProductLine.Substring(0,6) == "ZeGage" | g.ProductLine.Substring(0, 6) == "ZeFlat")
                 {
                     SQL = " and sn = '" + data[1] + " '";
                 }
@@ -1046,7 +1051,7 @@ namespace MicroscopeDB
 
                     if (g.ProductLine.Length > 9 && g.ProductLine.Substring(0, 10) == "ZeGage Pro")
                     {
-                        if (data.Length < 42)
+                        if (data.Length < 45)
                         {
                             MessageBox.Show("Data log can not be imported.  Log field count wrong.");
                             return;
@@ -1134,6 +1139,122 @@ namespace MicroscopeDB
                             "','" + data[23] +
                             "','" + data[24] +
                             "'," + data[25] +
+                            "," + data[26] +
+                            "," + data[27] +
+                            "," + data[28] +
+                            "," + data[29] +
+                            "," + data[30] +
+                            "," + data[31] +
+                            "," + data[32] +
+                            "," + data[33] +
+                            "," + data[34] +
+                            "," + data[35] +
+                            "," + data[36] +
+                            "," + data[37] +
+                            "," + data[38] +
+                            "," + data[39] +
+                            "," + data[40] +
+                            "," + data[41] +
+                            ",'" + data[42] +
+                            "','" + data[43] +
+                            "','" + data[44] +
+
+                            "')";
+                        }
+                    }
+
+                    if (g.ProductLine == "ZeFlat")
+                    {
+                        if (data.Length < 47)
+                        {
+                            MessageBox.Show("Data log can not be imported.  Log field count wrong.");
+                            return;
+                        }
+                        else
+                        {
+                            pData3 = new SqlParameter("@customer", SqlDbType.NChar);
+                            pData3.Value = data[3];
+
+                            pData4 = new SqlParameter("@endcustomer", SqlDbType.NChar);
+                            pData4.Value = data[4];
+
+                            pData5 = new SqlParameter("@pendcustomer", SqlDbType.NChar);
+                            pData5.Value = data[5];
+
+                            SQL =
+                            " ,Bridge " +
+                            " ,CANdelabraIII " +
+                            " ,CANdelabra " +
+                            " ,DualMotorCtrl " +
+
+                            " ,MotionCtrl " +
+                            " ,StepperCtrlX " +
+                            " ,StepperCtrlY " +
+                            " ,StepperCtrlZ " +
+                            " ,ZStage " +
+
+                            " ,Camera " +
+                            " ,SystemCtrl " +
+                            " ,ZeMapsVer " +
+                            " ,AtpDate " +
+                            " ,Temp " +
+
+                            " ,Humidity " +
+                            " ,Defocus " +
+                            " ,TopoRepeat " +
+                            " ,PkScanIncrSD " +
+                            " ,MeanScanIncrSD " +
+
+                            " ,[1p8umSHSAcc] " +
+                            " ,[24umSHSAcc] " +
+                            " ,SHRepeat " +
+                            " ,[1p8umCertSH] " +
+                            " ,[24umCertSH] " +
+
+                            " ,SH1p8Mean " +
+                            " ,SH1p8SDev " +
+                            " ,SH1p8upMean " +
+                            " ,SH1p8upSDev " +
+                            " ,SH24Mean " +
+
+                            " ,SH24SDev " +
+                            " ,SH24upMean " +
+                            " ,SH24upSDev " +
+
+                            " ,FlatRes " +
+                            " ,FlatRpt " +
+
+                            " ,AtpOperator " +
+                            " ,ZeGageAtpVer " +
+                            " ,LicenseHwId  " +
+
+                            " ) values ('" + g.ProductLine + "','" +
+                            data[0] +
+                            "','" + data[1] +
+                            "','" + data[2] +
+                            "'," + pData3 +
+                            "," + pData4 +
+                            "," + pData5 +
+                            ",'" + data[6] +
+                            "','" + data[7] +
+                            "','" + data[8] +
+                            "','" + data[9] +
+                            "','" + data[10] +
+                            "','" + data[11] +
+                            "','" + data[12] +
+                            "','" + data[13] +
+                            "','" + data[14] +
+                            "','" + data[15] +
+                            "','" + data[16] +
+                            "','" + data[17] +
+                            "','" + data[18] +
+                            "','" + data[19] +
+                            "','" + data[20] +
+                            "','" + data[21] +
+                            "','" + data[22] +
+                            "'," + data[23] +
+                            "," + data[24] +
+                            "," + data[25] +
                             "," + data[26] +
                             "," + data[27] +
                             "," + data[28] +
@@ -1270,8 +1391,8 @@ namespace MicroscopeDB
         public static int DataID;
         public static int AccessoryDataID;
         public static string DateCode;
-        public static string initialPath = @"\\zygocorp.zygo.com\departments\archives\";
-        public static string initialMIDpath = @"\\midfile01.zygo.com\departments\archives\";
+        public static string initialPath = @"\\zygocorp.ametek.com\departments\archives\";
+        public static string initialMIDpath = @"\\midfile01.ametek.com\departments\archives\";
 
         public static string db = "server = CT-MID-SQL11; password = Read+Write!; " +
                             "user = readwrite; database = ProductionControl;";
