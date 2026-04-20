@@ -362,11 +362,11 @@
         cmd.Parameters.Add(new SqlParameter("@ID", itemsList[shortNum].ID));
 
         SqlParameter pOnWarRoomList = new SqlParameter("@onWarRoomList", SqlDbType.Bit);
-        if (itemsList[shortNum].priority.Trim() == "P1: Immediate Risk (0-2 Weeks)" )
+        if (itemsList[shortNum].priority.Substring(0,2) == "P1" )
         {
             pOnWarRoomList.Value = 1;
         }
-        else if (itemsList[shortNum].priority.Trim() == "P2: Upcoming Risk (3-4 Weeks)")
+        else if (itemsList[shortNum].priority.Substring(0, 2) == "P2")
         {
             pOnWarRoomList.Value = 1;
         }
@@ -397,7 +397,7 @@
         UpdatePromised();
         await Task.Delay(1000);
         //ReloadBuyer();
-        
+
     }
 
 
@@ -416,6 +416,8 @@
     public async void Previous() //Cycle backwards in meeting
     {
         UpdateShortage();
+        //await getTables();
+
         if (newComment != "")
         {
             addComment(newComment);
@@ -433,16 +435,16 @@
             await Task.Delay(1000);
             isLoading = false;
             StateHasChanged();
-        }*/
+            }*/
 
-        if (((itemMasterDTList.Count < shortNum + 3) ||
-            (nettableStock.Count < shortNum + 3) ||
-            (OpenProdDTList.Count < shortNum + 3) ||
-            (ShortageDTList.Count < shortNum + 3) ||
-            (CommentsDTList.Count < shortNum + 3))
+    if (((itemMasterDTList.Count < shortNum + 3) ||
+    (nettableStock.Count < shortNum + 3) ||
+    (OpenProdDTList.Count < shortNum + 3) ||
+    (ShortageDTList.Count < shortNum + 3) ||
+    (CommentsDTList.Count < shortNum + 3))
 
-            &&
-            ((shortNum + 2 != ProdLineNumShortages) && (shortNum + 1 != ProdLineNumShortages)))
+    &&
+    ((shortNum + 2 != ProdLineNumShortages) && (shortNum + 1 != ProdLineNumShortages)))
 
         {
             isLoading = true;
@@ -462,7 +464,7 @@
             {
                 shortNum -= 1;
             }
-            
+
             StateHasChanged();
         }
 
@@ -472,7 +474,9 @@
     public async void Next() //Cycle forward in meeting
     {
         UpdateShortage();
+        //await LoadProdLineDataAsync();
         
+
         //First handle saving edits and reloading comments
         if (newComment != "")
         {
@@ -585,35 +589,35 @@
         cnxn.Close();
     }
 
-    public async Task ReloadBuyer()
-    {
-        SqlConnection cnxn = new SqlConnection(Databases.db);
-        SqlParameter pShortageID = new SqlParameter("@ID", itemsList[shortNum].ID);
-        SqlCommand cmd = new SqlCommand("select " +
-                                        "[ID]" +
-                                        ",InstrumentOptic" +
-                                        ",[STKOUT]" +
-                                        ",[QtyNeeded]" +
-                                        ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
-                                        ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
-                                        ",[Custom Item]" +
-                                        ",[PO]" +
-                                        ",[QTY] " +
-                                        ",[whoAdded]" +
-                                        ",[Project]" +
-                                        ",[PROJECTDESC]" +
-                                        ",[Supplier]" +
-                                        ",[Buyer]" + 
-                                        ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
-                                        ",OnWarRoomList" +
-                                        "FROM Shortage_List " +
-                                        "WHERE [ID] = " + pShortageID, cnxn);
-        cmd.Parameters.Add(pShortageID);
-        await cnxn.OpenAsync();
-        ShortageDTList[shortNum] = GetDataTable(cmd);
-        cmd.Parameters.Clear();
-        cnxn.Close();
-    }
+    // public async Task ReloadBuyer()
+    // {
+    //     SqlConnection cnxn = new SqlConnection(Databases.db);
+    //     SqlParameter pShortageID = new SqlParameter("@ID", itemsList[shortNum].ID);
+    //     SqlCommand cmd = new SqlCommand("select " +
+    //                                     "[ID]" +
+    //                                     ",InstrumentOptic" +
+    //                                     ",[STKOUT]" +
+    //                                     ",[QtyNeeded]" +
+    //                                     ",CONVERT(varchar,DateAddedToList,1) AS [List Date]" +
+    //                                     ",DATEDIFF(D, DateAddedtoList, GETDATE()) AS [Days on List]" +
+    //                                     ",[Custom Item]" +
+    //                                     ",[PO]" +
+    //                                     ",[QTY] " +
+    //                                     ",[whoAdded]" +
+    //                                     ",[Project]" +
+    //                                     ",[PROJECTDESC]" +
+    //                                     ",[Supplier]" +
+    //                                     ",[Buyer]" + 
+    //                                     ",CONVERT(varchar,[Orig_ Requested Receipt Date],1) [Orig_ Requested Receipt Date] " +
+    //                                     ",OnWarRoomList" +
+    //                                     "FROM Shortage_List " +
+    //                                     "WHERE [ID] = " + pShortageID, cnxn);
+    //     cmd.Parameters.Add(pShortageID);
+    //     await cnxn.OpenAsync();
+    //     ShortageDTList[shortNum] = GetDataTable(cmd);
+    //     cmd.Parameters.Clear();
+    //     cnxn.Close();
+    // }
     //END COMMENTS-----------------------------------------
 
     //ARCHIVE/UNARCHIVE-----------------------------------
