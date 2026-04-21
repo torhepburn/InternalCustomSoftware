@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>18.3.11512.155</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-04-02T17:14:38.1254586Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-04-21T13:21:24.0438790Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -25,31 +25,69 @@
       <Query>
         <DataSourceName>AccessFrontEnds</DataSourceName>
         <CommandText>
+
+WITH s1 AS
+(
+	SELECT
+
+	ShortageId
+	,MAX(CommentID) CommentID
+	
+	FROM ShortageListComments
+
+	WHERE ShortageID IN (SELECT ID FROM Shortage_List where DateArchived is null)
+
+	GROUP BY ShortageID
+)
+,s2 AS
+(
+	SELECT
+
+	c.ShortageID
+	,CONVERT(varchar(10),EnteredOn, 101) + ' : ' + Comment Comment
+	
+
+	FROM ShortageListComments c INNER JOIN s1 ON c.CommentID = s1.CommentID
+)
+,s3 AS
+(
 SELECT
 
-ID
+ ID
 ,Buyer
 ,ProdLine
 ,Priority
 ,ItemCode
 ,Description
 ,CONVERT(varchar(10),DateAddedtoList,101) DateAddedtoList
-,COALESCE(CONVERT(varchar(10),DateArchived,101),'') DateArchived
+,COALESCE(CONVERT(varchar(10),[Promised Receipt Date],101),'') [Promised Receipt Date]
 ,COALESCE(Supplier,'') Supplier
 ,COALESCE(Reason,'') Reason
 ,CASE 
 	WHEN DateArchived is not null THEN DATEDIFF(dd,DateAddedtoList, DateArchived)
 	ELSE DATEDIFF(dd, DateAddedtoList, GETDATE())
 END DaysOnList
+
 FROM Shortage_List
 
 WHERE
 
-(DateArchived is Null or
+DateArchived is Null
+)
 
-DateArchived &gt; DATEADD(dd, -7,CAST(GETDATE() as Date)))
+SELECT
 
-ORDER BY Priority, ItemCode</CommandText>
+s3.*
+,s2.Comment LatestComment
+
+FROM s3 
+
+LEFT JOIN s2 ON s3.ID = s2.ShortageID
+
+
+ORDER BY Priority, ItemCode
+
+</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -81,8 +119,8 @@ ORDER BY Priority, ItemCode</CommandText>
           <DataField>DateAddedtoList</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="DateArchived">
-          <DataField>DateArchived</DataField>
+        <Field Name="Promised_Receipt_Date">
+          <DataField>Promised Receipt Date</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Supplier">
@@ -96,6 +134,10 @@ ORDER BY Priority, ItemCode</CommandText>
         <Field Name="DaysOnList">
           <DataField>DaysOnList</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="LatestComment">
+          <DataField>LatestComment</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -167,6 +209,9 @@ ORDER BY Priority, ItemCode</CommandText>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.66667in</Width>
                 </TablixColumn>
               </TablixColumns>
               <TablixRows>
@@ -441,14 +486,14 @@ ORDER BY Priority, ItemCode</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox9">
+                        <Textbox Name="Textbox13">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Date Archived</Value>
+                                  <Value>Promised Receipt Date</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>9pt</FontSize>
@@ -460,7 +505,7 @@ ORDER BY Priority, ItemCode</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox9</rd:DefaultName>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -585,6 +630,45 @@ ORDER BY Priority, ItemCode</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox15">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Latest Comment</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -851,14 +935,14 @@ ORDER BY Priority, ItemCode</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="DateArchived">
+                        <Textbox Name="Promised_Receipt_Date">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!DateArchived.Value</Value>
+                                  <Value>=Fields!Promised_Receipt_Date.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -868,7 +952,7 @@ ORDER BY Priority, ItemCode</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>DateArchived</rd:DefaultName>
+                          <rd:DefaultName>Promised_Receipt_Date</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -972,7 +1056,9 @@ ORDER BY Priority, ItemCode</CommandText>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>DaysOnList</rd:DefaultName>
@@ -992,12 +1078,48 @@ ORDER BY Priority, ItemCode</CommandText>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="LatestComment">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!LatestComment.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>LatestComment</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
             </TablixBody>
             <TablixColumnHierarchy>
               <TablixMembers>
+                <TablixMember />
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
@@ -1034,7 +1156,7 @@ ORDER BY Priority, ItemCode</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>13.95833in</Width>
+            <Width>16.625in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -1042,7 +1164,7 @@ ORDER BY Priority, ItemCode</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>13.95833in</Width>
+      <Width>17.0625in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
