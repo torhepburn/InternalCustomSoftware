@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.3.11512.155</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.3.11512.155</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-04-23T18:00:45.1148643Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -13,7 +24,8 @@
     <DataSet Name="DataSet1">
       <Query>
         <DataSourceName>NAV</DataSourceName>
-        <CommandText>/*	Current production status	*/
+        <CommandText>
+/*	Current production status	*/
 
 WITH s1 AS
 (
@@ -25,32 +37,15 @@ o.[Shortcut Dimension 2 Code] [Value Stream]
 ,l.[Job No_]
 ,o.No_ [WO Number]
 ,l.[Remaining Quantity] [WO Quantity]
---[Reference] r
---,CHARINDEX('SN',Reference) rr
 ,CASE
 	WHEN TRY_CAST(LEFT(TRIM(REPLACE(Reference,'SO','')),1) AS DECIMAL) IS NOT NULL THEN
 		CASE 
 			WHEN CHARINDEX('SN',REPLACE(Reference,'SO','')) &gt; 0 THEN TRIM(LEFT(REPLACE(Reference,'SO',''), (CHARINDEX('SN',REPLACE(Reference,'SO',''))-2)))
-		--CHARINDEX('SN', Reference)
 		ELSE
-		--CASE
-			--WHEN SUBSTRING(Reference, 6, 1) = '-' THEN 
 			TRIM(LEFT(REPLACE(Reference,'SO',''),10))
-		--END
-		--ELSE ''
 		END
 	ELSE ''
 END SO
---,TRY_CAST(LEFT(TRIM(Reference),1) AS DECIMAL) num
---,CASE
---	WHEN CHARINDEX('SN',Reference) &gt; 0 THEN SUBSTRING(Reference, (CHARINDEX('-',Reference)+1),3)
-		
-			
-	
-	
---	--CHARINDEX('SN', Reference)
---	ELSE '99'
---END SOLine
 ,Reference
 ,CASE
 	WHEN CHARINDEX('SN',Reference) &gt; 0 THEN TRIM(SUBSTRING(Reference, (CHARINDEX('SN',Reference)+3), 10))
@@ -58,19 +53,7 @@ END SO
 	ELSE ''
 END SN
 ,o.[Source No_] [WO Part Number]
-
-
---,SUBSTRING(Reference, 0, CHARINDEX('SN',Reference))
 ,[Assigned User ID]
---,CASE 
---	WHEN o.Status = 2 THEN 'Planned - Not Started'
---	ELSE
---		CASE	
---			WHEN o.[Due Date] &lt; GETDATE() THEN 'Behind'
---			WHEN o.[Due Date] &gt; GETDATE() THEN 'On Target'
---			ELSE 'Unknown'
---			END
---		END [WO Status]
 ,CASE l.[Overtime Applicable]
 	WHEN 0 THEN ''
 	WHEN 1 THEN 'Yes'
@@ -82,25 +65,17 @@ END [Overtime Applicable]
 ,o.[Inventory Posting Group] ipg
 ,o.[Creation Date] [WO Release Date]
  
-
 FROM [ZYGO$Production Order] o
 
 INNER JOIN [ZYGO$Prod_ Order Line] l ON o.No_ = l.[Prod_ Order No_]
 
-
 WHERE 1=1
-
---AND LEN([Reference]) &gt; 0
 
 AND o.Status IN (3)	--3 = Released  2 = Firm Planned
 
+AND ([Assigned User ID] IN ('AMETEK-AD\DWOOLLEY','AMETEK-AD\LPEREZ')
 
-
---AND SUBSTRING(Reference, 3, 1) != '-'
-
---AND LEFT(Reference, 1) != 'S'
-
-AND [Assigned User ID] IN ('AMETEK-AD\DWOOLLEY','AMETEK-AD\LPEREZ')
+OR [Buyer Planner Code] IN ('LEYDE P', 'DIANE W'))
 
 AND o.Quantity &gt; 0
 
@@ -121,9 +96,6 @@ SELECT
 ,[WO Number]
 ,[WO Quantity]
 ,l.[Unit Price]
-
---,[WO Status]
---,[SO Line No_]
 ,l.[Requested Delivery Date]
 ,l.[Orig_ Promised Delivery Date]
 ,l.[Promised Delivery Date]
@@ -170,7 +142,6 @@ INNER JOIN [ZYGO$Sales Header] h ON l.[Document No_] = h.No_
 	,'' [Overtime Applicable]
 	,SN [S/N]
 
-
 	FROM s1
 )
 , s4 AS
@@ -203,9 +174,15 @@ LEFT JOIN s2 ON s3.[WO Number] = s3.[WO Number] and s3.[WO Release Date] = s2.[W
 AND s3.[WO Due Date] = s2.[WO Due Date]  AND s3.[WO Part Number] = s2.[WO Part Number] AND s3.[WO Quantity] = s2.[WO Quantity]
 )
 
-select * from s4
---WHERE [WO Status] != 'Planned - Not Started'
-</CommandText>
+select
+
+
+
+s4.* from s4
+
+INNER JOIN [ZYGO$Production Order] o ON s4.[WO Number] = o.No_
+
+WHERE o.Status = 3</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -295,7 +272,7 @@ select * from s4
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>MFO Production Execution Update</Value>
+                    <Value>MFO Production Current</Value>
                     <Style>
                       <FontFamily>Segoe UI Light</FontFamily>
                       <FontSize>24pt</FontSize>
