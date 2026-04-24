@@ -239,7 +239,7 @@ namespace MicroscopeDB
             }
 
 
-            if (g.ProductLine == "ZeGage Pro" | g.ProductLine == "ZeGage Pro HR")
+            if (g.ProductLine == "ZeGage Pro" | g.ProductLine == "ZeGage Pro HR" | g.ProductLine == "ZeFlat")
             {
                 Lbridge.Text = "Bridge:";
                 Lbridge.Location = new Point(119, 70);
@@ -323,7 +323,7 @@ namespace MicroscopeDB
 
 
 
-            if (g.ProductLine.Substring(0,6) != "ZeGage" ) //& g.ProductLine != "ZeGagePlus")
+            if (g.ProductLine.Substring(0,6) != "ZeGage" & g.ProductLine.Substring(0, 6) != "ZeFlat")
             {
                 LDateCode.Text = T1.Rows[0][0].ToString() + "-";
                 Lsn.Text = T1.Rows[0][1].ToString();

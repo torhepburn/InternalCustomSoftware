@@ -417,6 +417,78 @@ namespace MicroscopeDB
                             return;
                         }
 
+                        if (g.ProductLine == "ZeFlat")
+                        {
+                            if (data.Length < 47)
+                            {
+                                MessageBox.Show("Data log can not be imported.  Log field count wrong.");
+                                return;
+                            }
+                            else
+                            {
+                                pData3 = new SqlParameter("@customer", SqlDbType.NChar);
+                                pData3.Value = data[3];
+
+                                pData4 = new SqlParameter("@endcustomer", SqlDbType.NChar);
+                                pData4.Value = data[4];
+
+                                pData5 = new SqlParameter("@pendcustomer", SqlDbType.NChar);
+                                pData5.Value = data[5];
+
+                                SQL =
+                                " ,Bridge = '" + data[8] + "'" +
+                                " ,CANdelabraIII = '" + data[9] + "'" +
+                                " ,CANdelabra = '" + data[10] + "'" +
+                                " ,DualMotorCtrl = '" + data[11] + "'" +
+
+                                " ,MotionCtrl = '" + data[12] + "'" +
+                                " ,StepperCtrlX = '" + data[13] + "'" +
+                                " ,StepperCtrlY = '" + data[14] + "'" +
+                                " ,StepperCtrlZ = '" + data[15] + "'" +
+                                " ,ZStage = '" + data[16] + "'" +
+
+                                " ,Camera = '" + data[17] + "'" +
+                                " ,[xy-stage] = '" + data[18] + "'" +
+                                " ,[pr-stage] = '" + data[19] + "'" +
+                                " ,SystemCtrl = '" + data[20] + "'" +
+                                " ,MxVer = '" + data[21] + "'" +
+                                " ,AtpDate = '" + data[22] + "'" +
+                                " ,Temp = '" + data[23] + "'" +
+
+                                " ,Humidity = '" + data[24] + "'" +
+                                " ,Defocus = " + data[25] +
+                                " ,TopoRepeat = " + data[26] +
+                                " ,PkScanIncrSD = " + data[27] +
+                                " ,MeanScanIncrSD = " + data[28] +
+
+                                " ,[1p8umSHSAcc] = " + data[29] +
+                                " ,[24umSHSAcc] = " + data[30] +
+                                " ,SHRepeat = " + data[31] +
+                                " ,[1p8umCertSH] = " + data[32] +
+                                " ,[24umCertSH] = " + data[33] +
+
+                                " ,SH1p8Mean = " + data[34] +
+                                " ,SH1p8SDev = " + data[35] +
+                                " ,SH1p8upMean = " + data[36] +
+                                " ,SH1p8upSDev = " + data[37] +
+                                " ,SH24Mean = " + data[38] +
+
+                                " ,SH24SDev = " + data[39] +
+                                " ,SH24upMean = " + data[40] +
+                                " ,SH24upSDev = " + data[41] +
+
+                                " ,FlatRes = " + data[42] +
+                                " ,FlatRpt = " + data[43] +
+
+                                " ,AtpOperator = '" + data[44] + "'" +
+                                " ,ZeGageAtpVer = '" + data[45] + "'" +
+                                " ,LicenseHwId = '" + data[46] + "'" +
+                                " WHERE ID = " + dataID;
+
+                            }
+                        }
+
+
                         if (g.ProductLine == "ZeGage" | g.ProductLine == "ZeGagePlus")
                         {
                             SQL =
@@ -1194,8 +1266,10 @@ namespace MicroscopeDB
                             " ,ZStage " +
 
                             " ,Camera " +
+                            " ,[XY-Stage] " +
+                            " ,[PR-Stage] " +
                             " ,SystemCtrl " +
-                            " ,ZeMapsVer " +
+                            " ,MxVer " +
                             " ,AtpDate " +
                             " ,Temp " +
 
@@ -1274,6 +1348,8 @@ namespace MicroscopeDB
                             ",'" + data[42] +
                             "','" + data[43] +
                             "','" + data[44] +
+                            "','" + data[45] +
+                            "','" + data[46] +
 
                             "')";
                         }

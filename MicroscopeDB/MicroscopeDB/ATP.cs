@@ -30,7 +30,7 @@ namespace MicroscopeDB
         {
             LproductLine.Text = g.ProductLine;
 
-            if (g.ProductLine.Substring(0,6) != "ZeGage" ) //& g.ProductLine != "ZeGagePlus" )
+            if (g.ProductLine.Substring(0,6) != "ZeGage" & g.ProductLine.Substring(0, 6) != "ZeFlat")
             {
                 SQL =
                     " ,ATP_Operator " +
@@ -174,65 +174,143 @@ namespace MicroscopeDB
                     " ,SH1p8upSDev " +
                     " ,SH24upSDev " +
                     
-                    " ,ZeGageAtpVer ";
+                    " ,ZeGageAtpVer " +
+
+                    " ,FlatRes " +
+                    " ,FlatRpt ";
 
                 getT1();
 
-                label7.Text = "1.8 μm SH Accuracy:";
-                label7.Location = new Point(39, 56);
-                
-                if (T1.Rows[0][6].ToString().Length > 0)
+                if (g.ProductLine.Substring(0, 6) == "ZeGage")
                 {
-                    tbATPillumCntr.Text = Convert.ToDecimal(T1.Rows[0][6].ToString()).ToString("0.000");
+                    label7.Text = "1.8 μm SH Accuracy:";
+                    label7.Location = new Point(39, 56);
+
+                    if (T1.Rows[0][6].ToString().Length > 0)
+                    {
+                        tbATPillumCntr.Text = Convert.ToDecimal(T1.Rows[0][6].ToString()).ToString("0.000");
+                    }
+
+                    label6.Visible = false;
+                    tbATPillumLoss.Visible = false;
+                    tbMeanIllumLoss.Visible = false;
+                    label9.Visible = false;
+
+                    label13.Text = "24 μm SH Accuracy:";
+                    label13.Location = new Point(41, 108);
+                    label11.Text = "%";
+                    if (T1.Rows[0][7].ToString().Length > 0)
+                    {
+                        tbATPcnf50hz.Text = Convert.ToDecimal(T1.Rows[0][7].ToString()).ToString("0.000");
+                    }
+
+
+                    label12.Visible = false;
+                    tbATPcnfMax.Visible = false;
+                    tbMeanCnfMax.Visible = false;
+                    label10.Visible = false;
+
+                    label17.Text = "SH Repeatability:";
+                    label17.Location = new Point(57, 160);
+                    if (T1.Rows[0][8].ToString().Length > 0)
+                    {
+                        tbATPscanIncrErr.Text = Convert.ToDecimal(T1.Rows[0][8].ToString()).ToString("0.000");
+                    }
+
+                    label16.Visible = false;
+                    tbATPscanLinErr.Visible = false;
+                    tbMeanScanLinErr.Visible = false;
+                    label14.Visible = false;
+
+                    if (T1.Rows[0][9].ToString().Length > 0)
+                    {
+                        tbATPTopoRpt.Text = Convert.ToDecimal(T1.Rows[0][9].ToString()).ToString("0.000");
+                    }
+
+                    label20.Visible = false;
+                    tbATPremRpt.Visible = false;
+                    tbMeanRmsRpt.Visible = false;
+                    label18.Visible = false;
+
+                    label5.Text = "ZeGageAtpVer";
+                    label5.Location = new Point(65, 354);
+                    tbATPversion.Text = T1.Rows[0][20].ToString();
+
                 }
 
-                label6.Visible = false;
-                tbATPillumLoss.Visible = false;
-                tbMeanIllumLoss.Visible = false;
-                label9.Visible = false;
-
-                label13.Text = "24 μm SH Accuracy:";
-                label13.Location = new Point(41, 108);
-                label11.Text = "%";
-                if (T1.Rows[0][7].ToString().Length > 0)
+                if (g.ProductLine.Substring(0, 6) == "ZeFlat")
                 {
-                    tbATPcnf50hz.Text = Convert.ToDecimal(T1.Rows[0][7].ToString()).ToString("0.000");
+                    label7.Text = "1.8 μm SH Accuracy:";
+                    label7.Location = new Point(39, 56);
+
+                    if (T1.Rows[0][6].ToString().Length > 0)
+                    {
+                        tbATPillumCntr.Text = Convert.ToDecimal(T1.Rows[0][6].ToString()).ToString("0.000");
+                    }
+
+                    label6.Visible = false;
+                    tbATPillumLoss.Visible = false;
+                    tbMeanIllumLoss.Visible = false;
+                    label9.Visible = false;
+
+                    label13.Text = "24 μm SH Accuracy:";
+                    label13.Location = new Point(41, 90);
+                    label11.Text = "%";
+                    
+                    if (T1.Rows[0][7].ToString().Length > 0)
+                    {
+                        tbATPcnf50hz.Text = Convert.ToDecimal(T1.Rows[0][7].ToString()).ToString("0.000");
+                        tbATPcnf50hz.Location = new Point(151,90);
+                        tbMeanCnf50hz.Location = new Point(211, 90);
+                        label11.Location = new Point(267, 90);
+                    }
+
+
+                    label12.Visible = false;
+                    tbATPcnfMax.Visible = false;
+                    tbMeanCnfMax.Visible = false;
+                    label10.Visible = false;
+
+                    label17.Text = "SH Repeatability:";
+                    label17.Location = new Point(57, 124);
+                    if (T1.Rows[0][8].ToString().Length > 0)
+                    {
+                        tbATPscanIncrErr.Text = Convert.ToDecimal(T1.Rows[0][8].ToString()).ToString("0.000");
+                        tbATPscanIncrErr.Location = new Point(151, 124);
+                        tbMeanScanIncrErr.Location = new Point(211, 124);
+                        label15.Location = new Point(267, 124);
+                    }
+
+                    //label16.Visible = false;
+                    label16.Text = "Topo Repeatability:";
+                    label16.Location = new Point(57, 158);
+                    tbATPscanLinErr.Location = new Point(151,158);
+                    tbMeanScanLinErr.Location = new Point(211,158);
+                    label14.Location = new Point(267,158);
+
+                    if (T1.Rows[0][9].ToString().Length > 0)
+                    {
+                        tbATPTopoRpt.Text = Convert.ToDecimal(T1.Rows[0][9].ToString()).ToString("0.000");
+                    }
+
+                    //label20.Visible = false;
+                    label21.Text = "Flatness Residual:";
+                    label21.Location = new Point(57, 192);
+                    tbATPremRpt.Visible = false;
+
+                    //label20.Visible = false;
+                    label20.Text = "Flatness Repeatability:";
+                    label20.Location = new Point(57, 226);
+                    tbATPremRpt.Visible = false;
+
+                    tbMeanRmsRpt.Visible = false;
+                    label18.Visible = false;
+
+                    label5.Text = "ZeFlatAtpVer";
+                    label5.Location = new Point(65, 354);
+                    tbATPversion.Text = T1.Rows[0][20].ToString();
+
                 }
-
-                
-                label12.Visible = false;
-                tbATPcnfMax.Visible = false;
-                tbMeanCnfMax.Visible = false;
-                label10.Visible = false;
-
-                label17.Text = "SH Repeatability:";
-                label17.Location = new Point(57, 160);
-                if (T1.Rows[0][8].ToString().Length > 0)
-                {
-                    tbATPscanIncrErr.Text = Convert.ToDecimal(T1.Rows[0][8].ToString()).ToString("0.000");
-                }
-
-                label16.Visible = false;
-                tbATPscanLinErr.Visible = false;
-                tbMeanScanLinErr.Visible = false;
-                label14.Visible = false;
-
-                if (T1.Rows[0][9].ToString().Length > 0)
-                {
-                    tbATPTopoRpt.Text = Convert.ToDecimal(T1.Rows[0][9].ToString()).ToString("0.000");
-                }
-
-                label20.Visible = false;
-                tbATPremRpt.Visible = false;
-                tbMeanRmsRpt.Visible = false;
-                label18.Visible = false;
-
-                label5.Text = "ZeGageAtpVer";
-                label5.Location = new Point(65, 354);
-                tbATPversion.Text = T1.Rows[0][20].ToString();
-
-                
-
 
                 //step height performance details
                 //row 1
@@ -417,6 +495,8 @@ namespace MicroscopeDB
            " ,limStepHeightAccuracyZ " +    //9
            " ,lim1p8StepHeightAccuracy " +
            " ,lim24StepHeightAccuracy " +
+           " ,limFlatnessResidual " +
+           " ,limFlatnessRepeatability " +
 
            " FROM MicroscopeSpecs WHERE " +
            " ProductLine = '" + g.ProductLine + "'", cnxn);
@@ -466,7 +546,7 @@ namespace MicroscopeDB
             {
                 g.LimRmsRepeat = Convert.ToDecimal(T3.Rows[0][6].ToString()).ToString("0.000");
 
-                if (g.ProductLine.Substring(0,6) != "ZeGage")
+                if (g.ProductLine.Substring(0,6) != "ZeGage" & g.ProductLine.Substring(0, 6) != "ZeFlat")
                 {
                     limitChecker(tbATPremRpt, g.LimRmsRepeat);
                 }
@@ -475,7 +555,7 @@ namespace MicroscopeDB
             {
                 g.LimStepRepeat = Convert.ToDecimal(T3.Rows[0][7].ToString()).ToString("0.000");
 
-                if (g.ProductLine.Substring(0, 6) != "ZeGage")
+                if (g.ProductLine.Substring(0, 6) != "ZeGage" & g.ProductLine.Substring(0, 6) != "ZeFlat")
                 {
                     limitChecker(tbATPstepRpt1p8, g.LimStepRepeat);
                     limitChecker(tbATPstepRpt24, g.LimStepRepeat);
@@ -596,6 +676,12 @@ namespace MicroscopeDB
             if (g.ProductLine == "ZeGagePlus")
             {
                 PerformanceSpecsZeGagePlus p = new PerformanceSpecsZeGagePlus();
+                p.ShowDialog();
+            }
+
+            if (g.ProductLine == "ZeFlat")
+            {
+                PerformanceSpecsZeGage p = new PerformanceSpecsZeGage();
                 p.ShowDialog();
             }
         }

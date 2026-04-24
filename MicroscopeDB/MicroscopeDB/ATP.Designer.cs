@@ -410,7 +410,7 @@
             this.tbATPTopoRpt.Size = new System.Drawing.Size(50, 20);
             this.tbATPTopoRpt.TabIndex = 109;
             this.tbATPTopoRpt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
+            //
             // label21
             // 
             this.label21.AutoSize = true;
@@ -449,7 +449,7 @@
             // 
             // tbMeanScanIncrErr
             // 
-            this.tbMeanScanIncrErr.Location = new System.Drawing.Point(211, 157);
+            this.tbMeanScanIncrErr.Location = new System.Drawing.Point(208, 157);
             this.tbMeanScanIncrErr.Name = "tbMeanScanIncrErr";
             this.tbMeanScanIncrErr.ReadOnly = true;
             this.tbMeanScanIncrErr.Size = new System.Drawing.Size(50, 20);
