@@ -67,7 +67,7 @@ namespace MicroscopeDB
                 tbATPscanIncrErr.Text = Convert.ToDecimal(T1.Rows[0][11].ToString()).ToString("0.000");
                 tbATPscanLinErr.Text = Convert.ToDecimal(T1.Rows[0][12].ToString()).ToString("0.0");
                 tbATPTopoRpt.Text = Convert.ToDecimal(T1.Rows[0][13].ToString()).ToString("0.000");
-                tbATPremRpt.Text = Convert.ToDecimal(T1.Rows[0][14].ToString()).ToString("0.0000");
+                tb15.Text = Convert.ToDecimal(T1.Rows[0][14].ToString()).ToString("0.0000");
 
 
                 tbATPcertStep1p8.Text = Convert.ToDecimal(T1.Rows[0][15].ToString()).ToString("0.000");
@@ -138,7 +138,7 @@ namespace MicroscopeDB
                 g.MeanTopoRpt = Convert.ToDecimal(T2.Rows[0][6].ToString()).ToString("0.000");
                 tbMeanTopoRpt.Text = g.MeanTopoRpt;
                 g.MeanRmsRpt = Convert.ToDecimal(T2.Rows[0][7].ToString()).ToString("0.0000");
-                tbMeanRmsRpt.Text = g.MeanRmsRpt;
+                tb16.Text = g.MeanRmsRpt;
                 
                 tbMeanStepAcc1p8.Text = Convert.ToDecimal(T2.Rows[0][8].ToString()).ToString("0.000");
                 tbMeanStepRpt1p8.Text = Convert.ToDecimal(T2.Rows[0][9].ToString()).ToString("0.000");
@@ -228,8 +228,8 @@ namespace MicroscopeDB
                     }
 
                     label20.Visible = false;
-                    tbATPremRpt.Visible = false;
-                    tbMeanRmsRpt.Visible = false;
+                    tb15.Visible = false;
+                    tb16.Visible = false;
                     label18.Visible = false;
 
                     label5.Text = "ZeGageAtpVer";
@@ -281,11 +281,10 @@ namespace MicroscopeDB
                         label15.Location = new Point(267, 124);
                     }
 
-                    //label16.Visible = false;
                     label16.Text = "Topo Repeatability:";
-                    label16.Location = new Point(57, 158);
-                    tbATPscanLinErr.Location = new Point(151,158);
-                    tbMeanScanLinErr.Location = new Point(211,158);
+                    label16.Location = new Point(47, 158);
+                    tbATPTopoRpt.Location = new Point(151,158);
+                    tbMeanTopoRpt.Location = new Point(211,158);
                     label14.Location = new Point(267,158);
 
                     if (T1.Rows[0][9].ToString().Length > 0)
@@ -293,18 +292,29 @@ namespace MicroscopeDB
                         tbATPTopoRpt.Text = Convert.ToDecimal(T1.Rows[0][9].ToString()).ToString("0.000");
                     }
 
-                    //label20.Visible = false;
                     label21.Text = "Flatness Residual:";
-                    label21.Location = new Point(57, 192);
-                    tbATPremRpt.Visible = false;
+                    label21.Location = new Point(47, 192);
+                    tbATPscanLinErr.Location = new Point(151, 192);
+                    tbMeanScanLinErr.Location = new Point(211, 192);
+                    label19.Location = new Point(267, 192);
+
+                    if (T1.Rows[0][21].ToString().Length > 0)
+                    {
+                        tbATPscanLinErr.Text = Convert.ToDecimal(T1.Rows[0][21].ToString()).ToString("0.000");
+                    }
+
 
                     //label20.Visible = false;
                     label20.Text = "Flatness Repeatability:";
-                    label20.Location = new Point(57, 226);
-                    tbATPremRpt.Visible = false;
+                    label20.Location = new Point(27, 226);
+                    tb15.Location = new Point(151, 226);
+                    tb16.Location = new Point(211, 226);
+                    if (T1.Rows[0][22].ToString().Length > 0)
+                    {
+                        tb15.Text = Convert.ToDecimal(T1.Rows[0][22].ToString()).ToString("0.000");
+                    }
 
-                    tbMeanRmsRpt.Visible = false;
-                    label18.Visible = false;
+                    label18.Location = new Point (267, 226);
 
                     label5.Text = "ZeFlatAtpVer";
                     label5.Location = new Point(65, 354);
@@ -403,12 +413,14 @@ namespace MicroscopeDB
                     " ,AVG([24umSHSAcc]) " +
                     " ,AVG(SHRepeat) " +
                     " ,AVG(TopoRepeat) " +
-
-
+                   
                     " ,CAST(AVG(SH1p8SDev) AS DECIMAL(18,7)) " +
                     " ,CAST(AVG(SH24SDev) AS DECIMAL(18,7)) " +
                     " ,CAST(AVG(SH1p8upSDev) AS DECIMAL(18,7)) " +
                     " ,CAST(AVG(SH24upSDev) AS DECIMAL(18,7)) " +
+
+                    " ,AVG(FlatRes) " +
+                    " ,AVG(FlatRpt) " +
 
                     " FROM MicroscopeData WHERE " +
                     " ProductLine = '" + g.ProductLine + "'", cnxn);
@@ -466,6 +478,16 @@ namespace MicroscopeDB
                 {
 
                     tbMeanATPmeanStep24z.Text = Convert.ToDecimal(T2.Rows[0][7].ToString()).ToString("0.000000");
+                }
+                if (T2.Rows[0][8].ToString().Length > 0)
+                {
+
+                    tbMeanScanLinErr.Text = Convert.ToDecimal(T2.Rows[0][8].ToString()).ToString("0.000");
+                }
+                if (T2.Rows[0][9].ToString().Length > 0)
+                {
+
+                    tb16.Text = Convert.ToDecimal(T2.Rows[0][9].ToString()).ToString("0.000");
                 }
             }
 
@@ -548,7 +570,7 @@ namespace MicroscopeDB
 
                 if (g.ProductLine.Substring(0,6) != "ZeGage" & g.ProductLine.Substring(0, 6) != "ZeFlat")
                 {
-                    limitChecker(tbATPremRpt, g.LimRmsRepeat);
+                    limitChecker(tb15, g.LimRmsRepeat);
                 }
             }
             if (T3.Rows[0][7].ToString().Length > 0)
@@ -590,7 +612,19 @@ namespace MicroscopeDB
                 g.Lim24StepHeightAccuracy = Convert.ToDecimal(T3.Rows[0][11].ToString()).ToString("0.000");
                 limitChecker(tbATPcnf50hz, g.Lim24StepHeightAccuracy);
             }
-         }
+            if (T3.Rows[0][12].ToString().Length > 0)
+            {
+                //  ZeFlat only
+                g.LimFlatResidual = Convert.ToDecimal(T3.Rows[0][12].ToString()).ToString("0.000");
+                limitChecker(tbATPcnf50hz, g.LimFlatResidual);
+            }
+            if (T3.Rows[0][13].ToString().Length > 0)
+            {
+                //  ZeFlat only
+                g.LimFlatRepeat = Convert.ToDecimal(T3.Rows[0][13].ToString()).ToString("0.000");
+                limitChecker(tbATPcnf50hz, g.LimFlatRepeat);
+            }
+        }
 
         private void limitChecker(TextBox box, string limit)
         {
@@ -681,7 +715,7 @@ namespace MicroscopeDB
 
             if (g.ProductLine == "ZeFlat")
             {
-                PerformanceSpecsZeGage p = new PerformanceSpecsZeGage();
+                PerformanceSpecificationsZeFlat p = new PerformanceSpecificationsZeFlat();
                 p.ShowDialog();
             }
         }

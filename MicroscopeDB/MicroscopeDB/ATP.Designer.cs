@@ -57,11 +57,11 @@
             this.label17 = new System.Windows.Forms.Label();
             this.label18 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
-            this.tbATPremRpt = new System.Windows.Forms.TextBox();
+            this.tb15 = new System.Windows.Forms.TextBox();
             this.label20 = new System.Windows.Forms.Label();
             this.tbATPTopoRpt = new System.Windows.Forms.TextBox();
             this.label21 = new System.Windows.Forms.Label();
-            this.tbMeanRmsRpt = new System.Windows.Forms.TextBox();
+            this.tb16 = new System.Windows.Forms.TextBox();
             this.tbMeanTopoRpt = new System.Windows.Forms.TextBox();
             this.tbMeanScanLinErr = new System.Windows.Forms.TextBox();
             this.tbMeanScanIncrErr = new System.Windows.Forms.TextBox();
@@ -229,6 +229,7 @@
             this.tbATPillumLoss.ReadOnly = true;
             this.tbATPillumLoss.Size = new System.Drawing.Size(50, 20);
             this.tbATPillumLoss.TabIndex = 87;
+            this.tbATPillumLoss.Text = "3";
             this.tbATPillumLoss.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label6
@@ -247,6 +248,7 @@
             this.tbATPillumCntr.ReadOnly = true;
             this.tbATPillumCntr.Size = new System.Drawing.Size(50, 20);
             this.tbATPillumCntr.TabIndex = 85;
+            this.tbATPillumCntr.Text = "1";
             this.tbATPillumCntr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label8
@@ -301,6 +303,7 @@
             this.tbATPcnf50hz.ReadOnly = true;
             this.tbATPcnf50hz.Size = new System.Drawing.Size(50, 20);
             this.tbATPcnf50hz.TabIndex = 93;
+            this.tbATPcnf50hz.Text = "5";
             this.tbATPcnf50hz.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label13
@@ -337,6 +340,7 @@
             this.tbATPscanLinErr.ReadOnly = true;
             this.tbATPscanLinErr.Size = new System.Drawing.Size(50, 20);
             this.tbATPscanLinErr.TabIndex = 103;
+            this.tbATPscanLinErr.Text = "11";
             this.tbATPscanLinErr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label16
@@ -355,6 +359,7 @@
             this.tbATPscanIncrErr.ReadOnly = true;
             this.tbATPscanIncrErr.Size = new System.Drawing.Size(50, 20);
             this.tbATPscanIncrErr.TabIndex = 101;
+            this.tbATPscanIncrErr.Text = "9";
             this.tbATPscanIncrErr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label17
@@ -384,14 +389,15 @@
             this.label19.TabIndex = 114;
             this.label19.Text = "nm";
             // 
-            // tbATPremRpt
+            // tb15
             // 
-            this.tbATPremRpt.Location = new System.Drawing.Point(151, 235);
-            this.tbATPremRpt.Name = "tbATPremRpt";
-            this.tbATPremRpt.ReadOnly = true;
-            this.tbATPremRpt.Size = new System.Drawing.Size(50, 20);
-            this.tbATPremRpt.TabIndex = 111;
-            this.tbATPremRpt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.tb15.Location = new System.Drawing.Point(151, 235);
+            this.tb15.Name = "tb15";
+            this.tb15.ReadOnly = true;
+            this.tb15.Size = new System.Drawing.Size(50, 20);
+            this.tb15.TabIndex = 111;
+            this.tb15.Text = "15";
+            this.tb15.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label20
             // 
@@ -409,8 +415,9 @@
             this.tbATPTopoRpt.ReadOnly = true;
             this.tbATPTopoRpt.Size = new System.Drawing.Size(50, 20);
             this.tbATPTopoRpt.TabIndex = 109;
+            this.tbATPTopoRpt.Text = "13";
             this.tbATPTopoRpt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            //
+            // 
             // label21
             // 
             this.label21.AutoSize = true;
@@ -420,14 +427,15 @@
             this.label21.TabIndex = 108;
             this.label21.Text = "Topo Repeatability:";
             // 
-            // tbMeanRmsRpt
+            // tb16
             // 
-            this.tbMeanRmsRpt.Location = new System.Drawing.Point(211, 235);
-            this.tbMeanRmsRpt.Name = "tbMeanRmsRpt";
-            this.tbMeanRmsRpt.ReadOnly = true;
-            this.tbMeanRmsRpt.Size = new System.Drawing.Size(50, 20);
-            this.tbMeanRmsRpt.TabIndex = 123;
-            this.tbMeanRmsRpt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.tb16.Location = new System.Drawing.Point(211, 235);
+            this.tb16.Name = "tb16";
+            this.tb16.ReadOnly = true;
+            this.tb16.Size = new System.Drawing.Size(50, 20);
+            this.tb16.TabIndex = 123;
+            this.tb16.Text = "16";
+            this.tb16.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanTopoRpt
             // 
@@ -436,6 +444,7 @@
             this.tbMeanTopoRpt.ReadOnly = true;
             this.tbMeanTopoRpt.Size = new System.Drawing.Size(50, 20);
             this.tbMeanTopoRpt.TabIndex = 122;
+            this.tbMeanTopoRpt.Text = "14";
             this.tbMeanTopoRpt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanScanLinErr
@@ -445,6 +454,7 @@
             this.tbMeanScanLinErr.ReadOnly = true;
             this.tbMeanScanLinErr.Size = new System.Drawing.Size(50, 20);
             this.tbMeanScanLinErr.TabIndex = 121;
+            this.tbMeanScanLinErr.Text = "12";
             this.tbMeanScanLinErr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanScanIncrErr
@@ -454,6 +464,7 @@
             this.tbMeanScanIncrErr.ReadOnly = true;
             this.tbMeanScanIncrErr.Size = new System.Drawing.Size(50, 20);
             this.tbMeanScanIncrErr.TabIndex = 120;
+            this.tbMeanScanIncrErr.Text = "10";
             this.tbMeanScanIncrErr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanCnfMax
@@ -463,6 +474,7 @@
             this.tbMeanCnfMax.ReadOnly = true;
             this.tbMeanCnfMax.Size = new System.Drawing.Size(50, 20);
             this.tbMeanCnfMax.TabIndex = 119;
+            this.tbMeanCnfMax.Text = "8";
             this.tbMeanCnfMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanCnf50hz
@@ -472,6 +484,7 @@
             this.tbMeanCnf50hz.ReadOnly = true;
             this.tbMeanCnf50hz.Size = new System.Drawing.Size(50, 20);
             this.tbMeanCnf50hz.TabIndex = 118;
+            this.tbMeanCnf50hz.Text = "6";
             this.tbMeanCnf50hz.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanIllumLoss
@@ -481,6 +494,7 @@
             this.tbMeanIllumLoss.ReadOnly = true;
             this.tbMeanIllumLoss.Size = new System.Drawing.Size(50, 20);
             this.tbMeanIllumLoss.TabIndex = 117;
+            this.tbMeanIllumLoss.Text = "4";
             this.tbMeanIllumLoss.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // tbMeanIllumCntr
@@ -490,6 +504,7 @@
             this.tbMeanIllumCntr.ReadOnly = true;
             this.tbMeanIllumCntr.Size = new System.Drawing.Size(50, 20);
             this.tbMeanIllumCntr.TabIndex = 116;
+            this.tbMeanIllumCntr.Text = "2";
             this.tbMeanIllumCntr.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label23
@@ -511,7 +526,7 @@
             this.groupBox1.Controls.Add(this.tbATPillumCntr);
             this.groupBox1.Controls.Add(this.Lsn2);
             this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.tbMeanRmsRpt);
+            this.groupBox1.Controls.Add(this.tb16);
             this.groupBox1.Controls.Add(this.tbATPillumLoss);
             this.groupBox1.Controls.Add(this.tbMeanTopoRpt);
             this.groupBox1.Controls.Add(this.label8);
@@ -531,7 +546,7 @@
             this.groupBox1.Controls.Add(this.label17);
             this.groupBox1.Controls.Add(this.label19);
             this.groupBox1.Controls.Add(this.tbATPscanIncrErr);
-            this.groupBox1.Controls.Add(this.tbATPremRpt);
+            this.groupBox1.Controls.Add(this.tb15);
             this.groupBox1.Controls.Add(this.label16);
             this.groupBox1.Controls.Add(this.label20);
             this.groupBox1.Controls.Add(this.tbATPscanLinErr);
@@ -553,6 +568,7 @@
             this.tbATPcnfMax.ReadOnly = true;
             this.tbATPcnfMax.Size = new System.Drawing.Size(50, 20);
             this.tbATPcnfMax.TabIndex = 95;
+            this.tbATPcnfMax.Text = "7";
             this.tbATPcnfMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // BviewLimits
@@ -1022,7 +1038,7 @@
             // 
             this.LDateCode.AutoSize = true;
             this.LDateCode.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.LDateCode.Location = new System.Drawing.Point(92, 46);
+            this.LDateCode.Location = new System.Drawing.Point(81, 46);
             this.LDateCode.Name = "LDateCode";
             this.LDateCode.Size = new System.Drawing.Size(63, 20);
             this.LDateCode.TabIndex = 186;
@@ -1112,11 +1128,11 @@
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.Label label19;
-        private System.Windows.Forms.TextBox tbATPremRpt;
+        private System.Windows.Forms.TextBox tb15;
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.TextBox tbATPTopoRpt;
         private System.Windows.Forms.Label label21;
-        private System.Windows.Forms.TextBox tbMeanRmsRpt;
+        private System.Windows.Forms.TextBox tb16;
         private System.Windows.Forms.TextBox tbMeanTopoRpt;
         private System.Windows.Forms.TextBox tbMeanScanLinErr;
         private System.Windows.Forms.TextBox tbMeanScanIncrErr;

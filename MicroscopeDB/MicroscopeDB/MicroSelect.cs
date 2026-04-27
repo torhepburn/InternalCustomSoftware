@@ -11,6 +11,10 @@ using System.Data.SqlClient;
 
 namespace MicroscopeDB
 {
+    /*
+     * Unfortunately overly complex reusing variables and forms - very hard to debug
+     * 
+     * */
     public partial class MicroSelect : Form
     {
         private string initialDirectory;
@@ -1450,6 +1454,8 @@ namespace MicroscopeDB
         public static string LimTopoRepeat;
         public static string LimRmsRepeat;
         public static string LimStepRepeat;
+        public static string LimFlatResidual;
+        public static string LimFlatRepeat;
         public static string LimStepHeightAccuracyPZT;
         public static string LimStepHeightAccuracyZ;
         public static string Lim1p8StepHeightAccuracy;
