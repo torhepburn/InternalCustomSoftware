@@ -44,6 +44,7 @@
             this.tbDongle = new System.Windows.Forms.TextBox();
             this.bRePrint = new System.Windows.Forms.Button();
             this.bChangeSN = new System.Windows.Forms.Button();
+            this.LDuration = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // bPrint
@@ -124,21 +125,6 @@
             // cbDuration
             // 
             this.cbDuration.FormattingEnabled = true;
-            this.cbDuration.Items.AddRange(new object[] {
-            "14 Days",
-            "30 Days",
-            "60 Days",
-            "90 Days",
-            "120 Days",
-            "6 Months",
-            "9 Months",
-            "1 Year",
-            "3 Years",
-            "5 Years",
-            "10 Years",
-            "15 Years",
-            "20 Years",
-            "21 Years"});
             this.cbDuration.Location = new System.Drawing.Point(332, 218);
             this.cbDuration.Margin = new System.Windows.Forms.Padding(4);
             this.cbDuration.Name = "cbDuration";
@@ -225,12 +211,23 @@
             this.bChangeSN.UseVisualStyleBackColor = false;
             this.bChangeSN.Click += new System.EventHandler(this.bChangeSN_Click);
             // 
+            // LDuration
+            // 
+            this.LDuration.AutoSize = true;
+            this.LDuration.Location = new System.Drawing.Point(574, 221);
+            this.LDuration.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.LDuration.Name = "LDuration";
+            this.LDuration.Size = new System.Drawing.Size(68, 17);
+            this.LDuration.TabIndex = 33;
+            this.LDuration.Text = "120 Days";
+            // 
             // f5Assembly
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LemonChiffon;
             this.ClientSize = new System.Drawing.Size(707, 706);
+            this.Controls.Add(this.LDuration);
             this.Controls.Add(this.bChangeSN);
             this.Controls.Add(this.bRePrint);
             this.Controls.Add(this.bPrint);
@@ -275,5 +272,6 @@
         private System.Windows.Forms.TextBox tbDongle;
         private System.Windows.Forms.Button bRePrint;
         private System.Windows.Forms.Button bChangeSN;
+        private System.Windows.Forms.Label LDuration;
     }
 }

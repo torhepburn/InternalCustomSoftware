@@ -39,7 +39,8 @@ namespace LicenseGenerator
             {
                 SqlCommand cmd = new SqlCommand(
                  " Select permission, permissionvalue from applicationsetup " +
-                 " where application = 'LicenseManager.exe' and " +
+                 " where application = 'LicenseGenerator.exe' and " +
+//                 " where application = 'LicenseManager.exe' and " +
                  " userName = '" + user + "' " +
                  " order by permission desc ", cnxn);
                 DataTable table = new DataTable();
@@ -62,6 +63,13 @@ namespace LicenseGenerator
                         g.activeDemo = "A";
                         g.task = "Change SO";
                         Application.Run(new f7ViewDetails());
+                    }
+                    else if (table.Rows[0][0].ToString().Trim().ToUpper() == "TAIWAN" & table.Rows[0][1].ToString().Trim().ToUpper() == "TRUE")
+                    {
+                        g.role = "TAIWAN";
+                        g.productLine = "MX";
+                        g.activeDemo = "A";
+                        Application.Run(new f5Assembly());
                     }
                     else
                     {
