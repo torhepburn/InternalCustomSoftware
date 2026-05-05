@@ -7,9 +7,9 @@
     </am:CreatedBy>
     <am:UpdatedBy>
       <am:Name>SSDTRS</am:Name>
-      <am:Version>18.3.11512.155</am:Version>
+      <am:Version>18.5.11723.231</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-03-09T16:41:30.4126734Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-05-05T12:35:23.5111698Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -44,6 +44,12 @@ declare @item varchar(30)
 declare @text varchar(100)
 declare @salesText varchar(500)
 SET @salesText = ''
+
+/*
+	Item Cursor for MRP Purchase New not customer furnished material, not kanban
+
+*/
+
 
 declare itemCursor Cursor for 
 
@@ -86,7 +92,6 @@ SELECT FORMAT(Quantity,'####') + '  for '+ FORMAT([Due Date],'MM/dd/yy') FROM [Z
 
 WHERE No_ = @item AND [Action Message] = 1  --purchase new
 
-
 ORDER BY [Due Date]
 
 OPEN textCursor
@@ -125,6 +130,10 @@ deallocate itemCursor;
 --declare @text varchar(100)
 --declare @salesText varchar(500)
 SET @salesText = ''
+
+/*
+	Item Cursor for MRP Reschedule Push Out not customer furnished material, not kanban
+*/
 
 declare itemCursor Cursor for 
 
@@ -191,6 +200,10 @@ deallocate textCursor
 INSERT INTO #RescheduleOutDelivery (No_, Text) SELECT @item, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
 
 SET @salesText = ''
+
+/*
+	Item Cursor for MRP Reschedule Pull In not customer furnished material, not kanban
+*/
 	
 fetch next from itemCursor into  @item
 
@@ -283,7 +296,7 @@ close itemCursor
 deallocate itemCursor;
 
 
-WITH s1 AS
+WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer furnished material, not vendor managed items - within 14 days	*/
 (
 	select 
 
@@ -354,7 +367,7 @@ WITH s1 AS
 
 	AND i.[Item Group Code] &lt;&gt; 'VMI'
 
-	--AND r.[Starting Date] &lt; (GETDATE() + 14)
+	AND r.[Starting Date] &lt; (DATEADD(WEEK, 4, GETDATE()))
 
 	GROUP BY r.No_
 
@@ -415,7 +428,8 @@ WITH s1 AS
 
 	HAVING SUM(Quantity) &gt; 0
 )
-
+,s5 AS
+(
 
 SELECT DISTINCT
 
@@ -471,13 +485,15 @@ LEFT JOIN #RescheduleInDelivery nin ON  nin.No_ = s1.No_ COLLATE DATABASE_DEFAUL
 LEFT JOIN s1a ON s1.No_ = s1a.No_
 
 LEFT JOIN s4 ON s1.No_ = s4.[Item No_]
+)
 
+select * from s5 where [Earliest Purchase New Start Date] &lt;= DATEADD(ww,3,GETDATE()) AND [Earliest Purchase New Start Date] &lt;&gt; '1900-01-01'
 
 ORDER BY
 
 [Buyer Planner Code]
 ,[Vendor No_]
-,s1.No_
+,No_
 
 --DROP TABLE #ItemDelivery
 --DROP TABLE #PNewDelivery;DROP TABLE #RescheduleOutDelivery;DROP TABLE #RescheduleInDelivery
