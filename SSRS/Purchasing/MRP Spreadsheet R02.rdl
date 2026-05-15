@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>18.5.11723.231</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-05-07T13:44:18.5923976Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-05-15T19:24:37.7889923Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -372,6 +372,46 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 	GROUP BY r.No_
 
 )
+,s1b AS
+(
+	select 
+		
+	r.No_
+	,MIN(r.[Starting Date]) EarliestRescheduleIN
+
+	from [ZYGO$Requisition Line] r
+
+	left join ZYGO$Item i on r.No_ = i.No_ 
+
+	WHERE 
+
+	0=0
+
+	AND r.[Ref_ Order Type] = 1
+
+	AND r.Type = 2
+
+	AND i.[Replenishment System] = 0
+
+	AND r.[Worksheet Template Name] = 'PLANNING'
+
+	AND r.[Journal Batch Name] = 'DEFAULT'
+
+	AND i.[Selection Code] not like 'K%'
+
+	AND i.[Selection Code] not like 'CFM%'
+
+	AND [Action Message] IN (3)  --reschedule
+
+	AND [Original Due Date] &gt; [Due Date]
+
+	AND i.[Item Group Code] &lt;&gt; 'VMI'
+
+	AND r.[Starting Date] &lt;= (DATEADD(WEEK, 3, GETDATE()))
+
+	GROUP BY r.No_
+
+)
 ,s2 AS
 (
 	SELECT
@@ -461,6 +501,7 @@ END [Lead Time Calculation]
 ,[Last Direct Cost] [Last Purchase Price]
 ,[Standard Cost]
 ,COALESCE(EarliestPurchaseNew,'') [Earliest Purchase New Start Date]
+,COALESCE(EarliestRescheduleIN,'') [Earliest RescheduleIn Start Date]
 ,COALESCE(d.Text,'') [Purchase New Requested Delivery]
 ,COALESCE(nin.Text,'') [Reschedule In Requested Delivery]
 ,COALESCE(o.Text,'') [Reschedule Out Delivery]
@@ -486,20 +527,31 @@ LEFT JOIN #RescheduleInDelivery nin ON  nin.No_ = s1.No_ COLLATE DATABASE_DEFAUL
 
 LEFT JOIN s1a ON s1.No_ = s1a.No_
 
+LEFT JOIN s1b ON s1.No_ = s1b.No_
+
 LEFT JOIN s4 ON s1.No_ = s4.[Item No_]
 )
 
-select * from s5 where [Earliest Purchase New Start Date] &lt;= DATEADD(ww,3,GETDATE()) AND [Earliest Purchase New Start Date] &lt;&gt; '1900-01-01'
+select * from s5 where (([Earliest Purchase New Start Date] &lt;= DATEADD(ww,3,GETDATE()) AND [Earliest Purchase New Start Date] &lt;&gt; '1900-01-01') OR
+([Earliest Purchase New Start Date] = '1900-01-01') AND ([Earliest RescheduleIn Start Date] &lt;= DATEADD(ww,3,GETDATE()) ))
+
 
 ORDER BY
 
---[Earliest Purchase New Start Date] desc
-[Buyer Planner Code]
-,[Vendor No_]
-,No_
+[Earliest Purchase New Start Date] desc
+--[Buyer Planner Code]
+--,[Vendor No_]
+--,No_
 
 --DROP TABLE #ItemDelivery
---DROP TABLE #PNewDelivery;DROP TABLE #RescheduleOutDelivery;DROP TABLE #RescheduleInDelivery</CommandText>
+--DROP TABLE #PNewDelivery;DROP TABLE #RescheduleOutDelivery;DROP TABLE #RescheduleInDelivery
+/*
+select * from #PNewDelivery WHERE No_ = '1115-802-893'
+
+select * from #RescheduleOutDelivery WHERE No_ = '1115-802-893'
+
+select * from #RescheduleInDelivery WHERE No_ = '1115-802-893'
+*/</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -565,6 +617,10 @@ ORDER BY
         </Field>
         <Field Name="Earliest_Purchase_New_Start_Date">
           <DataField>Earliest Purchase New Start Date</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="Earliest_RescheduleIn_Start_Date">
+          <DataField>Earliest RescheduleIn Start Date</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="Purchase_New_Requested_Delivery">
