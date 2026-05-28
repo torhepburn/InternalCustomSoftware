@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.5.11723.231</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.5.11723.231</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-05-28T13:17:28.0724486Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -23,7 +34,9 @@
           </QueryParameter>
         </QueryParameters>
         <CommandText>--Declare @orderNo varchar(20)
---SET @orderNo = '6350';
+--SET @orderNo = '12459';
+--DECLARE @PriceListCode varchar (3);
+--SET @PriceListCode = 'ZCV';
 --SET @orderNo = 'SO001399';
 
 
@@ -33,14 +46,53 @@ WITH s1 AS
 
 	[Item No_]
 	,[Unit Price]
+	,[Ending Date]
 
 	FROM [ZYGO$Sales Price]
 
 	WHERE [Sales Code] = @PriceListCode
 
 	AND [Ending Date] &gt; GETDATE()
-),
-s2 AS
+)
+,s1a AS
+(
+	select 
+
+	[Item No_]
+	,COUNT([Item No_]) CountPrice
+	,MIN([Ending Date]) CurrentEndingDate
+
+	from s1
+
+	GROUP BY [Item No_]
+)
+,s1b AS
+(
+	SELECT 
+
+	s1.[Item No_]
+	,s1.[Unit Price]
+		
+	,CASE
+		WHEN CountPrice = 2 THEN CurrentEndingDate
+			
+		ELSE [Ending Date]
+	END [Ending Date]
+	
+	FROM s1 INNER JOIN s1a ON s1.[Item No_] = s1a.[Item No_]
+
+	AND s1.[Ending Date] = 
+	
+	CASE
+		WHEN CountPrice = 2 THEN CurrentEndingDate
+			
+		ELSE [Ending Date]
+	END
+
+	
+
+)
+,s2 AS
 (
 	select 
 
@@ -55,11 +107,8 @@ s2 AS
 
 	GROUP BY [Job No_]
 )
-
-
-
-
-
+,s3 as
+(
 SELECT
 
  h.[External Document No_] [CUST PO]
@@ -108,7 +157,7 @@ from [ZYGO$Sales Header] h
 
 INNER JOIN [ZYGO$Sales Line] l ON h.No_ = l.[Document No_] and h.[Document Type] = l.[Document Type]
 
-LEFT JOIN s1 p ON l.No_ = p.[Item No_]
+LEFT JOIN s1b p ON l.No_ = p.[Item No_]
 
 LEFT JOIN s2 ON l.[Job No_] = s2.[Job No_]
 
@@ -181,7 +230,15 @@ WHERE
 h.No_ = @orderNo
 
 AND l.[Srv Line No_] &lt; 500
+)
 
+select *
+
+/*
+[ITEM NO]
+,[BL ZCV]
+*/
+from s3
 
 ORDER BY 
 
