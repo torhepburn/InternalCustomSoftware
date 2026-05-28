@@ -45,6 +45,7 @@
             this.bRePrint = new System.Windows.Forms.Button();
             this.bChangeSN = new System.Windows.Forms.Button();
             this.LDuration = new System.Windows.Forms.Label();
+            this.bDeleteLine = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // bPrint
@@ -221,12 +222,26 @@
             this.LDuration.TabIndex = 33;
             this.LDuration.Text = "120 Days";
             // 
+            // bDeleteLine
+            // 
+            this.bDeleteLine.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
+            this.bDeleteLine.Location = new System.Drawing.Point(56, 510);
+            this.bDeleteLine.Margin = new System.Windows.Forms.Padding(4);
+            this.bDeleteLine.Name = "bDeleteLine";
+            this.bDeleteLine.Size = new System.Drawing.Size(300, 46);
+            this.bDeleteLine.TabIndex = 34;
+            this.bDeleteLine.Text = "Delete License Line";
+            this.bDeleteLine.UseVisualStyleBackColor = false;
+            this.bDeleteLine.Visible = false;
+            this.bDeleteLine.Click += new System.EventHandler(this.bDeleteLine_Click);
+            // 
             // f5Assembly
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LemonChiffon;
             this.ClientSize = new System.Drawing.Size(707, 706);
+            this.Controls.Add(this.bDeleteLine);
             this.Controls.Add(this.LDuration);
             this.Controls.Add(this.bChangeSN);
             this.Controls.Add(this.bRePrint);
@@ -273,5 +288,6 @@
         private System.Windows.Forms.Button bRePrint;
         private System.Windows.Forms.Button bChangeSN;
         private System.Windows.Forms.Label LDuration;
+        private System.Windows.Forms.Button bDeleteLine;
     }
 }

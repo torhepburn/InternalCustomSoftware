@@ -147,6 +147,7 @@ namespace LicenseGenerator
         public static string customerName;
         public static string role;
         public static string user;
+        public static string windowsUser;
         public static string db = "server=CT-MID-SQL11; password = Read+Write!;" +
                                   " user = readwrite; database = ZygoProductLicenses";
         public static string dbNAV = "server = pa-hor-as408; password = 2018#ameteK; " +

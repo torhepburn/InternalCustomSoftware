@@ -246,7 +246,46 @@ namespace LicenseGenerator
         {
             if (g.task == "Delete")
             {
-                SqlCommand cmd = new SqlCommand("Delete from LicenseData " +
+                try
+                {
+                    SqlCommand cmd = new SqlCommand("Insert into LicenseChangeLog (" +
+                        "[LicenseNumber] " +
+                        ",[DongleID] " +
+                        ",[Application] " +
+                        ",[StartDate] " +
+                        ",[ExpirationDate] " +
+                        ",[CustomerNumber] " +
+                        ",[SerialNo] " +
+                        ",[WhoDeleted] " +
+                        ",[WhenDeleted] " +
+                        ") " +
+                        "SELECT " +
+                        "[LicenseNumber] " +
+                        ",[DongleID] " +
+                        ",[Application] " +
+                        ",[StartDate] " +
+                        ",[ExpirationDate] " +
+                        ",[CustomerNumber] " +
+                        ",[SerialNo] " +
+                        ", '" + g.windowsUser + "' " +
+                        ",GETDATE() " +
+                        " FROM LicenseData " +
+                        "where id = '" + g.uid + "' ", cnxn);
+
+                    cnxn.Open();
+
+                    cmd.ExecuteNonQuery();
+                }
+                catch 
+                {
+                    
+                }
+                finally
+                {
+                    cnxn.Close(); 
+                }   
+
+                cmd = new SqlCommand("Delete from LicenseData " +
                     "where id = '" + g.uid + "' ", cnxn);
                 
                 cnxn.Open();

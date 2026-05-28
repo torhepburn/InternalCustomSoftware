@@ -20,15 +20,15 @@ namespace LicenseGenerator
             System.Security.Principal.WindowsIdentity userBase;
             userBase = System.Security.Principal.WindowsIdentity.GetCurrent();
 
-            string user = userBase.Name.ToUpper(); ;
+            g.windowsUser = userBase.Name.ToUpper(); ;
 
             if (userBase.Name.IndexOf("Z") == 0)
             {
-                user = userBase.Name.Replace("ZYGOMIS\\", "");
+                g.windowsUser = userBase.Name.Replace("ZYGOMIS\\", "");
             }
             else
             {
-                user = userBase.Name.Replace("AMETEK-AD\\", "");
+                g.windowsUser = userBase.Name.Replace("AMETEK-AD\\", "");
             }
 
 
@@ -41,7 +41,7 @@ namespace LicenseGenerator
                  " Select permission, permissionvalue from applicationsetup " +
                  " where application = 'LicenseGenerator.exe' and " +
 //                 " where application = 'LicenseManager.exe' and " +
-                 " userName = '" + user + "' " +
+                 " userName = '" + g.windowsUser + "' " +
                  " order by permission desc ", cnxn);
                 DataTable table = new DataTable();
 

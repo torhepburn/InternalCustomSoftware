@@ -37,6 +37,7 @@ namespace LicenseGenerator
             if (g.role == "TAIWAN")
             {
                 this.Text = "License Generator v" + Application.ProductVersion;
+                bDeleteLine.Visible = true;
             }
 
             this.Location = new Point(300, 200);
@@ -294,6 +295,13 @@ namespace LicenseGenerator
             }
             this.Close();
 
+        }
+
+        private void bDeleteLine_Click(object sender, EventArgs e)
+        {
+            g.task = "Delete";
+            f7ViewDetails f7 = new f7ViewDetails();
+            f7.Show();
         }
     }
 }
