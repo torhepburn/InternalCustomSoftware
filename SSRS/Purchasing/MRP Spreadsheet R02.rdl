@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>18.5.11723.231</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-05-26T17:33:42.8455342Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-06-02T19:20:40.8815473Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -34,13 +34,18 @@
   
  */
 
+ DECLARE @window int
+ SET @window = 21
+ 
  CREATE TABLE #PNewDelivery
 (
- [No_] nvarchar(20)
-,[Text] nvarchar(500)
+  [Vendor No_] nvarchar(30)
+ ,[No_] nvarchar(30)
+ ,[Text] nvarchar(500)
 )
 
 declare @item varchar(30)
+declare @vendorNo varchar(30)
 declare @text varchar(100)
 declare @salesText varchar(500)
 SET @salesText = ''
@@ -53,7 +58,7 @@ SET @salesText = ''
 
 declare itemCursor Cursor for 
 
-select distinct r.[No_] FROM [ZYGO$Requisition Line] r
+select distinct r.[No_], r.[Vendor No_] FROM [ZYGO$Requisition Line] r
 
 left join ZYGO$Item i on r.No_ = i.No_ 
 
@@ -81,7 +86,7 @@ order by [No_]
 
 open itemCursor
 
-fetch next from itemCursor into @item
+fetch next from itemCursor into @item, @vendorNo
 
 while @@FETCH_STATUS = 0
 begin
@@ -90,7 +95,7 @@ declare textCursor Cursor for
 
 SELECT FORMAT(Quantity,'####') + '  for '+ FORMAT([Due Date],'MM/dd/yy') FROM [ZYGO$Requisition Line]
 
-WHERE No_ = @item AND [Action Message] = 1  --purchase new
+WHERE No_ = @item AND [Vendor No_] = @vendorNo AND [Action Message] = 1  --purchase new
 
 ORDER BY [Due Date]
 
@@ -109,11 +114,11 @@ end
 close textCursor
 deallocate textCursor
 
-INSERT INTO #PNewDelivery (No_, Text) SELECT @item, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
+INSERT INTO #PNewDelivery (No_, [Vendor No_], Text) SELECT @item, @vendorNo, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
 
 SET @salesText = ''
 	
-fetch next from itemCursor into  @item
+fetch next from itemCursor into  @item, @vendorNo
 
 end
 close itemCursor
@@ -122,8 +127,9 @@ deallocate itemCursor;
 
  CREATE TABLE #RescheduleOutDelivery
 (
- [No_] nvarchar(20)
-,[Text] nvarchar(500)
+  [Vendor No_] nvarchar(30)
+ ,[No_] nvarchar(30)
+ ,[Text] nvarchar(500)
 )
 
 --declare @item varchar(30)
@@ -137,7 +143,7 @@ SET @salesText = ''
 
 declare itemCursor Cursor for 
 
-select distinct r.[No_] FROM [ZYGO$Requisition Line] r
+select distinct r.[No_], r.[Vendor No_] FROM [ZYGO$Requisition Line] r
 
 left join ZYGO$Item i on r.No_ = i.No_ 
 
@@ -167,9 +173,10 @@ order by [No_]
 
 open itemCursor
  
-fetch next from itemCursor into @item
+fetch next from itemCursor into @item, @vendorNo
 
 while @@FETCH_STATUS = 0
+
 begin
 
 declare textCursor Cursor for 
@@ -197,7 +204,7 @@ end
 close textCursor
 deallocate textCursor
 
-INSERT INTO #RescheduleOutDelivery (No_, Text) SELECT @item, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
+INSERT INTO #RescheduleOutDelivery (No_, [Vendor No_], Text) SELECT @item, @vendorNo, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
 
 SET @salesText = ''
 
@@ -205,7 +212,7 @@ SET @salesText = ''
 	Item Cursor for MRP Reschedule Pull In not customer furnished material, not kanban
 */
 	
-fetch next from itemCursor into  @item
+fetch next from itemCursor into  @item, @vendorNo
 
 end
 close itemCursor
@@ -214,8 +221,9 @@ deallocate itemCursor;
 
  CREATE TABLE #RescheduleInDelivery
 (
- [No_] nvarchar(20)
-,[Text] nvarchar(500)
+  [Vendor No_] nvarchar(30)
+ ,[No_] nvarchar(30)
+ ,[Text] nvarchar(500)
 )
 
 --declare @item varchar(30)
@@ -225,7 +233,7 @@ SET @salesText = ''
 
 declare itemCursor Cursor for 
 
-select distinct r.[No_] FROM [ZYGO$Requisition Line] r
+select distinct r.[No_], r.[Vendor No_] FROM [ZYGO$Requisition Line] r
 
 left join ZYGO$Item i on r.No_ = i.No_ 
 
@@ -255,7 +263,7 @@ order by [No_]
 
 open itemCursor
  
-fetch next from itemCursor into @item
+fetch next from itemCursor into @item, @vendorNo
 
 while @@FETCH_STATUS = 0
 begin
@@ -264,7 +272,7 @@ declare textCursor Cursor for
 
 SELECT FORMAT(Quantity,'####') + '  for '+ FORMAT([Due Date],'MM/dd/yy') FROM [ZYGO$Requisition Line]
 
-WHERE No_ = @item AND [Action Message] IN (3)  --reschedule
+WHERE No_ = @item AND [Vendor No_] = @vendorNo AND [Action Message] IN (3)  --reschedule
 
 AND [Original Due Date] &gt; [Due Date]
 
@@ -285,15 +293,16 @@ end
 close textCursor
 deallocate textCursor
 
-INSERT INTO #RescheduleInDelivery (No_, Text) SELECT @item, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
+INSERT INTO #RescheduleInDelivery (No_, [Vendor No_], Text) SELECT @item, @vendorNo, SUBSTRING(@salesText,2, (LEN(@salesText) - 1))
 
 SET @salesText = ''
 	
-fetch next from itemCursor into  @item
+fetch next from itemCursor into  @item, @vendorNo
 
 end
 close itemCursor
 deallocate itemCursor;
+
 
 
 WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer furnished material, not vendor managed items - within 14 days	*/
@@ -332,13 +341,14 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 
 	AND i.[Item Group Code] &lt;&gt; 'VMI'
 
-	AND r.[Starting Date] &lt; (GETDATE() + 14)
+	AND r.[Starting Date] &lt;= (GETDATE() + @window)
 )
 ,s1a AS
 (
 	select 
 		
-	r.No_
+	 r.No_
+	,r.[Vendor No_]
 	,MIN(r.[Starting Date]) EarliestPurchaseNew
 
 	from [ZYGO$Requisition Line] r
@@ -367,16 +377,17 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 
 	AND i.[Item Group Code] &lt;&gt; 'VMI'
 
-	AND r.[Starting Date] &lt;= (DATEADD(WEEK, 3, GETDATE()))
+	AND r.[Starting Date] &lt;= (GETDATE() + @window)
 
-	GROUP BY r.No_
+	GROUP BY r.[Vendor No_], r.No_
 
 )
 ,s1b AS
 (
 	select 
 		
-	r.No_
+	 r.No_
+    ,r.[Vendor No_]
 	,MIN(r.[Starting Date]) EarliestRescheduleIN
 
 	from [ZYGO$Requisition Line] r
@@ -407,9 +418,9 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 
 	AND i.[Item Group Code] &lt;&gt; 'VMI'
 
-	AND r.[Starting Date] &lt;= (DATEADD(WEEK, 3, GETDATE()))
+	AND r.[Starting Date] &lt;= (GETDATE() + @window)
 
-	GROUP BY r.No_
+	GROUP BY r.[Vendor No_], r.No_
 
 )
 ,s2 AS
@@ -417,6 +428,7 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 	SELECT
 
 	 l.No_
+	,l.[Vendor No_]
 	,[Action Message]
 	,COALESCE(CASE [Action Message]
 		WHEN 1 THEN CAST(SUM(Quantity) as int) 
@@ -433,15 +445,16 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 
 	FROM [ZYGO$Requisition Line] l 
 	
-	INNER JOIN s1 ON s1.No_ = l.No_
+	INNER JOIN s1 ON s1.No_ = l.No_ and s1.[Vendor No_] = l.[Vendor No_]
 	
-	GROUP BY l.No_,[Action Message]
+	GROUP BY l.[Vendor No_],l.No_,[Action Message]
 )
 ,s3 AS
 (
 	SELECT
 
 	No_
+	,[Vendor No_]
 	,SUM([Purchase New Quantity]) [Purchase New Quantity]
 	,SUM([Change Quantity]) [Change Quantity]
 	,SUM([Reschedule No Change Quantity]) [Reschedule No Change Quantity]
@@ -449,7 +462,7 @@ WITH s1 AS		/*	all action messages except for cancel, not kanban, not customer f
 	
 	FROM s2
 
-	GROUP BY No_
+	GROUP BY [Vendor No_], No_
 )
 ,s4 as
 (
@@ -513,46 +526,44 @@ END [Lead Time Calculation]
 
 FROM s1 LEFT JOIN ZYGO$Item i ON s1.No_ = i.No_
 
-LEFT JOIN s2 ON s1.No_ = s2.No_
+LEFT JOIN s2 ON s1.No_ = s2.No_ AND s1.[Vendor No_] = s2.[Vendor No_]
 
-LEFT JOIN s3 ON s1.No_ = s3.No_
+LEFT JOIN s3 ON s1.No_ = s3.No_ AND s1.[Vendor No_] = s3.[Vendor No_]
 
 LEFT JOIN ZYGO$Vendor v ON s1.[Vendor No_] = v.No_
 
-LEFT JOIN #PNewDelivery d ON  d.No_ = s1.No_ COLLATE DATABASE_DEFAULT
+LEFT JOIN #PNewDelivery d ON  d.No_ = s1.No_ COLLATE DATABASE_DEFAULT AND d.[Vendor No_] = s1.[Vendor No_] COLLATE DATABASE_DEFAULT
 
-LEFT JOIN #RescheduleOutDelivery o ON  o.No_ = s1.No_ COLLATE DATABASE_DEFAULT
+LEFT JOIN #RescheduleOutDelivery o ON  o.No_ = s1.No_ COLLATE DATABASE_DEFAULT AND o.[Vendor No_] = s1.[Vendor No_] COLLATE DATABASE_DEFAULT
 
-LEFT JOIN #RescheduleInDelivery nin ON  nin.No_ = s1.No_ COLLATE DATABASE_DEFAULT
+LEFT JOIN #RescheduleInDelivery nin ON  nin.No_ = s1.No_ COLLATE DATABASE_DEFAULT AND nin.[Vendor No_] = s1.[Vendor No_] COLLATE DATABASE_DEFAULT
 
-LEFT JOIN s1a ON s1.No_ = s1a.No_
+LEFT JOIN s1a ON s1.No_ = s1a.No_ AND s1.[Vendor No_] = s1a.[Vendor No_] COLLATE DATABASE_DEFAULT
 
-LEFT JOIN s1b ON s1.No_ = s1b.No_
+LEFT JOIN s1b ON s1.No_ = s1b.No_ AND s1.[Vendor No_] = s1b.[Vendor No_] COLLATE DATABASE_DEFAULT
 
 LEFT JOIN s4 ON s1.No_ = s4.[Item No_]
 )
 
-select * from s5 where (([Earliest Purchase New Start Date] &lt;= DATEADD(ww,3,GETDATE()) AND [Earliest Purchase New Start Date] &lt;&gt; '1900-01-01') OR
-([Earliest Purchase New Start Date] = '1900-01-01') AND ([Earliest RescheduleIn Start Date] &lt;= DATEADD(ww,3,GETDATE()) AND [Earliest RescheduleIn Start Date] != '1900-01-01' ))
-
-
+select * from s5 where (([Earliest Purchase New Start Date] &lt;= (GETDATE() + @window) AND [Earliest Purchase New Start Date] &lt;&gt; '1900-01-01') OR
+([Earliest Purchase New Start Date] = '1900-01-01') AND ([Earliest RescheduleIn Start Date] &lt;= (GETDATE() + @window) AND [Earliest RescheduleIn Start Date] != '1900-01-01' ))
 
 
 ORDER BY
 
+--[Earliest Purchase New Start Date] --desc
 [Buyer Planner Code]
 ,[Vendor No_]
 ,No_
-,[Earliest Purchase New Start Date]
 
 --DROP TABLE #ItemDelivery
 --DROP TABLE #PNewDelivery;DROP TABLE #RescheduleOutDelivery;DROP TABLE #RescheduleInDelivery
 /*
-select * from #PNewDelivery WHERE No_ = '1115-802-893'
+select * from #PNewDelivery WHERE No_ = '6191-1552-01'
 
-select * from #RescheduleOutDelivery WHERE No_ = '1115-802-893'
+select * from #RescheduleOutDelivery --WHERE No_ = '1115-802-893'
 
-select * from #RescheduleInDelivery WHERE No_ = '1115-802-893'
+select * from #RescheduleInDelivery WHERE No_ = '1541-401-010'
 */</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
