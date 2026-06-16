@@ -1,0 +1,409 @@
+﻿@page "/"
+@page "/home"
+@rendermode InteractiveServer
+
+@using System.Data
+@using Microsoft.Data.SqlClient
+@using Microsoft.AspNetCore.Components.Authorization
+@using static PopUp
+
+@inject Global g
+@inject NavigationManager NavMgr
+@inject AuthenticationStateProvider auth
+
+
+<div class="popup-overlay @(pop.IsVisible ? "visible" : "")">
+    <div class="popup-content">
+        <h3>@pop.Title</h3>
+        <p>@pop.Message</p>
+        <button class="button-85" @onclick="pop.ClosePopup">Close</button>
+    </div>
+</div>
+
+
+ 
+ <div style="display:flex; gap:20px; justify-content:left"> 
+    
+    @* while the content looks to be right justified, it is actually centered in the whole container defined by the width of the table *@
+    
+    Filters
+     <select @bind=@selectedRegion>
+        <option value="">Select Location/Region</option>
+        @foreach (System.Data.DataRow r in dtLocationRegion.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        }
+    </select>
+ 
+     <select @bind=@selectedCommodity>
+        <option value="">Select Commodity</option>
+        @foreach (System.Data.DataRow r in dtCommodity.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        }
+    </select> 
+
+     <select @bind=@selectedVendorTitle>
+         <option value="">Select Vendor Title</option>
+        @foreach (System.Data.DataRow r in dtVendorTitle.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        }
+    </select>  
+
+    @* <select @bind=@selectedCommodity>
+        <option value="">Select Cost Center</option>
+         @foreach (System.Data.DataRow r in dtCostCenters.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        } 
+    </select> 
+ *@
+    <select @bind=@selectedBuyer>
+        <option value="">Select Buyer</option>
+        @foreach (System.Data.DataRow r in dtBuyer.Rows)
+        {
+            <option value="@r[0].ToString()">@r[0].ToString()</option>
+        }
+    </select>
+
+
+</div>
+<br />
+<div>
+    <button @onclick="selectFilter">Apply Filters</button>
+</div>
+
+<br />
+<h1>Click on the row and it will open a new screen to enable Editing</h1>
+<br />
+<br /> 
+
+<div class="table-striped" style="border:solid 1px black">
+    <table>
+        <thead>
+            <tr>
+                <th>Supplier</th>
+                <th>Supplier No</th>
+                <th>Overall Supplier Rating</th>
+                <th>Quality Rating</th>
+                <th>OTD Rating</th>
+                <th>Payment Terms</th>
+                <th>Annual Spend Actual</th>
+                <th>Annual Spend Projected</th>
+                <th>Location/Region</th>
+                <th>Commodity</th>
+                <th>Vendor Title</th>
+                <th>Purchaser Code</th>
+                <th>Date Entered</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (DataRow r in dt.Rows)
+            {
+                string color = "white";
+               
+                <tr style="background-color:@color" @onclick="() => Select(r[1].ToString())">
+                    <td style="width:80px">@r[0].ToString()</td>
+                    <td style="width:150px">@r[1].ToString()</td>
+                    <td style="width:150px">@r[2].ToString()</td>
+                    <td style="width:150px">@r[3].ToString()</td>
+                    <td style="width:150px">@r[4].ToString()</td>
+                    <td style="width:150px">@r[5].ToString()</td>
+                    <td style="width:150px">@r[6].ToString()</td>
+                    <td style="width:150px">@r[7].ToString()</td>
+                    <td style="width:150px">@r[8].ToString()</td>
+                    <td style="width:500px">@r[9].ToString()</td>
+                    <td style="width:80px">@r[10].ToString()</td>
+                    <td style="width:150px">@r[11].ToString()</td>
+                    <td style="width:150px">@r[12].ToString()</td>
+                    <td style="width:150px">@r[13].ToString()</td> 
+                </tr> 
+            }
+        </tbody>
+     </table>
+</div> 
+  
+@code {
+    /*
+    // public string enteredOn = "";
+    // public string wo = "";
+    // public string woline = "";
+    // public string job = "";
+    // public string jobreference = "";
+    // public string item = "";
+    // public string partdescription = "";
+    // public string quantity = "";
+    // public string location = "";
+    // public string binCode = "";
+    // public string storekeeper = "";
+    // public string costcenter = "";
+    // public string planner = "";
+    // public string duedate = "";
+    // public string comment = "";
+    // public string commentEntered = "";
+    // public string assignedTo = "";
+    // public string resolution = "";
+    // public string computer = "";*/
+    public string selectedRegion = "";
+    public string selectedVendorTitle = "";
+    public string selectedBuyer = "";
+    public string selectedRequestor = "";
+    public string selectedCommodity = "";
+    public string selection = "";
+    private string? user;
+
+
+
+    SqlCommand cmd;
+    SqlConnection cnxn;
+    SqlDataReader dr;
+    DataTable dt;
+
+    DataTable? dtLocationRegion;
+    DataTable? dtVendorTitle;
+    DataTable? dtBuyer;
+    DataTable? dtCommodity;
+
+    PopUp pop = new PopUp();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        SqlConnection cnxn = new SqlConnection(g.db);
+        DataTable dt = new DataTable();
+        SqlCommand cmd = new SqlCommand(" Select UserName, permission, permissionValue from applicationsetup " +
+        "WHERE Application = 'SupplierInfo'", cnxn);
+        try
+        {
+            cnxn.Open();
+            using (SqlDataReader dr = cmd.ExecuteReader())
+            {
+                dt.Load(dr);
+                }
+            cnxn.Close();
+            user = auth.GetAuthenticationStateAsync().Result.User.Identity.Name;
+            if (user.StartsWith("Z"))
+            {
+                user = user.Replace("ZYGOMIS\\", "");
+                }
+            else
+            {
+                user = user.Replace("AMETEK-AD\\", "");
+                }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row[0].ToString().ToUpper().Trim().Equals(user.ToUpper()))
+                {
+                    g.permission = row[1].ToString().ToUpper();
+                    g.permissionvalue = row[2].ToString().ToUpper();
+                    GetAsyncData();
+                    }
+                }
+            }
+        catch(SqlException ex)
+        {
+
+            }
+        
+
+                    await Task.Run(() => { _ = GetAsyncData(); });
+    }
+
+    private async Task GetAsyncData()
+    {
+        // Location Region
+
+        dtLocationRegion = new DataTable();
+
+        cnxn = new SqlConnection(g.dbNAV);
+
+        cmd = new SqlCommand
+            ("select Code + ' : ' + Name from [ZYGO$Country_Region] " +
+             "order by Code", cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtLocationRegion.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+        
+        // Vendor Title
+
+        dtVendorTitle = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand
+            ("select Distinct [Vendor Title] from SupplierData_s1 " +
+             "order by [vendor title]", cnxn);
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtVendorTitle.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        // Commodity
+
+        dtCommodity = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand
+            ("select distinct [Commodity 1] FROM SupplierData_s1 " +
+             "WHERE LEN([Commodity 1]) > 0 " +
+             "order by [Commodity 1] ", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dtCommodity.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+
+        //buyer
+
+        dtBuyer = new System.Data.DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand(
+            "SELECT Code [Name] from [BuyerPlannerData] " +
+            "ORDER BY Code", cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+            dtBuyer.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+                
+        GridData();
+
+        await Task.Delay(15000);
+    }
+
+    
+    private void Select(string SupplierNo)
+    {
+        g.supplierNo = SupplierNo;
+        
+        NavMgr.NavigateTo("editData");
+        //NavMgr.NavigateTo("editDataTextFields");
+    }
+
+    private void selectFilter()
+    {
+         selection = string.Empty;
+
+        if (selectedRegion.Length > 0)
+        {
+            selection += " and [Location/Region] = '" + selectedRegion.Substring(0,3) + "' ";
+        }
+
+        if (selectedCommodity.Length > 0)
+        {
+            selection += " and [Commodity 1] = '" + selectedCommodity + "' ";
+        }
+
+        if (selectedBuyer.Length > 0)
+        {
+            selection += " and [purchaser code] = '" + selectedBuyer + "' ";
+        }
+
+        if (selectedVendorTitle.Length > 0)
+        {
+            selection += " and [vendor title] = '" + selectedVendorTitle + "' ";
+        }
+
+       
+         GridData();
+    }
+
+    private void GridData()
+    {
+        dt = new DataTable();
+
+        cnxn = new SqlConnection(g.db);
+
+        cmd = new SqlCommand(
+         
+                "SELECT " +
+                "TRIM([Name]) Supplier " +  //0
+                ",TRIM([SupplierNo]) [SupplierNo] " +          //1
+                ",TRIM([Overall Supplier Rating]) [Overall Supplier Rating] " + //2
+                ",TRIM([Quality Rating]) [Quality Rating] " +   //3
+                ",TRIM([OTD Rating]) [OTD Rating] " +   //4
+                ",TRIM([Payment Terms]) [Payment Terms] " + //5
+                ",[Annual Spend Actual] [Annual Spend Actual] " +   //6
+                ",[Annual Spend Projected] [Annual Spend Projected] " + //7
+                ",TRIM([Location/Region]) [Location / Region] " + //8
+                ",TRIM([Commodity 1]) " + //9
+                ",TRIM([Vendor Title]) [Vendor Title] " +      //10
+                ",TRIM([Purchaser Code]) [Purchaser Code] " +   //11
+                ",[DateEntered] [DateEntered] " +   //12
+                ",TRIM([Notes]) [Notes] " + //13
+                " FROM SupplierData " +
+                "where 1=1 " +
+                selection +
+                " ORDER BY Name "
+         , cnxn);
+
+        try
+        {
+            cnxn.Open();
+            dr = cmd.ExecuteReader();
+
+            dt.Load(dr);
+        }
+        catch (SqlException ex)
+        {
+            ex.ToString();
+        }
+        finally
+        {
+            cnxn.Close();
+        }
+    }
+
+
+}
+
