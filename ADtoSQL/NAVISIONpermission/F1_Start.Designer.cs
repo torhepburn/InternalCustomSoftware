@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             bSearch = new Button();
             DGV = new DataGridView();
             cbddRole = new ComboBox();
@@ -48,7 +48,7 @@
             // bSearch
             // 
             bSearch.BackColor = Color.FromArgb(210, 255, 145);
-            bSearch.Location = new Point(208, 84);
+            bSearch.Location = new Point(37, 86);
             bSearch.Name = "bSearch";
             bSearch.Size = new Size(134, 51);
             bSearch.TabIndex = 0;
@@ -58,13 +58,13 @@
             // 
             // DGV
             // 
-            dataGridViewCellStyle2.BackColor = Color.FromArgb(180, 240, 255);
-            DGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.BackColor = Color.FromArgb(180, 240, 255);
+            DGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             DGV.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             DGV.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            DGV.Location = new Point(37, 185);
+            DGV.Location = new Point(37, 166);
             DGV.Name = "DGV";
-            DGV.Size = new Size(1360, 313);
+            DGV.Size = new Size(1360, 329);
             DGV.TabIndex = 2;
             // 
             // cbddRole
@@ -109,11 +109,11 @@
             // 
             bUpdate.BackColor = Color.FromArgb(100, 150, 255);
             bUpdate.Font = new Font("Arial", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            bUpdate.Location = new Point(33, 78);
+            bUpdate.Location = new Point(891, 86);
             bUpdate.Name = "bUpdate";
             bUpdate.Size = new Size(150, 62);
             bUpdate.TabIndex = 7;
-            bUpdate.Text = "Update Data";
+            bUpdate.Text = "Refresh Data";
             bUpdate.UseVisualStyleBackColor = false;
             bUpdate.Click += bUpdate_Click;
             // 
@@ -159,7 +159,7 @@
             // bClearFilters
             // 
             bClearFilters.BackColor = Color.FromArgb(255, 215, 145);
-            bClearFilters.Location = new Point(371, 84);
+            bClearFilters.Location = new Point(200, 86);
             bClearFilters.Name = "bClearFilters";
             bClearFilters.Size = new Size(134, 51);
             bClearFilters.TabIndex = 12;
@@ -170,11 +170,11 @@
             // bExport
             // 
             bExport.BackColor = Color.FromArgb(135, 245, 125);
-            bExport.Location = new Point(531, 84);
+            bExport.Location = new Point(360, 86);
             bExport.Name = "bExport";
-            bExport.Size = new Size(134, 51);
+            bExport.Size = new Size(322, 51);
             bExport.TabIndex = 13;
-            bExport.Text = "Export to Excel";
+            bExport.Text = "Export to Excel - look in C:\\A\\ for results";
             bExport.UseVisualStyleBackColor = false;
             bExport.Click += bExport_Click;
             // 

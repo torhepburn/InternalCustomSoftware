@@ -218,7 +218,16 @@ namespace NAVISIONpermission
         }
 
 
-        private void bUpdate_Click(object sender, EventArgs e)
+        private async void bUpdate_Click(object sender, EventArgs e)
+        {
+            bUpdate.Text = "Refreshing Data - Please Wait";
+            bUpdate.BackColor = System.Drawing.Color.Red;
+            await Task.Run(() => { _ = refresh(); });
+            bUpdate.BackColor = Color.FromArgb(100, 150, 255);
+            bUpdate.Text = "Refresh Data";
+        }
+
+        private async Task refresh()
         {
             string groupUserName;
             string groupFullName;
@@ -255,7 +264,7 @@ namespace NAVISIONpermission
                     "select " +
                     "REPLACE([User Name], 'AMETEK-AD\\','') UserName " +
                     ", [Full Name] " +
-                    "from[User] " +
+                    "from [User] " +
                     "WHERE[User Name] like '%-GG-%' " +
                     "AND[User Name] NOT LIKE '%BROOK%' " +
                     "AND[User Name] NOT LIKE '%RICH%' " +
@@ -337,6 +346,7 @@ namespace NAVISIONpermission
                 cnxnNAV.Close();
             }
 
+            await Task.Delay(1000);
         }
 
         private void cbddRole_SelectionChangeCommitted(object sender, EventArgs e)
@@ -413,10 +423,12 @@ namespace NAVISIONpermission
             {
                 DirectoryInfo di = Directory.CreateDirectory(@"C:\A");
             }
+            
+            string timestamp = DateTime.Now.ToString(" yyyy-MM-dd_HHmmssfff");
 
-            File.WriteAllText(@"C:\A\NAVaudit" + DateTime.Now.ToLongDateString() + ".csv", sb.ToString(), Encoding.UTF8);
+            File.WriteAllText(@"C:\A\NAVaudit" + timestamp + ".csv", sb.ToString(), Encoding.UTF8);
 
-            //Close();
+            bClearFilters.PerformClick();
         }
     }
 
