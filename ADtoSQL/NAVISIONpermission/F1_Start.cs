@@ -133,12 +133,7 @@ namespace NAVISIONpermission
             string SQL =
                 "SELECT " +
                 " * " +
-
-                ////",[DateEntered] [DateEntered] " +
                 " FROM [NAV_User_Permissions]";
-
-
-
 
             if (selection.Length > 0)
             {
@@ -279,6 +274,8 @@ namespace NAVISIONpermission
                     groupUserName = dr.GetString(0).Trim();
                     groupFullName = dr.GetString(1).Trim();
 
+                    //groupUserName = "PA-HOR-GG-ZYGONAVACCT"; //for testing
+
                     using (PowerShell ps = PowerShell.Create())
                     {
                         ps.AddCommand("Get-ADGroupMember");
@@ -347,6 +344,87 @@ namespace NAVISIONpermission
             }
 
             await Task.Delay(1000);
+
+            try
+            {
+                /* first get the username from the NAV table  */
+
+                cnxnNAV = new SqlConnection(g.db);
+
+                cnxnNAV.Open();
+
+                cmd = new SqlCommand(
+                    "select DISTINCT " +
+                    "UserName " +
+                    "from [NAV_User_Group_Mapping] "
+                    , cnxnNAV);
+
+                dr = cmd.ExecuteReader();
+
+                /*  then use power shell to get the samname of the user    */
+
+                while (dr.Read())
+                {
+                    string userName = dr.GetString(0).Trim();
+                    string filterName = @"Name -eq '" + userName + "'";
+                    
+
+                    //groupUserName = "PA-HOR-GG-ZYGONAVACCT"; //for testing
+
+                    using (PowerShell ps = PowerShell.Create())
+                    {
+                        ps.AddCommand("Get-ADUser");
+                        ps.AddParameter("-Filter", filterName);
+                        ps.AddCommand("Select-Object");
+                        ps.AddParameter("Property", new string[] { "SamAccountName" });
+                        
+                        
+                        var results = ps.Invoke();
+                        
+                        foreach (var result in results)
+                        {
+                            string samName = result.ToString().Replace("@{SamAccountName=","").Replace("}","");
+
+                            /*  update the user data with the samname   */
+
+                            cnxn = new SqlConnection(g.db);
+
+                            try
+                            {
+                                cnxn.Open();
+
+                                cmd = new SqlCommand("UPDATE [AccessFrontEnds].[dbo].[NAV_User_Group_Mapping] " +
+                                                     "SET SamName = '" + samName + "' " +
+                                                     "WHERE UserName = '" + userName + "'", cnxn);
+
+                                int nn = cmd.ExecuteNonQuery();
+                            }
+                            catch (SqlException ex)
+                            {
+                                Console.Error.WriteLine(ex.Message);
+                            }
+                            finally
+                            {
+                                cnxn.Close();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+            }
+            finally
+            {
+                cnxnNAV.Close();
+            }
+
+            await Task.Delay(1000);
+
+
+
+
         }
 
         private void cbddRole_SelectionChangeCommitted(object sender, EventArgs e)
