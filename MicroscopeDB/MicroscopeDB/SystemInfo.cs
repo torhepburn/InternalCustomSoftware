@@ -856,7 +856,7 @@ namespace MicroscopeDB
                     " ,Comments =" + pComments;
             }
 
-            if (g.ProductLine == "ZeGage" | g.ProductLine == "ZeGagePlus")
+            if (g.ProductLine == "ZeGage" | g.ProductLine == "ZeGagePlus" | g.ProductLine == "ZeFlat")
             {
                 SQL =
                     "  Customer =" + pCustomer +
