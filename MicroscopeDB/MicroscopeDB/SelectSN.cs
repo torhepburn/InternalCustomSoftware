@@ -65,7 +65,7 @@ namespace MicroscopeDB
             da = new SqlDataAdapter
                 (SQL +
                  " where productline = '" + g.ProductLine + "' " +
-                 " order by SN", cnxn);
+                 " order by SN DESC", cnxn);
 
 
             DataTable table = new DataTable();
@@ -111,7 +111,7 @@ namespace MicroscopeDB
                 (SQL +
                  " where productline = '" + g.ProductLine + "' " +
                  " and EndCustomer like '%" + tbSearchEquipment.Text + "%' " +
-                 " order by id asc", cnxn);
+                 " order by id DESC", cnxn);
             DataTable table = new DataTable();
             da.Fill(table);
             
