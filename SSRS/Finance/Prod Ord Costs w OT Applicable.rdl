@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>18.5.11723.231</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-08-27T14:30:02.0969027Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-08-28T12:19:29.2004585Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -107,17 +107,19 @@ End [Status]										--F7
 ,l.[Remaining Quantity]
 ,l.[Finished Quantity]
 ,COALESCE(s2.[Material],0) [Consumption Total]
-,COALESCE((s2.[Material] * -1),0) [Material]			/*	S7	*/
-,COALESCE(s3.[Labor],0) [Labor]									/*	T7	*/
-,COALESCE(s4.[Overhead Cost],0)	[Overhead Cost]						/*	U7	*/
-,COALESCE(s5.[SubContract],0) [V SubContract]			/*	V7	*/
-,(COALESCE((s2.[Material] * -1),0) + COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0) + COALESCE(s5.[SubContract],0) ) [W Charges Total]	/*	W	*/
+,COALESCE((s2.[Material] * -1),0) [Issued Material]			/*	S7	excel O*/
+,COALESCE(s3.[Labor],0) [Issued Labor]									/*	T7	excel P*/
+,COALESCE(s4.[Overhead Cost],0)	[Issued Overhead Cost]						/*	U7	excel Q*/
+,COALESCE(s5.[SubContract],0) [Issued SubContract]
+,(COALESCE((s2.[Material] * -1),0) + COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0) + COALESCE(s5.[SubContract],0) ) [Issued Charges Total]
+,(COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0)) [Issued Labor + Overhead]	/*	W	*/
 ,COALESCE(s6.[Output Post],0) [Output Post]					/*	X	*/
-,COALESCE(i.[Rolled-up Material Cost],0) [Mat]	/*	Y	*/
-,COALESCE(i.[Rolled-up Capacity Cost],0) [Lbr]	/*	Z	*/
-,COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) [Ovh]	/*	AA	*/
-,COALESCE(i.[Rolled-up Subcontracted Cost],0) [SC]	/*	AB	*/
-,(COALESCE(i.[Rolled-up Material Cost],0) + COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) + COALESCE(i.[Rolled-up Subcontracted Cost],0))	[Ext Std Cst]	/*	AC	*/
+,COALESCE(i.[Rolled-up Material Cost],0) [STD Mat]	/*	Y	*/
+,COALESCE(i.[Rolled-up Capacity Cost],0) [STD Lbr]	/*	Z	*/
+,COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) [STD Ovh]	/*	AA	*/
+,COALESCE(i.[Rolled-up Subcontracted Cost],0) [STD SC]	/*	AB	*/
+,(COALESCE(i.[Rolled-up Material Cost],0) + COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) + COALESCE(i.[Rolled-up Subcontracted Cost],0))	[STD Ext Std Cst]	/*	AC	*/
+,(COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0))[STD Labor + Overhead]
 ,(COALESCE(s6.[Output Post],0) * -1) [Completions Amount]	/*	AE	*/
 ,(COALESCE(s2.[Material] * -1,0) + COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0) + COALESCE(s5.[SubContract],0)  +  COALESCE((s6.[Output Post] * -1),0)) [Net WIP Amount $]	/*	AG	*/
 ,COALESCE((s2.[Material] * -1),0) - COALESCE(i.[Rolled-up Material Cost],0)	[WIP Mat]				/*	AI	*/
@@ -222,52 +224,60 @@ ORDER BY o.No_</CommandText>
           <DataField>Consumption Total</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Material">
-          <DataField>Material</DataField>
+        <Field Name="Issued_Material">
+          <DataField>Issued Material</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Labor">
-          <DataField>Labor</DataField>
+        <Field Name="Issued_Labor">
+          <DataField>Issued Labor</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Overhead_Cost">
-          <DataField>Overhead Cost</DataField>
+        <Field Name="Issued_Overhead_Cost">
+          <DataField>Issued Overhead Cost</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="V_SubContract">
-          <DataField>V SubContract</DataField>
+        <Field Name="Issued_SubContract">
+          <DataField>Issued SubContract</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="W_Charges_Total">
-          <DataField>W Charges Total</DataField>
+        <Field Name="Issued_Charges_Total">
+          <DataField>Issued Charges Total</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Issued_Labor___Overhead">
+          <DataField>Issued Labor + Overhead</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Output_Post">
           <DataField>Output Post</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Mat">
-          <DataField>Mat</DataField>
+        <Field Name="STD_Mat">
+          <DataField>STD Mat</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Lbr">
-          <DataField>Lbr</DataField>
+        <Field Name="STD_Lbr">
+          <DataField>STD Lbr</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Ovh">
-          <DataField>Ovh</DataField>
+        <Field Name="STD_Ovh">
+          <DataField>STD Ovh</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="SC">
-          <DataField>SC</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="Ext_Std_Cst">
-          <DataField>Ext Std Cst</DataField>
+        <Field Name="STD_SC">
+          <DataField>STD SC</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Completions_Amount">
           <DataField>Completions Amount</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="STD_Labor___Overhead">
+          <DataField>STD Labor + Overhead</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="STD_Ext_Std_Cst">
+          <DataField>STD Ext Std Cst</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Net_WIP_Amount__">
@@ -344,6 +354,12 @@ ORDER BY o.No_</CommandText>
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1in</Width>
+                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -1010,7 +1026,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Material</Value>
+                                  <Value>Issued Material</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1051,7 +1067,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Labor</Value>
+                                  <Value>Issued Labor</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1092,7 +1108,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Overhead Cost</Value>
+                                  <Value>Issued Overhead Cost</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1133,7 +1149,24 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>V Sub Contract</Value>
+                                  <Value>Issued</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value> Sub Contract</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1174,7 +1207,24 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>W Charges Total</Value>
+                                  <Value>Issued</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <FontFamily />
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value> Charges Total</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1198,6 +1248,45 @@ ORDER BY o.No_</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox37">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Issued Labor  Plus Overhead</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox37</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1256,7 +1345,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Mat</Value>
+                                  <Value>STD Mat</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1297,7 +1386,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Lbr</Value>
+                                  <Value>STD Lbr</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1338,7 +1427,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Ovh</Value>
+                                  <Value>STD Ovh</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1379,7 +1468,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>SC</Value>
+                                  <Value>STD SC</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1420,7 +1509,7 @@ ORDER BY o.No_</CommandText>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Ext Std Cst</Value>
+                                  <Value>STD Ext Std Cst</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1444,6 +1533,45 @@ ORDER BY o.No_</CommandText>
                               <Style>Solid</Style>
                             </BottomBorder>
                             <FontFamily />
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox39">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>STD Labor Plus Overhead</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <FontSize>11pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>#666666</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox39</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -2200,11 +2328,14 @@ ORDER BY o.No_</CommandText>
                                   <Value>=Fields!Standard_Cost.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Standard_Cost</rd:DefaultName>
@@ -2220,6 +2351,7 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
@@ -2370,24 +2502,27 @@ ORDER BY o.No_</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Material">
+                        <Textbox Name="Issued_Material">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Material.Value</Value>
+                                  <Value>=Fields!Issued_Material.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Material</rd:DefaultName>
+                          <rd:DefaultName>Issued_Material</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2400,30 +2535,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Labor">
+                        <Textbox Name="Issued_Labor">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Labor.Value</Value>
+                                  <Value>=Fields!Issued_Labor.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Labor</rd:DefaultName>
+                          <rd:DefaultName>Issued_Labor</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2436,30 +2575,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Overhead_Cost">
+                        <Textbox Name="Issued_Overhead_Cost">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Overhead_Cost.Value</Value>
+                                  <Value>=Fields!Issued_Overhead_Cost.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Overhead_Cost</rd:DefaultName>
+                          <rd:DefaultName>Issued_Overhead_Cost</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2472,30 +2615,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="V_SubContract">
+                        <Textbox Name="Issued_SubContract">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!V_SubContract.Value</Value>
+                                  <Value>=Fields!Issued_SubContract.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>V_SubContract</rd:DefaultName>
+                          <rd:DefaultName>Issued_SubContract</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2508,30 +2655,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="W_Charges_Total">
+                        <Textbox Name="Issued_Charges_Total">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!W_Charges_Total.Value</Value>
+                                  <Value>=Fields!Issued_Charges_Total.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>W_Charges_Total</rd:DefaultName>
+                          <rd:DefaultName>Issued_Charges_Total</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2544,6 +2695,46 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Issued_Labor___Overhead">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Issued_Labor___Overhead.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Issued_Labor___Overhead</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
@@ -2586,24 +2777,27 @@ ORDER BY o.No_</CommandText>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Mat">
+                        <Textbox Name="STD_Mat">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Mat.Value</Value>
+                                  <Value>=Fields!STD_Mat.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Mat</rd:DefaultName>
+                          <rd:DefaultName>STD_Mat</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2616,30 +2810,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Lbr">
+                        <Textbox Name="STD_Lbr">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Lbr.Value</Value>
+                                  <Value>=Fields!STD_Lbr.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Lbr</rd:DefaultName>
+                          <rd:DefaultName>STD_Lbr</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2652,22 +2850,24 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Ovh">
+                        <Textbox Name="STD_Ovh">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Ovh.Value</Value>
+                                  <Value>=Fields!STD_Ovh.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
@@ -2675,7 +2875,7 @@ ORDER BY o.No_</CommandText>
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Ovh</rd:DefaultName>
+                          <rd:DefaultName>STD_Ovh</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2688,30 +2888,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="SC">
+                        <Textbox Name="STD_SC">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!SC.Value</Value>
+                                  <Value>=Fields!STD_SC.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>SC</rd:DefaultName>
+                          <rd:DefaultName>STD_SC</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2724,30 +2928,34 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Ext_Std_Cst">
+                        <Textbox Name="STD_Ext_Std_Cst">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Ext_Std_Cst.Value</Value>
+                                  <Value>=Fields!STD_Ext_Std_Cst.Value</Value>
                                   <Style>
                                     <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
                                     <Color>#333333</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Ext_Std_Cst</rd:DefaultName>
+                          <rd:DefaultName>STD_Ext_Std_Cst</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2760,6 +2968,46 @@ ORDER BY o.No_</CommandText>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
                             <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="STD_Labor___Overhead">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!STD_Labor___Overhead.Value</Value>
+                                  <Style>
+                                    <FontFamily />
+                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
+                                    <Color>#333333</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>STD_Labor___Overhead</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
                           </Style>
                         </Textbox>
                       </CellContents>
@@ -3165,6 +3413,8 @@ ORDER BY o.No_</CommandText>
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -3190,7 +3440,7 @@ ORDER BY o.No_</CommandText>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>35in</Width>
+            <Width>37in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -3198,7 +3448,7 @@ ORDER BY o.No_</CommandText>
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>35in</Width>
+      <Width>37in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
