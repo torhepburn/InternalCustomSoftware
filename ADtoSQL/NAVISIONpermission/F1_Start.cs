@@ -217,12 +217,14 @@ namespace NAVISIONpermission
         {
             bUpdate.Text = "Refreshing Data - Please Wait";
             bUpdate.BackColor = System.Drawing.Color.Red;
-            await Task.Run(() => { _ = refresh(); });
+            await Task.Run(() => { _ = refresh_s1(); });
+            await Task.Run(() => { _ = refresh_s2(); });
             bUpdate.BackColor = Color.FromArgb(100, 150, 255);
             bUpdate.Text = "Refresh Data";
         }
+                
 
-        private async Task refresh()
+        private async Task refresh_s1()
         {
             string groupUserName;
             string groupFullName;
@@ -267,7 +269,7 @@ namespace NAVISIONpermission
 
                 dr = cmd.ExecuteReader();
 
-                /*  then use power shell to get the member names of the AD groups    */
+                /*  then use power shell to get the names of the members of the AD groups    */
 
                 while (dr.Read())
                 {
@@ -343,7 +345,13 @@ namespace NAVISIONpermission
                 cnxnNAV.Close();
             }
 
-            await Task.Delay(1000);
+            await Task.Delay(2000);
+            await Task.Delay(2000);
+       
+        }
+
+        private async Task refresh_s2()
+        {
 
             try
             {
@@ -367,7 +375,7 @@ namespace NAVISIONpermission
                 {
                     string userName = dr.GetString(0).Trim();
                     string filterName = @"Name -eq '" + userName + "'";
-                    
+
 
                     //groupUserName = "PA-HOR-GG-ZYGONAVACCT"; //for testing
 
@@ -377,13 +385,13 @@ namespace NAVISIONpermission
                         ps.AddParameter("-Filter", filterName);
                         ps.AddCommand("Select-Object");
                         ps.AddParameter("Property", new string[] { "SamAccountName" });
-                        
-                        
+
+
                         var results = ps.Invoke();
-                        
+
                         foreach (var result in results)
                         {
-                            string samName = result.ToString().Replace("@{SamAccountName=","").Replace("}","");
+                            string samName = result.ToString().Replace("@{SamAccountName=", "").Replace("}", "");
 
                             /*  update the user data with the samname   */
 
@@ -409,6 +417,8 @@ namespace NAVISIONpermission
                             }
                         }
                     }
+
+
                 }
             }
             catch (SqlException ex)
@@ -419,10 +429,6 @@ namespace NAVISIONpermission
             {
                 cnxnNAV.Close();
             }
-
-            await Task.Delay(1000);
-
-
 
 
         }
