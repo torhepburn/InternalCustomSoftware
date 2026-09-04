@@ -12,6 +12,8 @@ Select ADP csv File to upload.
 <br />
 <br />
 Use format MM.YY Daily Close or MM.YY Pay Groups
+<br/>
+Import Pay Groups first then Daily Close.
 <br />
 <br />
 
@@ -19,7 +21,7 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
     <div class="popup-content">
         <h3>@pop.Title</h3>
         <p>@pop.Message</p>
-        <button class="btn" @onclick="pop.ClosePopup">Close</button>
+        <button class="btn" @onclick="pop.ClosePopup"></button>
     </div>
 </div>
 
@@ -144,12 +146,16 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                     cnxn.Close();
                 }
 
-                for (int i = 10; 1 < lines.Length; i++)
+                for (int i = 8; i < lines.Length-1; i++)
                 {
                     /*  Splits the line on the comma when the comma is not between two double quotes  */
                     data = System.Text.RegularExpressions.Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-                    if (data[0].Length > 0)
+                    string test = data[2];
+                    string test1 = data[3];
+                    string test2 = data[4];
+
+                    if ((data[0].Length > 0) & (data[3] != "APIUSER"))
                     {
                         for (int j = 3; j < 22; j++)
                         {
@@ -464,6 +470,7 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                 "   '5010', " +
                 "   '5012', " +
                 "   '5013', " +
+                "   '5025', " +
                 "   '5050', " +
                 "   '5070', " +
                 "   '5072', " +
@@ -488,10 +495,12 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                 "   '8120', " +
                 "   '8180') " +
                 "            THEN 'Instruments' " +
+                
                 "ELSE CASE " +
                 "   WHEN [Pay Group] = 'GC9' THEN 'NAVITAR' " +
                 "   WHEN [Pay Group] = 'H9G' THEN 'Special Optics' " +
                 "   WHEN [Pay Group] = 'IAM' THEN 'Pixelink' " +
+                "   ELSE '' " +
                 "END " +
                 "END "
 
@@ -514,6 +523,175 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
             {
                 cnxn.Close();
             }
+
+            /*
+             * cmd = new Microsoft.Data.SqlClient.SqlCommand(
+                "UPDATE ADP9 " +
+                "SET BusinessSegment =  " +
+                "CASE " +
+                "   WHEN [Payroll Department] in ( " +
+                "   '5200', " +
+                "   '5210', " +
+                "   '5215', " +
+                "   '5225', " +
+                "   '5230') " +
+                "           THEN 'LFO'" +
+                "   WHEN [Payroll Department] in ( " +
+                "   '5062', " +
+                "	'5065', " +
+                "	'7006', " +
+                " 	'8035', " +
+                "	'8150') " +
+                "           THEN 'PPS'" +
+                            "   WHEN [Payroll Department] in ( " +
+                "   '5110', " +
+                "	'5125', " +
+                "	'5135', " +
+                "	'5145', " +
+                "	'5150', " +
+                "	'5160', " +
+                "	'5177', " +
+                "	'5185', " +
+                "	'5310', " +
+                "	'6050', " +
+                "	'8074', " +
+                "	'8077', " +
+                "	'8177', " +
+                "	'8190') " +
+                "           THEN 'PO'" +
+                            "   WHEN [Payroll Department] in ( " +
+                "   '1140', " +
+                "	'5017', " +
+                "	'5024', " +
+                "	'7222', " +
+                "	'8200', " +
+                "	'8210', " +
+                "	'8211', " +
+                "	'8215', " +
+                "	'8220') " +
+                "	        THEN 'OSG' " +
+                            "   WHEN [Payroll Department] in ( " +
+                "   '1151', " +
+                "	'5620', " +
+                "	'5640', " +
+                "	'5641', " +
+                "	'5642', " +
+                "	'5643', " +
+                "	'5644', " +
+                "	'5645', " +
+                "   '5646', " +
+                "	'5647', " +
+                "	'5648', " +
+                "	'5649', " +
+                "	'5680', " +
+                "	'5685', " +
+                "	'5690', " +
+                "	'6011', " +
+                "	'7007', " +
+                "	'8191') " +
+                "	        THEN 'EPO' " +
+                            "   WHEN [Payroll Department] in ( " +
+                "   '5013', " +
+                ) " +
+                "            THEN 'CMS' " +
+                             "   WHEN [Payroll Department] in ( " +
+                "   '5010', " +
+                "   '5012', " +
+                "   '5025', " +
+                "   '5050', " +
+                "   '5070', " +
+                "   '5072', " +
+                "   '5074', " +
+                "   '7010', " +
+                "   '7011', " +
+                "   '7012', " +
+                "   '7017', " +
+                "   '7028', " +
+                "   '7050', " +
+                "   '8015', " +
+                "   '8017', " +
+                "   '8049', " +
+                "   '8050', " +
+                "   '8070', " +
+                ") " +
+                "            THEN 'LI' " +
+                             "   WHEN [Payroll Department] in ( " +
+                "   '5010', " +
+                "   '5012', " +
+                "   '5025', " +
+                "   '5050', " +
+                "   '5070', " +
+                "   '5072', " +
+                "   '5074', " +
+                "   '7010', " +
+                "   '7011', " +
+                "   '7012', " +
+                "   '7017', " +
+                "   '7028', " +
+                "   '7050', " +
+                "   '8015', " +
+                "   '8017', " +
+                "   '8049', " +
+                "   '8050', " +
+                "   '8070', " +
+                ") " +
+                "            THEN 'Profiler' " +
+                             "   WHEN [Payroll Department] in ( " +
+                "   '5010', " +
+                "   '5012', " +
+                "   '5025', " +
+                "   '5050', " +
+                "   '5070', " +
+                "   '5072', " +
+                "   '5074', " +
+                "   '7010', " +
+                "   '7011', " +
+                "   '7012', " +
+                "   '7017', " +
+                "   '7028', " +
+                "   '7050', " +
+                "   '8015', " +
+                "   '8017', " +
+                "   '8049', " +
+                "   '8050', " +
+                "   '8070', " +
+                ") " +
+                "            THEN 'OSG' " +
+
+
+                "ELSE CASE " +
+                "   WHEN [Pay Group] = 'GC9' THEN 'NAVITAR' " +
+                "   WHEN [Pay Group] = 'H9G' THEN 'Special Optics' " +
+                "   WHEN [Pay Group] = 'IAM' THEN 'Pixelink' " +
+                "   ELSE '' " +
+                "END " +
+                "END "
+
+                , cnxn);
+
+
+            try
+            {
+                cnxn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex)
+            {
+                pop.Title = "Error";
+                pop.Message = ex.ToString();
+                pop.ShowPopup();
+
+            }
+            finally
+            {
+                cnxn.Close();
+            }
+
+             * 
+             * 
+             * 
+             */
+
 
             cmd = new(
                         "UPDATE ADP9 " +
@@ -611,8 +789,10 @@ Use format MM.YY Daily Close or MM.YY Pay Groups
                 cnxn.Close();
             }
             
-            nav.NavigateTo("counter");
+           
         }
+
+        nav.NavigateTo("counter");
         
     }
 
