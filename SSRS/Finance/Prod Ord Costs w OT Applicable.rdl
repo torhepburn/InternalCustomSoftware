@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>18.5.11723.231</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-09-08T18:17:43.6315605Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-09-10T15:37:03.3028121Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -107,28 +107,23 @@ End [Status]										--F7
 ,l.[Finished Quantity]
 ,COALESCE(s2.[Material],0) [Consumption Total]
 ,COALESCE((s2.[Material] * -1),0) [Issued Material]			/*	S7	excel O*/
-,COALESCE(s3.[Labor],0) [Issued Labor]									/*	T7	excel P*/
-,COALESCE(s4.[Overhead Cost],0)	[Issued Overhead Cost]						/*	U7	excel Q*/
+,COALESCE(s3.[Labor],0) + COALESCE(s4.[Overhead Cost],0) [Issued Labor plus Overhead Cost]						/*	U7	excel Q*/
 ,COALESCE(s5.[SubContract],0) [Issued SubContract]
 ,(COALESCE((s2.[Material] * -1),0) + COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0) + COALESCE(s5.[SubContract],0) ) [Issued Charges Total]
-,(COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0)) [Issued Labor plus Overhead]	/*	W	*/
 ,COALESCE(s6.[Output Post],0) [Output Post]					/*	X	*/
 ,COALESCE(i.[Rolled-up Material Cost],0) [STD Mat]	/*	Y	*/
-,COALESCE(i.[Rolled-up Capacity Cost],0) [STD Lbr]	/*	Z	*/
-,COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) [STD Ovh]	/*	AA	*/
 ,COALESCE(i.[Rolled-up Subcontracted Cost],0) [STD SC]	/*	AB	*/
 ,(COALESCE(i.[Rolled-up Material Cost],0) + COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) + COALESCE(i.[Rolled-up Subcontracted Cost],0))	[STD Ext Std Cst]	/*	AC	*/
-,(COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0))[STD Labor + Overhead]
+,(COALESCE(i.[Rolled-up Capacity Cost],0) + COALESCE(i.[Rolled-up Cap_ Overhead Cost],0))[STD Labor plus Overhead]
 ,(COALESCE(s6.[Output Post],0) * -1) [Completions Amount]	/*	AE	*/
 ,(COALESCE(s2.[Material] * -1,0) + COALESCE(s3.Labor,0) + COALESCE(s4.[Overhead Cost],0) + COALESCE(s5.[SubContract],0)  +  COALESCE((s6.[Output Post] * -1),0)) [Net WIP Amount $]	/*	AG	*/
-,COALESCE((s2.[Material] * -1),0) - COALESCE(i.[Rolled-up Material Cost],0)	[WIP Mat]				/*	AI	*/
-,COALESCE(s3.[Labor],0) - COALESCE(i.[Rolled-up Capacity Cost],0) 	[WIP Lbr]						/*	AJ	*/
-,COALESCE(s4.[Overhead Cost],0)	- COALESCE(i.[Rolled-up Cap_ Overhead Cost],0) 	[WIP Ovh ]			/*	AK	*/
-,COALESCE(s5.[SubContract],0) - COALESCE(i.[Rolled-up Subcontracted Cost],0)	[WIP SC]			/*	AL	*/
+,COALESCE((s2.[Material] * -1),0) - COALESCE(i.[Rolled-up Material Cost],0)	[Mat Variance]				/*	AI	*/
+,(COALESCE(s3.[Labor],0) - COALESCE(i.[Rolled-up Capacity Cost],0)) + (COALESCE(s4.[Overhead Cost],0)	- COALESCE(i.[Rolled-up Cap_ Overhead Cost],0)) [Lbr plus Ovh Variance ]			/*	AK	*/
+,COALESCE(s5.[SubContract],0) - COALESCE(i.[Rolled-up Subcontracted Cost],0)	[SC Variance]			/*	AL	*/
 ,(COALESCE((s2.[Material] * -1),0) - COALESCE(i.[Rolled-up Material Cost],0)) +
 (COALESCE(s3.[Labor],0) - COALESCE(i.[Rolled-up Capacity Cost],0)) +
 (COALESCE(s4.[Overhead Cost],0)	- COALESCE(i.[Rolled-up Cap_ Overhead Cost],0)) +
-(COALESCE(s5.[SubContract],0) - COALESCE(i.[Rolled-up Subcontracted Cost],0))	[WIP Revised]		/*  AM	*/
+(COALESCE(s5.[SubContract],0) - COALESCE(i.[Rolled-up Subcontracted Cost],0))	[Total Variance]		/*  AM	*/
 ,CASE l.[Overtime Applicable]
 		WHEN 0 THEN ''
 		WHEN 1 THEN 'Yes'
@@ -161,8 +156,7 @@ AND l.[Overtime Applicable] IN (1,5)  --yes, Zygo Affiliate
 
 --AND LEN(o.[Source No_]) &gt; 0
 
-ORDER BY o.No_
-</CommandText>
+ORDER BY o.No_</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
@@ -226,12 +220,8 @@ ORDER BY o.No_
           <DataField>Issued Material</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Issued_Labor">
-          <DataField>Issued Labor</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="Issued_Overhead_Cost">
-          <DataField>Issued Overhead Cost</DataField>
+        <Field Name="Issued_Labor_plus_Overhead_Cost">
+          <DataField>Issued Labor plus Overhead Cost</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Issued_SubContract">
@@ -242,10 +232,6 @@ ORDER BY o.No_
           <DataField>Issued Charges Total</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="Issued_Labor_plus_Overhead">
-          <DataField>Issued Labor plus Overhead</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
         <Field Name="Output_Post">
           <DataField>Output Post</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
@@ -254,12 +240,8 @@ ORDER BY o.No_
           <DataField>STD Mat</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="STD_Lbr">
-          <DataField>STD Lbr</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="STD_Ovh">
-          <DataField>STD Ovh</DataField>
+        <Field Name="STD_Labor_plus_Overhead">
+          <DataField>STD Labor plus Overhead</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="STD_SC">
@@ -270,36 +252,28 @@ ORDER BY o.No_
           <DataField>Completions Amount</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="STD_Labor___Overhead">
-          <DataField>STD Labor + Overhead</DataField>
+        <Field Name="Mat_Variance">
+          <DataField>Mat Variance</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Lbr_plus_Ovh_Variance_">
+          <DataField>Lbr plus Ovh Variance </DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="STD_Ext_Std_Cst">
           <DataField>STD Ext Std Cst</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
+        <Field Name="SC_Variance">
+          <DataField>SC Variance</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
         <Field Name="Net_WIP_Amount__">
           <DataField>Net WIP Amount $</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
-        <Field Name="WIP_Mat">
-          <DataField>WIP Mat</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="WIP_Lbr">
-          <DataField>WIP Lbr</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="WIP_Ovh_">
-          <DataField>WIP Ovh </DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="WIP_SC">
-          <DataField>WIP SC</DataField>
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-        <Field Name="WIP_Revised">
-          <DataField>WIP Revised</DataField>
+        <Field Name="Total_Variance">
+          <DataField>Total Variance</DataField>
           <rd:TypeName>System.Decimal</rd:TypeName>
         </Field>
         <Field Name="Overtime_Applicable">
@@ -344,21 +318,6 @@ ORDER BY o.No_
           <Tablix Name="table1">
             <TablixBody>
               <TablixColumns>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
-                <TablixColumn>
-                  <Width>1in</Width>
-                </TablixColumn>
                 <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
@@ -1044,14 +1003,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox17">
+                        <Textbox Name="Textbox34">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Issued Labor</Value>
+                                  <Value>Issued Labor plus Overhead Cost</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1061,12 +1020,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox17</rd:DefaultName>
+                          <rd:DefaultName>Textbox34</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1074,48 +1032,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox18">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Issued Overhead Cost</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox18</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1242,45 +1158,6 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox38">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>Issued Labor plus Overhead</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox38</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="textbox21">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1363,14 +1240,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox23">
+                        <Textbox Name="Textbox37">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>STD Lbr</Value>
+                                  <Value>STD Labor plus Overhead</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1380,12 +1257,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox23</rd:DefaultName>
+                          <rd:DefaultName>Textbox37</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1393,48 +1269,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox24">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>STD Ovh</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox24</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1527,45 +1361,6 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox39">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>STD Labor Plus Overhead</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox39</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="textbox27">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -1648,14 +1443,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox29">
+                        <Textbox Name="Textbox45">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>WIP Mat</Value>
+                                  <Value>Mat Variance</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1665,12 +1460,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox29</rd:DefaultName>
+                          <rd:DefaultName>Textbox45</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1678,7 +1472,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1689,14 +1482,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox30">
+                        <Textbox Name="Textbox43">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>WIP Lbr</Value>
+                                  <Value>Lbr plus Ovh Variance </Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1706,12 +1499,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox30</rd:DefaultName>
+                          <rd:DefaultName>Textbox43</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1719,7 +1511,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1730,14 +1521,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox31">
+                        <Textbox Name="Textbox41">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>WIP Ovh </Value>
+                                  <Value>SC Variance</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1747,12 +1538,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox31</rd:DefaultName>
+                          <rd:DefaultName>Textbox41</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1760,7 +1550,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -1771,14 +1560,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox32">
+                        <Textbox Name="Textbox39">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>WIP SC</Value>
+                                  <Value>Total Variance</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>11pt</FontSize>
@@ -1788,12 +1577,11 @@ ORDER BY o.No_
                                 </TextRun>
                               </TextRuns>
                               <Style>
-                                <FontFamily />
                                 <TextAlign>Right</TextAlign>
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox32</rd:DefaultName>
+                          <rd:DefaultName>Textbox39</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1801,48 +1589,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="textbox33">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>WIP Revised</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <FontSize>11pt</FontSize>
-                                    <FontWeight>Bold</FontWeight>
-                                    <Color>#666666</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <FontFamily />
-                                <TextAlign>Right</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>textbox33</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -2462,14 +2208,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Issued_Labor">
+                        <Textbox Name="Issued_Labor_plus_Overhead_Cost">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Issued_Labor.Value</Value>
+                                  <Value>=Fields!Issued_Labor_plus_Overhead_Cost.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -2482,7 +2228,7 @@ ORDER BY o.No_
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Issued_Labor</rd:DefaultName>
+                          <rd:DefaultName>Issued_Labor_plus_Overhead_Cost</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2490,47 +2236,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Issued_Overhead_Cost">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Issued_Overhead_Cost.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Issued_Overhead_Cost</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -2622,45 +2327,6 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Issued_Labor_plus_Overhead">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!Issued_Labor_plus_Overhead.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Issued_Labor_plus_Overhead</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="Output_Post">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -2740,54 +2406,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="STD_Lbr">
+                        <Textbox Name="STD_Labor_plus_Overhead">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!STD_Lbr.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>STD_Lbr</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="STD_Ovh">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!STD_Ovh.Value</Value>
+                                  <Value>=Fields!STD_Labor_plus_Overhead.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -2798,7 +2424,7 @@ ORDER BY o.No_
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>STD_Ovh</rd:DefaultName>
+                          <rd:DefaultName>STD_Labor_plus_Overhead</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -2806,7 +2432,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -2898,45 +2523,6 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="STD_Labor___Overhead">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!STD_Labor___Overhead.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>STD_Labor___Overhead</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
                         <Textbox Name="Completions_Amount">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
@@ -3016,14 +2602,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="WIP_Mat">
+                        <Textbox Name="Mat_Variance">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!WIP_Mat.Value</Value>
+                                  <Value>=Fields!Mat_Variance.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -3036,7 +2622,7 @@ ORDER BY o.No_
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>WIP_Mat</rd:DefaultName>
+                          <rd:DefaultName>Mat_Variance</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3044,7 +2630,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -3056,14 +2641,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="WIP_Lbr">
+                        <Textbox Name="Lbr_plus_Ovh_Variance_">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!WIP_Lbr.Value</Value>
+                                  <Value>=Fields!Lbr_plus_Ovh_Variance_.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -3076,7 +2661,7 @@ ORDER BY o.No_
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>WIP_Lbr</rd:DefaultName>
+                          <rd:DefaultName>Lbr_plus_Ovh_Variance_</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3084,7 +2669,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -3096,14 +2680,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="WIP_Ovh_">
+                        <Textbox Name="SC_Variance">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!WIP_Ovh_.Value</Value>
+                                  <Value>=Fields!SC_Variance.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -3116,7 +2700,7 @@ ORDER BY o.No_
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>WIP_Ovh_</rd:DefaultName>
+                          <rd:DefaultName>SC_Variance</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3124,7 +2708,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -3136,14 +2719,14 @@ ORDER BY o.No_
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="WIP_SC">
+                        <Textbox Name="Total_Variance">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!WIP_SC.Value</Value>
+                                  <Value>=Fields!Total_Variance.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Format>'$'#,0.00;('$'#,0.00)</Format>
@@ -3156,7 +2739,7 @@ ORDER BY o.No_
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>WIP_SC</rd:DefaultName>
+                          <rd:DefaultName>Total_Variance</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -3164,47 +2747,6 @@ ORDER BY o.No_
                             <BottomBorder>
                               <Style>Solid</Style>
                             </BottomBorder>
-                            <FontFamily />
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                            <rd:FormatSymbolCulture>en-US</rd:FormatSymbolCulture>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="WIP_Revised">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Fields!WIP_Revised.Value</Value>
-                                  <Style>
-                                    <FontFamily />
-                                    <Format>'$'#,0.00;('$'#,0.00)</Format>
-                                    <Color>#333333</Color>
-                                  </Style>
-                                </TextRun>
-                              </TextRuns>
-                              <Style>
-                                <TextAlign>Center</TextAlign>
-                              </Style>
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>WIP_Revised</rd:DefaultName>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                            </Border>
-                            <BottomBorder>
-                              <Style>Solid</Style>
-                            </BottomBorder>
-                            <FontFamily />
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -3286,11 +2828,6 @@ ORDER BY o.No_
                 <TablixMember />
                 <TablixMember />
                 <TablixMember />
-                <TablixMember />
-                <TablixMember />
-                <TablixMember />
-                <TablixMember />
-                <TablixMember />
               </TablixMembers>
             </TablixColumnHierarchy>
             <TablixRowHierarchy>
@@ -3316,7 +2853,7 @@ ORDER BY o.No_
             <DataSetName>DataSet1</DataSetName>
             <Top>0.43in</Top>
             <Height>0.43in</Height>
-            <Width>35in</Width>
+            <Width>30in</Width>
             <ZIndex>1</ZIndex>
             <Style />
           </Tablix>
@@ -3324,7 +2861,7 @@ ORDER BY o.No_
         <Height>0.86in</Height>
         <Style />
       </Body>
-      <Width>38in</Width>
+      <Width>39in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
