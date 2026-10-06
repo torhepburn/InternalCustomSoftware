@@ -1,5 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily">
+<Report MustUnderstand="df" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:df="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition/defaultfontfamily" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.5.11723.231</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>SSDTRS</am:Name>
+      <am:Version>18.5.11723.231</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-10-06T15:59:02.3993068Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -20,123 +31,69 @@ WITH s1 AS	/*	all line amount changes in time frame	*/
 (
 select 
 
-DATEADD(hh, -5, [Date and Time]) TransactionDate
+CAST([Date and Time] AT TIME ZONE 'UTC' AT TIME ZONE 'Eastern Standard Time' AS date) TransactionDate
 ,[Old Value]
 ,[New Value]
 ,[Primary Key Field 2 Value] pk2
 ,[Primary Key Field 3 Value] pk3
-,[Primary Key Field 2 Value] + [Primary Key Field 3 Value] FreightLineTest
+,CAST([Primary Key Field 2 Value] as varchar(8)) + '-' + CAST([Primary Key Field 3 Value] as varchar(8)) olink
 
-from 
+from
 
 [ZYGO$Change Log Entry]
 
 WHERE [Table No_] = 37  --Sales Line
 
-AND CAST(DATEADD(hh, -5, [Date and Time]) AS date) = CAST(GETDATE()-@days as date)
+AND CAST([Date and Time] AT TIME ZONE 'UTC' AT TIME ZONE 'Eastern Standard Time' AS date)  = CAST(GETDATE()-@days as date)
 
 AND [Field No_] IN (103) --Line Amount
 
+AND [Primary Key Field 1 Value] = 1 --[Document Type] = Order 
+
 )
-,s2 AS	/*	get all lines where SO Line Number &gt;= 500	*/
-
-(	
-	SELECT 
-
-   [Primary Key Field 2 Value] + [Primary Key Field 3 Value] FreightLines
-	
-	from 
-
-	[ZYGO$Change Log Entry]
-
-	WHERE [Table No_] = 37  --Sales Line
-
-	AND CAST(DATEADD(hh, -5, [Date and Time]) AS date) = CAST(GETDATE()-@days as date)
-
-	AND [Primary Key Field 2 Value] IN (Select pk2 from s1)
-	
-	AND [Field No_] = 50000
-
-	AND [New Value] &gt;= 500
-)
-,s3 AS
+,s3 AS	/*	Amount Change per order	*/
 (
-select
+	select
 
- SUM(CAST([Old Value] as float)) old
-,SUM(CAST([New Value] as float)) new
-,SUM(CAST([New Value] as float)) - SUM(CAST([Old Value] as float)) Net_Amount
-,s1.pk2
+	 SUM(CAST([Old Value] as float)) old
+	,SUM(CAST([New Value] as float)) new
+	,SUM(CAST([New Value] as float)) - SUM(CAST([Old Value] as float)) Net_Amount
+	,s1.pk2
+	,MIN(s1.[TransactionDate]) TransactionDate
 
-FROM s1
+	FROM s1
 
-WHERE s1.FreightLineTest NOT IN (Select FreightLines from s2)
-
-GROUP BY s1.pk2
+	GROUP BY s1.pk2
 )
-,s4 AS
-(	
-	SELECT
-
-	[New Value] + ' - ' + COALESCE(i.Description,'') Item
-	,[Primary Key Field 2 Value] pk2
-	,[Primary Key Field 3 Value] pk3
-	
-
-	FROM [ZYGO$Change Log Entry] cle
-
-	/*Need to get the description from the sales Line due to SERs.  */
-
-	INNER JOIN s3 ON s3.pk2 = cle.[Primary Key Field 2 Value]
-
-	INNER JOIN [ZYGO$Sales Line] i on s3.pk2 = i.[Document No_] and cle.[Primary Key Field 3 Value] = i.[Line No_]
-
-	WHERE 
-
-	[Table No_] = 37	--sales line
-
-	AND [Field No_] = 6	--No_
-
-	AND LEFT([New Value],5)&lt;&gt; '50160'  /*	filtering out freight account numbers	*/
-	
-	AND CAST([Date and Time] as date) = CAST(GETDATE()-1 as date)
-	
-	AND (COALESCE([Primary Key Field 2 Value],'') + COALESCE([Primary Key Field 3 Value],''))
-
-	NOT IN (Select FreightLines from s2)
-)
-,s5 AS	/*  fnding the first item line as it will be the most significant for Linda Z	*/
-(
-	SELECT
-	
-	 pk2
-	,MIN(pk3) linkLine
-
-	FROM s4
-
-	GROUP BY pk2
-)
-, s6 AS
+,s4 AS	/*	top item per order by dollar value that has been changed  */
 (
 	SELECT
 
-	s4.pk2
-	,Item
+	[Document No_]
+	,No_ + ' - ' + [Description] item
+	,[Line Amount]
 
-	FROM s4 INNER JOIN s5 ON s5.pk2 = s4.pk2 and s5.linkLine = s4.pk3
+	,ROW_NUMBER() OVER (PARTITION BY sl.[Document No_]
+		ORDER BY sl.[Line Amount] desc) as RN
+
+	FROM [ZYGO$Sales Line] sl
+
+	INNER JOIN s1 ON sl.[Document No_] = s1.pk2
+
+	WHERE sl.[Document No_] + '-' + CAST(sl.[Line No_] as varchar(8)) IN (SELECT olink from s1)
+	
 )
 
+SELECT
 
-SELECT 
-
-CAST(GETDATE() - 1 as date) TransactionDate
-,s3.pk2
+ TransactionDate
+,s3.pk2 [OrderNo]
 --,Net_Amount
 ,h.[Sell-to Customer Name]
 ,h.[Sell-to County]
 ,h.[Sell-to Country_Region Code]
 ,c.[Customer Group Code]
-,h.[Ship-to County]
+,h.[Ship-to County] [Ship-to to State]
 ,h.[Ship-to Country_Region Code]
 ,h.[External Document No_] [Customer PO]
 ,Net_Amount
@@ -145,9 +102,9 @@ CAST(GETDATE() - 1 as date) TransactionDate
 ,COALESCE(h.[Salesperson Code],'') Sales_Agent
 ,vind.Name 'Industry'
 ,dind.[Dimension Value Code]'Industry Code'
-,COALESCE(Item,'') Item
+,COALESCE(item,'') 'Item'
 ,dseg.[Dimension Value Code]'Segment'
-
+,h.[Quote No_]
 
 FROM s3
 
@@ -162,11 +119,15 @@ left join [ZYGO$Dimension Value] vind on dind.[Dimension Value ID] = vind.[Dimen
 
 lEFT JOIN ZYGO$Customer c ON h.[Sell-to Customer No_] = c.No_
 
-INNER JOIN s6 ON s3.pk2 = s6.pk2
+LEFT JOIN s4 ON s3.pk2 = s4.[Document No_]
 
 WHERE h.[Document Type] = 1
 
-ORDER BY s3.pk2
+AND s4.RN = 1
+
+ORDER BY pk2
+
+
 </CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -175,8 +136,8 @@ ORDER BY s3.pk2
           <DataField>TransactionDate</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
-        <Field Name="pk2">
-          <DataField>pk2</DataField>
+        <Field Name="OrderNo">
+          <DataField>OrderNo</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Sell_to_Customer_Name">
@@ -195,8 +156,8 @@ ORDER BY s3.pk2
           <DataField>Customer Group Code</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="Ship_to_County">
-          <DataField>Ship-to County</DataField>
+        <Field Name="Ship_to_to_State">
+          <DataField>Ship-to to State</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="Ship_to_Country_Region_Code">
@@ -237,6 +198,10 @@ ORDER BY s3.pk2
         </Field>
         <Field Name="Segment">
           <DataField>Segment</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Quote_No_">
+          <DataField>Quote No_</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -379,7 +344,7 @@ ORDER BY s3.pk2
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>pk2</Value>
+                                  <Value>Order_No</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>9pt</FontSize>
@@ -569,7 +534,7 @@ ORDER BY s3.pk2
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>Ship to County</Value>
+                                  <Value>Ship to State</Value>
                                   <Style>
                                     <FontFamily />
                                     <FontSize>9pt</FontSize>
@@ -1026,14 +991,14 @@ ORDER BY s3.pk2
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="pk2">
+                        <Textbox Name="OrderNo">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!pk2.Value</Value>
+                                  <Value>=Fields!OrderNo.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1043,7 +1008,7 @@ ORDER BY s3.pk2
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>pk2</rd:DefaultName>
+                          <rd:DefaultName>OrderNo</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -1206,14 +1171,14 @@ ORDER BY s3.pk2
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Ship_to_County">
+                        <Textbox Name="Ship_to_to_State">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Ship_to_County.Value</Value>
+                                  <Value>=Fields!Ship_to_to_State.Value</Value>
                                   <Style>
                                     <FontFamily />
                                     <Color>#333333</Color>
@@ -1223,7 +1188,7 @@ ORDER BY s3.pk2
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Ship_to_County</rd:DefaultName>
+                          <rd:DefaultName>Ship_to_to_State</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
