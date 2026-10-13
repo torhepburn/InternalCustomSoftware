@@ -107,147 +107,181 @@ namespace RepairLabels
                 line1 = g.iDescription.Trim();
                 line2 = "";
                 line3 = "";
+
+
             }
-            else
+            else   /*   description length is greater than 14   */
             {
-                if (g.iDescription.IndexOf(" ") != -1)
+
+                string a = g.iDescription.Substring(0, 14);
+
+                if (a.LastIndexOf(",") != -1)
                 {
-                    if (descriptionLength > 14)
+                    firstLastIndex = a.LastIndexOf(",");
+                    line1 = g.iDescription.Substring(0, firstLastIndex + 1);
+                }
+                else if (a.LastIndexOf(" ") != -1)
+                {
+                    firstLastIndex = a.LastIndexOf(" ");
+                    line1 = g.iDescription.Substring(0, firstLastIndex);
+                }
+                else
+                {
+                    line1 = g.iDescription.Substring(0, 14);
+                    firstLastIndex = 13;
+                }
+
+
+                if (g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1)).Length > 14)
+                {
+                    string b = g.iDescription.Substring(firstLastIndex + 1, 14);
+
+                    if (b.Substring(0, 1) == " ")
                     {
-                        string a = g.iDescription.Substring(0, 14);
-
-                        if (a.LastIndexOf(",") != -1)
-                        {
-                            firstLastIndex = a.LastIndexOf(",");
-                            line1 = g.iDescription.Substring(0, firstLastIndex + 1);
-                        }
-                        else if (a.LastIndexOf(" ") != -1)
-                        {
-                            firstLastIndex = a.LastIndexOf(" ");
-                            line1 = g.iDescription.Substring(0, firstLastIndex);
-                        }
-
+                        firstLastIndex = firstLastIndex + 1;
+                        b = g.iDescription.Substring(firstLastIndex + 1, 14);
                     }
 
-                    if (g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1)).Length > 14)
-
+                    if (b.LastIndexOf(",") != -1)
                     {
-                        string b = g.iDescription.Substring(firstLastIndex + 1, 14);
-
-
-                        if (b.LastIndexOf(",") != -1)
-                        {
-                            secondLastIndex = b.LastIndexOf(",");
-                            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex + 1);
-                        }
-                        else if (b.LastIndexOf(" ") != -1)
-                        {
-                            secondLastIndex = b.LastIndexOf(" ");
-                            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex);
-                        }
-                        else if (b.ToUpper().LastIndexOf("X") != -1)
-                        {
-                            secondLastIndex = b.ToUpper().LastIndexOf("X");
-                            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex);
-                        }
-                        else
-                        {
-                            secondLastIndex = 14;
-                            line2 = b;
-                        }
-
-                        if (line2.Substring(0, 1) == " ")
-                        {
-                            line2 = line2.Trim();
-                        }
+                        secondLastIndex = b.LastIndexOf(",");
+                        line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex + 1);
+                    }
+                    else if (b.LastIndexOf(" ") != -1 && b.LastIndexOf(" ") != 0)
+                    {
+                        secondLastIndex = b.LastIndexOf(" ");
+                        line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex);
+                    }
+                    else if (b.ToUpper().LastIndexOf("X") != -1)
+                    {
+                        secondLastIndex = b.ToUpper().LastIndexOf("X");
+                        line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex);
                     }
                     else
                     {
-                        line2 = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
-                        secondLastIndex = -1;
+                        secondLastIndex = 13;
+                        line2 = b;
                     }
 
-                    if (secondLastIndex != -1)
+                    if (line2.Substring(0, 1) == " ")
                     {
-                        line3 = g.iDescription.Substring(firstLastIndex + secondLastIndex + 2, descriptionLength -
-                                (firstLastIndex + secondLastIndex + 2));
-
-                        if (line3.Substring(0, 1) == " ")
-                        {
-                            line3 = line3.Trim();
-                        }
+                        line2 = line2.Trim();
                     }
-                    else
+                }
+                else
+                {
+                    line2 = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
+                    secondLastIndex = -1;
+                }
+
+                if (secondLastIndex != -1)
+                {
+                    line3 = g.iDescription.Substring(firstLastIndex + secondLastIndex + 2, descriptionLength -
+                            (firstLastIndex + secondLastIndex + 2));
+
+                    if (line3.Substring(0, 1) == " ")
                     {
-                        line3 = "";
+                        line3 = line3.Trim();
                     }
                 }
-            }
-            //else
-            //{
-            //    if (descriptionLength > 14)
-            //    {
-            //        string a = g.iDescription.Substring(0, 14);
-            //        firstLastIndex = a.LastIndexOf(",");
-            //        line1 = g.iDescription.Substring(0, firstLastIndex + 1);
-            //    }
-            //    else
-            //    {
-            //        line1 = g.iDescription.Trim();
-            //    }
-
-            //    if (descriptionLength > 14)
-            //    {
-            //        string b = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
-
-            //        secondLastIndex = b.LastIndexOf(",");
-
-            //        if (secondLastIndex != -1)
-            //        {
-            //            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex + 1);
-            //        }
-            //        else
-            //        {
-            //            if (descriptionLength - (firstLastIndex + 1) <= 14)
-            //            {
-            //                line2 = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex));
-            //            }
-            //            else
-            //            {
-            //                commaIndex = b.LastIndexOf(",");
-            //                line2 = g.iDescription.Substring(firstLastIndex + 1, commaIndex + 1);
-            //            }
-            //        }
-            //    }
-
-            //    if (secondLastIndex != -1)
-            //    {
-            //        line3 = g.iDescription.Substring(firstLastIndex + secondLastIndex + 2, descriptionLength -
-            //                (firstLastIndex + secondLastIndex + 2));
-            //    }
-            //    else
-            //    {
-            //        line3 = g.iDescription.Substring(firstLastIndex + commaIndex + 2, descriptionLength -
-            //                (firstLastIndex + commaIndex + 2));
-            //    }
-            //}
-
-            if (line1.Length > 14 | line2.Length > 14 | line3.Length > 14)
-            {
-                line1 = g.iDescription.Substring(0, 14);
-
-                if (descriptionLength > 28)
+                else
                 {
-                    line2 = g.iDescription.Substring(14, 14);
+                    line3 = "";
                 }
-                else  //( descriptionLength <= 28 )
-                {
-                    line2 = g.iDescription.Substring(14, descriptionLength - 14);
-                }
+                //}
+                //else /* g.iDescription.IndexOf(" ") == -1) no spaces in description */
+                //{
+                //    if (descriptionLength > 14)
+                //    {
+                //        string a = g.iDescription.Substring(0, 14);
 
-                if (descriptionLength > 28)
+                //        if (a.LastIndexOf(",") != -1)
+                //        {
+                //            firstLastIndex = a.LastIndexOf(",");
+                //            line1 = g.iDescription.Substring(0, firstLastIndex + 1);
+                //        }
+                //        else
+                //        {
+                //            line1 = g.iDescription.Substring(0, 14);
+                //            firstLastIndex = 13;
+                //        }
+                //    }
+
+                //    if (g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1)).Length > 14)
+                //    {
+                //        string b = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
+
+                //        if (b.LastIndexOf(",") != -1)
+                //        {
+                //            secondLastIndex = b.LastIndexOf(",");
+                //            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex + 1);
+                //        }
+                //        else if (b.ToUpper().LastIndexOf("X") != -1)
+                //        {
+                //            secondLastIndex = b.ToUpper().LastIndexOf("X");
+                //            line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex);
+                //        }
+                //        else
+                //        {
+                //            secondLastIndex = 13;
+                //            line2 = b;
+                //        }
+
+
+
+                //        //secondLastIndex = b.LastIndexOf(",");
+
+                //        //if (secondLastIndex != -1)
+                //        //{
+                //        //    line2 = g.iDescription.Substring(firstLastIndex + 1, secondLastIndex + 1);
+                //        //}
+                //        //else
+                //        //{
+                //        //    if (descriptionLength - (firstLastIndex + 1) <= 14)
+                //        //    {
+                //        //        line2 = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex));
+                //        //    }
+                //        //    else
+                //        //    {
+                //        //        //commaIndex = b.LastIndexOf(",");
+                //        //        //line2 = g.iDescription.Substring(firstLastIndex + 1, commaIndex + 1);
+                //        //    }
+                //        //}
+                //    }//****
+                //    else
+                //    {
+                //        line2 = g.iDescription.Substring(firstLastIndex + 1, descriptionLength - (firstLastIndex + 1));
+                //        secondLastIndex = -1;
+                //    }
+
+                //    if (secondLastIndex != -1)
+                //    {
+                //        line3 = g.iDescription.Substring(firstLastIndex + secondLastIndex + 2, descriptionLength -
+                //                (firstLastIndex + secondLastIndex + 2));
+                //    }
+                //    else
+                //    {
+                //        line3 = "";
+                //    }
+                //}
+
+                if (line1.Length > 14 | line2.Length > 14 | line3.Length > 14)
                 {
-                    line3 = g.iDescription.Substring(28, descriptionLength - 28);
+                    line1 = g.iDescription.Substring(0, 14);
+
+                    if (descriptionLength > 28)
+                    {
+                        line2 = g.iDescription.Substring(14, 14);
+                    }
+                    else  //( descriptionLength <= 28 )
+                    {
+                        line2 = g.iDescription.Substring(14, descriptionLength - 14);
+                    }
+
+                    if (descriptionLength > 28)
+                    {
+                        line3 = g.iDescription.Substring(28, descriptionLength - 28);
+                    }
                 }
             }
 
@@ -277,6 +311,8 @@ namespace RepairLabels
              *  the image name.
              */
 
+            //g.printer = @"ZDesigner ZD421-203dpi ZPL";
+            //@"\\CT-MID-PS01\ZEBRASN17";
             //Bitmap bzp = new Bitmap(@"c:\a\zygo_blk_noR_132.bmp");
             //Bitmap bxp = new Bitmap(@"c:\a\AMETEK_blk_noR_132.bmp");
             //line1 = "4\\\" Colimeter";
